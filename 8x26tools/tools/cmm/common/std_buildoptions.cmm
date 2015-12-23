@@ -1,0 +1,429 @@
+//============================================================================
+//  Name:                                                                     
+//    std_loadbuild.cmm 
+//
+//  Description:                                                              
+//    Top level build loading script
+//                                                                            
+// Copyright (c) 2012 - 2014 by Qualcomm Technologies, Incorporated.  All Rights Reserved.        
+//
+//
+//
+//
+//                      EDIT HISTORY FOR FILE
+//  This section contains comments describing changes made to the module.
+//  Notice that changes are listed in reverse chronological order.
+//
+// when       who     		what, where, why
+// --------   ---     		---------------------------------------------------------
+// 02/08/2012 AJCheriyan	Fixed issue with buttons
+// 07/19/2012 AJCheriyan    Created for B-family 
+
+// We support only one argument which is the chipset. Should not be used.
+ENTRY &ARG0
+
+// Global variables populated by the the build options utility
+LOCAL &NEW_BOOTBUILD &NEW_TZBUILD &NEW_RPMBUILD &NEW_APPSBUILD &NEW_MPSSBUILD &NEW_ADSPBUILD &NEW_WCNSSBUILD &NEW_SDIBUILD
+LOCAL &NEW_PDFLAVOR
+
+LOCAL &HLOS_LOADBUILD &LOAD_OPT &FLAVOR_OPT
+
+
+MAIN:
+	&NEW_RPMBUILD=0.
+	&NEW_BOOTBUILD=0.
+	&NEW_TZBUILD=0.
+	&NEW_APPSBUILD=0.
+	&NEW_MPSSBUILD=0.
+	&NEW_ADSPBUILD=0.
+	&NEW_WCNSSBUILD=0.
+	&NEW_SDIBUILD=0.
+	&NEW_PDFLAVOR=0.
+    
+	// Create the dialog for the script
+	GOSUB CREATEDIALOG
+
+	// Wait for the person to do something
+	STOP
+
+LOADBUILD:
+	// We will not return to this script after this point
+	DIALOG.END
+	
+	// Check if the RPM and APPS Core 0 sessions are open 
+	// RPM session must be open and hence no check 
+	do std_intercom_init CHECKSESSION 1. APPS0
+	do std_utils CHECKARGS FATALEXIT &APPS0_ALIVE 1.
+
+	// Call the utility to map all the builds to the other sessions
+	GOSUB BUILDSYNCUP
+
+	// Call the top level load scripts
+	do std_loadbuild &LOAD_OPT
+	
+	// Done. Now Exit
+	GOTO EXIT
+	
+
+// Sub-routine to create the dialog
+CREATEDIALOG:
+	
+	// Check if the window exists
+	WINTOP BUILDOPTIONS
+	IF FOUND()
+       RETURN 
+	WINPOS ,,,,,, LOADSIM
+
+	DIALOG
+	(&
+	    HEADER "Build Options"
+		
+		POS 0. 0. 61. 20.
+		BOX "Select Image Sources"
+		POS 1. 1. 60. 1.
+		BOOTTEXT: TEXT "Boot Build"
+		BOOTEDIT: EDIT "&BOOT_BUILDROOT" "GOSUB VERIFYBOOTBUILD"
+
+		RPMTEXT: TEXT "RPM Build"
+		RPMEDIT: DEFEDIT "&RPM_BUILDROOT" "GOSUB VERIFYRPMBUILD"
+
+		TZTEXT: TEXT "TZ Build"
+		TZEDIT: DEFEDIT "&TZ_BUILDROOT" "GOSUB VERIFYTZBUILD"
+
+		APPSTEXT: TEXT "APPS Build"
+		APPSEDIT: DEFEDIT "&APPS_BUILDROOT" "GOSUB VERIFYAPPSBUILD"
+
+		MPSSTEXT: TEXT "MPSS Build"
+		MPSSEDIT: DEFEDIT "&MPSS_BUILDROOT" "GOSUB VERIFYMPSSBUILD"
+
+		ADSPTEXT: TEXT "ADSP Build"
+		ADSPEDIT: DEFEDIT "&ADSP_BUILDROOT" "GOSUB VERIFYADSPBUILD"
+
+		WCNSSTEXT: TEXT "WCNSS Build"
+		WCNSSEDIT: DEFEDIT "&WCNSS_BUILDROOT" "GOSUB VERIFYWCNSSBUILD"
+
+		SDITEXT: TEXT "SDI Build"
+		SDIEDIT: DEFEDIT "&SDI_BUILDROOT" "GOSUB VERIFYSDIBUILD"
+
+		POS 1. 18. 6. 1. 
+		HELPBUTTON: DEFBUTTON "?"
+		(
+			DIALOG.OK "Paste the paths of the various builds for this debug session. Click the map button after that. The defaults are provided by the meta build."
+		)
+		POS 54. 18. 6. 1.
+		MAPBUTTON: DEFBUTTON "Map" "GOSUB BUILDSYNCUP"
+
+		POS 0. 21. 30. 7.
+	    BOX "Load Options"
+	    POS 1. 22. 30. 1.
+	    LOAD.ERASEONLY: CHOOSEBOX "Erase Storage only" "GOSUB SETLOADOPTION"
+		LOAD.COMMON: CHOOSEBOX "Load Common Images Only (BOOT, TZ, RPM)" "GOSUB SETLOADOPTION"
+		LOAD.FULL: CHOOSEBOX "Load Full Build" "GOSUB SETLOADOPTION"
+
+		POS 1. 26. 6. 1. 
+		HELPBUTTON: DEFBUTTON "?"
+		(
+			DIALOG.OK "Common Images option will load the bootloaders, RPM and TZ images. Full Build option will load all images including HLOS images."
+		)
+
+		POS 53. 26. 6. 1.
+	    LOADBUTTON: DEFBUTTON "Load" "GOSUB LOADBUILD"
+
+		POS 35. 21. 25. 3.
+		BOX "Product Flavor"
+		POS 36. 22. 23. 1.
+		PDFLAVOR: DYNPULLDOWN "&PRODUCT_FLAVORS" "GOSUB LOADPDFLAVORS"
+
+
+	)
+	// Set the default options here
+	DIALOG.SET LOAD.FULL
+	&LOAD_OPT="LOADFULL"
+
+	RETURN
+
+
+SETLOADOPTION:
+	IF DIALOG.BOOLEAN(LOAD.ERASEONLY)
+	(
+		&LOAD_OPT="ERASEONLY"
+	)
+	IF DIALOG.BOOLEAN(LOAD.COMMON)
+	(
+		&LOAD_OPT="LOADCOMMON"
+	)
+	IF DIALOG.BOOLEAN(LOAD.FULL)
+	(
+		&LOAD_OPT="LOADFULL"
+	)
+
+	RETURN
+
+// Macros to check for valid build locations
+// Expand to include more comprehensive checks
+VERIFYBOOTBUILD:
+	LOCAL &DIR
+
+	&DIR=DIALOG.STRING(BOOTEDIT)
+	IF !OS.DIR("&DIR/boot_images")
+	(
+		DIALOG.SET BOOTEDIT "Invalid Boot Build"
+		DIALOG.DISABLE LOADBUTTON
+		DIALOG.DISABLE MAPBUTTON
+	)
+	ELSE
+	(
+		&BOOT_BUILDROOT="&DIR"
+		DIALOG.SET BOOTEDIT "&BOOT_BUILDROOT"
+		// We have a new build
+		&NEW_BOOTBUILD=1.
+		GOSUB CHECKLOAD
+	)
+	RETURN
+
+VERIFYTZBUILD:
+	LOCAL &DIR
+
+	&DIR=DIALOG.STRING(TZEDIT)
+	IF !OS.DIR("&DIR/trustzone_images")
+	(
+		DIALOG.SET TZEDIT "Invalid TZ Build"
+		DIALOG.DISABLE LOADBUTTON
+		DIALOG.DISABLE MAPBUTTON
+	)
+	ELSE
+	(
+		&TZ_BUILDROOT="&DIR"
+		DIALOG.SET TZEDIT "&TZ_BUILDROOT"
+		&NEW_TZBUILD=1.
+		GOSUB CHECKLOAD
+	)
+	RETURN
+
+VERIFYRPMBUILD:
+	LOCAL &DIR
+
+	&DIR=DIALOG.STRING(RPMEDIT)
+	IF !OS.DIR("&DIR/rpm_proc")
+	(
+		DIALOG.SET RPMEDIT "Invalid RPM Build"
+		DIALOG.DISABLE LOADBUTTON
+		DIALOG.DISABLE MAPBUTTON
+	)
+	ELSE
+	(
+		&RPM_BUILDROOT="&DIR"
+		DIALOG.SET RPMEDIT "&RPM_BUILDROOT"
+		&NEW_RPMBUILD=1.
+		GOSUB CHECKLOAD
+	)
+	RETURN
+
+VERIFYAPPSBUILD:
+	LOCAL &DIR
+	
+	&DIR=DIALOG.STRING(APPSEDIT)
+	&APPS_BUILDROOT="&DIR"
+	&NEW_APPSBUILD=1.
+	GOSUB CHECKLOAD
+	
+	RETURN
+
+VERIFYMPSSBUILD:
+	LOCAL &DIR
+
+	&DIR=DIALOG.STRING(MPSSEDIT)
+	IF !OS.DIR("&DIR/modem_proc")
+	(
+		DIALOG.SET MPSSEDIT "Invalid MPSS Build"
+		DIALOG.DISABLE LOADBUTTON
+		DIALOG.DISABLE MAPBUTTON
+	)
+	ELSE
+	(
+		&MPSS_BUILDROOT="&DIR"
+		DIALOG.SET MPSSEDIT "&MPSS_BUILDROOT"
+		&NEW_MPSSBUILD=1.
+		GOSUB CHECKLOAD
+	)
+	RETURN
+
+VERIFYADSPBUILD:
+	LOCAL &DIR
+
+	&DIR=DIALOG.STRING(ADSPEDIT)
+	IF !OS.DIR("&DIR/adsp_proc")
+	(
+		DIALOG.SET ADSPEDIT "Invalid ADSP Build"
+		DIALOG.DISABLE LOADBUTTON
+		DIALOG.DISABLE MAPBUTTON
+	)
+	ELSE
+	(
+		&ADSP_BUILDROOT="&DIR"
+		DIALOG.SET ADSPEDIT "&ADSP_BUILDROOT"
+		&NEW_ADSPBUILD=1.
+		GOSUB CHECKLOAD
+	)
+	RETURN
+	
+VERIFYWCNSSBUILD:
+	LOCAL &DIR
+
+	&DIR=DIALOG.STRING(WCNSSEDIT)
+	IF !OS.DIR("&DIR/wcnss_proc")
+	(
+		DIALOG.SET WCNSSEDIT "Invalid WCNSS Build"
+		DIALOG.DISABLE LOADBUTTON
+		DIALOG.ENABLE MAPBUTTON
+	)
+	ELSE
+	(
+		&WCNSS_BUILDROOT="&DIR"
+		DIALOG.SET WCNSSEDIT "&WCNSS_BUILDROOT"
+		&NEW_WCNSSBUILD=1.
+		GOSUB CHECKLOAD
+	)
+	RETURN
+		
+VERIFYSDIBUILD:
+	LOCAL &DIR
+
+	&DIR=DIALOG.STRING(SDIEDIT)
+	&SDI_BUILDROOT="&DIR"
+	DIALOG.SET SDIEDIT "&SDI_BUILDROOT"
+	&NEW_SDIBUILD=1.
+	GOSUB CHECKLOAD
+
+	RETURN
+
+CHECKLOAD:
+	LOCAL &DIR
+
+	IF (OS.DIR("&RPM_BUILDROOT/rpm_proc")&&OS.DIR("&BOOT_BUILDROOT/boot_images")&&OS.DIR("&MPSS_BUILDROOT/modem_proc")&&OS.DIR("&ADSP_BUILDROOT/adsp_proc")&&OS.DIR("&WCNSS_BUILDROOT/wcnss_proc"))
+	(
+		DIALOG.ENABLE LOADBUTTON
+		DIALOG.ENABLE MAPBUTTON
+	)
+	ELSE
+	(
+		DIALOG.DISABLE LOADBUTTON
+		DIALOG.ENABLE MAPBUTTON
+	)
+
+	RETURN
+
+
+LOADPDFLAVORS:
+	// Basically call the script generated by the meta-build with the image information
+	// using the user specified product flavor
+	&FLAVOR_OPT=DIALOG.STRING(PDFLAVOR)
+	
+	do gen_buildflavor &FLAVOR_OPT
+	// Change the global that indicates the product flavor chosen
+	&PRODUCT_FLAVOR="&FLAVOR_OPT"
+	&NEW_PDFLAVOR=1.
+
+	RETURN
+
+
+BUILDSYNCUP:
+	// Assumptions: 
+	// 1. &NEW_XYZBUILD variable is populated correctly to indicate the state 
+	// of the build. A non-zero value indicates that user has changed the build from what 
+	// was present in the meta build.
+	// 2. Utility is always run from the RPM T32 session
+	// 3. Every processor cares only about its own image. Apps is the only exception (at times).
+	// So we notify only necessary procs that their build has changed. 
+	IF ("&NEW_RPMBUILD">"0.")
+	(
+		// We never need to update the RPM session as it always has the latest
+		do std_intercom_do &APPS0_PORT std_mapbuilds RPM &RPM_BUILDROOT
+		//do std_intercom_do &MPSS_PORT  std_mapbuilds RPM &RPM_BUILDROOT
+		//do std_intercom_do &ADSP_PORT  std_mapbuilds RPM &RPM_BUILDROOT
+		//do std_intercom_do &WCNSS_PORT std_mapbuilds RPM &RPM_BUILDROOT
+		//
+		// Reload the session configs again 
+		do std_intercom_do &RPM_PORT std_sessioncfg_rpm
+	)
+	IF ("&NEW_BOOTBUILD">"0.")
+	(
+	 	// We never need to update the RPM session as it always has the latest
+		//do std_intercom_do &RPM_PORT   std_mapbuilds BOOT &BOOT_BUILDROOT
+		do std_intercom_do &APPS0_PORT std_mapbuilds BOOT &BOOT_BUILDROOT
+		//do std_intercom_do &MPSS_PORT  std_mapbuilds BOOT &BOOT_BUILDROOT
+		//do std_intercom_do &ADSP_PORT  std_mapbuilds BOOT &BOOT_BUILDROOT
+		//do std_intercom_do &WCNSS_PORT std_mapbuilds BOOT &BOOT_BUILDROOT
+	)
+	IF ("&NEW_TZBUILD">"0.")
+	(
+		// We never need to update the RPM session as it always has the latest
+		//do std_intercom_do &RPM_PORT   std_mapbuilds TZ &TZ_BUILDROOT
+        do std_intercom_do &APPS0_PORT std_mapbuilds TZ &TZ_BUILDROOT
+		//do std_intercom_do &MPSS_PORT  std_mapbuilds TZ &TZ_BUILDROOT
+		//do std_intercom_do &ADSP_PORT  std_mapbuilds TZ &TZ_BUILDROOT
+		//do std_intercom_do &WCNSS_PORT std_mapbuilds TZ &TZ_BUILDROOT
+	)
+	IF ("&NEW_APPSBUILD">"0.")
+	(
+		// We never need to update the RPM session as it always has the latest
+		//do std_intercom_do &RPM_PORT   std_mapbuilds APPS &APPS_BUILDROOT
+		do std_intercom_do &APPS0_PORT std_mapbuilds APPS &APPS_BUILDROOT
+		//do std_intercom_do &MPSS_PORT  std_mapbuilds APPS &APPS_BUILDROOT
+		//do std_intercom_do &ADSP_PORT  std_mapbuilds APPS &APPS_BUILDROOT
+		//do std_intercom_do &WCNSS_PORT std_mapbuilds APPS &APPS_BUILDROOT
+		// Reload the session configs again 
+		do std_intercom_do &APPS0_PORT std_sessioncfg_apps
+	)
+	IF ("&NEW_MPSSBUILD">"0.")
+	(
+		// We never need to update the RPM session as it always has the latest
+		do std_intercom_do &APPS0_PORT std_mapbuilds MPSS &MPSS_BUILDROOT
+		do std_intercom_do &MPSS_PORT  std_mapbuilds MPSS &MPSS_BUILDROOT
+		//do std_intercom_do &ADSP_PORT  std_mapbuilds MPSS &MPSS_BUILDROOT
+		//do std_intercom_do &WCNSS_PORT std_mapbuilds MPSS &MPSS_BUILDROOT
+		// Reload the session configs again 
+		do std_intercom_do &MPSS_PORT std_sessioncfg_mpss
+	)
+	IF ("&NEW_ADSPBUILD">"0.")
+	(
+		// We never need to update the RPM session as it always has the latest
+		do std_intercom_do &APPS0_PORT std_mapbuilds ADSP &ADSP_BUILDROOT
+		//do std_intercom_do &MPSS_PORT  std_mapbuilds ADSP &ADSP_BUILDROOT
+		do std_intercom_do &ADSP_PORT  std_mapbuilds ADSP &ADSP_BUILDROOT
+		//do std_intercom_do &WCNSS_PORT std_mapbuilds ADSP &ADSP_BUILDROOT
+		// Reload the session configs again 
+		do std_intercom_do &ADSP_PORT std_sessioncfg_adsp
+	)
+	IF ("&NEW_WCNSSBUILD">"0.")
+	(
+		// We never need to update the RPM session as it always has the latest
+		do std_intercom_do &APPS0_PORT std_mapbuilds WCNSS &WCNSS_BUILDROOT
+		//do std_intercom_do &MPSS_PORT  std_mapbuilds WCNSS &WCNSS_BUILDROOT
+		//do std_intercom_do &ADSP_PORT  std_mapbuilds WCNSS &WCNSS_BUILDROOT
+		do std_intercom_do &WCNSS_PORT std_mapbuilds WCNSS &WCNSS_BUILDROOT
+		// Reload the session configs again 
+		do std_intercom_do &WCNSS_PORT std_sessioncfg_wcnss
+	)
+	IF ("&NEW_SDIBUILD">"0.")
+	(
+		// We never need to update the RPM session as it always has the latest
+		do std_intercom_do &APPS0_PORT std_mapbuilds SDI &SDI_BUILDROOT
+	)
+	IF ("&NEW_PDFLAVOR">"0.")
+	(
+	 	// New product flavor has been selected and has to be broadcast to all
+		// sessions
+		do std_intercom_do &APPS0_PORT gen_buildflavor &FLAVOR_OPT
+		do std_intercom_do &APPS1_PORT gen_buildflavor &FLAVOR_OPT
+		do std_intercom_do &APPS2_PORT gen_buildflavor &FLAVOR_OPT
+		do std_intercom_do &APPS3_PORT gen_buildflavor &FLAVOR_OPT
+		do std_intercom_do &MPSS_PORT  gen_buildflavor &FLAVOR_OPT
+		do std_intercom_do &ADSP_PORT  gen_buildflavor &FLAVOR_OPT
+		do std_intercom_do &WCNSS_PORT gen_buildflavor &FLAVOR_OPT
+	)
+
+	RETURN
+
+EXIT:
+	ENDDO

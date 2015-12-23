@@ -1,0 +1,58 @@
+ADD 
+MENU 
+( 
+	POPUP "[:CORRELATE]&CoreBSP Scripts" 
+	( 
+	POPUP "[:PSTEP]&Kernel" 
+	( 
+		MENUITEM "[:ACONFIG]&QuRT Extension" 
+		( 
+			if os.file("&MPSS_SCRIPTSDIR/../kernel/qurt/install/modemv5/debugger/T32/qurt_model.t32") 
+				task.config ../kernel/qurt/install/modemv5/debugger/T32/qurt_model.t32
+			else 
+				task.config qurt.t32
+		)
+		MENUITEM "[:ACONFIG]&QuRT Menu" 
+		( 
+			if os.file("&MPSS_SCRIPTSDIR/../kernel/qurt/install/modemv5/debugger/T32/qurt_model.men")
+				menu.reprogram ../kernel/qurt/install/modemv5/debugger/T32/qurt_model.men 
+			else
+				menu.rp qurt.men
+		)
+	)
+	POPUP "[:PSTEP]&Dal" 
+	( 
+		MENUITEM "[:FLASH]& Interrupt Log" 
+		( 
+			if os.file("&MPSS_SCRIPTSDIR/../systemdrivers/InterruptController/scripts/InterruptLog.cmm")
+				cd.do ../systemdrivers/InterruptController/scripts/InterruptLog.cmm
+			else
+				do InterruptLog.cmm
+		)
+		MENUITEM "[:FLASH]& Interrupt Controller" 
+		( 
+			if os.file("&MPSS_SCRIPTSDIR/../systemdrivers/InterruptController/scripts/InterruptController.cmm")
+				cd.do ../systemdrivers/InterruptController/scripts/InterruptController.cmm
+			else
+				do InterruptController.cmm
+		)
+	)
+	POPUP "[:PSTEP]&Systemdrivers" 
+	( 
+		MENUITEM "[:CHIP]&HWIO" 
+		( 
+			if os.file("&MPSS_SCRIPTSDIR/../systemdrivers/hwio/scripts/msm8974/hwioreg.per")
+				per.view ../systemdrivers/hwio/scripts/msm8974/hwioreg.per 
+			else
+				per.view hwioreg.per 
+		)
+		MENUITEM "[:FLASH]&Clocks" 
+		( 
+			if os.file("&MPSS_SCRIPTSDIR/../systemdrivers/clock/scripts/Clock.cmm msm8974")
+				cd.do ../systemdrivers/clock/scripts/Clock.cmm msm8974
+			else
+				do Clock.cmm msm8974
+		)
+	)
+	) 
+)

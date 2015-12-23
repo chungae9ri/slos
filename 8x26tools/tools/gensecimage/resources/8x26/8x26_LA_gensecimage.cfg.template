@@ -1,0 +1,136 @@
+#Configuration file which GenSecImage python script uses to process images
+#Following are the parameters which can be used
+#file_name - Source location of file
+#file_type - can be mbn (hdr+code), htelf (elf with hashtable), rawelf (elf without hashtable)
+#header_size (80/40)- applicable only for file_type=mbn. Used to denote if header size is 40 or 80 byte. Default=40
+#has_preamble (yes/no) - applicable only for SBL1 images. Default=no
+#preamble_size (10/8/2) - applicable only if has_preamble=yes. Denotes:
+#  10k preamble (flash_auto_detect_max_page=8192, flash_auto_detect_min_page=2048, small_preamble=True)
+#   8k preamble (flash_auto_detect_max_page=4096, flash_auto_detect_min_page=2048, small_preamble=False)
+#   2k preamble (flash_auto_detect_max_page=2048, flash_auto_detect_min_page=2048, small_preamble=False)
+#cert_chain_size - max size of the certificate chain. Default=6144
+#image_type - sahara image type value to place in the mbn header field
+#total_num_root_certs - Total number of root certificates used. Default is 1.
+#                       Applicable range is from 1 to 16.
+
+[DEFAULT]
+signconfig=resources/8x26/8x26_LA_signingattr_qpsa.cfg
+postsignconfig=resources/8x26/8x26_LA_postsigncmd.cfg
+encrypt=no
+total_num_root_certs=1
+
+[sbl1]
+file_name=%BOOT_BINARY%
+file_type=mbn
+header_size=80
+has_preamble=no 
+preamble_size=10
+encrypt_format=mbn
+output_dir=output/sbl1
+
+[emmcbld]
+file_name=%ROOTPATH_boot%boot_images/build/ms/bin/EMMCBLD/MPRG8626.mbn
+file_type=mbn
+header_size=80
+encrypt_format=mbn
+output_dir=output/emmcbld
+
+[tz]
+file_name=%BOOT_TZ_MBN%
+file_type=htelf
+encrypt_format=mbn
+output_dir=output/tz
+
+[appsbl]
+file_name=%APPSBOOT_BINARY%
+file_type=mbn
+header_size=40
+encrypt_format=mbn
+output_dir=output/appsbl
+
+[rpm]
+file_name=%RPM_BINARY%
+file_type=htelf
+encrypt_format=mbn
+output_dir=output/rpm
+
+[mba]
+file_name=%ROOTPATH_modem%modem_proc/core/bsp/mba_img/build/%BID_modem%/MBA_CORE_IMG_%BID_modem%Q.mbn
+file_type=mbn
+header_size=80
+encrypt_format=mbn
+output_dir=output/mba
+
+[modem]
+file_name=%MPSS_BINARY%
+file_type=htelf
+encrypt_format=elf
+output_dir=output/modem
+
+[wcnss]
+file_name=%WCNSS_BINARY%
+file_type=htelf
+encrypt_format=elf
+output_dir=output/wcnss
+
+[adsp]
+file_name=%ADSP_BINARY%
+file_type=htelf
+encrypt_format=elf
+output_dir=output/adsp
+
+#If FEATURE_SDI_AS_ELF_IMAGE is enabled, sign sdi as elf.
+#Set file_type=htelf as follows:
+#[dbi]
+#file_name=%SDI_BINARY%
+#file_type=htelf
+#encrypt_format=mbn
+#output_dir=output/dbi
+
+[dbi]
+file_name=%SDI_BINARY%
+file_type=mbn
+header_size=40
+encrypt_format=mbn
+output_dir=output/dbi
+
+[venus]
+#External build path
+#file_name=%ROOTPATH_apps%LINUX/android/vendor/qcom/proprietary/prebuilt_HY11/target/product/msm8226/system/etc/firmware/venus.mbn
+#Internal build path
+file_name=%ROOTPATH_apps%LINUX/android/out/target/product/msm8226/system/etc/firmware/venus.mbn
+file_type=htelf
+encrypt_format=elf
+output_dir=output/venus
+
+# Below are tzapps - they are not going to be encrypted
+[sampleapp]
+file_name=%ROOTPATH_tz%trustzone_images/build/ms/bin/%BID_tz%/sampleapp.mbn
+file_type=htelf
+encrypt=no
+output_dir=output/sampleapp
+
+[isdbtmm]
+file_name=%ROOTPATH_tz%trustzone_images/build/ms/bin/%BID_tz%/isdbtmm.mbn
+file_type=htelf
+encrypt=no
+output_dir=output/isdbtmm
+
+[widevine]
+file_name=%ROOTPATH_tz%trustzone_images/build/ms/bin/%BID_tz%/widevine.mbn
+file_type=htelf
+encrypt=no
+output_dir=output/widevine
+
+[playready]
+file_name=%ROOTPATH_tz%trustzone_images/build/ms/bin/%BID_tz%/playready.mbn
+file_type=htelf
+encrypt=no
+output_dir=output/playready
+
+[cmnlib]
+file_name=%ROOTPATH_tz%trustzone_images/build/ms/bin/%BID_tz%/cmnlib.mbn
+file_type=htelf
+encrypt=no
+output_dir=output/cmnlib
+

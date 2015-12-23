@@ -1,0 +1,85 @@
+;===================================================================================================
+;
+;  Copyright (C) 2009-2010, MDS Technology CO., LTD. All Rights Reserved.
+; INFORMATION IN THIS CMM IS PROVIDED IN CONNECTION WITH MDS TECHNOLOGY INC. 
+; MDS TECHNOLOGY INC. HAS ALL OF RIGHTS ALLOWED LEGALLY. 
+; ANY INTELLECTUAL PROPERTY RIGHTS GRANTED BY THIS CMM IS NOT ALLOWED TO DISCLOSE, TRANSMIT, 
+; REPRODUCTION WITH ELECTRICALLY OR NON-ELECTRICALLY WITHOUT THE PRIOR WRITTEN CONSENT OF 
+; MDS TECHNOLOGY INC. 
+; ALL KIND OF CONDUCT IS PROHIBITED THAT INFRINGEMENT RIGHT OF MDS TECHNOLOGY INC.
+;
+;===================================================================================================
+;  MDS Technology Co. Contact Point  : http://www.trace32.com, TRACE32@mdstec.com  
+;===================================================================================================
+;  Revision History:
+;  Author                	Date D/M/Y       Number    Description of Changes
+;  -------------------------   ------------    ----------  ----------------------------------------
+;  Justin, Sung               	Feb-07-11                  ver 0.1
+;===================================================================================================
+;  Name:
+;       reset.cmm
+;  Usage:
+;       do reset.cmm
+;===================================================================================================
+
+;===================================================================================================
+B::
+
+entry &isCPU
+
+IF run()
+	break
+
+IF "&isCPU"=="ap"||"&isCPU"=="dsps"||"&isCPU"=="q6sw" 
+(
+	; Save the windows
+	STOre &G_Build_Base\common\my_&isCPU_setup_window.cmm WIN
+
+	; Save the break points
+	STOre &G_Build_Base\common\my_&isCPU_break.cmm break
+)
+ELSE
+(
+	IF "&G_Reset_Mode"!=""
+	(
+		; RPM 
+		; Save the windows
+		STOre &G_Build_Base\common\my_rpm_setup_window.cmm WIN
+
+		; Save the break points
+		STOre &G_Build_Base\common\my_rpm_break.cmm break
+
+		IF "&G_Reset_Mode"=="rpm_debug"
+		(
+			do debug_auto_rpm.cmm &G_Reset_Mode true
+		)
+		ELSE IF "&G_Reset_Mode"=="rpm_sbl1_debug"||"&G_Reset_Mode"=="rpm_lk_debug"||"&G_Reset_Mode"=="rpm_kernel_debug"||"&G_Reset_Mode"=="rpm_kernelsmp_debug"
+		(
+			do sync.cmm init
+			ON ERROR GOTO error
+			intercom.execute &intercom_handle do reset.cmm ap
+			do debug_auto_rpm.cmm &G_Reset_Mode true	
+		)		
+		ELSE IF "&G_Reset_Mode"=="dsps"||"&G_Reset_Mode"=="q6sw"
+		(
+			do sync3.cmm init
+			ON ERROR GOTO error
+			intercom.execute &intercom_handle  do reset.cmm ap
+			intercom.execute &intercom1_handle do reset.cmm &G_Reset_Mode		
+			do debug_auto_rpm.cmm &G_Reset_Mode true
+		)		
+	)
+	ELSE
+	(
+		PRINT %ERROR "Please check G_Reset_Mode:&G_Reset_Mode"
+		ENDDO
+	)	
+)	
+continue:
+PRINT "Reset complete"
+
+ENDDO
+;===================================================================================================
+error:
+	PRINT ""
+	ENDDO

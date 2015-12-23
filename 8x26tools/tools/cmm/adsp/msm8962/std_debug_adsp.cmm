@@ -1,0 +1,155 @@
+//============================================================================
+//  Name:                                                                     
+//    std_debug_adsp.cmm 
+//
+//  Description:                                                              
+//    ADSP debug script
+//                                                                            
+// Copyright (c) 2012 - 2014 by Qualcomm Technologies, Incorporated.  All Rights Reserved.        
+//
+//
+//
+//
+//                      EDIT HISTORY FOR FILE
+//  This section contains comments describing changes made to the module.
+//  Notice that changes are listed in reverse chronological order.
+//
+// when       who     		what, where, why
+// --------   ---     		---------------------------------------------------------
+// 07/03/2013 AJCheriyan        Changed debug logic
+// 02/21/2013 AJCheriyan	Disable clock gating
+// 12/05/2012 AJCheriyan	Added multi-pd support for Audio / Sensors Image
+// 10/19/2012 AJCheriyan	Re-ordered the sleep enable / disable logic
+// 10/10/2012 AJCheriyan	Added breakpoints support
+// 07/19/2012 AJCheriyan    Created for B-family.
+
+// Following arguments are supported. 
+// ARG0 - Image to debug. 
+// ARG1 - En/Disable Sleep. lpm_enable / lpm_disable
+// ARG2 - Entry point for this debug session. will default to image entry point
+//        if nothing is specified.
+// ARGn - n > 2 - Any other arguments to be passed to the script
+//
+ENTRY &ARG0 &ARG1 &ARG2 &ARG3 &ARG4 &ARG5
+
+LOCAL &ELFILE &IMAGE
+
+MAIN:
+	&IMAGE="&ARG0"
+	&LPM_OPTION="&ARG1"
+	&PDOPTION="&ARG3"
+
+	// The arguments are valid at this point and the required T32 sessions are open
+	// Go about business without error checking
+	do hwio.cmm
+
+	// For MBA / MPSS image
+	IF ("&IMAGE"=="adsp")
+	(
+		// Attach to the RPM 
+		do std_utils BREAKPROC
+
+		// Set the magic number appropriately
+		IF ("&IMAGE"=="adsp")
+		(
+			D.S E&ACCESS:&ADSP_DEBUG_COOKIE %LONG %LE &DEBUG_COOKIE_VALUE
+		)
+
+		// Let RPM run too 
+		do std_utils ATTACHPROC
+
+
+		// Now poll until modem is brought out of reset
+		&VALUE=0x7
+		WHILE (&VALUE!=0x7)
+		(
+			do std_utils HWIO_IN LPASS_QDSP6SS_RESET
+			ENTRY &VALUE
+		)
+
+		WAIT 20.s
+
+		// We need to disable clock gating
+		do std_utils HWIO_OUTF LPASS_QDSP6SS_CGC_OVERRIDE CORE_RCLK_EN 0x1
+		do std_utils HWIO_OUTF LPASS_QDSP6SS_CGC_OVERRIDE CORE_CLK_EN 0x1
+
+		// Now we can attach and break. It should be welcoming us with a "brkpt"
+		do std_intercom_do &ADSP_PORT std_utils BREAKPROC
+
+		// Load the symbols appropriately
+		IF ("&IMAGE"=="adsp")
+		(
+			do std_intercom_do &ADSP_PORT std_loadsyms_adsp &ADSP_BUILDROOT
+			// Load the sensors image in a multi-pd build
+			IF ("&PDOPTION"=="MULTIPD")
+			(
+				do std_intercom_do &ADSP_PORT std_loadsyms_sensors &ADSP_BUILDROOT
+			)
+			
+	   		// We are good to exit fastdebug mode
+			do std_exitfastdebug adsp	
+		)
+
+		// Check if sleep is to be enabled or not
+		INTERCOM.EVALUATE &ADSP_PORT Y.EXIST(sleep_allow_low_power_modes)
+		IF (1==EVAL())
+		(
+			IF ("&LPM_OPTION"=="lpm_disable")
+			(
+				&CMD="v sleep_allow_low_power_modes = 0"
+			)
+			IF ("&LPM_OPTION"=="lpm_enable")
+			(
+				&CMD="v sleep_allow_low_power_modes = 1"
+			)
+		)
+
+		// Now go to the desired point
+		// Let's check if the symbol is present
+		INTERCOM.EVALUATE &ADSP_PORT Y.EXIST("&ARG2")			
+		IF (1==EVAL())
+		(
+			INTERCOM.EVALUATE &ADSP_PORT Y.EXIST(sleep_allow_low_power_modes)
+			IF (1==EVAL())
+			(
+				// Go to user determined breakpoint
+				INTERCOM.EXECUTE &ADSP_PORT GO &ARG2 /O /CMD "do std_loadsyms_adsp"
+				INTERCOM.WAIT &ADSP_PORT
+				// Set the low power mode option
+				INTERCOM.EXECUTE &ADSP_PORT &CMD
+			)
+			ELSE
+			(
+				INTERCOM.EXECUTE &ADSP_PORT GO &ARG2 /O /CMD "do std_loadsyms_adsp"
+			)
+		)
+		ELSE
+		(
+			INTERCOM.EVALUATE &ADSP_PORT Y.EXIST(sleep_allow_low_power_modes)
+			IF (1==EVAL())
+			(
+				// Go to entry breakpoint
+				INTERCOM.EXECUTE &ADSP_PORT GO &ARG2 /O /CMD "do std_loadsyms_adsp"
+				INTERCOM.WAIT &ADSP_PORT
+				// Set the low power mode option
+				INTERCOM.EXECUTE &ADSP_PORT &CMD
+			)
+			ELSE
+			(
+				INTERCOM.EXECUTE &ADSP_PORT GO &ARG2 /O /CMD "do std_loadsyms_adsp"
+			)
+		)
+	)	
+	
+	GOTO EXIT
+
+EXIT:
+	ENDDO
+
+FATALEXIT:
+	END
+
+
+
+	
+

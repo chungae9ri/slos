@@ -1,0 +1,81 @@
+;===================================================================================================
+;
+;  Copyright (C) 2009-2010, MDS Technology CO., LTD. All Rights Reserved.
+; INFORMATION IN THIS CMM IS PROVIDED IN CONNECTION WITH MDS TECHNOLOGY INC. 
+; MDS TECHNOLOGY INC. HAS ALL OF RIGHTS ALLOWED LEGALLY. 
+; ANY INTELLECTUAL PROPERTY RIGHTS GRANTED BY THIS CMM IS NOT ALLOWED TO DISCLOSE, TRANSMIT, 
+; REPRODUCTION WITH ELECTRICALLY OR NON-ELECTRICALLY WITHOUT THE PRIOR WRITTEN CONSENT OF 
+; MDS TECHNOLOGY INC. 
+; ALL KIND OF CONDUCT IS PROHIBITED THAT INFRINGEMENT RIGHT OF MDS TECHNOLOGY INC.
+;
+;===================================================================================================
+;  MDS Technology Co. Contact Point  : http://www.trace32.com, TRACE32@mdstec.com  
+;===================================================================================================
+;  Revision History:
+;  Author                	Date D/M/Y       Number    Description of Changes
+;  -------------------------   ------------    ----------  ----------------------------------------
+;  Justin Sung 		 	Jul-27-11		   Ver 0.1 
+;===================================================================================================
+;  Name:
+;        debug_auto_dsps.cmm
+;  Usage:
+;       do debug_auto_dsps.cmm
+;===================================================================================================
+
+;===================================================================================================
+B::
+
+ENTRY &reset_value
+LOCAL &DSPS_ELF_FileName
+
+&DSPS_ELF_FileName="&G_MSFolder_Dir\..\..\..\dsps_proc\core\bsp\sensorsimg\build\arm7\SENSORSIMG_DSPSBLDZ.elf"
+if !os.file(&DSPS_ELF_FileName)
+	&DSPS_ELF_FileName="&G_MSFolder_Dir\..\..\..\dsps_proc\core\bsp\sensorsimg\build\arm7\sensorsimg\arm7\DSPSBLDZ\sensorsimg.elf"
+
+winclear
+
+do target_sysup.cmm dsps
+
+sys.m.a
+	
+if (!y.exist(ppss_main_ctl))
+(
+	if !os.file(&DSPS_ELF_FileName)
+	(
+		print "Select DSPS ELF file in browser: "
+		dialog.file &G_MSFolder_Dir\..\..\..\dsps_proc\core\bsp\sensorsimg\build\arm7\*.elf 
+		entry &DSPS_ELF_FileName
+		
+		if "&DSPS_ELF_FileName"==""
+		(
+			print "Failed to select file. Exiting..."
+			END
+		)	
+	) 
+	
+	d.load.elf &DSPS_ELF_FileName /nocode /noclear /strippart "dsps_proc" /sourcepath &G_MSFolder_Dir/..\..\../dsps_proc
+)
+	
+b.s ppss_main_ctl /onchip
+
+wait !run()
+
+; sleep_go_to_low_power_mode -> nop
+d.a 0x1711e nop
+d.a 0x17120 nop
+
+task.config ucos.t32
+menu.rp ucos.men
+
+if "&isReset"=="true"
+(
+	do my_dsps_setup_window.cmm
+	do my_dsps_break.cmm
+)
+else
+(
+	do setup_window.cmm
+)
+
+ENDDO
+;==================================================================================================

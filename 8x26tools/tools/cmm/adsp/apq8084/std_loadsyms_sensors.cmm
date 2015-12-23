@@ -1,0 +1,68 @@
+//============================================================================
+//  Name:                                                                     
+//    std_loadsyms_sensors.cmm 
+//
+//  Description:                                                              
+//    Script to load Sensors Image symbols. Part of ADSP build
+//                                                                            
+// Copyright (c) 2012 - 2014 by Qualcomm Technologies, Incorporated.  All Rights Reserved.        
+//
+//
+//
+//
+//                      EDIT HISTORY FOR FILE
+//  This section contains comments describing changes made to the module.
+//  Notice that changes are listed in reverse chronological order.
+//
+// when       who     		what, where, why
+// --------   ---     		---------------------------------------------------------
+// 12/5/2012 AJCheriyan    Created for B-family 
+//
+
+// ARG0 - Build from which symbols have to loaded
+//
+ENTRY &ADSPBUILD 
+LOCAL &ELFILE1_sens &ELFILE2_sens &DEVCFG_ELF_sens &ADSP_BUILDMSDIR1_sens &PBNFILE_sens &ADSP_COREDIR_sens
+
+&ELFILE1_sens="NONE" 
+&ELFILE2_sens="NONE"
+&DEVCFG_ELF_sens="NONE"
+&ADSP_BUILDMSDIR1_sens="NONE"
+&PBNFILE_sens="NONE"
+&ADSP_COREDIR_sens="NONE"
+
+
+MAIN:
+	IF ("&ADSPBUILD"=="")
+	(
+	
+	    PRINT "Point to the ADSP .elf file."
+        DIALOG.FILE "&ADSP_BUILDROOT/adsp_proc/build/ms/*SENSOR_reloc.elf"
+        ENTRY &ELFILE1_sens
+        &DEVCFG_ELF_sens=STRING.CUT("&ELFILE",-4)+"_DEVCFG.elf"
+        &ADSP_BUILDMSDIR1_sens=OS.FILE.PATH(&ELFILE)
+        &ADSP_COREDIR_sens="&ADSP_BUILDMSDIR1_sens\..\..\core"
+        &ADSP_BUILDROOT="&ADSP_BUILDMSDIR1_sens\..\..\.."
+        &PBNFILE_sens="&ADSP_BUILDMSDIR1_sens\bootimage.pbn"
+		
+		D.LOAD.ELF &ELFILE1_sens  EAHB: /nocode /noclear /strippart "adsp_proc" /sourcepath "&ADSP_BUILDROOT/adsp_proc"
+	)
+	ELSE
+	(
+	
+		PRINT "Point to the ADSP .elf file."
+        DIALOG.FILE "&ADSP_BUILDROOT/adsp_proc/build/ms/*SENSOR_reloc.elf"
+        ENTRY &ELFILE1_sens
+        &DEVCFG_ELF_sens=STRING.CUT("&ELFILE",-4)+"_DEVCFG.elf"
+        &ADSP_BUILDMSDIR1_sens=OS.FILE.PATH(&ELFILE)
+        &ADSP_COREDIR_sens="&ADSP_BUILDMSDIR1_sens\..\..\core"
+        &ADSP_BUILDROOT="&ADSP_BUILDMSDIR1_sens\..\..\.."
+        &PBNFILE_sens="&ADSP_BUILDMSDIR1_sens\bootimage.pbn"
+		
+		D.LOAD.ELF &ELFILE1_sens  EAHB: /nocode /noclear /strippart "adsp_proc" /sourcepath "&ADSP_BUILDROOT/adsp_proc"
+	)
+
+	GOTO EXIT
+
+EXIT:
+	ENDDO

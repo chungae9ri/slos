@@ -1,0 +1,312 @@
+//============================================================================
+//  Name:                                                                     
+//    std_debug_adsp.cmm 
+//
+//  Description:                                                              
+//    ADSP debug script
+//                                                                            
+// Copyright (c) 2012 - 2014 by Qualcomm Technologies, Incorporated.  All Rights Reserved.        
+//
+//
+//
+//
+//                      EDIT HISTORY FOR FILE
+//  This section contains comments describing changes made to the module.
+//  Notice that changes are listed in reverse chronological order.
+//
+// when       who     		what, where, why
+// --------   ---     		---------------------------------------------------------
+// 07/03/2013 AJCheriyan        Changed debug logic
+// 02/21/2013 AJCheriyan	Disable clock gating
+// 12/05/2012 AJCheriyan	Added multi-pd support for Audio / Sensors Image
+// 10/19/2012 AJCheriyan	Re-ordered the sleep enable / disable logic
+// 10/10/2012 AJCheriyan	Added breakpoints support
+// 07/19/2012 AJCheriyan    Created for B-family.
+
+// Following arguments are supported. 
+// ARG0 - Image to debug. 
+// ARG1 - En/Disable Sleep. lpm_enable / lpm_disable
+// ARG2 - Entry point for this debug session. will default to image entry point
+//        if nothing is specified.
+// ARGn - n > 2 - Any other arguments to be passed to the script
+//
+ENTRY &ARG0 &ARG1 &ARG2 &ARG3 &ARG4 &ARG5
+
+LOCAL &ELFILE &IMAGE &CTI_enabled &Qurt_Breakpoints
+
+&CTI_enabled=0 
+&Qurt_Breakpoints=0
+
+
+MAIN:
+	&IMAGE="&ARG0"
+	&LPM_OPTION="&ARG1"
+	
+	GOSUB ParseArguments &ARG0 &ARG1 &ARG2 &ARG3 &ARG4 &ARG5
+		entry &CTI_enabled &Qurt_Breakpoints &PDOPTION
+	
+	// The arguments are valid at this point and the required T32 sessions are open
+	// Go about business without error checking
+    
+	IF (1==&CTI_enabled)
+	(
+		do std_cti adsp rpm apps0 apps1 apps2 apps3
+	)
+    ELSE
+    (
+        do std_cti adsp rpm
+    )
+    
+	GOSUB Setup_ADSP_T32_Session
+ 
+    // Let RPM run too
+    GO
+    WAIT.500ms
+    // Set the magic number appropriately
+    IF ("&IMAGE"=="adsp")
+    (
+    D.S E&ACCESS:&ADSP_DEBUG_COOKIE %LONG %LE &DEBUG_COOKIE_VALUE
+    )
+
+                    
+    //wait at least 4 seconds to allow system to boot, then attempt to break repeatedly
+    WAIT 4.s
+    //d.s EZAXI:0x0:0xFC4AA004 %LE %LONG 0x80000006
+	// Now we can attach and break. It should be welcoming us with a "brkpt"
+	//this will poll for 10 seconds
+    print "Attempting to break on ADSP. Will poll for 20 seconds"
+    
+    &counter=0
+    
+    while (STATE.RUN()&&(&counter<0x128))
+    (
+        wait.100ms
+        &counter=&counter+1
+    )
+    do std_intercom_do &ADSP_PORT std_utils BREAKPROC
+    INTERCOM.EVALUATE &ADSP_PORT SYSTEM.MODE()
+    &ADSP_T32_attachstate=EVAL()
+    IF (0==&ADSP_T32_attachstate)
+    (
+        print %error "Could not attach to ADSP during bootup. Try coldbooting device, restart ADSP T32 window, and try again"
+        GOTO EXIT
+    )
+    
+	IF (1!=&CTI_enabled)
+    (
+        //let RPM go again
+        GO
+        //clear CTI's.
+        do std_utils ClearCTITrig ADSP
+        do std_utils ClearCTITrig RPM
+    )
+    
+
+	GOSUB SetSleepCommand
+
+
+	// Now go to the desired point
+	// assumed that adsp is stopped and attached by this point
+    //logic improvement: need to remove the 'haltatdesiredbp' and just set the breakpoint 
+    //after it hits main and after you've loaded the sensor elf
+    
+    GOSUB SetupADSPcore
+    
+    GOTO EXIT
+
+ParseArguments:
+	entry &loc_ARG0 &loc_ARG1 &loc_ARG2 &loc_ARG3 &loc_ARG4 &loc_ARG5
+	
+	local &loc_ARG0 &loc_ARG1 &loc_ARG2 &loc_ARG3 &loc_ARG4 &loc_ARG5
+	local &Loc_CTI_enabled &Loc_Qurt_Breakpoints
+	&Loc_CTI_enabled=0 
+	&Loc_Qurt_Breakpoints=0
+	&Loc_PDOPTION=0
+	
+	&Loc_ARG0=string.upr("&loc_ARG0")
+	&Loc_ARG1=string.upr("&loc_ARG1")
+	&Loc_ARG2=string.upr("&loc_ARG2")
+	&Loc_ARG3=string.upr("&loc_ARG3")
+	&Loc_ARG4=string.upr("&loc_ARG4")
+	&Loc_ARG5=string.upr("&loc_ARG5")
+	
+	//do std_utils CHECKARGS FATALEXIT &Loc_ARG1 "ADSP"
+	
+	//args 0,1,2 are all set (need to be adsp, lpm option, breakpoint).
+	//check options after that.
+	
+	IF (("&Loc_ARG3"=="CTI")||("&Loc_ARG4"=="CTI")||("&Loc_ARG5"=="CTI")||("&Loc_ARG3"=="cti")||("&Loc_ARG4"=="cti")||("&Loc_ARG5"=="cti"))
+	(
+		&Loc_CTI_enabled=1
+	)
+	IF (("&Loc_ARG3"=="QURTERRORS")||("&Loc_ARG3"=="QURTBREAKPOINTS")||("&Loc_ARG3"=="QURTBP")||("&Loc_ARG4"=="QURTERRORS")||("&Loc_ARG4"=="QURTBREAKPOINTS")||("&Loc_ARG4"=="QURTBP")||("&Loc_ARG5"=="QURTERRORS")||("&Loc_ARG5"=="QURTBREAKPOINTS")||("&Loc_ARG5"=="QURTBP"))
+	(
+		&Loc_Qurt_Breakpoints=1
+	)
+	IF (("&Loc_ARG3"=="MPD")||("&Loc_ARG3"=="MULTIPD")||("&Loc_ARG3"=="SENSORS")||("&Loc_ARG4"=="MPD")||("&Loc_ARG4"=="MULTIPD")||("&Loc_ARG4"=="SENSORS")||("&Loc_ARG5"=="MPD")||("&Loc_ARG5"=="MULTIPD")||("&Loc_ARG5"=="SENSORS"))
+	(
+		&Loc_PDOPTION=1
+	)
+	
+	
+	
+	RETURN	&Loc_CTI_enabled &Loc_Qurt_Breakpoints &Loc_PDOPTION
+
+
+Setup_ADSP_T32_Session:
+
+	IF !y.exist(HWIO_QDSS_CTI0_CTICONTROL_ADDR)
+	(
+		do hwio
+	)
+    
+    
+	// Load the symbols before processor starts
+	IF ("&IMAGE"=="adsp")
+	(
+		do std_intercom_do &ADSP_PORT std_loadsyms_adsp NONE noattach &ADSP_SW_start &ADSP_SW_size
+		INTERCOM.WAIT &ADSP_PORT
+		
+
+        
+		INTERCOM.EVALUATE &ADSP_PORT Y.EXIST(sleep_allow_low_power_modes)
+		IF (1!=EVAL())
+		(
+			print %error "Error ocurred during symbol load. Please ensure remote T32 window restared and retry"
+			GOTO FATALEXIT
+	    )
+        
+        	
+	)
+	ELSE
+	(
+		
+		PRINT %error "std_debug_adsp, no image defined, should be adsp"
+		GOTO FATALEXIT
+	)
+
+    
+	RETURN	
+
+SetSleepCommand:
+
+	// Check if sleep is to be enabled or not
+	INTERCOM.EVALUATE &ADSP_PORT Y.EXIST(sleep_allow_low_power_modes)
+	IF (1==EVAL())
+	(
+		IF ("&LPM_OPTION"=="lpm_disable")
+		(
+			&CMD="v sleep_allow_low_power_modes = 0"
+
+		)
+		IF ("&LPM_OPTION"=="lpm_enable")
+		(
+			&CMD="v sleep_allow_low_power_modes = 1"
+		)
+	)
+        ELSE
+        (
+            
+            PRINT %error "Error loading ADSP Symbols. Exiting"
+            GOTO FATALEXIT
+        )
+
+	RETURN
+
+SetupADSPcore:
+
+        
+        INTERCOM.EVALUATE &ADSP_PORT Y.EXIST("&ARG2")    
+        IF (1==EVAL()) //if breakpoint is known, stop at that breakpoint
+        (
+            do std_intercom_do &ADSP_PORT std_utils SetBreakpoints onchip &ARG2
+        )
+        
+		do std_intercom_do &ADSP_PORT std_utils SetBreakpoints onchip main
+        
+		INTERCOM.EXECUTE &ADSP_PORT GO
+
+		wait.2s
+        
+        //INTERCOM.EVALUATE &ADSP_PORT SYSTEM.MODE()
+        //&ADSP_T32_attachstate=EVAL()
+        //IF (0==&ADSP_T32_attachstate)
+        //(
+        //    print %error "Was not able to stop. Check if symbols match"
+        //)
+        
+				
+				
+		// Set the low power mode option
+		INTERCOM.EXECUTE &ADSP_PORT &CMD                
+		IF ("&LPM_OPTION"=="lpm_disable")
+		(
+			//disable clock gating
+			do std_utils HWIO_OUTF LPASS_QDSP6SS_CGC_OVERRIDE CORE_RCLK_EN 0x1
+			do std_utils HWIO_OUTF LPASS_QDSP6SS_CGC_OVERRIDE CORE_CLK_EN 0x1
+		)
+        
+        do std_intercom_do &ADSP_PORT std_utils DeleteBreakpoint main
+        GOSUB Setup_MMU_Livetarget
+
+        wait.1s
+		INTERCOM.WAIT &ADSP_PORT
+
+		IF (1==&Qurt_Breakpoints)
+		(
+			do std_intercom_do &ADSP_PORT std_utils SetBreakpoints Soft QURTK_handle_error QURTK_tlb_crash 
+			do std_intercom_do &ADSP_PORT std_utils SetBreakpoints Soft QURTK_error err_SaveFatal3 err_fatal_handler QURTK_user_fatal_exit 
+			do std_intercom_do &ADSP_PORT std_utils SetBreakpoints Soft err_fatal_lock err_fatal_jettison_core QURTK_handle_nmi
+		)
+
+		//clear debug cookie
+		D.S EA:0xFE80593C %LONG %LE 0x0
+                
+		//if CTI is specified, run it again so that RPM and APPS0 will resume on adsp resuming.
+		IF (1==&CTI_enabled)
+		(
+			do std_cti adsp rpm apps0 apps1 apps2 apps3 apps1 apps2 apps3
+            wait.1s
+            do std_utils InsertTrigPulseOnChannel ADSP 0
+		)
+
+        //need some better logic check as to if breakpoint hit already or not
+        //so that system will stop if breakpoint is before main, but continue if breakpoint is after main        
+        
+        INTERCOM.EVALUATE &ADSP_PORT Y.EXIST("&ARG2")    
+        //IF (1!=EVAL()&&("&ARG2"!="main")&&("&ARG2"!="QURTOS_init")) //if breakpoint is known, don't let ADSP go as user wants system stopped at that location
+        IF (("&ARG2"!="main")&&("&ARG2"!="QURTOS_init")) 
+        (
+            INTERCOM.EXECUTE &ADSP_PORT GO
+        )
+        //Go on RPM
+        GO
+		
+	do std_intercom_do &ADSP_PORT std_loadsyms_sensors
+	INTERCOM.WAIT &ADSP_PORT
+		
+	INTERCOM.EVALUATE &ADSP_PORT Y.EXIST("&ARG2") 
+        IF (1==EVAL())
+	(
+		do std_intercom_do &ADSP_PORT std_utils SetBreakpoints onchip &ARG2
+	)
+	
+    RETURN 	
+    
+        
+Setup_MMU_Livetarget:
+    INTERCOM.EXECUTE &ADSP_PORT mmu.off
+    INTERCOM.EXECUTE &ADSP_PORT mmu.reset
+    INTERCOM.EXECUTE &ADSP_PORT mmu.tlb.scan
+    INTERCOM.EXECUTE &ADSP_PORT mmu.on
+    RETURN
+EXIT:
+	ENDDO
+
+FATALEXIT:
+	END
+
+
+
+	
+

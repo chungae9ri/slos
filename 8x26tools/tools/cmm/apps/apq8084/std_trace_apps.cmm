@@ -1,0 +1,251 @@
+//============================================================================
+//  Name:                                                                     
+//    std_trace_apps.cmm 
+//
+//  Description:                                                              
+//    Trace setup script for Krait0
+//                                                                            
+// Copyright (c) 2012 - 2014 by Qualcomm Technologies, Incorporated.  All Rights Reserved.        
+//
+//
+//
+//
+//                      EDIT HISTORY FOR FILE
+//  This section contains comments describing changes made to the module.
+//  Notice that changes are listed in reverse chronological order.
+//
+// when       who     		what, where, why
+// --------   ---     		---------------------------------------------------------
+// 09/28/2012 jbilling           Created for B-family.
+
+// Following arguments are supported. 
+// ARG0 - "APPS" 
+// ARG1 - Tracing Type . Currently supports TPIU, ETB
+// ARG2 - which Krait (0-3) to debug
+// ARGn - n > 1 - Any other arguments to be passed to the script 
+ENTRY &ARG0 &ARG1 &ARG2 &ARG3 &ARG4 &ARG5
+
+
+
+MAIN:
+
+    print "Checking that app core number (0,1,2,3) was specified"
+;    do std_utils CHECKARGS FATALEXIT &ARG2 0 1 2 3
+    
+;	print "If using CDP, make sure that rotary switch is set to 1 or 2, and that dipswitch S3 1 and 8 are off"
+    
+    do std_utils BREAKPROC
+    GOSUB printhelpwindow    
+
+	IF (("&ARG1"=="TPIU")||("&ARG1"=="tpiu")||("&ARG1"=="SDCARD")||("&ARG1"=="SDcard")||("&ARG1"=="sdcard"))
+	(
+
+
+		if (("&ARG2"=="krait0")||("&ARG2"=="KRAIT0")||("&ARG2"=="0")||("&ARG2"=="Krait0")) 
+		(
+			SYStem.CONFIG ETMBASE DAP:(0x80000000+KRAIT0_ETM_BASE_OFFSET)
+		)
+		if (("&ARG2"=="krait1")||("&ARG2"=="KRAIT1")||("&ARG2"=="1")||("&ARG2"=="Krait1"))
+		(
+			SYStem.CONFIG.ETM1.BASE DAP (0x80000000+KRAIT1_ETM_BASE_OFFSET)		
+		)
+		if (("&ARG2"=="krait2")||("&ARG2"=="KRAIT2")||("&ARG2"=="2")||("&ARG2"=="Krait2"))
+		(
+			SYStem.CONFIG.ET2.BASE DAP (0x80000000+KRAIT2_ETM_BASE_OFFSET)
+		)
+		if (("&ARG2"=="krait3")||("&ARG2"=="KRAIT3")||("&ARG2"=="3")||("&ARG2"=="Krait3"))
+		(
+			SYStem.CONFIG.ET3.BASE DAP (0x80000000+KRAIT3_ETM_BASE_OFFSET)
+		)			
+				
+		SYStem.CONFIG.FUNNEL1.BASE 		DAP:(0x80000000+KRAIT_FUNNEL_BASE_OFFSET)		
+		;SYSTEM.CONFIG.FUNNEL1.ATBSOURCE	 ETM 0 ;ETM 1 ETM 2 ETM 3
+				
+		if (("&ARG2"=="krait0")||("&ARG2"=="KRAIT0")||("&ARG2"=="0")||("&ARG2"=="Krait0")) 
+		(
+			SYSTEM.CONFIG.FUNNEL1.ATBSOURCE	 ETM 0
+		)
+		if (("&ARG2"=="krait1")||("&ARG2"=="KRAIT1")||("&ARG2"=="1")||("&ARG2"=="Krait1"))
+		(
+			SYSTEM.CONFIG.FUNNEL1.ATBSOURCE	 ETM 1
+		)
+		if (("&ARG2"=="krait2")||("&ARG2"=="KRAIT2")||("&ARG2"=="2")||("&ARG2"=="Krait2"))
+		(
+			SYSTEM.CONFIG.FUNNEL1.ATBSOURCE	 ETM 2
+		)
+		if (("&ARG2"=="krait3")||("&ARG2"=="KRAIT3")||("&ARG2"=="3")||("&ARG2"=="Krait3"))
+		(
+			SYSTEM.CONFIG.FUNNEL1.ATBSOURCE	 ETM 3
+		)			
+		
+		
+		SYStem.CONFIG.FUNNEL2.BASE DAP:(0x80000000+QDSS_IN_FUN1_BASE_OFFSET)
+		SYStem.CONFIG.FUNNEL2.ATBSOURCE FUNNEL1 6
+		SYStem.CONFIG.FUNNEL3.BASE DAP:(0x80000000+QDSS_MERG_FUN_BASE_OFFSET)
+		SYStem.CONFIG.FUNNEL3.ATBSOURCE FUNNEL2 1
+
+		SYStem.CONFIG.ETF.BASE DAP:(0x80000000+QDSS_ETB_ETF_BASE_OFFSET)
+		SYStem.CONFIG.ETF.ATBSOURCE FUNNEL3
+		SYStem.CONFIG.TPIU.BASE DAP:(0x80000000+QDSS_TPIU_BASE_OFFSET)
+		SYStem.CONFIG.TPIU.ATBSOURCE ETF
+
+
+
+
+		// Reset ETM
+		ETM.RESET
+        
+	    //set portsize. should be 4 for sdcard
+		IF (("&ARG3"=="4bit")||("&ARG3"=="SDCARD")||("&ARG3"=="SDcard")||("&ARG3"=="sdcard")||("&ARG3"=="sdcc"))       
+		(
+			ETM.PORTSIZE 4.
+			print "Configuring Portsize to 4. THis setting is compliant with Lauterbach SDCC2 Port adapter"
+		)
+		ELSE IF ("&ARG3"=="8bit")  
+		(
+			ETM.PORTSIZE 8.
+			print "Configurtion Portsize to 8"
+		)
+		ELSE IF ("&ARG3"=="16bit") 
+		(
+			ETM.PORTSIZE 16.
+			print "Configurtion Portsize to 16"
+		)
+		ELSE                       
+		(
+			ETM.PORTSIZE 8.
+			print "Configurtion Portsize to 8"
+		)
+		
+		etm.portmode continuous
+		
+		
+        	//set traceID to correct krait processor
+		if (("&ARG2"=="krait0")||("&ARG2"=="KRAIT0")||("&ARG2"=="0")||("&ARG2"=="Krait0")) 
+		(
+			ETM.TRACEID 4
+		)
+		if (("&ARG2"=="krait1")||("&ARG2"=="KRAIT1")||("&ARG2"=="1")||("&ARG2"=="Krait1"))
+		(
+			ETM.TRACEID 4
+		)
+		if (("&ARG2"=="krait2")||("&ARG2"=="KRAIT2")||("&ARG2"=="2")||("&ARG2"=="Krait2"))
+		(
+			ETM.TRACEID 4
+		)
+		if (("&ARG2"=="krait3")||("&ARG2"=="KRAIT3")||("&ARG2"=="3")||("&ARG2"=="Krait3"))
+		(
+			ETM.TRACEID 4
+		)		
+		
+		
+
+        
+
+		etm.timestamps OFF
+		etm.stall OFF
+		etm.on
+		etm.clear
+		
+        
+		trace.method ANALYZER
+		trace.clock 10.MHz
+		trace.init
+        
+		ON ERROR GOSUB autofocusErrorHandler
+		trace.AutoFocus
+		ON ERROR
+		
+		
+		trace.list      
+
+	)
+	ELSE IF (("&ARG1"=="ETB")||("&ARG1"=="etb"))
+	(
+		SYStem.CONFIG ETMBASE DAP:(0x80000000+KRAIT0_ETM_BASE_OFFSET)
+	
+		SYStem.CONFIG.FUNNEL1.BASE DAP:(0x80000000+KRAIT_FUNNEL_BASE_OFFSET)
+		SYStem.CONFIG.FUNNEL1.ATBSOURCE ETM 0
+		SYStem.CONFIG.FUNNEL2.BASE DAP:(0x80000000+QDSS_IN_FUN1_BASE_OFFSET)
+		SYStem.CONFIG.FUNNEL2.ATBSOURCE FUNNEL1 6
+		SYStem.CONFIG.FUNNEL3.BASE DAP:(0x80000000+QDSS_MERG_FUN_BASE_OFFSET)
+		SYStem.CONFIG.FUNNEL3.ATBSOURCE FUNNEL2 1
+		SYStem.CONFIG.ETB.BASE DAP:(0x80000000+QDSS_ETB_ETF_BASE_OFFSET)
+		SYStem.CONFIG.ETB.ATBSOURCE FUNNEL3
+
+
+		etm.reset
+		etm.traceid 4.
+		etm.timestamps OFF
+		etm.stall OFF
+		etm.on
+		etm.clear
+		
+		trace.method OnChip
+		trace.clock 10.MHz
+		trace.init 
+		trace.list
+		
+		
+
+	)
+	ELSE
+	(
+		GOTO FATALEXIT
+	)	
+
+
+
+	GOTO EXIT
+    
+printhelpwindow:
+    WinPOS 2. 3. 165. 15. 0. 0. W0002
+    area
+    area.clear
+    PRINT "  ========8084 ETM - APPS Script=========== "
+
+    IF (("&ARG1"=="TPIU")||("&ARG1"=="tpiu"))
+    (
+        PRINT "  *use TPIU Port B "
+        PRINT "  *Make sure to run the std_trace script ***after*** system has booted up fully to android."
+        PRINT "         otherwise GPIO settings will cause Android to hang"
+        PRINT "  *Make sure to use a recent version of T32. "
+        PRINT "      can be found at \\tex\qdsp6_sw_release\TRACE32\Run\latest"
+        PRINT " "
+    )
+    ELSE
+    (
+        PRINT "  =======Using ETB Configuration==========="
+        PRINT "  *Make sure to use a recent version of T32. "
+        PRINT "      can be found at \\tex\qdsp6_sw_release\TRACE32\Run\latest"
+        PRINT " "
+
+    )
+    return
+ 
+autofocusErrorHandler:
+	area
+	print %error " Autofocus Error indicate that Trace signal lines likely have some physical path problem."
+	print %error " Make sure that TPIU cable is plugged in to port B, that Rotary switch is on Port 2, "
+	print %error " And that TPIU rework has been done for your CDP"
+	print %error " -> 0Ohm resistors on R3236, R3239, R3238, R3241, R3240, R3237"
+	print %error " You should try fixing that problem first before proceeding further"
+	goto FATALEXIT
+    
+
+		    
+print_wrongt32version:
+	area
+	print %error "Syntax error detected. Please update your Trace32 version to latest, "
+	print %error "which can be found here: \\tex\qdsp6_sw_release\TRACE32\Run\latest"
+	print %error " "
+	print %error "exiting..."
+	goto FATALEXIT
+    
+    
+FATALEXIT:
+	END
+
+EXIT:
+	ENDDO
+

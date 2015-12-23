@@ -1,0 +1,80 @@
+;===================================================================================================
+;
+;  Copyright (C) 2009-2010, MDS Technology CO., LTD. All Rights Reserved.
+; INFORMATION IN THIS CMM IS PROVIDED IN CONNECTION WITH MDS TECHNOLOGY INC. 
+; MDS TECHNOLOGY INC. HAS ALL OF RIGHTS ALLOWED LEGALLY. 
+; ANY INTELLECTUAL PROPERTY RIGHTS GRANTED BY THIS CMM IS NOT ALLOWED TO DISCLOSE, TRANSMIT, 
+; REPRODUCTION WITH ELECTRICALLY OR NON-ELECTRICALLY WITHOUT THE PRIOR WRITTEN CONSENT OF 
+; MDS TECHNOLOGY INC. 
+; ALL KIND OF CONDUCT IS PROHIBITED THAT INFRINGEMENT RIGHT OF MDS TECHNOLOGY INC.
+;
+;===================================================================================================
+;  MDS Technology Co. Contact Point  : http://www.trace32.com, TRACE32@mdstec.com  
+;===================================================================================================
+;  Revision History:
+;  Author                	Date D/M/Y       Number    Description of Changes
+;  -------------------------   ------------    ----------  ----------------------------------------
+;  YoNGariA                     16-09-11        v.0.1       Recognize RGB format and resolution.
+;===================================================================================================
+;  Name:
+;       target_view.cmm
+;  Usage:
+;       do target_view.cmm
+;===================================================================================================
+
+;===================================================================================================
+B::
+
+entry &fb_info
+
+local &str_endian &format &x
+
+if "&fb_info"==""
+(
+	&fb_info=v.value(registered_fb[0])
+)
+
+&scr_base=v.value(((struct fb_info *)&fb_info).screen_base)
+
+&r=format.decimal(1.,v.value(((struct fb_info *)&fb_info).var.red.length))
+&g=format.decimal(1.,v.value(((struct fb_info *)&fb_info).var.green.length))
+&b=format.decimal(1.,v.value(((struct fb_info *)&fb_info).var.blue.length))
+
+&transp=v.value(((struct fb_info *)&fb_info).var.transp.length)
+
+&r_offset=v.value(((struct fb_info *)&fb_info).var.red.offset)
+&g_offset=v.value(((struct fb_info *)&fb_info).var.green.offset)
+&b_offset=v.value(((struct fb_info *)&fb_info).var.blue.offset)
+
+&line_length=format.decimal(8.,v.value(((struct fb_info *)&fb_info).fix.line_length))
+&bits_per_pixel=format.decimal(8.,v.value(((struct fb_info *)&fb_info).var.bits_per_pixel))
+;&xres=format.decimal(8.,v.value(((struct fb_info *)&fb_info).var.xres_virtual))
+&xres=format.decimal(8.,v.value(&line_length/&bits_per_pixel*8))
+&yres=format.decimal(8.,v.value(((struct fb_info *)&fb_info).var.yres_virtual))
+
+if ((&r_offset>&g_offset)||(&g_offset>&b_offset))
+(
+	//Little Endian
+	//&str_endian="LE"
+)
+else
+(
+	//Big Endian
+	&str_endian="BE"
+)
+
+if (&transp>0.)
+(
+	&x="X"
+)
+else
+(
+	&x=""
+)
+
+&format="RGB"+"&x"+"&r&g&b"+"&str_endian"
+
+data.image &scr_base &xres. &yres. /&format
+
+ENDDO
+;===================================================================================================

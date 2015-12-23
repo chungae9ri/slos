@@ -1,0 +1,90 @@
+//   Title: std_platinfo
+
+//   License: License
+//   Copyright 2012 Qualcomm Inc
+
+//   Description:
+//   This script collects chip / PMIC version and related platform info
+
+//   Input: None
+
+//   Output: None
+
+//   Usage: do std_platinfo
+
+//   Team: CoreBSP Products 8974
+
+//   Target: MSM8974
+
+//   Author: Author
+//   $Author: coresvc $
+
+//   Location: Perforce Revision
+//   $Header: 
+//
+//   Edits : 		Edits
+//   AJC   : 	Created for B-family			: 01/10/2013
+//
+
+GLOBAL &CHIPSET_NAME &CHIPSET_ID &CHIPSET_REVISION &CHIPSET_SPIN
+
+MAIN:
+	LOCAL &READVAL
+
+	// Can't use std_utils macro here because that requires HWIO.
+	// JTAG_ID should not change across spins, we will have a problem here if that happens 
+	&READVAL=DATA.LONG(EAHB:0xFC4BE0E0)
+
+	// This is the assignment for MSM8974
+	&CHIPSET_ID=(&READVAL&0xFFFF000)>>12.
+	&CHIPSET_SPIN=(&READVAL&0xF0000000)>>28.
+	
+	IF (&CHIPSET_ID==0x07B0)
+	(
+		&CHIPSET_NAME="MSM8974v"
+	)
+	ELSE
+	(
+		&CHIPSET_NAME="UNKNOWNv"
+	)
+
+	// Assign the complete name based on the spin number
+	&SPIN="xx.yy.zz"
+	IF (&CHIPSET_SPIN==0)
+	(
+		&CHIPSET_REVISION="1.0"
+	)
+	IF (&CHIPSET_SPIN==1)
+	(
+		&CHIPSET_REVISION="1.1.1"
+	)
+	IF (&CHIPSET_SPIN==2)
+	(
+		&CHIPSET_REVISION="1.1.2"
+	)
+	IF (&CHIPSET_SPIN==3)
+	(
+		&CHIPSET_REVISION="1.2"
+	)
+	IF (&CHIPSET_SPIN==4)
+	(
+		&CHIPSET_REVISION="2.0"
+	)
+
+	// Now put together the complete name
+	&CHIPSET_NAME="&CHIPSET_NAME"+"&CHIPSET_REVISION"
+
+	GOTO EXIT
+
+//	Function: Exit
+//	Return with return values	
+EXIT:
+	ENDDO 
+
+//	Function: Fatalexit
+//	Return without return values	
+FATALEXIT:
+	END
+
+
+

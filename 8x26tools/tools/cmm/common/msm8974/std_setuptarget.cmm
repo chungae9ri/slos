@@ -1,0 +1,62 @@
+//============================================================================
+//  Name:                                                                     
+//    std_setuptarget.cmm 
+//
+//  Description:                                                              
+//    Target specific script to setup the target to load a build
+//                                                                            
+// Copyright (c) 2012 - 2014 by Qualcomm Technologies, Incorporated.  All Rights Reserved.        
+//
+//
+//
+//
+//                      EDIT HISTORY FOR FILE
+//  This section contains comments describing changes made to the module.
+//  Notice that changes are listed in reverse chronological order.
+//
+// when       who     		what, where, why
+// --------   ---     		---------------------------------------------------------
+// 07/22/2013 AJCheriyan    Changed to new format for chip revs
+// 06/13/2013 AJCheriyan    Updated for Aragorn Pro
+// 08/08/2012 AJCheriyan    Created for B-family 
+//
+
+MAIN:
+	// Whatever we need for MSM8974 is to get apps out of reset
+	// which is pretty much what std_debug does
+	do std_platinfo
+
+	// For Aragorn
+	IF ("&CHIPSET_NAME"=="MSM8974")
+	(
+	
+		IF (&CHIPSET_SPIN<4)
+		(
+			do std_debug_boot appspbl lpm_disable 0xFC0181FC
+		)
+		IF ((&CHIPSET_SPIN>=4)&&(&CHIPSET_SPIN<7))
+		(
+			do std_debug_boot appspbl lpm_disable 0xFC017E5C
+		)
+		IF (&CHIPSET_SPIN>=7)
+		(
+			do std_debug_boot appspbl lpm_disable 0xFC017EE0
+		)
+
+	)
+
+	// For Aragorn Pro
+	IF ("&CHIPSET_NAME"=="MSM8974Pro")
+	(
+		IF (&CHIPSET_SPIN<8)
+		(
+			do std_debug_boot appspbl lpm_disable 0xFC017EE0
+		)
+
+	)
+
+EXIT:
+	ENDDO
+
+
+

@@ -1,0 +1,488 @@
+//============================================================================
+//  Name:                                                                     
+//    std_trace.cmm 
+//
+//  Description:                                                              
+//    Top level tracing script
+//                                                                            
+// Copyright (c) 2012 - 2014 by Qualcomm Technologies, Incorporated.  All Rights Reserved.        
+//
+//
+//
+//
+//                      EDIT HISTORY FOR FILE
+//  This section contains comments describing changes made to the module.
+//  Notice that changes are listed in reverse chronological order.
+//
+// when       who     		what, where, why
+// --------   ---     		---------------------------------------------------------
+// 01/07/2014 JBILLING		Major Logic Update
+// 07/10/2012 AJCheriyan    	Created for B-family.
+
+// Following arguments are supported. 
+// ARG0 - Processor to debug. 
+// ARG1 - Tracing Type . Currently supports TPIU, ETB
+// ARGn - n > 1 - Any other arguments to be passed to the script 
+ENTRY &ARG0 &ARG1 &ARG2 &ARG3 &ARG4 &ARG5 &ARG6 &ARG7 &ARG8 &ARG9
+
+LOCAL &FILENAME &WRITEPTR &READPTR &MODE
+LOCAL &HEAD &TAIL &DATA &ETBSIZE &TPIU_MODE
+LOCAL &Trace_Mode &TraceSource &CycleAccurate_Command &Configuration &PortSize &Lpm_Option &ExtraOption
+
+
+MAIN:
+	GOSUB ParseArguments &ARG0 &ARG1 &ARG2 &ARG3 &ARG4 &ARG5 &ARG6 &ARG7 &ARG8 &ARG9
+		entry &Trace_Mode &TraceSource &CycleAccurate_Command &Configuration &PortSize &Lpm_Option &ExtraOption
+	
+	IF ("&Configuration"!="ONLYGPIOS")
+	(
+		GOSUB printhelpwindow
+	)
+
+    IF (("&ARG1"=="ETM")||("&ARG1"=="etm"))
+    (
+        print %error "ETM is ambiguous. Please specify ETB (onchip) TPIU (requires dongle) or SDCARD (requires dongle)"
+        GOTO FATALEXIT
+    )
+    
+    
+
+	//only set up GPIO's before setting up trace if in hottattach mode or if
+	//only setting up GPIO's. Otherwise punt to lower script.
+	IF (("&Configuration"=="HOTATTACH")||("&Configuration"=="ONLYGPIOS"))
+	(
+			//attach and halt if not already done so
+			do std_utils ATTACHPROC dontgo
+			
+			// We always need HWIO    
+			IF !y.exist(HWIO_QDSS_CTI0_CTICONTROL_ADDR)
+			(
+				do hwio
+			)
+			
+			
+			//To be fixed.
+			//Increase QDSS Clock speed for all cases
+				
+			;d.s ea:0xfc400384 %LE %LONG 0x103
+			; F=86MHz
+			;d.s ea:0xfc400380 %LE %LONG 0x1
+
+			; INTERNAL QDSS SPEED
+			;CLK_CTL_QDSS_AT_CFG_RCGR 
+			;d.s ea:0xFC400344 %LE %LONG 0x102
+			;CLK_CTL_QDSS_AT_CMD_RCGR
+			;d.s ea:0xFC400340 %LE %LONG 0x1
+			
+
+			
+			// For ETM tracing over TPIU, we need to configure the TLMM and this needs to happen just once
+			IF (("&Trace_Mode"=="TPIU_A")||("&Trace_Mode"=="TPIU_B"))
+			(
+				
+				y.create.l TLMM_ETM_MODE           0xFD512014
+				y.create.l TLMM_SDC2_HDRV_PULL_CTL 0xFD512048
+				y.create.done
+
+				d.s eahb:TLMM_ETM_MODE %L 0x00000001
+				d.s eahb:TLMM_SDC2_HDRV_PULL_CTL %L 0x0000016D
+				
+				if "&Trace_Mode"=="TPIU_A"
+				(
+						do std_utils HWIO_OUTI TLMM_GPIO_CFG 4.   0x1D0 ;D1
+						do std_utils HWIO_OUTI TLMM_GPIO_CFG 5.   0x1D0 ;D0
+						
+						do std_utils HWIO_OUTI TLMM_GPIO_CFG 6.   0x1D0 ;CTL
+						do std_utils HWIO_OUTI TLMM_GPIO_CFG 7.   0x1D0 ;CLK
+						do std_utils HWIO_OUTI TLMM_GPIO_CFG 48.  0x1D4 ;D4
+						do std_utils HWIO_OUTI TLMM_GPIO_CFG 49.  0x1D0 ;D3
+						
+						do std_utils HWIO_OUTI TLMM_GPIO_CFG 50.  0x1D0 ;D2
+						do std_utils HWIO_OUTI TLMM_GPIO_CFG 51.  0x1D4 ;D12
+						do std_utils HWIO_OUTI TLMM_GPIO_CFG 52.  0x1D4 ;D13
+						do std_utils HWIO_OUTI TLMM_GPIO_CFG 53.  0x1D0 ;D8
+						
+						//IF "&PortSize"=="16BIT"
+						//(
+						do std_utils HWIO_OUTI TLMM_GPIO_CFG 54.  0x1D0 ;D9
+						do std_utils HWIO_OUTI TLMM_GPIO_CFG 55.  0x1D0 ;D5
+						do std_utils HWIO_OUTI TLMM_GPIO_CFG 56.  0x1D0 ;D6
+						do std_utils HWIO_OUTI TLMM_GPIO_CFG 57.  0x1D0 ;D7
+						
+						do std_utils HWIO_OUTI TLMM_GPIO_CFG 63.  0x1D0 ;D14
+						do std_utils HWIO_OUTI TLMM_GPIO_CFG 64.  0x1D4 ;D15
+						do std_utils HWIO_OUTI TLMM_GPIO_CFG 75.  0x1C8 ;D10
+						do std_utils HWIO_OUTI TLMM_GPIO_CFG 122. 0x1C4 ;D11
+						//)
+				)
+				ELSE if "&Trace_Mode"=="TPIU_B"
+				(
+						do std_utils HWIO_OUTI TLMM_GPIO_CFG 10.  0x1D0 ;D14
+						do std_utils HWIO_OUTI TLMM_GPIO_CFG 11.  0x1D0 ;D15
+						
+						do std_utils HWIO_OUTI TLMM_GPIO_CFG 29.  0x1D4 ;CTL
+						do std_utils HWIO_OUTI TLMM_GPIO_CFG 30.  0x1D0 ;CLK
+						do std_utils HWIO_OUTI TLMM_GPIO_CFG 39.  0x1D0 ;D12
+						do std_utils HWIO_OUTI TLMM_GPIO_CFG 40.  0x1D0 ;D11
+						
+						do std_utils HWIO_OUTI TLMM_GPIO_CFG 43.  0x1D0 ;D0
+						do std_utils HWIO_OUTI TLMM_GPIO_CFG 44.  0x1D0 ;D1
+						do std_utils HWIO_OUTI TLMM_GPIO_CFG 45.  0x1D0 ;D2
+						do std_utils HWIO_OUTI TLMM_GPIO_CFG 46.  0x1D0 ;D3
+						
+						//IF "&PortSize"=="16BIT"
+						//(
+						do std_utils HWIO_OUTI TLMM_GPIO_CFG 67.  0x1CC ;D4
+						do std_utils HWIO_OUTI TLMM_GPIO_CFG 68.  0x1CC ;D5
+						do std_utils HWIO_OUTI TLMM_GPIO_CFG 69.  0x1C8 ;D6
+						do std_utils HWIO_OUTI TLMM_GPIO_CFG 70.  0x1D0 ;D7
+						
+						do std_utils HWIO_OUTI TLMM_GPIO_CFG 71.  0x1CC ;D8
+						do std_utils HWIO_OUTI TLMM_GPIO_CFG 72.  0x1CC ;D9
+						do std_utils HWIO_OUTI TLMM_GPIO_CFG 102. 0x1C8 ;D13
+						do std_utils HWIO_OUTI TLMM_GPIO_CFG 121. 0x1C4 ;D10
+						//)
+				)
+
+				//Exit if only GPIO configuration setup specified
+				IF ( "&Configuration"=="ONLYGPIOS")
+				(
+					GOTO EXIT
+				)
+				
+			)
+    )
+	
+	//Setup for SDCARD Tracing
+	IF ("&Trace_Mode"=="SDCARD")
+	(
+        y.create.l TLMM_ETM_MODE           0xFD512014
+        y.create.l TLMM_SDC2_HDRV_PULL_CTL 0xFD512048
+        y.create.done
+
+        d.s eahb:TLMM_ETM_MODE %L 0x00000001
+        d.s eahb:TLMM_SDC2_HDRV_PULL_CTL %L 0x0000016D
+        
+    )
+
+	IF (("&Trace_Mode"=="ETB")||("&Trace_Mode"=="etb"))
+	(
+		//no general configurations for ETB
+	)
+	
+	
+	GOTO HANDLEPROC
+	
+	IF ("&Configuration"=="SAVEETB")
+	(
+	
+		GOSUB SAVEETB
+	)
+	
+
+	GOTO EXIT
+
+
+
+HANDLEPROC: 
+		// Now punt the arguments off to the lower level / image specific script
+		IF ("&TraceSource"=="RPM")
+		(
+			do std_trace ONLYGPIOS
+			RUN std_trace_rpm &ARG0 &ARG1 &ARG2 &ARG3 &ARG4 &ARG5
+			GOTO EXIT
+
+		)
+		IF ("&TraceSource"=="APPS")
+		(
+			RUN std_trace_apps &ARG0 &ARG1 &ARG2 &ARG3 &ARG4 &ARG5
+			GOTO EXIT
+		)
+		IF ("&TraceSource"=="MPSS")
+		(
+			// no MPSS on 8092
+			PRINT  %error "No MPSS on 8092. Exiting"
+			GOTO EXIT
+		)
+		IF ("&TraceSource"=="ADSP")
+		(
+			//&Lpm_Option="lpm_disable"
+			//&Trace_Mode="ETB"
+			//&CycleAccurate_Command="nocycleaccurate"
+			
+			do std_debug adsp &Lpm_Option nobreak &ExtraOption qurtbp &Trace_Mode &CycleAccurate_Command
+			
+			GOTO EXIT
+		)
+		IF ("&TraceSource"=="WCNSS")
+		(
+			// no WCNSS on 8092
+			PRINT  %error "No WCNSS on 8092. Exiting"
+			GOTO EXIT
+		)
+		IF ("&TraceSource"=="VENUS")
+		(
+			print %error "VSS tracing not yet functional on 8092. Exiting"
+			GOTO EXIT
+		)
+		IF ("&TraceSource"=="MAPLE")
+		(
+			print %error "VPU tracing not yet functional on 8092. Exiting"
+			GOTO EXIT
+		)
+
+
+
+RETURN
+//HANDLEPROC
+
+
+
+printhelpwindow:
+    WinPOS 2. 3. 165. 15. 0. 0. W0002
+    area
+    area.clear
+    PRINT "                               ========8084 ETM Script=========== "
+
+        IF (("&ARG1"=="TPIU")||("&ARG1"=="tpiu"))
+    (
+        PRINT "                *use TPIU Port B "
+        PRINT "                *Make sure to run the std_trace script ***after*** system has booted up fully to android."
+        PRINT "                        otherwise GPIO settings will cause Android to hang"
+    )
+    return
+	
+	
+ParseArguments:
+	entry &loc_ARG0 &loc_ARG1 &loc_ARG2 &loc_ARG3 &loc_ARG4 &loc_ARG5
+	
+	local &loc_ARG0 &loc_ARG1 &loc_ARG2 &loc_ARG3 &loc_ARG4 &loc_ARG5
+	local &Loc_Trace_Mode &Loc_Configuration &Loc_PortSize
+
+	&Loc_Trace_Mode="ETB"
+	&Loc_TraceSource="RPM"
+	&Loc_CycleAccurate_Command="NONE"
+	&Loc_Configuration="FROMCOLDBOOT"
+	&Loc_PortSize="16BIT"
+	&Loc_Lpm_Option="lpm_disable"
+	&Loc_ExtraOption="NONE"
+	
+	
+	&Loc_ARG0=string.upr("&loc_ARG0")
+	&Loc_ARG1=string.upr("&loc_ARG1")
+	&Loc_ARG2=string.upr("&loc_ARG2")
+	&Loc_ARG3=string.upr("&loc_ARG3")
+	&Loc_ARG4=string.upr("&loc_ARG4")
+	&Loc_ARG5=string.upr("&loc_ARG5")
+	
+	//do std_utils CHECKARGS FATALEXIT &Loc_ARG1 "ADSP"
+	
+	//args 0,1,2 are all set (need to be adsp, lpm option, breakpoint).
+	//check options after that.
+	
+	//Specify ETM mode (ETB, TPIU_A, TPIU_B, SDcard)
+	IF (("&Loc_ARG0"=="ETB")||("&Loc_ARG1"=="ETB")||("&Loc_ARG2"=="ETB")||("&Loc_ARG3"=="ETB")||("&Loc_ARG4"=="ETB")||("&Loc_ARG5"=="ETB"))
+	(
+		&Loc_Trace_Mode="ETB"
+	)
+	IF (("&Loc_ARG0"=="TPIU")||("&Loc_ARG1"=="TPIU")||("&Loc_ARG2"=="TPIU")||("&Loc_ARG3"=="TPIU")||("&Loc_ARG4"=="TPIU")||("&Loc_ARG5"=="TPIU"))
+	(
+		&Loc_Trace_Mode_Argument="TPIU" //used to pass to subsystem
+		&Loc_Trace_Mode="TPIU_A" //default to use TPIU_A
+	)
+	IF (("&Loc_ARG0"=="TPIUA")||("&Loc_ARG1"=="TPIUA")||("&Loc_ARG2"=="TPIUA")||("&Loc_ARG3"=="TPIUA")||("&Loc_ARG4"=="TPIUA")||("&Loc_ARG5"=="TPIUA")||("&Loc_ARG0"=="TPIU_A")||("&Loc_ARG1"=="TPIU_A")||("&Loc_ARG2"=="TPIU_A")||("&Loc_ARG3"=="TPIU_A")||("&Loc_ARG4"=="TPIU_A")||("&Loc_ARG5"=="TPIU_A"))
+	(
+		&Loc_Trace_Mode_Argument="TPIU" //used to pass to subsystem
+		&Loc_Trace_Mode="TPIU_A" //default to use TPIU_A
+	)
+	IF (("&Loc_ARG0"=="TPIUB")||("&Loc_ARG1"=="TPIUB")||("&Loc_ARG2"=="TPIUB")||("&Loc_ARG3"=="TPIUB")||("&Loc_ARG4"=="TPIUB")||("&Loc_ARG5"=="TPIUB")||("&Loc_ARG0"=="TPIU_B")||("&Loc_ARG1"=="TPIU_B")||("&Loc_ARG2"=="TPIU_B")||("&Loc_ARG3"=="TPIU_B")||("&Loc_ARG4"=="TPIU_B")||("&Loc_ARG5"=="TPIU_B"))
+	(
+		&Loc_Trace_Mode_Argument="TPIU" //used to pass to subsystem
+		&Loc_Trace_Mode="TPIU_B"
+	)
+	
+	
+	IF (("&Loc_ARG0"=="SDCARD")||("&Loc_ARG1"=="SDCARD")||("&Loc_ARG2"=="SDCARD")||("&Loc_ARG3"=="SDCARD")||("&Loc_ARG4"=="SDCARD")||("&Loc_ARG5"=="SDCARD"))
+	(
+		&Loc_Trace_Mode="SDCARD"
+		&PortSize="4BIT"
+	)
+
+	
+	//Specify Usecase Configuration
+	IF (("&Loc_ARG0"=="ONLYGPIOS")||("&Loc_ARG1"=="ONLYGPIOS")||("&Loc_ARG2"=="ONLYGPIOS")||("&Loc_ARG3"=="ONLYGPIOS")||("&Loc_ARG4"=="ONLYGPIOS")||("&Loc_ARG5"=="ONLYGPIOS"))
+	(
+		&Loc_Configuration="ONLYGPIOS"
+		IF ("&Loc_Trace_Mode"=="ETB")
+		(
+			&Loc_Trace_Mode="TPIU_A"
+		)
+	)
+	//Specify Usecase Configuration
+	IF (("&Loc_ARG1"=="SAVEETB")||("&Loc_ARG2"=="SAVEETB")||("&Loc_ARG3"=="SAVEETB")||("&Loc_ARG4"=="SAVEETB")||("&Loc_ARG5"=="SAVEETB"))
+	(
+		&Loc_Configuration="SAVEETB"
+	)
+
+	
+	
+	//Configure ETM Portsize
+	IF (("&Loc_ARG0"=="4BIT")||("&Loc_ARG1"=="4BIT")||("&Loc_ARG2"=="4BIT")||("&Loc_ARG3"=="4BIT")||("&Loc_ARG4"=="4BIT")||("&Loc_ARG5"=="4BIT"))
+	(
+		IF ((Loc_Trace_Mode"=="ETB"))
+		(
+			PRINT %error "Configuration error: portsize can't be specified with ETB trace mode"
+		)
+		&Loc_PortSize="4BIT"
+	)
+	IF (("&Loc_ARG0"=="8BIT")||("&Loc_ARG1"=="8BIT")||("&Loc_ARG2"=="8BIT")||("&Loc_ARG3"=="8BIT")||("&Loc_ARG4"=="8BIT")||("&Loc_ARG5"=="8BIT"))
+	(
+		IF ((Loc_Trace_Mode"=="ETB"))
+		(
+			PRINT %error "Configuration error: portsize can't be specified with ETB trace mode"
+		)
+		&Loc_PortSize="8BIT"
+	)
+	IF (("&Loc_ARG0"=="16BIT")||("&Loc_ARG1"=="16BIT")||("&Loc_ARG2"=="16BIT")||("&Loc_ARG3"=="16BIT")||("&Loc_ARG4"=="16BIT")||("&Loc_ARG5"=="16BIT"))
+	(
+		IF ((Loc_Trace_Mode"=="ETB"))
+		(
+			PRINT %error "Configuration error: portsize can't be specified with ETB trace mode"
+		)
+		&Loc_PortSize="16BIT"
+	)
+	
+	
+	//Specify which core to trace
+	IF (("&Loc_ARG0"=="RPM")||("&Loc_ARG1"=="RPM")||("&Loc_ARG2"=="RPM")||("&Loc_ARG3"=="RPM")||("&Loc_ARG4"=="RPM")||("&Loc_ARG5"=="RPM"))
+	(
+		&Loc_TraceSource="RPM"
+	)
+	IF (("&Loc_ARG0"=="APPS")||("&Loc_ARG1"=="APPS")||("&Loc_ARG2"=="APPS")||("&Loc_ARG3"=="APPS")||("&Loc_ARG4"=="APPS")||("&Loc_ARG5"=="APPS"))
+	(
+		&Loc_TraceSource="APPS"
+	)
+	IF (("&Loc_ARG0"=="MPSS")||("&Loc_ARG1"=="MPSS")||("&Loc_ARG2"=="MPSS")||("&Loc_ARG3"=="MPSS")||("&Loc_ARG4"=="MPSS")||("&Loc_ARG5"=="MPSS"))
+	(
+		&Loc_TraceSource="MPSS"
+	)
+	IF (("&Loc_ARG0"=="ADSP")||("&Loc_ARG1"=="ADSP")||("&Loc_ARG2"=="ADSP")||("&Loc_ARG3"=="ADSP")||("&Loc_ARG4"=="ADSP")||("&Loc_ARG5"=="ADSP"))
+	(
+		&Loc_TraceSource="ADSP"
+	)
+	IF (("&Loc_ARG0"=="WCNSS")||("&Loc_ARG1"=="WCNSS")||("&Loc_ARG2"=="WCNSS")||("&Loc_ARG3"=="WCNSS")||("&Loc_ARG4"=="WCNSS")||("&Loc_ARG5"=="WCNSS")||("&Loc_ARG0"=="PRONTO")||("&Loc_ARG1"=="PRONTO")||("&Loc_ARG2"=="PRONTO")||("&Loc_ARG3"=="PRONTO")||("&Loc_ARG4"=="PRONTO")||("&Loc_ARG5"=="PRONTO"))
+	(
+		&Loc_TraceSource="WCNSS"
+	)
+	IF (("&Loc_ARG0"=="MAPLE")||("&Loc_ARG1"=="MAPLE")||("&Loc_ARG2"=="MAPLE")||("&Loc_ARG3"=="MAPLE")||("&Loc_ARG4"=="MAPLE")||("&Loc_ARG5"=="MAPLE")||("&Loc_ARG0"=="VPU")||("&Loc_ARG1"=="VPU")||("&Loc_ARG2"=="VPU")||("&Loc_ARG3"=="VPU")||("&Loc_ARG4"=="VPU")||("&Loc_ARG5"=="VPU"))
+	(
+		&Loc_TraceSource="MAPLE"
+	)
+	IF (("&Loc_ARG0"=="VENUS")||("&Loc_ARG1"=="VENUS")||("&Loc_ARG2"=="VENUS")||("&Loc_ARG3"=="VENUS")||("&Loc_ARG4"=="VENUS")||("&Loc_ARG5"=="VENUS")||("&Loc_ARG0"=="VSS")||("&Loc_ARG1"=="VSS")||("&Loc_ARG2"=="VSS")||("&Loc_ARG3"=="VSS")||("&Loc_ARG4"=="VSS")||("&Loc_ARG5"=="VSS"))
+	(
+		&Loc_TraceSource="VENUS"
+	)
+	
+	//Specify CycleAccurate Mode (Takes up more data bandwidth, but very accurate timestamps)
+	IF (("&Loc_ARG1"=="CYCLEACCURATE")||("&Loc_ARG2"=="CYCLEACCURATE")||("&Loc_ARG3"=="CYCLEACCURATE")||("&Loc_ARG4"=="CYCLEACCURATE")||("&Loc_ARG5"=="CYCLEACCURATE"))
+	(
+		&Loc_CycleAccurate_Command="CYCLEACCURATE"
+	)
+
+    
+	//additional options
+	IF (("&Loc_ARG0"=="NOWARMBOOTBREAKPOINT")||("&Loc_ARG1"=="NOWARMBOOTBREAKPOINT")||("&Loc_ARG2"=="NOWARMBOOTBREAKPOINT")||("&Loc_ARG3"=="NOWARMBOOTBREAKPOINT")||("&Loc_ARG4"=="NOWARMBOOTBREAKPOINT")||("&Loc_ARG5"=="NOWARMBOOTBREAKPOINT"))
+	(
+		&Loc_ExtraOption="NoWarmbootBreakpoint"
+	)
+	IF (("&Loc_ARG0"=="LPM_ENABLE")||("&Loc_ARG1"=="LPM_ENABLE")||("&Loc_ARG2"=="LPM_ENABLE")||("&Loc_ARG3"=="LPM_ENABLE")||("&Loc_ARG4"=="LPM_ENABLE")||("&Loc_ARG5"=="LPM_ENABLE"))
+	(
+		&Loc_Lpm_Option="lpm_enable"
+	)
+
+	RETURN	&Loc_Trace_Mode &Loc_TraceSource &Loc_CycleAccurate_Command &Loc_Configuration &Loc_PortSize &Loc_Lpm_Option &Loc_ExtraOption
+	
+	
+	
+	
+	
+	
+	
+SAVEETB:
+		// There is nothing image specific here
+		IF ("&ARG2"=="")
+		(
+			PRINT %ERROR "Invalid arguments. Provide path to save ETB"
+		 	GOTO FATALEXIT
+		)
+		
+		&FILENAME="&ARG2/"+"ETBDump.bin"
+		// Find the size of the ETB buffer
+		do std_utils HWIO_IN QDSS_ETFETB_RSZ
+		ENTRY &SIZE
+		// Access ETB by unlocking it
+		do std_utils HWIO_OUT QDSS_ETFETB_LAR 0xC5ACCE55
+		// Flush the system
+		do std_utils HWIO_OUTF QDSS_ETFETB_FFCR FLUSHMAN_W 0x1
+		// Disable ETB
+		do std_utils HWIO_OUT QDSS_ETFETB_CTL 0x0
+		// Not sure if we need to save other ETB regs here
+		// Right now, save mode and write PTR
+		// Set it to circular mode
+		do std_utils HWIO_IN QDSS_ETFETB_MODE
+		ENTRY &MODE
+		do std_utils HWIO_IN QDSS_ETFETB_RRP
+		ENTRY &READPTR
+		do std_utils HWIO_IN QDSS_ETFETB_RWP
+		ENTRY &WRITEPTR
+		// Check if the ETB has overflowed using the status bit
+		do std_utils HWIO_INF QDSS_ETFETB_STS FULL
+		ENTRY &FULL
+		// Set the head to start from top
+		&HEAD=0x0
+		IF (&FULL==0x1)
+		(
+			&TAIL=&SIZE
+		)
+		ELSE
+		(
+			&TAIL=&WRITEPTR
+		)
+
+		// Set the read pointer to the head
+		do std_utils HWIO_OUT QDSS_ETFETB_RRP &HEAD
+
+		// Loop until it reaches the write pointer
+		WHILE (&HEAD!=&TAIL)
+		(
+			// Read the data
+			do std_utils HWIO_IN QDSS_ETFETB_RRD
+			ENTRY &DATA
+			DATA.SET VM:(&HEAD) %LONG &DATA
+			&HEAD=&HEAD+0x4
+		)
+		// Check to make sure there is something in the buffer
+		IF (&TAIL!=0x0)
+		(
+			D.SAVE.BINARY &FILENAME (VM:0x0--(&TAIL))
+		)
+		ELSE
+		(
+			PRINT "No binary to write"
+		)
+		// Restore the read pointer 
+		do std_utils HWIO_OUT QDSS_ETFETB_RRP &READPTR
+		// Lock ETB now
+		do std_utils HWIO_OUT QDSS_ETFETB_LAR 0xF00DD00D
+	
+	
+	// Done. Exit	
+	GOTO EXIT
+	
+	
+
+EXIT:
+	ENDDO
+
+FATALEXIT:
+	END

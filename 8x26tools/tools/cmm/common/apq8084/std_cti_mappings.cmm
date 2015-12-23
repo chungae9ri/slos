@@ -1,0 +1,60 @@
+//============================================================================
+//  Name:                                                                     
+//    std_cti_APQ8084.cmm
+//
+//  Description:                                                              
+//    Script for CTI configurations specific to target
+//
+//  Usage
+//  do std_cti_mappings &corename
+//
+//  Options:    GPIO
+//
+//  e.g. do std_cti MPSS KRAIT0 KRAIT1 KRAIT2 KRAIT3 RPM
+//          This will cause MPSS to be a 'master' over KRAIT processors and over RPM. 
+//          Thus, whenever MPSS stops, Kraits and RPM will stop. Whenever MPSS goes, Kraits and RPM will go.
+//          Note - if Kraits and RPM were halted by a CTI trigger, you must run the script again for them to go.
+//     
+
+//
+// Copyright (c) 2012 - 2014 by Qualcomm Technologies, Incorporated.  All Rights Reserved.        
+//
+//
+//
+//                      EDIT HISTORY FOR FILE
+//  This section contains comments describing changes made to the module.
+//  Notice that changes are listed in reverse chronological order.
+//
+// when         who     	what, where, why
+// --------     ---        --------------------------------------------------------
+// 10/29/2013   JBILLING   Created
+
+MAIN:
+entry &CTI_Functionality
+
+	//This is configuration for 8084
+	IF ("&CTI_Functionality"=="GPIO")
+	(
+		
+		//GPIO settings
+		&TLMM_GPIO_number=66
+		&TLMM_GPIO_setting=0x14
+		&Trigout_for_GPIO=0x2
+		//GPIO's on 8084 use CTI6
+		&CTI_Block="QDSS_CTI6"
+		//if (!y.exist(HWIO_TLMM_GPIO_CFG1_ADDR))
+		//(
+		//	do hwio.cmm
+		//)
+		d.set eaxi:0xfd5113f0 %long %le 0x00000014
+		//do std_utils HWIO_OUTI TLMM_GPIO_CFG  &TLMM_GPIO_number  &TLMM_GPIO_setting
+		
+		
+		
+		enddo &CTI_Block &Trigout_for_GPIO
+	)
+	
+	
+enddo
+
+	

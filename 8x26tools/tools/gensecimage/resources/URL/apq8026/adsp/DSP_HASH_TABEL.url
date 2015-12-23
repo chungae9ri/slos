@@ -1,0 +1,9 @@
+[DEFAULT]
+BASEURL=https://csms.qti.qualcomm.com/csms/processCSWizard.do?action=setSoftware&source=entry&target=entry&softwareName=DSP_HASH_TABLE&hardwareId=2862&softwareId=4187%3A0000000000000004&debugBitMask=0000000000000002&oemId=31&productId=0000&appId=&ou9=0&subCA=QC&cryptoEngine=07+0001+SHA256
+[InternetShortcut]
+URL=https://csms.qti.qualcomm.com/csms/processCSWizard.do?action=setSoftware&source=entry&target=entry&softwareName=DSP_HASH_TABLE&hardwareId=2862&softwareId=4187%3A0000000000000004&debugBitMask=0000000000000002&oemId=31&productId=0000&appId=&ou9=0&subCA=QC&cryptoEngine=07+0001+SHA256
+IDList=
+IconFile=https://csms.qti.qualcomm.com/favicon.ico
+IconIndex=1
+[{000214A0-0000-0000-C000-000000000046}]
+Prop3=19,11

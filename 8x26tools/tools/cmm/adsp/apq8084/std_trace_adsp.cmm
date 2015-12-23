@@ -1,0 +1,312 @@
+//============================================================================
+//  Name:                                                                     
+//    std_trace_adsp.cmm 
+//
+//  Description:                                                              
+//    Trace setup script for ADSP
+//                                                                            
+// Copyright (c) 2012 - 2014 by Qualcomm Technologies, Incorporated.  All Rights Reserved.        
+//
+//
+//
+//
+//                      EDIT HISTORY FOR FILE
+//  This section contains comments describing changes made to the module.
+//  Notice that changes are listed in reverse chronological order.
+//
+// when       who     		what, where, why
+// --------   ---     		---------------------------------------------------------
+// 01/07/2014 jbilling		Major Logic Update
+// 09/28/2012 jbilling           Created for B-family.
+
+// Following arguments are supported. 
+// ARG0 - Processor to debug. 
+// ARG1 - Tracing Type . Currently supports TPIU 
+// ARGn - n > 1 - Any other arguments to be passed to the script 
+ENTRY &ARG0 &ARG1 &ARG2 &ARG3 &ARG4 &ARG5
+LOCAL &Trace_Mode &CycleAccurate_Mode &Configuration &PortSize
+
+MAIN:
+
+	GOSUB ParseArguments &ARG0 &ARG1 &ARG2 &ARG3 &ARG4 &ARG5
+		entry &Trace_Mode &CycleAccurate_Mode &Configuration &PortSize
+		//Configurations can come in: NOGPIOS, FROMCOLDBOOT, AFTERGPIOS, HOTATTACH
+		
+		
+	IF ("&Configuration"=="HOTATTACH")
+	(
+		do std_utils BREAKPROC
+	)
+
+    IF ((STATE.RUN())&&(SYSTEM.MODE()>6))
+    (
+        PRINT "Could not attach/break ADSP Processor. Exiting"
+        GOTO FATALEXIT
+
+    ) 
+
+    trans.off
+    GOSUB printhelpwindow
+    
+    IF !y.exist(HWIO_QDSS_CTI0_CTICONTROL_ADDR)
+    (
+        do hwio 
+    )
+        
+    
+	IF (("&Trace_Mode"=="TPIU")||("&Trace_Mode"=="SDCARD"))
+	(
+	
+		IF ("&Configuration"!="AFTERGPIOS")
+		(
+	;		ON ERROR GOTO print_wrongt32version
+				SYStem.CONFIG.FUNNEL1.BASE DAP:(0x80000000+QDSS_IN_FUN0_BASE_OFFSET)
+				SYStem.CONFIG.FUNNEL1.ATBSOURCE ETM 2
+				SYStem.CONFIG.FUNNEL2.BASE DAP:(0x80000000+QDSS_MERG_FUN_BASE_OFFSET)
+				SYStem.CONFIG.FUNNEL2.ATBSOURCE FUNNEL1 0
+
+				SYStem.CONFIG.ETF.BASE DAP:(0x80000000+QDSS_ETB_ETF_BASE_OFFSET)
+				SYStem.CONFIG.ETF.ATBSOURCE FUNNEL2
+				SYStem.CONFIG.TPIU.BASE DAP:(0x80000000+QDSS_TPIU_BASE_OFFSET)
+				SYStem.CONFIG.TPIU.ATBSOURCE ETF
+	;		ON ERROR
+
+			//Reset ETM
+			etm.reset
+			
+			//set portsize. 
+			ETM.PORTSIZE &PortSize
+			ETM.PORTMODE CONTINUOUS
+		)
+
+		//This section isn't run if NOGPIOS is specified.
+		//	Usecase assumed that GPIOs are not yet set up for TPIU
+		//	and that tracing will be enabled once system is up and running
+		IF ("&Configuration"=="NOGPIOS")
+		(
+			GOTO EXIT
+		)
+		
+		
+
+		//default is off unless specified
+		etm.cycleaccurate &CycleAccurate_Mode
+		
+		
+		etm.traceid 4
+		ETM.stall OFF
+		ETM.ON
+		ETM.CLEAR
+
+		TRACE.METHOD ANALYZER
+		TRACE.CLOCK 400.MHz
+		TRACE.INIT
+		
+
+		ON ERROR GOSUB autofocusErrorHandler
+			TRACE.AUTOFOCUS
+		ON ERROR
+				
+		TRACE.LIST
+	
+	)
+	ELSE IF ("&Trace_Mode"=="ETB")
+	(
+
+		ON ERROR GOTO print_wrongt32version
+		SYStem.CONFIG.FUNNEL1.BASE DAP:(0x80000000+QDSS_IN_FUN0_BASE_OFFSET)
+		SYStem.CONFIG.FUNNEL1.ATBSOURCE ETM 2
+		SYStem.CONFIG.FUNNEL2.BASE DAP:(0x80000000+QDSS_MERG_FUN_BASE_OFFSET)
+		SYStem.CONFIG.FUNNEL2.ATBSOURCE FUNNEL1 0
+		
+		SYStem.CONFIG.ETB.BASE DAP:(0x80000000+QDSS_ETB_ETF_BASE_OFFSET)
+		SYStem.CONFIG.ETB.ATBSOURCE FUNNEL2
+		ON ERROR
+
+		//default is off unless specified
+		etm.cycleaccurate &CycleAccurate_Mode
+		
+		etm.traceid 4.
+		etm.stall OFF
+		etm.on
+		etm.clear
+
+		trace.method OnChip
+		trace.clock 10.MHz
+		trace.init 
+		trace.list
+
+
+	)
+    
+	IF ("&Configuration"=="HOTATTACH")
+    (
+        GOSUB SetupMmuManually
+        go   
+    
+    )   
+
+
+	GOTO EXIT
+
+
+FATALEXIT:
+	END
+
+EXIT:
+	ENDDO
+
+printhelpwindow:
+    WinPOS 2. 3. 165. 15. 0. 0. W0002
+    area
+    area.clear
+    PRINT "  ========8084 ETM - ADSP Script=========== "
+
+    IF (("&ARG1"=="TPIU")||("&ARG1"=="tpiu"))
+    (
+        PRINT "  *use TPIU Port B "
+        PRINT "  *Make sure to run the std_trace script ***after*** system has booted up fully to android."
+        PRINT "         otherwise GPIO settings will cause Android to hang"
+        PRINT "  *Make sure to use a recent version of T32. "
+        PRINT "      can be found at \\tex\qdsp6_sw_release\TRACE32\Run\latest"
+        PRINT " "
+        PRINT "  *T32 will attempt to attach and halt the Q6. You may need to do something "
+        PRINT "     externally to make the processor wakeup (e.g. plug in usb, run a diag command etc."
+        PRINT "     However - certain behaviors are time-sensitive and the jtag's interference may cause a crash"
+    )
+    ELSE
+    (
+        PRINT "  =======Using ETB Configuration==========="
+        PRINT "  *Make sure to use a recent version of T32. "
+        PRINT "      can be found at \\tex\qdsp6_sw_release\TRACE32\Run\latest"
+        PRINT " "
+        PRINT "  *T32 will attempt to attach and halt the Q6. You may need to do something "
+        PRINT "     externally to make the processor wakeup (e.g. plug in usb, run a diag command etc."
+        PRINT "     However - certain behaviors are time-sensitive and the jtag's interference may cause a crash"
+        PRINT "     Behaviors found to be useful: run a diag command."
+
+    )
+    return
+    
+    
+autofocusErrorHandler:
+	area
+	print %error " Autofocus Error indicate that Trace signal lines likely have some physical path problem."
+	print %error " Make sure that TPIU cable is plugged in to port B, that Rotary switch is on Port 2, "
+	print %error " And that TPIU rework has been done for your CDP"
+	print %error " -> 0Ohm resistors on R3236, R3239, R3238, R3241, R3240, R3237"
+	print %error " You should try fixing that problem first before proceeding further"
+	goto FATALEXIT
+    
+    
+SetupMmuManually:
+                    mmu.off
+                    mmu.reset
+                    mmu.on
+                    mmu.tlb.scan
+                    RETURN
+		    
+print_wrongt32version:
+	area
+	print %error "Syntax error detected. Please update your Trace32 version to latest, "
+	print %error "which can be found here: \\tex\qdsp6_sw_release\TRACE32\Run\latest"
+	print %error " "
+	print %error "exiting..."
+	goto FATALEXIT
+	
+	
+	
+ParseArguments:
+	entry &loc_ARG0 &loc_ARG1 &loc_ARG2 &loc_ARG3 &loc_ARG4 &loc_ARG5
+	
+	local &loc_ARG0 &loc_ARG1 &loc_ARG2 &loc_ARG3 &loc_ARG4 &loc_ARG5
+	local &Loc_Trace_Mode &Loc_CycleAccurate_Mode &Loc_Configuration &Loc_PortSize
+
+	&Loc_Trace_Mode="ETB"
+	&Loc_CycleAccurate_Mode="OFF"
+	&Loc_Configuration="FROMCOLDBOOT"
+	&Loc_PortSize="8BIT"
+	
+	
+	&Loc_ARG0=string.upr("&loc_ARG0")
+	&Loc_ARG1=string.upr("&loc_ARG1")
+	&Loc_ARG2=string.upr("&loc_ARG2")
+	&Loc_ARG3=string.upr("&loc_ARG3")
+	&Loc_ARG4=string.upr("&loc_ARG4")
+	&Loc_ARG5=string.upr("&loc_ARG5")
+	
+	//do std_utils CHECKARGS FATALEXIT &Loc_ARG1 "ADSP"
+	
+	//args 0,1,2 are all set (need to be adsp, lpm option, breakpoint).
+	//check options after that.
+	
+	//Specify ETM mode (ETB, TPIU, SDcard)
+	IF (("&Loc_ARG0"=="ETB")||("&Loc_ARG1"=="ETB")||("&Loc_ARG2"=="ETB")||("&Loc_ARG3"=="ETB")||("&Loc_ARG4"=="ETB")||("&Loc_ARG5"=="ETB"))
+	(
+		&Loc_Trace_Mode="ETB"
+	)
+	IF (("&Loc_ARG0"=="TPIU")||("&Loc_ARG1"=="TPIU")||("&Loc_ARG2"=="TPIU")||("&Loc_ARG3"=="TPIU")||("&Loc_ARG4"=="TPIU")||("&Loc_ARG5"=="TPIU"))
+	(
+		&Loc_Trace_Mode="TPIU"
+	)
+	IF (("&Loc_ARG0"=="SDCARD")||("&Loc_ARG1"=="SDCARD")||("&Loc_ARG2"=="SDCARD")||("&Loc_ARG3"=="SDCARD")||("&Loc_ARG4"=="SDCARD")||("&Loc_ARG5"=="SDCARD"))
+	(
+		&Loc_Trace_Mode="SDCARD"
+	)
+	
+	//Specify CycleAccurate Mode (Takes up more data bandwidth, but very accurate timestamps)
+	IF (("&Loc_ARG1"=="CYCLEACCURATE")||("&Loc_ARG2"=="CYCLEACCURATE")||("&Loc_ARG3"=="CYCLEACCURATE")||("&Loc_ARG4"=="CYCLEACCURATE")||("&Loc_ARG5"=="CYCLEACCURATE"))
+	(
+		&Loc_CycleAccurate_Mode="ON"
+	)
+
+	
+	//Specify Usecase Configuration
+	IF (("&Loc_ARG1"=="NOGPIOS")||("&Loc_ARG2"=="NOGPIOS")||("&Loc_ARG3"=="NOGPIOS")||("&Loc_ARG4"=="NOGPIOS")||("&Loc_ARG5"=="NOGPIOS"))
+	(
+		&Loc_Configuration="NOGPIOS"
+	)
+	IF (("&Loc_ARG1"=="HOTATTACH")||("&Loc_ARG2"=="HOTATTACH")||("&Loc_ARG3"=="HOTATTACH")||("&Loc_ARG4"=="HOTATTACH")||("&Loc_ARG5"=="HOTATTACH"))
+	(
+		&Loc_Configuration="HOTATTACH"
+	)
+	IF (("&Loc_ARG1"=="FROMCOLDBOOT")||("&Loc_ARG2"=="FROMCOLDBOOT")||("&Loc_ARG3"=="FROMCOLDBOOT")||("&Loc_ARG4"=="FROMCOLDBOOT")||("&Loc_ARG5"=="FROMCOLDBOOT"))
+	(
+		&Loc_Configuration="FROMCOLDBOOT"
+	)
+	IF (("&Loc_ARG1"=="AFTERGPIOS")||("&Loc_ARG2"=="AFTERGPIOS")||("&Loc_ARG3"=="AFTERGPIOS")||("&Loc_ARG4"=="AFTERGPIOS")||("&Loc_ARG5"=="AFTERGPIOS"))
+	(
+		&Loc_Configuration="AFTERGPIOS"
+	)
+	
+	
+	//Configure ETM Portsize
+	IF (("&Loc_ARG1"=="4BIT")||("&Loc_ARG2"=="4BIT")||("&Loc_ARG3"=="4BIT")||("&Loc_ARG4"=="4BIT")||("&Loc_ARG5"=="4BIT"))
+	(
+		IF ((Loc_Trace_Mode"=="ETB"))
+		(
+			PRINT %error "Configuration error: portsize can't be specified with ETB trace mode"
+		)
+		&Loc_PortSize="4BIT"
+	)
+	IF (("&Loc_ARG1"=="8BIT")||("&Loc_ARG2"=="8BIT")||("&Loc_ARG3"=="8BIT")||("&Loc_ARG4"=="8BIT")||("&Loc_ARG5"=="8BIT"))
+	(
+		IF ((Loc_Trace_Mode"=="ETB"))
+		(
+			PRINT %error "Configuration error: portsize can't be specified with ETB trace mode"
+		)
+		&Loc_PortSize="8BIT"
+	)
+	IF (("&Loc_ARG1"=="16BIT")||("&Loc_ARG2"=="16BIT")||("&Loc_ARG3"=="16BIT")||("&Loc_ARG4"=="16BIT")||("&Loc_ARG5"=="16BIT"))
+	(
+		IF ((Loc_Trace_Mode"=="ETB"))
+		(
+			PRINT %error "Configuration error: portsize can't be specified with ETB trace mode"
+		)
+		&Loc_PortSize="16BIT"
+	)
+	
+	
+
+	
+	RETURN	&Loc_Trace_Mode &Loc_CycleAccurate_Mode &Loc_Configuration &Loc_PortSize
