@@ -69,18 +69,18 @@ spin_lock_acquire:
 	ldr	r1,=LOCKED
 loop1:	ldrex	r2,[r0]
 	cmp	r2,r1
-	strexne	r2,r1,[r0]
-	cmp	r2,#1 /* success:0, fail:1 */
 	beq	loop1
+	/* store r1 to [r0], r2 is result */
+	strexne	r2,r1,[r0] 
+	cmpne	r2,#1 
+	beq	loop1
+	/*lock acquired*/
+	DMB
 	bx	lr
 .global spin_lock_release
 spin_lock_release:
 	ldr	r1,=UNLOCKED
-/*loop2:	ldrex	r2,[r0]
-	cmpne	r2,r1
-	bne	loop2
-	str	r1,[r0]
-	*/
+	DMB
 	str	r1,[r0]
 	bx	lr
 @END
