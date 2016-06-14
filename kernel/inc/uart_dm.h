@@ -272,4 +272,5 @@ void uart_dm_init(uint8_t id,
 				  uint32_t gsbi_base,
 				  uint32_t uart_dm_base);
 int uart_putc(int port, char c);
+int uart_getc(int port, int wait);
 #endif				/* __UART_DM_H__ */

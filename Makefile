@@ -1,7 +1,9 @@
 #GCCINC :=$(HOME)/MentorGraphics/Sourcery_CodeBench_Lite_for_ARM_EABI/arm-none-eabi/include
+CPPFLAG := -fno-exceptions -fno-rtti
 LIBS := $(HOME)/bin/arm-2014.05/arm-none-eabi/lib
 LIBS2 :=$(HOME)/bin/arm-2014.05/lib/gcc/arm-none-eabi/4.8.3
 CC := arm-none-eabi-gcc
+CPP := arm-none-eabi-g++
 ASM := arm-none-eabi-as
 LD := arm-none-eabi-ld
 AR := arm-none-eabi-ar
@@ -19,9 +21,13 @@ HELLO_DIR := helloworld
 TEST1_DIR := test1
 TEST2_DIR := test2
 
+CPPSRC := $(foreach sdir,$(SRC_DIR),$(wildcard $(sdir)/*.cpp))
+CPPOBJ := $(patsubst kernel/%.cpp,out/%.o,$(CPPSRC))
+
 CSRC := $(foreach sdir,$(SRC_DIR),$(wildcard $(sdir)/*.c))
-ASMSRC := $(foreach sdir,$(SRC_DIR),$(wildcard $(sdir)/*.S))
 COBJ := $(patsubst kernel/%.c,out/%.o,$(CSRC))
+
+ASMSRC := $(foreach sdir,$(SRC_DIR),$(wildcard $(sdir)/*.S))
 ASMOBJ := $(patsubst kernel/%.S,out/%.o,$(ASMSRC))
 
 LIBCSRC := $(foreach sdir,$(LIB_DIR),$(wildcard $(sdir)/*.c))
@@ -56,16 +62,18 @@ SCL := $(TOP_DIR)/kernel/linker/kernel.scl
 MISC_DIR := $(TOP_DIR)/misc
 
 vpath %.c $(SRC_DIR)
+vpath %.cpp $(SRC_DIR)
 vpath %.S $(SRC_DIR)
 
 define make-obj
 $1/%.o: %.c
-#$(CC) $(INC) -o $$@ -c $$< --debug
-	$(CC) $(INC) -o $$@ -c $$< -gstabs
+	$(CC) $(INC) -o $$@ -c $$< -g
+
+$1/%.o: %.cpp
+	$(CPP) $(INC) $(CPPFLAG) -o $$@ -c $$< -g
 
 $1/%.o: %.S
-#$(CC) $(INC) -o $$@ -c $$< --debug 
-	$(CC) $(INC) -o $$@ -c $$< -gstabs
+	$(CC) $(INC) -o $$@ -c $$< 
 endef
 
 $(foreach bdir, $(OUT_DIR),$(eval $(call make-obj,$(bdir))))
@@ -74,8 +82,8 @@ $(foreach bdir, $(OUT_DIR),$(eval $(call make-obj,$(bdir))))
 
 all: checkdirs app ramdisk slos
 
-slos : checkdirs app ramdisk $(COBJ) $(ASMOBJ)
-	$(LD) -T $(LDS) -o $(OUT_TOP)/kernel.elf $(COBJ) $(ASMOBJ) -L$(LIBS) -L$(LIBS2) -lc -lgcc
+slos : checkdirs app ramdisk $(COBJ) $(CPPOBJ) $(ASMOBJ)
+	$(LD) -T $(LDS) -o $(OUT_TOP)/kernel.elf $(COBJ) $(CPPOBJ) $(ASMOBJ) -L$(LIBS) -L$(LIBS2) -lc -lgcc 
 	$(OBJCOPY) -O binary $(OUT_TOP)/kernel.elf $(OUT_TOP)/kernel.bin 
 	cp mkappfs/ramdisk.img $(OUT_TOP)/
 	cp $(MISC_DIR)/emmc_appsboot_jump_to_pilot.mbn  $(OUT_TOP)/

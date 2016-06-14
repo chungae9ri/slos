@@ -138,7 +138,7 @@ data_abort_handler:
 	mov 	r0, sp
 	mrs	r1, spsr
 	stmia	r0, {r1, r13-r14}^
-	b	platform_data_abort_handler
+	b	abort
 	b	.
 ;
 reserved:

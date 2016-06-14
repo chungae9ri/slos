@@ -76,6 +76,11 @@ void schedule(void *arg);
 void dequeue_se_to_exit(struct cfs_rq *rq, struct sched_entity *se);
 void enqueue_se_to_runq(struct cfs_rq *rq, struct sched_entity *se, bool update);
 void dequeue_se_to_waitq(struct cfs_rq *rq, struct sched_entity *se, bool update);
+void drop_usrtask();
+void init_idletask();
+void init_shell();
+void update_se();
+void set_priority(struct task_struct *pt, uint32_t pri);
 
 void func1(void);
 void func2(void);

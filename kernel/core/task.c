@@ -97,7 +97,7 @@ void init_task()
 	create_all_task();
 }
 
-void drop_usrtask(void)
+void drop_usrtask()
 {
 	int i;
 	for (i=0 ; i<MAX_USR_TASK ; i++) {

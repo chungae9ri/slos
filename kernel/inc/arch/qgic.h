@@ -47,4 +47,6 @@ uint32_t qgic_platform_irq(struct task_struct *frame);
 void qgic_platform_fiq(struct task_struct *frame);
 int qgic_mask_interrupt(unsigned int vector);
 int qgic_unmask_interrupt(unsigned int vector);
+void platform_qgic_init(void);
+void platform_init_timer(void);
 #endif

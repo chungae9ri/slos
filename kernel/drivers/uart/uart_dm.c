@@ -451,7 +451,7 @@ int uart_putc(int port, char c)
  * is supposed to read only one character. So we need to
  * read a word and keep track of each character in the word.
  */
-int uart_getc(int port, bool wait)
+int uart_getc(int port, int wait)
 {
 	int byte;
 	static unsigned int word = 0;

@@ -39,7 +39,7 @@ void platform_prefetch_abort_handler(void)
 	print_msg("prefetch abort exception!!\r\n");
 	for(;;);
 }
-void platform_data_abort_handler(void)
+void abort(void)
 {
 	print_msg("data abort exception!!\r\n");
 	for(;;);

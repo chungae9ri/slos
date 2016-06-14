@@ -13,6 +13,8 @@
 	EXPORT do_switch_context
 	EXPORT enable_interrupt
 	EXPORT disable_interrupt
+	EXPORT spin_lock_acquire
+	EXPORT spin_lock_release
 	*/
 .text
 

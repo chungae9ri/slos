@@ -24,7 +24,7 @@ void spin_lock_release_irqsafe(volatile uint32_t *lock)
 }
 
 /* critical section function for UP*/
-inline enter_critical_section(void)
+inline void enter_critical_section()
 {
 	critical_section_count++;
 	if (critical_section_count == 1) {
@@ -32,7 +32,7 @@ inline enter_critical_section(void)
 	}
 }
 
-inline exit_critical_section(void)
+inline void exit_critical_section()
 {
 	critical_section_count--;
 	if (critical_section_count == 0) {

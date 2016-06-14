@@ -9,4 +9,4 @@ uint32_t get_timer_freq(void);
 static void qtimer_enable(void);
 void qtimer_disable(void);
 int timer_irq (void *arg);
-inline uint64_t timer_get_phy_tick_cnt(void);
+uint64_t timer_get_phy_tick_cnt(void);

@@ -1,5 +1,8 @@
 #include <msgQ.h>
 
+extern void spin_lock_acquire(volatile char *msg);
+extern void spin_lock_release(volatile char *msg);
+
 void setmsg(int val, int idx, bool bspin)
 {
 	if(bspin) {

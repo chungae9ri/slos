@@ -39,16 +39,16 @@ void load_ramdisk()
 	}
 }
 
-void* find_sym(const char* name, Elf32_Shdr* shdr, const char* strings, const char* src, char* dst)
+Elf32_Addr find_sym(const char* name, Elf32_Shdr* shdr, const char* strings, const char* src, char* dst)
 {
     Elf32_Sym* syms = (Elf32_Sym*)(src + shdr->sh_offset);
     int i;
     for(i = 0; i < shdr->sh_size / sizeof(Elf32_Sym); i++) {
         if (strcmp(name, strings + syms[i].st_name) == 0) {
-            return dst + syms[i].st_value;
+            return (Elf32_Addr)(dst + syms[i].st_value);
         }
     }
-    return NULL;
+    return -1;
 }
 task_entry load_elf (char *elf_start, int idx)
 {
@@ -91,7 +91,7 @@ task_entry load_elf (char *elf_start, int idx)
 	    if (shdr[i].sh_type == SHT_SYMTAB) {
 		syms = (Elf32_Sym *)(elf_start + shdr[i].sh_offset);
 		strings = elf_start + shdr[shdr[i].sh_link].sh_offset;
-		entry = find_sym("main", shdr + i, strings, elf_start, exec);
+		entry = (task_entry)find_sym("main", shdr + i, strings, elf_start, exec);
 		break;
 	    }
     }
