@@ -1,20 +1,23 @@
 /*
-    File: frame_pool.H
-
-*/
+ * File: frame_pool.H
+ */
 
 #ifndef _FRAME_POOL_H_                   // include file only once
 #define _FRAME_POOL_H_
 
-
 /* ARM small page(4KB) frame is used
  * convert frame number to 32bit physical memory address 
  */
+
+#define GB * (0x1 << 30)
+#define MB * (0x1 << 20)
+#define KB * (0x1 << 10)
+#define KERNEL_POOL_START_FRAME ((2 MB) / (4 KB))
+#define KERNEL_POOL_SIZE ((4 MB) / (4 KB))
+#define PROCESS_POOL_START_FRAME ((32 MB) / (4 KB))
+#define PROCESS_POOL_SIZE ((256 MB) / (4 KB))
+
 #define FRAMETOPHYADDR(X) ((unsigned long)((X * 4 * (0x1<<10))))
-
-void init_frames();
-
-#if 1
 
 class FramePool {
 	private:
@@ -75,5 +78,4 @@ defined in the system, and it is unclear which one this frame belongs to.
 This function must first identify the correct frame pool and then call the frame
 pool's release_frame function. */
 };
-#endif
 #endif
