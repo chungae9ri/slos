@@ -42,6 +42,18 @@ void platform_prefetch_abort_handler(void)
 void abort(void)
 {
 	print_msg("data abort exception!!\r\n");
+	/* here is the routine to check the page fault */
+	unsigned int dfsr, dfar;
+	/* read DFSR */
+	asm volatile ( "mrc p15, 0, %0, c5, c0, 0" : "=r" (dfsr) ::);
+
+	/* page fault handler should be here */
+	if(dfsr & 0x07) {
+		print_msg("page fault\r\n");
+		/* read DFAR */
+		asm volatile ("mrc p15, 0, %0, c6, c0, 0" : "=r" (dfar) ::);
+	}
+
 	for(;;);
 }
 
