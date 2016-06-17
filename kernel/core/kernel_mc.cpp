@@ -12,6 +12,7 @@ extern "C" {
 	#include <debug.h>
 	#include <loader.h>
 	#include <frame_pool.h>
+	#include <page_table.h>
 
 	extern void enable_interrupt();
 	extern void disable_interrupt();
@@ -50,6 +51,14 @@ extern "C" {
 	}
 
 	void mem_init() {
+		
+	}
+
+	void kernel_main_ctl(void) {
+
+		disable_interrupt();
+		mem_init();
+
 		/* initialize frame pools */
 		FramePool kernel_mem_pool(KERNEL_POOL_START_FRAME, KERNEL_POOL_SIZE, 0);
 		unsigned long process_mem_pool_info_frame = kernel_mem_pool.get_frame();
@@ -58,11 +67,14 @@ extern "C" {
 				process_mem_pool_info_frame);
 		/*process_mem_pool.mark_inaccessible(MEM_HOLE_START_FRAME, MEM_HOLE_SIZE);*/
 
-	}
+		PageTable::init_paging(&kernel_mem_pool,
+				&process_mem_pool,
+				0 MB);
 
-	void kernel_main_ctl(void) {
-		disable_interrupt();
-		mem_init();
+		PageTable kernel_pt;
+		kernel_pt.load();
+		PageTable::enable_paging();
+
 		platform_init();
 		target_early_init();
 		core_init();

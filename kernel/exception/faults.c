@@ -34,14 +34,21 @@ char platform_syscall_handler(char *msg, int idx, int sys_num)
 	}
 	return ret;
 }
+
 void platform_prefetch_abort_handler(void)
 {
 	print_msg("prefetch abort exception!!\r\n");
 	for(;;);
 }
-void abort(void)
+
+void abort()
 {
 	print_msg("data abort exception!!\r\n");
+	for(;;);
+}
+
+void platform_abort_handler(void)
+{
 	/* here is the routine to check the page fault */
 	unsigned int dfsr, dfar;
 	/* read DFSR */
@@ -52,8 +59,9 @@ void abort(void)
 		print_msg("page fault\r\n");
 		/* read DFAR */
 		asm volatile ("mrc p15, 0, %0, c6, c0, 0" : "=r" (dfar) ::);
+		/* to do : page fault handler should be here */
+
+	} else {
+		abort();
 	}
-
-	for(;;);
 }
-
