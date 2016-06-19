@@ -12,10 +12,10 @@
 #define GB * (0x1 << 30)
 #define MB * (0x1 << 20)
 #define KB * (0x1 << 10)
-#define KERNEL_POOL_START_FRAME ((2 MB) / (4 KB))
-#define KERNEL_POOL_SIZE ((4 MB) / (4 KB))
-#define PROCESS_POOL_START_FRAME ((32 MB) / (4 KB))
-#define PROCESS_POOL_SIZE ((256 MB) / (4 KB))
+#define KERNEL_POOL_START_FRAME ((32 KB) / (4 KB))
+#define KERNEL_POOL_FRAME_NUM ((4 MB) / (4 KB)) - KERNEL_POOL_START_FRAME
+#define PROCESS_POOL_START_FRAME ((16 MB) / (4 KB))
+#define PROCESS_POOL_FRAME_NUM ((128 MB) / (4 KB)) - PROCESS_POOL_START_FRAME
 
 #define FRAMETOPHYADDR(X) ((unsigned long)((X * 4 * (0x1<<10))))
 

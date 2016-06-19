@@ -60,10 +60,10 @@ extern "C" {
 		mem_init();
 
 		/* initialize frame pools */
-		FramePool kernel_mem_pool(KERNEL_POOL_START_FRAME, KERNEL_POOL_SIZE, 0);
+		FramePool kernel_mem_pool(KERNEL_POOL_START_FRAME, KERNEL_POOL_FRAME_NUM, 0);
 		unsigned long process_mem_pool_info_frame = kernel_mem_pool.get_frame();
 		FramePool process_mem_pool(PROCESS_POOL_START_FRAME,
-				PROCESS_POOL_SIZE,
+				PROCESS_POOL_FRAME_NUM,
 				process_mem_pool_info_frame);
 		/*process_mem_pool.mark_inaccessible(MEM_HOLE_START_FRAME, MEM_HOLE_SIZE);*/
 
