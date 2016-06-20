@@ -71,7 +71,7 @@ extern "C" {
 				&process_mem_pool,
 				0 MB);
 
-		PageTable kernel_pt;
+		PageTable kernel_pt(PG_TABLE_KERN);
 		kernel_pt.load();
 		PageTable::enable_paging();
 
