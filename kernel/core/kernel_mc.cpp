@@ -22,6 +22,8 @@ extern "C" {
 	extern struct task_struct *current;
 	extern uint32_t show_stat;
 
+	PageTable *pkernel_pt;
+
 	void cpuidle(void) {
 		while(1) {
 			drop_usrtask();
@@ -45,9 +47,9 @@ extern "C" {
 		platform_init_timer();
 	}
 
-	void core_init() {
+	void core_init(unsigned long *ppd) {
 		init_jiffies();
-		init_idletask();
+		init_idletask(ppd);
 	}
 
 	void mem_init() {
@@ -55,6 +57,7 @@ extern "C" {
 	}
 
 	void kernel_main_ctl(void) {
+		unsigned long *pdadr;
 
 		disable_interrupt();
 		mem_init();
@@ -72,15 +75,19 @@ extern "C" {
 				0 MB);
 
 		PageTable kernel_pt(PG_TABLE_KERN);
+		pdadr = kernel_pt.getpd();
 		kernel_pt.load();
 		PageTable::enable_paging();
 
+		pkernel_pt = &kernel_pt;
+
 		platform_init();
 		target_early_init();
-		core_init();
-		init_shell();
+		core_init(pdadr);
+		init_shell(pdadr);
 		enable_interrupt();
-		load_ramdisk();
+		/* imsi out while virtual mem implementation */
+		/*load_ramdisk();*/
 		cpuidle();
 	}
 } // extern C

@@ -3,16 +3,18 @@
 
 #include <frame_pool.h>
 
+typedef enum {PG_TABLE_KERN = 0, PG_TABLE_USER = 1} PG_TYPE;
+
 class PageTable {
 	private:
-		static PageTable     * current_page_table; /* pointer to currently loaded page table object */
+		static PageTable     *current_page_table; /* pointer to currently loaded page table object */
 		static unsigned int    paging_enabled;     /* is paging turned on (i.e. are addresses logical)? */
-		static FramePool     * kernel_mem_pool;    /* Frame pool for the kernel memory */
-		static FramePool     * process_mem_pool;   /* Frame pool for the process memory */
+		static FramePool     *kernel_mem_pool;    /* Frame pool for the kernel memory */
+		static FramePool     *process_mem_pool;   /* Frame pool for the process memory */
 		static unsigned long   shared_size;        /* size of shared address space */
 
 		/* data for current page table */
-		unsigned long        * page_directory;     /* where is page directory located? */
+		unsigned long        *page_directory;     /* where is page directory located? */
 		/* static page_table for shared memory(4MB kernel) */
 		static unsigned long 		*k_page_table;
 
@@ -32,7 +34,11 @@ class PageTable {
 		   has been enabled.
 		 */
 
-		PageTable();
+		PageTable(PG_TYPE pagetype);
+
+		unsigned long *getpd() {
+			return page_directory;
+		}
 		
 		/* Makes the given page table the current table. This must be done once during
 		   system startup and whenever the address space is switched (e.g. during

@@ -96,9 +96,13 @@ task_entry load_elf (char *elf_start, int idx)
 	    }
     }
 
+    /* to do page directory construction here */
+    /* ismi*/
+    unsigned long *ppd = 0x0;
+
 /* user task is not inserted to rq. it should be called explicitly*/
     sprintf(buff,"user%d",idx);
-    upt[idx]= do_forkyi(buff, (task_entry)entry, idx); 
+    upt[idx]= do_forkyi(buff, (task_entry)entry, idx, ppd); 
 
     set_priority(upt[idx], 4);
     rb_init_node(&(upt[idx]->se).run_node);

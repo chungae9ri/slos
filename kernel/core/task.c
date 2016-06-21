@@ -352,11 +352,11 @@ void shell(void)
 	}
 }
 
-void init_shell(void)
+void init_shell(unsigned long *ppd)
 {
 	struct task_struct *temp;
 
-	temp = do_forkyi("shell", (task_entry)shell, -1);
+	temp = do_forkyi("shell", (task_entry)shell, -1, ppd);
 	set_priority(temp, 2);
 	rb_init_node(&temp->se.run_node);
 	enqueue_se_to_runq(runq, &temp->se, true);
@@ -369,7 +369,7 @@ void init_rq(struct task_struct *pt)
 	enqueue_se_to_runq(runq, &pt->se, true);
 }
 
-void init_idletask(void)
+void init_idletask(unsigned long *ppd)
 {
 	struct task_struct *pt = (struct task_struct *)malloc(sizeof(struct task_struct));
 	struct task_struct *temp;
@@ -385,14 +385,14 @@ void init_idletask(void)
 	init_waitq(&wq_sched);
 
 /* create some dummy tasks just for test purpose */
-	temp = do_forkyi("dummy1", (task_entry)func1, -1);
+	temp = do_forkyi("dummy1", (task_entry)func1, -1, ppd);
 #ifdef WAIT_Q_TEST
 	fortest1 = temp;
 #endif
 	set_priority(temp, 8);
 	rb_init_node(&temp->se.run_node);
 	enqueue_se_to_runq(runq, &temp->se, true);
-	temp = do_forkyi("worker", (task_entry)worker, -1); 
+	temp = do_forkyi("worker", (task_entry)worker, -1, ppd); 
 	set_priority(temp, 2);
 	rb_init_node(&temp->se.run_node);
 	enqueue_se_to_runq(runq, &temp->se, true);
@@ -417,7 +417,7 @@ void forkyi(struct task_struct *pbt, struct task_struct *pt)
 	pt->ct.spsr = SVCSPSR;
 }
 
-struct task_struct *do_forkyi(char *name, task_entry fn, int idx)
+struct task_struct *do_forkyi(char *name, task_entry fn, int idx, unsigned long *ppd)
 {
 	struct task_struct *pt;
 	if (task_created_num == MAX_TASK) return;
@@ -438,6 +438,7 @@ struct task_struct *do_forkyi(char *name, task_entry fn, int idx)
 	pt->ct.lr = (uint32_t)pt->entry;
 	pt->ct.pc = (uint32_t)pt->entry;
 	pt->ct.spsr = SVCSPSR;
+	pt->ct.tlb = ppd;
 	/* get the last task from task list and add this task to the end of the task list*/
 	last->task.next = &(pt->task);
 	pt->task.prev = &(last->task);

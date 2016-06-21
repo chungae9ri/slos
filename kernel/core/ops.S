@@ -29,14 +29,14 @@ dsb:
 /* do_switch_context(struct task_struct *prev, struct task_struct *next) */
 do_switch_context:
 	push	{r0-r4}
-	ldr	r2,=0x11
+	ldr	r2,=0x12
 	ldr	r4,=CONTEXT_MEM
 savectxt:
 	ldr	r3,[r4],#4
 	str	r3,[r0],#4
 	subs	r2,r2,#1
 	bne	savectxt
-	ldr	r2,=0x11
+	ldr	r2,=0x12
 	ldr	r4,=CONTEXT_MEM
 restrctxt:
 	ldr	r3,[r1],#4

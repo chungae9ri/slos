@@ -159,6 +159,8 @@ irq_handler:
 	stmia	r1!,{r4-r12}
 	mrs	r5, spsr
 	stmia	r1!, {r5} /* save spsr */
+	mrc	p15, 0, r12, c2, c0, 0 /* read ttb addr */
+	str	r12, [r1] /* str ttb addr to Mem */
 	bl 	qgic_platform_irq
 ;	
 	ldr 	r12, =CONTEXT_MEM 
@@ -169,6 +171,9 @@ irq_handler:
 	add 	r12,r12,#4
 	ldmia	r12,{r12}
 	msr 	spsr_cxsf, r12
+	add 	r12,r12,#4
+	ldr 	r12, [r12] /* load ttb addr */
+	mcr	p15, 0, r12, c2, c0, 0 /* write ttb addr */
 	ldr 	r12, =CONTEXT_MEM 
 	ldr	r12, [r12]
 	movs	pc,r12
