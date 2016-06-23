@@ -438,7 +438,7 @@ struct task_struct *do_forkyi(char *name, task_entry fn, int idx, unsigned long 
 	pt->ct.lr = (uint32_t)pt->entry;
 	pt->ct.pc = (uint32_t)pt->entry;
 	pt->ct.spsr = SVCSPSR;
-	pt->ct.tlb = ppd;
+	pt->ct.tlb = (unsigned long)ppd;
 	/* get the last task from task list and add this task to the end of the task list*/
 	last->task.next = &(pt->task);
 	pt->task.prev = &(last->task);

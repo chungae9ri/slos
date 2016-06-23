@@ -7,6 +7,7 @@ FramePool * PageTable::process_mem_pool;
 unsigned long PageTable::shared_size;
 PageTable * PageTable::current_page_table;
 unsigned long *PageTable::k_page_table;
+unsigned long *PageTable::k_page_dir;
 
 
 void PageTable::init_paging(FramePool *_kernel_mem_pool,
@@ -68,7 +69,7 @@ PageTable::PageTable(PG_TYPE pagetype)
 	 */
 
 	for(i=0 ; i<1024 ; i++) {
-		k_page_table[i] = ((i*4*(0x1<<10)) | 0x55E;
+		k_page_table[i] = (i*4*(0x1<<10)) | 0x55E;
 	}
 
 	if(pagetype == PG_TABLE_KERN) {
