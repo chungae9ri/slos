@@ -53,6 +53,18 @@ PageTable::PageTable(PG_TYPE pagetype)
 		}
 	}
 
+	/* 0x55E
+	 * Bit[1:0] = 10 : small page 
+	 * Bit[2] = 1 : Bufferable
+	 * Bit[3] = 1 : Cacheable
+	 * Bit[5:4] = Bit[7:6] = Bit[9:8] = Bit[11:10] = 01 
+	 * : subpage access permission,
+	 * : 01 only SVC mode can r/w, user mode can't access 
+	 */
+
+	for(i=0 ; i<1024 ; i++) {
+		k_page_table[i] = ((i*4*(0x1<<10)) | 0x55E;
+	}
 }
 
 void PageTable::load()
