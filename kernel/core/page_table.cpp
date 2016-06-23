@@ -17,12 +17,17 @@ void PageTable::init_paging(FramePool *_kernel_mem_pool,
 	kernel_mem_pool = _kernel_mem_pool;
 	process_mem_pool = _process_mem_pool;
 	shared_size = _shared_size;
+	k_page_dir = 0;
 }
 
 /* small page translation is used */
 PageTable::PageTable(PG_TYPE pagetype) 
 {
 	int i;
+	
+	if(pagetype == PG_TABLE_KERN && k_page_dir)
+		return;
+
 	/* page directory is located in process mem pool */
 	if(pagetype == PG_TABLE_USER) {
 		page_directory = (unsigned long *)FRAMETOPHYADDR(process_mem_pool->get_frame());
@@ -64,6 +69,10 @@ PageTable::PageTable(PG_TYPE pagetype)
 
 	for(i=0 ; i<1024 ; i++) {
 		k_page_table[i] = ((i*4*(0x1<<10)) | 0x55E;
+	}
+
+	if(pagetype == PG_TABLE_KERN) {
+		k_page_dir = page_directory;
 	}
 }
 

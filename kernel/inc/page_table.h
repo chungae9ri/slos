@@ -17,6 +17,8 @@ class PageTable {
 		unsigned long        *page_directory;     /* where is page directory located? */
 		/* static page_table for shared memory(4MB kernel) */
 		static unsigned long 		*k_page_table;
+		/* kernel task should have common page directory */
+		static unsigned long		*k_page_dir;
 
 	public:
 		static const unsigned int PAGE_SIZE        ;//= Machine::PAGE_SIZE; /* in bytes */
