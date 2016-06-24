@@ -36,8 +36,6 @@ PageTable::PageTable(PG_TYPE pagetype)
 		page_directory = (unsigned long *)FRAMETOPHYADDR(kernel_mem_pool->get_frame());
 	}
 	page_directory = (unsigned long *)((unsigned long)page_directory & 0xffffc000);
-	/* set the translation table base */
-	__asm__ ("mrc p15, 0, %0, c2, c0, 0" : "=r" (page_directory) ::);
 
 	/* initialize page directory as 0 */
 	for(i=0 ; i<4095 ; i++) {
@@ -79,7 +77,10 @@ PageTable::PageTable(PG_TYPE pagetype)
 
 void PageTable::load()
 {
+	current_page_table = this;
 
+	/* set the translation table base */
+	asm ("mrc p15, 0, %0, c2, c0, 0" : "=r" (current_page_table->page_directory) ::);
 }
 
 void PageTable::enable_paging()
