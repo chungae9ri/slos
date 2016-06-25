@@ -1,6 +1,14 @@
 #include <page_table.h>
 #include <frame_pool.h>
 
+#define ENABLE_MMU		0x00000001
+#define ENABLE_DCACHE		0x00000004
+#define ENABLE_ICACHE		0x00001000
+#define MASK_MMU		0x00000001
+#define MASK_DCACHE		0x00000004
+#define MASK_ICACHE		0x00001000
+
+
 unsigned int PageTable::paging_enabled;
 FramePool * PageTable::kernel_mem_pool;
 FramePool * PageTable::process_mem_pool;
@@ -79,11 +87,24 @@ void PageTable::load()
 {
 	current_page_table = this;
 
-	/* set the translation table base */
+	/* read the translation table base */
 	asm ("mrc p15, 0, %0, c2, c0, 0" : "=r" (current_page_table->page_directory) ::);
 }
 
 void PageTable::enable_paging()
+{
+	unsigned int enable = ENABLE_MMU | ENABLE_DCACHE | ENABLE_ICACHE;
+	unsigned int mask = MASK_MMU | MASK_DCACHE | MASK_ICACHE;
+	unsigned int c1;
+	/* read control (c1) register of cp 15*/
+	asm ("mrc p15, 0, %0, c1, c0, 0" : "=r" (c1) ::);
+	c1 &= ~mask;
+	c1 |= enable;
+	/* write control register */
+	asm("mcr p15, 0, %1, c1, c0, 0" : : "r" (c1):);
+}
+
+void PageTable::handle_fault()
 {
 
 }

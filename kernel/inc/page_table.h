@@ -54,6 +54,9 @@ class PageTable {
 		 */
 		static void enable_paging();
 
+		/* page fault handler*/
+		static void handle_fault();
+
 		/* Release the frame associated with the page _page_no */
 		void free_page(unsigned long _page_no);
 };
