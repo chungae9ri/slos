@@ -82,6 +82,7 @@ void init_idletask(unsigned int *ppd);
 void init_shell(unsigned int *ppd);
 void update_se();
 void set_priority(struct task_struct *pt, uint32_t pri);
+void put_to_sleep(char *dur, int idx);
 
 void func1(void);
 void func2(void);

@@ -1,6 +1,9 @@
-#include <stdint-gcc.h>
+extern "C" {
 #include <mem_layout.h>
 #include <debug.h>
+#include <page_table.h>
+#include <loader.h>
+#include <task.h>
 
 void platform_undefined_handler(void)
 {
@@ -13,7 +16,7 @@ char platform_syscall_handler(char *msg, int idx, int sys_num)
 	char ret=0;
 	switch(sys_num) {
 		case 0x0: /* syscall exit */
-			exit_elf(msg);
+			exit_elf(idx);
 			break;
 
 		case 0x1: /* syscal shellcmd */
@@ -57,11 +60,10 @@ void platform_abort_handler(void)
 	/* page fault handler should be here */
 	if(dfsr & 0x07) {
 		print_msg("page fault\r\n");
-		/* read DFAR */
-		asm volatile ("mrc p15, 0, %0, c6, c0, 0" : "=r" (dfar) ::);
 		/* to do : page fault handler should be here */
-
+		PageTable::handle_fault();
 	} else {
 		abort();
 	}
+}
 }

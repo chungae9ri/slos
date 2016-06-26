@@ -8,4 +8,5 @@ void load_bin_to_scratch_mem(char *buf);
 #endif
 task_entry load_elf (char *elf_start, int idx);
 void load_ramdisk();
+void exit_elf(int idx);
 #endif

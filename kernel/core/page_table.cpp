@@ -32,7 +32,7 @@ void PageTable::init_paging(FramePool *_kernel_mem_pool,
 /* small page translation is used */
 PageTable::PageTable(PG_TYPE pagetype) 
 {
-	int i;
+	int i, j;
 	
 	if(pagetype == PG_TABLE_KERN && k_page_dir)
 		return;
@@ -51,17 +51,22 @@ PageTable::PageTable(PG_TYPE pagetype)
 	}
 
 	if(k_page_table == 0) {
-		k_page_table = (unsigned long *)FRAMETOPHYADDR(kernel_mem_pool->get_frame());
+		/* 16MB(=4MB *4) directly mapped memory
+		 * 4MB ~ 16MB kernel heap
+		 */
 		for(i=0 ; i<4 ; i++) {
+			k_page_table = (unsigned int *)FRAMETOPHYADDR(kernel_mem_pool->get_frame());
+			for(j=0 ; j<4 ; j++) {
 
-			/* 0x11 is
-			   Bit[1:0] = 01 : 00:fualt, 01:page, 10:section, 11 : reserved
-			   Bit[3:2] = 00 : section : B(ufferable), C(achable), page : don't care
-			   Bit[4] = 1
-			   Bit[8:5] = 0000 : Domain 0
-			   Bit[9] = 0 : don't care
-			 */
-			page_directory[i] = ((unsigned long)k_page_table+(256*i)<<2 | 0x11);
+				/* 0x11 is
+				   Bit[1:0] = 01 : 00:fualt, 01:page, 10:section, 11 : reserved
+				   Bit[3:2] = 00 : section : B(ufferable), C(achable), page : don't care
+				   Bit[4] = 1
+				   Bit[8:5] = 0000 : Domain 0
+				   Bit[9] = 0 : don't care
+				 */
+				page_directory[i*4+j] = ((unsigned int)k_page_table+(256*j)<<2 | 0x11);
+			}
 		}
 	}
 
@@ -74,8 +79,12 @@ PageTable::PageTable(PG_TYPE pagetype)
 	 * : 01 only SVC mode can r/w, user mode can't access 
 	 */
 
-	for(i=0 ; i<1024 ; i++) {
-		k_page_table[i] = (i*4*(0x1<<10)) | 0x55E;
+	/* 16MB(4 * 4KB page * 1024 entry) direct mapped memory */
+	for(i=0 ; i<4 ; i++) {
+		k_page_table = (unsigned int *)(page_directory[i*4]);
+		for(j=0 ; j<1024 ; j++) {
+			k_page_table[j] = (j*4*(0x1<<10)) | 0x55E;
+		}
 	}
 
 	if(pagetype == PG_TABLE_KERN) {
@@ -87,8 +96,8 @@ void PageTable::load()
 {
 	current_page_table = this;
 
-	/* read the translation table base */
-	asm ("mrc p15, 0, %0, c2, c0, 0" : "=r" (current_page_table->page_directory) ::);
+	/* write the translation table base */
+	asm ("mcr p15, 0, %0, c2, c0, 0" : : "r" (current_page_table->page_directory) :);
 }
 
 void PageTable::enable_paging()
@@ -101,15 +110,67 @@ void PageTable::enable_paging()
 	c1 &= ~mask;
 	c1 |= enable;
 	/* write control register */
-	asm("mcr p15, 0, %1, c1, c0, 0" : : "r" (c1):);
+	asm("mcr p15, 0, %0, c1, c0, 0" : : "r" (c1):);
 }
 
 void PageTable::handle_fault()
 {
+	int i;
+	unsigned int *pda, *pta;
+	unsigned int *pfa;
+	unsigned int *pde, *pte;
+	unsigned int *page_table, *frame_addr;
 
+	/* read DFAR */
+	asm volatile ("mrc p15, 0, %0, c6, c0, 0" : "=r" (pfa) ::);
+	/* read ttb */
+	asm volatile ("mrc p15, 0, %0, c2, c0, 0" : "=r" (pda) ::);
+
+	/* entry for 1st level descriptor */
+	pde = (unsigned int *)((0xffffc000 & *pda) | ((0xfff00000 & *pfa)>>18));
+
+	if(*pde == 0x0) {
+		page_table = (unsigned int *)FRAMETOPHYADDR(process_mem_pool->get_frame());
+		for(i=0 ; i<4 ; i++) {
+			/* set the value of 1st level descriptor */
+			*pde = (unsigned int)((unsigned int)page_table + (256*i)<<2 | 0x11); 
+		}
+	}
+
+	frame_addr = (unsigned int *)FRAMETOPHYADDR(process_mem_pool->get_frame());
+
+	/* entry for 2nd level descriptor */
+	pte = (unsigned int *)((*pde & 0xfffffc00) | ((0x000ff000 & *pfa)>>22));
+	/* set the value of 2nd level descriptor */
+	*pte = ((unsigned int)frame_addr | 0x55E);
 }
 
 void PageTable::free_page(unsigned int pageAddr)
 {
+	unsigned int *pda, *pde, *pte;
+	unsigned int *frame_addr;
+	unsigned int frame_num, frame_num_k_heap;
+	/* read ttb */
+	asm volatile ("mrc p15, 0, %0, c2, c0, 0" : "=r" (pda) ::);
+	/* get the 1st level descriptor */
+	pde = (unsigned int *)((*pda & 0xfffc0000) | ((pageAddr & 0xfff00000)>>18));
+	pte = (unsigned int *)((*pde & 0xfffffc00) | ((pageAddr & 0x000ff000)>>22));
 
+	/* physical address of frame */
+	frame_addr = (unsigned int *)(*pte);
+	frame_num = (unsigned int)(frame_addr) >> 12;
+
+	if(frame_num >= KERNEL_HEAP_START_FRAME &&
+ 	   frame_num < KERNEL_HEAP_START_FRAME + KERNEL_HEAP_FRAME_NUM) {
+		kernel_mem_pool->release_frame(frame_num);
+	} else if(frame_num >= PROCESS_HEAP_START_FRAME &&
+		  frame_num < PROCESS_HEAP_START_FRAME + PROCESS_HEAP_FRAME_NUM) {
+		process_mem_pool->release_frame(frame_num);
+	} else {
+		/* error !
+		 * only frames in heap can be freed.
+		 */
+	}
+
+	*pte = 0x0;
 }
