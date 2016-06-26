@@ -47,7 +47,7 @@ extern "C" {
 		platform_init_timer();
 	}
 
-	void core_init(unsigned long *ppd) {
+	void core_init(unsigned int *ppd) {
 		init_jiffies();
 		init_idletask(ppd);
 	}
@@ -57,7 +57,7 @@ extern "C" {
 	}
 
 	void kernel_main_ctl(void) {
-		unsigned long *pdadr;
+		unsigned int *pdadr;
 
 		disable_interrupt();
 		mem_init();

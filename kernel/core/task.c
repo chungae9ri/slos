@@ -352,7 +352,7 @@ void shell(void)
 	}
 }
 
-void init_shell(unsigned long *ppd)
+void init_shell(unsigned int *ppd)
 {
 	struct task_struct *temp;
 
@@ -369,7 +369,7 @@ void init_rq(struct task_struct *pt)
 	enqueue_se_to_runq(runq, &pt->se, true);
 }
 
-void init_idletask(unsigned long *ppd)
+void init_idletask(unsigned int *ppd)
 {
 	struct task_struct *pt = (struct task_struct *)malloc(sizeof(struct task_struct));
 	struct task_struct *temp;
@@ -417,7 +417,7 @@ void forkyi(struct task_struct *pbt, struct task_struct *pt)
 	pt->ct.spsr = SVCSPSR;
 }
 
-struct task_struct *do_forkyi(char *name, task_entry fn, int idx, unsigned long *ppd)
+struct task_struct *do_forkyi(char *name, task_entry fn, int idx, unsigned int *ppd)
 {
 	struct task_struct *pt;
 	if (task_created_num == MAX_TASK) return;

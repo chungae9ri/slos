@@ -12,15 +12,15 @@
 unsigned int PageTable::paging_enabled;
 FramePool * PageTable::kernel_mem_pool;
 FramePool * PageTable::process_mem_pool;
-unsigned long PageTable::shared_size;
+unsigned int PageTable::shared_size;
 PageTable * PageTable::current_page_table;
-unsigned long *PageTable::k_page_table;
-unsigned long *PageTable::k_page_dir;
+unsigned int *PageTable::k_page_table;
+unsigned int *PageTable::k_page_dir;
 
 
 void PageTable::init_paging(FramePool *_kernel_mem_pool,
 		FramePool *_process_mem_pool,
-		const unsigned long _shared_size)
+		const unsigned int _shared_size)
 {
 	paging_enabled = 0;
 	kernel_mem_pool = _kernel_mem_pool;
@@ -39,11 +39,11 @@ PageTable::PageTable(PG_TYPE pagetype)
 
 	/* page directory is located in process mem pool */
 	if(pagetype == PG_TABLE_USER) {
-		page_directory = (unsigned long *)FRAMETOPHYADDR(process_mem_pool->get_frame());
+		page_directory = (unsigned int *)FRAMETOPHYADDR(process_mem_pool->get_frame());
 	} else {
-		page_directory = (unsigned long *)FRAMETOPHYADDR(kernel_mem_pool->get_frame());
+		page_directory = (unsigned int *)FRAMETOPHYADDR(kernel_mem_pool->get_frame());
 	}
-	page_directory = (unsigned long *)((unsigned long)page_directory & 0xffffc000);
+	page_directory = (unsigned int *)((unsigned int)page_directory & 0xffffc000);
 
 	/* initialize page directory as 0 */
 	for(i=0 ; i<4095 ; i++) {
@@ -109,7 +109,7 @@ void PageTable::handle_fault()
 
 }
 
-void PageTable::free_page(unsigned long pageAddr)
+void PageTable::free_page(unsigned int pageAddr)
 {
 
 }

@@ -11,14 +11,14 @@ class PageTable {
 		static unsigned int    paging_enabled;     /* is paging turned on (i.e. are addresses logical)? */
 		static FramePool     *kernel_mem_pool;    /* Frame pool for the kernel memory */
 		static FramePool     *process_mem_pool;   /* Frame pool for the process memory */
-		static unsigned long   shared_size;        /* size of shared address space */
+		static unsigned int shared_size;        /* size of shared address space */
 
 		/* data for current page table */
-		unsigned long        *page_directory;     /* where is page directory located? */
+		unsigned int *page_directory;     /* where is page directory located? */
 		/* static page_table for shared memory(4MB kernel) */
-		static unsigned long 		*k_page_table;
+		static unsigned int *k_page_table;
 		/* kernel task should have common page directory */
-		static unsigned long		*k_page_dir;
+		static unsigned int *k_page_dir;
 
 	public:
 		static const unsigned int PAGE_SIZE        ;//= Machine::PAGE_SIZE; /* in bytes */
@@ -27,7 +27,7 @@ class PageTable {
 		/* Set the global parameters for the paging subsystem. */
 		static void init_paging(FramePool * _kernel_mem_pool,
 				FramePool * _process_mem_pool,
-				const unsigned long _shared_size);
+				const unsigned int _shared_size);
 		/* Initializes a page table with a given location for the directory and the
 		   page table proper.
 		   The PageTable object still needs to be stored somewhere! Probably it is best
@@ -38,7 +38,7 @@ class PageTable {
 
 		PageTable(PG_TYPE pagetype);
 
-		unsigned long *getpd() {
+		unsigned int *getpd() {
 			return page_directory;
 		}
 		
@@ -58,7 +58,7 @@ class PageTable {
 		static void handle_fault();
 
 		/* Release the frame associated with the page _page_no */
-		void free_page(unsigned long _page_no);
+		void free_page(unsigned int _page_no);
 };
 #endif
 
