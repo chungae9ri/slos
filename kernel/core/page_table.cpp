@@ -16,6 +16,8 @@ unsigned int PageTable::shared_size;
 PageTable * PageTable::current_page_table;
 unsigned int *PageTable::k_page_table;
 unsigned int *PageTable::k_page_dir;
+int PageTable::VMcnt;
+VMPool *PageTable::pVMref[10];
 
 
 void PageTable::init_paging(FramePool *_kernel_mem_pool,
@@ -27,6 +29,7 @@ void PageTable::init_paging(FramePool *_kernel_mem_pool,
 	process_mem_pool = _process_mem_pool;
 	shared_size = _shared_size;
 	k_page_dir = 0;
+	VMcnt = 0;
 }
 
 /* small page translation is used */
@@ -126,6 +129,15 @@ void PageTable::handle_fault()
 	/* read ttb */
 	asm volatile ("mrc p15, 0, %0, c2, c0, 0" : "=r" (pda) ::);
 
+	/* check fault address is in valid VM region */
+	for(i=0 ; i<VMcnt ; i++) {
+		if(pVMref[i]->is_legitimate((unsigned int)pfa)) break;
+	}
+
+	/* the fault address is not in valid VM region */
+	if(VMcnt != 0 && i == VMcnt) {
+		return;
+	}
 	/* entry for 1st level descriptor */
 	pde = (unsigned int *)((0xffffc000 & *pda) | ((0xfff00000 & *pfa)>>18));
 
@@ -143,6 +155,11 @@ void PageTable::handle_fault()
 	pte = (unsigned int *)((*pde & 0xfffffc00) | ((0x000ff000 & *pfa)>>22));
 	/* set the value of 2nd level descriptor */
 	*pte = ((unsigned int)frame_addr | 0x55E);
+}
+
+void PageTable::register_vmpool(VMPool *_pool)
+{
+	pVMref[VMcnt++] = _pool;
 }
 
 void PageTable::free_page(unsigned int pageAddr)

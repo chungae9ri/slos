@@ -13,6 +13,7 @@ extern "C" {
 	#include <loader.h>
 	#include <frame_pool.h>
 	#include <page_table.h>
+	#include <vm_pool.h>
 
 	extern void enable_interrupt();
 	extern void disable_interrupt();
@@ -80,6 +81,9 @@ extern "C" {
 		PageTable::enable_paging();
 
 		pkernel_pt = &kernel_pt;
+
+		VMPool kernel_heap(512 MB, 12 MB, &kernel_mem_pool, &kernel_pt);
+		/*VMPool proc_heap(1 GB, 256 MB, &process_mem_pool, &);*/
 
 		platform_init();
 		target_early_init();
