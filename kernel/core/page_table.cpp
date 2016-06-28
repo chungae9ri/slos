@@ -162,14 +162,14 @@ void PageTable::handle_fault()
 		page_table = (unsigned int *)FRAMETOPHYADDR(process_mem_pool->get_frame());
 		for(i=0 ; i<4 ; i++) {
 			/* set the value of 1st level descriptor */
-			*pde = (unsigned int)((unsigned int)page_table + (256*i)<<2 | 0x11); 
+			pde[i] = (unsigned int)((unsigned int)page_table + (256*i)<<2 | 0x11); 
 		}
 	}
 
 	frame_addr = (unsigned int *)FRAMETOPHYADDR(process_mem_pool->get_frame());
 
 	/* entry for 2nd level descriptor */
-	pte = (unsigned int *)((*pde & 0xfffffc00) | ((0x000ff000 & *pfa)>>22));
+	pte = (unsigned int *)((*pde & 0xfffffc00) | ((0x000ff000 & *pfa)>>10));
 	/* set the value of 2nd level descriptor */
 	*pte = ((unsigned int)frame_addr | 0x55E);
 }
@@ -188,7 +188,7 @@ void PageTable::free_page(unsigned int pageAddr)
 	asm volatile ("mrc p15, 0, %0, c2, c0, 0" : "=r" (pda) ::);
 	/* get the 1st level descriptor */
 	pde = (unsigned int *)((*pda & 0xfffc0000) | ((pageAddr & 0xfff00000)>>18));
-	pte = (unsigned int *)((*pde & 0xfffffc00) | ((pageAddr & 0x000ff000)>>22));
+	pte = (unsigned int *)((*pde & 0xfffffc00) | ((pageAddr & 0x000ff000)>>10));
 
 	/* physical address of frame */
 	frame_addr = (unsigned int *)(*pte);
