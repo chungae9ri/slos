@@ -64,7 +64,7 @@ extern "C" {
 		mem_init();
 
 		/* initialize frame pools */
-		FramePool kernel_mem_pool(KERNEL_POOL_START_FRAME, KERNEL_POOL_FRAME_NUM, 0);
+		FramePool kernel_mem_pool(KERNEL_HEAP_START_FRAME, KERNEL_HEAP_FRAME_NUM, 0);
 		unsigned long process_mem_pool_info_frame = kernel_mem_pool.get_frame();
 		FramePool process_mem_pool(PROCESS_HEAP_START_FRAME,
 				PROCESS_HEAP_FRAME_NUM,

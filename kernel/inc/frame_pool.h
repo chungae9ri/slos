@@ -13,7 +13,7 @@
 #define MB * (0x1 << 20)
 #define KB * (0x1 << 10)
 #define KERNEL_POOL_START_FRAME ((0 KB) / (4 KB))
-#define KERNEL_POOL_FRAME_NUM ((16 MB) / (4 KB)) - KERNEL_POOL_START_FRAME
+#define KERNEL_POOL_FRAME_NUM ((16 MB) / (4 KB)) 
 #define KERNEL_HEAP_START_FRAME ((4 MB) / (4 KB))
 #define KERNEL_HEAP_FRAME_NUM ((12 MB) / (4 KB))
 #define PROCESS_HEAP_START_FRAME ((16 MB) / (4 KB))

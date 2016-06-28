@@ -37,14 +37,25 @@ PageTable::PageTable(PG_TYPE pagetype)
 {
 	int i, j;
 	
+	/* all kernel tasks share the same page directory */
 	if(pagetype == PG_TABLE_KERN && k_page_dir)
 		return;
 
-	/* page directory is located in process mem pool */
+	/* page directory is located in process mem pool 
+	 * 16KB for 4096 entry(16KB = 4K * 4Byte) is needed
+	 */
 	if(pagetype == PG_TABLE_USER) {
 		page_directory = (unsigned int *)FRAMETOPHYADDR(process_mem_pool->get_frame());
+		/* alloc 3 more contiguous page frames */
+		for(i=0 ; i<3 ; i++) {
+			FRAMETOPHYADDR(process_mem_pool->get_frame());
+		}
 	} else {
 		page_directory = (unsigned int *)FRAMETOPHYADDR(kernel_mem_pool->get_frame());
+		/* alloc 3 more contiguous page frames */
+		for(i=0 ; i<3 ; i++) {
+			FRAMETOPHYADDR(kernel_mem_pool->get_frame());
+		}
 	}
 	page_directory = (unsigned int *)((unsigned int)page_directory & 0xffffc000);
 
