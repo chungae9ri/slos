@@ -66,7 +66,13 @@ PageTable::PageTable(PG_TYPE pagetype)
 
 	if(k_page_table == 0) {
 		/* 16MB(=4MB *4) directly mapped memory
-		 * 4MB ~ 16MB kernel heap
+		 * 0 ~ 4MB : kernel text, data, stack + 
+		 * usr task text, data, stack + 
+		 * ramdisk img
+		 * 4MB ~ 16MB : kernel heap
+		 */
+		/* to address 16MB kernel area(code+heap), 
+		 * 4 page frames are needed 
 		 */
 		for(i=0 ; i<4 ; i++) {
 			k_page_table = (unsigned int *)FRAMETOPHYADDR(kernel_mem_pool->get_frame());
@@ -93,9 +99,9 @@ PageTable::PageTable(PG_TYPE pagetype)
 	 * : 01 only SVC mode can r/w, user mode can't access 
 	 */
 
-	/* 16MB(4 * 4KB page * 1024 entry) direct mapped memory */
+	/* initialize 16MB(4 * 4KB page * 1024 entry) direct mapped memory */
 	for(i=0 ; i<4 ; i++) {
-		k_page_table = (unsigned int *)(page_directory[i*4]);
+		k_page_table = (unsigned int *)(page_directory[i*4] & 0xfffffc00);
 		for(j=0 ; j<1024 ; j++) {
 			k_page_table[j] = (j*4*(0x1<<10)) | 0x55E;
 		}
