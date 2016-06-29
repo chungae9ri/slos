@@ -450,6 +450,7 @@ struct task_struct *do_forkyi(char *name, task_entry fn, int idx, unsigned int *
 }
 void schedule(void *arg)
 {
+	int r0 = 0;
 	struct task_struct *next;
 	struct sched_entity *se;
 
@@ -465,6 +466,8 @@ void schedule(void *arg)
 	if (current==next) return;
 
 	switch_context(current, next);
+	/* flush TLB */
+	asm ("mcr p15, 0, %0, c8, c7, 0" : : "r" (r0) :);
 	current = next;
 }
 

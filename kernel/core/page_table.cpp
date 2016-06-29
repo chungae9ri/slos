@@ -114,10 +114,13 @@ PageTable::PageTable(PG_TYPE pagetype)
 
 void PageTable::load()
 {
+	int r0 = 0;
 	current_page_table = this;
 
 	/* write the translation table base */
 	asm ("mcr p15, 0, %0, c2, c0, 0" : : "r" (current_page_table->page_directory) :);
+	/* flush TLB */
+	asm ("mcr p15, 0, %0, c8, c7, 0" : : "r" (r0) :);
 }
 
 void PageTable::enable_paging()

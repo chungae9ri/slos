@@ -82,7 +82,7 @@ extern "C" {
 
 		pkernel_pt = &kernel_pt;
 
-		VMPool kernel_heap(512 MB, 12 MB, &kernel_mem_pool, &kernel_pt);
+		VMPool kernel_heap(128 MB, 32 MB, &kernel_mem_pool, &kernel_pt);
 		/*VMPool proc_heap(1 GB, 256 MB, &process_mem_pool, &);*/
 
 		platform_init();
