@@ -23,7 +23,8 @@ extern "C" {
 	extern struct task_struct *current;
 	extern uint32_t show_stat;
 
-	PageTable *pkernel_pt;
+	VMPool *pvm_kernel;
+	VMPool *pvm_user;
 
 	void cpuidle(void) {
 		while(1) {
@@ -80,10 +81,12 @@ extern "C" {
 		kernel_pt.load();
 		PageTable::enable_paging();
 
-		pkernel_pt = &kernel_pt;
+		/*pkernel_pt = &kernel_pt;*/
 
-		VMPool kernel_heap(128 MB, 32 MB, &kernel_mem_pool, &kernel_pt);
-		/*VMPool proc_heap(1 GB, 256 MB, &process_mem_pool, &);*/
+		VMPool kernel_heap(128 MB, 12 MB, &kernel_mem_pool, &kernel_pt);
+		VMPool proc_heap(1 GB, 112 MB, &process_mem_pool, &kernel_pt);
+		pvm_kernel = &kernel_heap;
+		pvm_user = &proc_heap;
 
 		platform_init();
 		target_early_init();

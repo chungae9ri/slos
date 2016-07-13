@@ -1,7 +1,7 @@
 #include <vm_pool.h>
 #include <page_table.h>
 
-#define PAGE_SIZE	(4*1024)
+#define PAGE_SIZE	(4 * 1024)
 
 VMPool::VMPool(unsigned int _base_address,
 		unsigned int _size,

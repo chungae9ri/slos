@@ -51,7 +51,7 @@ struct task_context_struct {
 	uint32_t sp;
 	uint32_t r[13];
 	uint32_t spsr;
-	uint32_t tlb; /* translation base address */
+	uint32_t ttb; /* translation base address */
 };
 
 struct task_struct {
@@ -83,6 +83,7 @@ void init_shell(unsigned int *ppd);
 void update_se();
 void set_priority(struct task_struct *pt, uint32_t pri);
 void put_to_sleep(char *dur, int idx);
+
 
 void func1(void);
 void func2(void);

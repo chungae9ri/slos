@@ -3,6 +3,7 @@
 #include <task.h>
 #include <stdlib.h>
 #include <defs.h>
+#include <smm.h>
 
 struct clock_source_device csd;
 struct timer_root *ptroot = NULL;
@@ -12,7 +13,7 @@ extern struct task_struct *current;
 
 void timertree_init(void)
 {
-	ptroot = (struct timer_root *) malloc(sizeof(struct timer_root));
+	ptroot = (struct timer_root *) kmalloc(sizeof(struct timer_root));
 	ptroot->root = RB_ROOT;
 }
 
@@ -76,7 +77,7 @@ void sched_timer_handler(void *arg)
 
 void create_oneshot_timer(timer_handler oneshot_timer_handler, uint32_t msec, void *arg)
 {
-	struct timer_struct *oneshot_timer = (struct timer_struct *)malloc(sizeof(struct timer_struct));
+	struct timer_struct *oneshot_timer = (struct timer_struct *)kmalloc(sizeof(struct timer_struct));
 	oneshot_timer->handler = oneshot_timer_handler;
 	oneshot_timer->type = ONESHOT_TIMER;
 	oneshot_timer->tc = get_ticks_per_sec()/1000 * msec;
@@ -87,7 +88,7 @@ void create_oneshot_timer(timer_handler oneshot_timer_handler, uint32_t msec, vo
 
 void sched_timer_init(void)
 {
-	sched_timer = (struct timer_struct *)malloc(sizeof(struct timer_struct));
+	sched_timer = (struct timer_struct *)kmalloc(sizeof(struct timer_struct));
 	sched_timer->handler = sched_timer_handler;
 	sched_timer->type = SCHED_TIMER;
 	/* 10msec sched timer tick */

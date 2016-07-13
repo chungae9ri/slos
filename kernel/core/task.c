@@ -12,6 +12,7 @@
 #include <loader.h>
 #include <ktimer.h>
 #include <msgQ.h>
+#include <smm.h>
 
 #define TIMER_TEST
 #define WAIT_Q_TEST
@@ -250,7 +251,7 @@ void dequeue_se_to_waitq(struct cfs_rq *rq, struct sched_entity *se, bool update
 
 void init_cfs_rq(void)
 {
-	runq = (struct cfs_rq *)malloc(sizeof(struct cfs_rq));
+	runq = (struct cfs_rq *)kmalloc(sizeof(struct cfs_rq));
 	runq->root = RB_ROOT;
 	runq->priority_sum = 0;
 }
@@ -371,7 +372,7 @@ void init_rq(struct task_struct *pt)
 
 void init_idletask(unsigned int *ppd)
 {
-	struct task_struct *pt = (struct task_struct *)malloc(sizeof(struct task_struct));
+	struct task_struct *pt = (struct task_struct *)kmalloc(sizeof(struct task_struct));
 	struct task_struct *temp;
 	sprintf(pt->name,"idle task");
 	pt->task.next = NULL;
@@ -425,10 +426,10 @@ struct task_struct *do_forkyi(char *name, task_entry fn, int idx, unsigned int *
 	/* idx >=0 for user task */
 	if (idx >= 0) {
 		if(upt[idx] == NULL) {
-			upt[idx] = (struct task_struct *)malloc(sizeof(struct task_struct));
+			upt[idx] = (struct task_struct *)kmalloc(sizeof(struct task_struct));
 		}
 		pt = upt[idx];
-	} else pt = (struct task_struct *)malloc(sizeof(struct task_struct));
+	} else pt = (struct task_struct *)kmalloc(sizeof(struct task_struct));
 
 	sprintf(pt->name,name);
 	pt->entry = fn;
@@ -438,7 +439,7 @@ struct task_struct *do_forkyi(char *name, task_entry fn, int idx, unsigned int *
 	pt->ct.lr = (uint32_t)pt->entry;
 	pt->ct.pc = (uint32_t)pt->entry;
 	pt->ct.spsr = SVCSPSR;
-	pt->ct.tlb = (unsigned long)ppd;
+	pt->ct.ttb = (unsigned long)ppd;
 	/* get the last task from task list and add this task to the end of the task list*/
 	last->task.next = &(pt->task);
 	pt->task.prev = &(last->task);
