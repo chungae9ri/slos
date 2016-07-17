@@ -4,15 +4,14 @@
 extern int __heap_start__;
 extern int __heap_end__;
 
-extern VMPool *pvm_kernel;
-extern VMPool *pvm_user;
+extern struct vmpool *pvm_kernel;
+extern struct vmpool *pvm_user;
 
 /* Simple memory management routine.
    1. without _sbrk, data abort happens while running. libc library might use this.
    2. fix linking error. 
  */
-extern "C" {
-void *_sbrk(void *reent, size_t incr)
+void *_sbrk(void *reent, unsigned int incr)
 {
 #if 0
 	static unsigned char *heap = NULL;
@@ -30,21 +29,20 @@ void *_sbrk(void *reent, size_t incr)
 	heap += incr;
 	return (void *) prev_heap;
 #else
-	return (void *)(pvm_user->allocate(incr));
+	return (void *)(allocate(pvm_user, incr));
 #endif
 }
 
 void *kmalloc(unsigned int size)
 {
-	return (void *)(pvm_kernel->allocate(size));
+	return (void *)(allocate(pvm_kernel, size));
 }
 
 void kfree(unsigned int free_addr)
 {
-	pvm_kernel->release(free_addr);
+	release(pvm_kernel, free_addr);
 }
 void free(void *free_addr)
 {
-	pvm_user->release((unsigned int)free_addr);
-}
+	release(pvm_user, (unsigned int)free_addr);
 }

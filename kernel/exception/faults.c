@@ -1,4 +1,3 @@
-extern "C" {
 #include <mem_layout.h>
 #include <debug.h>
 #include <page_table.h>
@@ -61,9 +60,8 @@ void platform_abort_handler(void)
 	if(dfsr & 0x07) {
 		print_msg("page fault\r\n");
 		/* to do : page fault handler should be here */
-		PageTable::handle_fault();
+		handle_fault();
 	} else {
 		abort();
 	}
-}
 }
