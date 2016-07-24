@@ -43,12 +43,12 @@ void init_pagetable(struct pagetable *ppagetable, PG_TYPE pagetype)
 		}
 	} else {
 		ppagetable->page_directory = (unsigned int *)FRAMETOPHYADDR(get_frame(ppagetable->kernel_framepool));
-		/* alloc 3 more contiguous page frames */
+		/* alloc 3 more contiguous page frames for page_directory : 4096 entry */
 		for(i=0 ; i<3 ; i++) {
 			FRAMETOPHYADDR(get_frame(ppagetable->kernel_framepool));
 		}
 	}
-	ppagetable->page_directory = (unsigned int *)((unsigned int)ppagetable->page_directory & 0xffffc000);
+	ppagetable->page_directory = (unsigned int *)((unsigned int)ppagetable->page_directory & 0xfffff000);
 
 	/* initialize page directory as 0 */
 	for(i=0 ; i<4095 ; i++) {
@@ -76,7 +76,7 @@ void init_pagetable(struct pagetable *ppagetable, PG_TYPE pagetype)
 				   Bit[8:5] = 0000 : Domain 0
 				   Bit[9] = 0 : don't care
 				 */
-				ppagetable->page_directory[i*4+j] = ((unsigned int)ppagetable->k_page_table+(256*j)<<2 | 0x11);
+				ppagetable->page_directory[i*4+j] = ((unsigned int)(ppagetable->k_page_table)+((256*j)<<2) | 0x11);
 			}
 		}
 	}
@@ -94,7 +94,7 @@ void init_pagetable(struct pagetable *ppagetable, PG_TYPE pagetype)
 	for(i=0 ; i<4 ; i++) {
 		ppagetable->k_page_table = (unsigned int *)(ppagetable->page_directory[i*4] & 0xfffffc00);
 		for(j=0 ; j<1024 ; j++) {
-			ppagetable->k_page_table[j] = (j*4*(0x1<<10)) | 0x55E;
+			ppagetable->k_page_table[j] = (i*(0x1<<22) + j*(0x1<<12)) | 0x55E;
 		}
 	}
 

@@ -1,7 +1,5 @@
 #include <frame_pool.h>
 
-
-/* constructor of FramePool */
 void init_framepool(struct framepool *pframe,
 		     unsigned long _base_frame_no, 
 		     unsigned long _nframes, 
