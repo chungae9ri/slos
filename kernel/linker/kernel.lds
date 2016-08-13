@@ -17,10 +17,12 @@ SECTIONS
 	.bss : { 
 		*(.bss); 
 	}
+	/*
 	.heap : {
 		__heap_start__ = KERNEL_HEAP_START;
 		*(.heap)
 		. = __heap_start__ + KERNEL_HEAP_SIZE + USER_HEAP_SIZE;
 		__heap_end__ = .;
 	}
+	*/
 }

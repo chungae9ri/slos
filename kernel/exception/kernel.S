@@ -60,6 +60,7 @@ reset_handler:
 	 /*set VBAR with 0x8000*/
 	ldr	r0, =0x8000
 	mcr	p15,0,r0,c12,c0,0 
+
 	 /*change to supervisor*/
 	@msr	CPSR_c, #MODE_SVC:OR:I_Bit:OR:F_Bit 
 	msr	CPSR_c, #MODE_SVC | I_BIT | F_BIT
@@ -133,6 +134,11 @@ prefetch_abort_handler:
 	b	.
 ;
 data_abort_handler:
+	mrc	p15, 0, r0, c5, c0, 0 /* read dfsr, test code */
+	mrc	p15, 0, r1, c5, c1, 0 /* read ifsr, test code */
+	mrc	p15, 0, r2, c6, c0, 0 /* read fault address, test code */
+	mrc 	p15, 0, r3, c2, c0, 0 /* read TTBR0, test code */
+	mrc 	p15, 0, r4, c2, c0, 1 /* read TTBR1, test code */
 	stmfd	sp!, {r0-r12, r14}
 	sub	sp, sp,#12
 	mov 	r0, sp

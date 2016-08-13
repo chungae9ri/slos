@@ -4,6 +4,21 @@
 #include <loader.h>
 #include <task.h>
 
+#define ALIGNMENT_FLT 		0x1
+#define BUS_ERR_TRN_LVL1		0xc
+#define BUS_ERR_TRN_LVL2		0xe
+#define TRANSLATION_FLT_SEC		0x5
+#define TRANSLATION_FLT_PG		0x7
+#define DOMAIN_FLT_SEC		0x9
+#define DOMAIN_FLT_PG		0xb
+#define PERM_FLT_SEC		0xd
+#define PERM_FLT_PG		0xf
+#define BUS_ERR_LF_SEC		0x4
+#define BUS_ERR_LF_PG		0x6
+#define BUS_ERR_OTH_SEC		0x8
+#define BUS_ERR_OTH_PG		0xa
+
+
 void platform_undefined_handler(void)
 {
 	print_msg("undefined cmd exception!!\r\n");
@@ -57,7 +72,7 @@ void platform_abort_handler(void)
 	asm volatile ( "mrc p15, 0, %0, c5, c0, 0" : "=r" (dfsr) ::);
 
 	/* page fault handler should be here */
-	if(dfsr & 0x07) {
+	if((dfsr & TRANSLATION_FLT_PG) == TRANSLATION_FLT_PG) {
 		print_msg("page fault\r\n");
 		/* to do : page fault handler should be here */
 		handle_fault();

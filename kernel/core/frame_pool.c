@@ -93,11 +93,19 @@ void mark_inaccessible(struct framepool *pframe,
 	/* mark the inaccessilbe region */
 	pframe->inacc_baseFrameNo = _base_frame_no;
 	pframe->inacc_nFrames = _nframes;
-	pBitmapEntry = pframe->pBitmap + (int)((pframe->inacc_baseFrameNo-pframe->baseFrameNo)/8);
+	pBitmapEntry = pframe->pBitmap + (int)((_base_frame_no)/8);
 
 	/* make inaccessible region as already allocated */
-	for(i=0 ; i<(int)(pframe->inacc_nFrames/8) ; i++) {
+	for (i=0 ; i<(int)(_nframes/8) ; i++) {
 		*pBitmapEntry++ = 0xFF;
+	}
+
+	if ((i = _nframes%8) != 0) {
+		i--;
+		while (i >= 0) {
+			*pBitmapEntry |= (0x1 << i);
+			i--;
+		}
 	}
 }
 
@@ -111,13 +119,15 @@ void release_frame(struct framepool *pframe,
 	entryOffset = (unsigned long)((_frame_no - pframe->baseFrameNo) / 8);
 	remainder = _frame_no % 8;
 	/* frame for kernel Bitmap(meta data) should not be freed. */
-	if((unsigned long)pframe->pBitmap == FRAMETOPHYADDR(_frame_no))
+	if ((unsigned long)pframe->pBitmap == FRAMETOPHYADDR(_frame_no))
 		return;
 	/* inaccessible region should not be freed */
-	if(_frame_no >= pframe->inacc_baseFrameNo && _frame_no < pframe->inacc_baseFrameNo + pframe->inacc_nFrames)
+	if (_frame_no >= pframe->inacc_baseFrameNo && 
+  	    _frame_no < pframe->inacc_baseFrameNo + pframe->inacc_nFrames)
 		return;
 	/* region out of bound should not be freed */
-	if(_frame_no >= pframe->baseFrameNo + pframe->nFrames || _frame_no < pframe->baseFrameNo)
+	if (_frame_no >= pframe->baseFrameNo + pframe->nFrames || 
+	    _frame_no < pframe->baseFrameNo)
 		return;
 
 	pBitmapEntry = pframe->pBitmap;
