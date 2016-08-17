@@ -9,7 +9,7 @@
 #define MASK_DCACHE		0x00000004
 #define MASK_ICACHE		0x00001000
 
-#define MMIO_START_ADDR		0xF8000000 /* 128MB */
+#define MMIO_START_ADDR		0xF8000000 /* size : 128MB */
 
 static struct pagetable *pcurrentpgt;
 
@@ -68,7 +68,7 @@ void init_pagetable(struct pagetable *ppagetable, PG_TYPE pagetype)
 		 */			
 		pcur = (unsigned int *)PGT_START_BASE;
 
-		for(i=0 ; i<4 ; i++) {
+		for(i=0 ; i<2 ; i++) { /* 8MB kernel text, data,stack, kernel page table are directly mapped */
 			for(j=0 ; j<4 ; j++) {
 				/* 0x11 is
 				   Bit[1:0] = 01 : 00:fualt, 01:page, 10:section, 11 : reserved
