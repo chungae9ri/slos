@@ -72,7 +72,8 @@ void platform_abort_handler(void)
 	asm volatile ( "mrc p15, 0, %0, c5, c0, 0" : "=r" (dfsr) ::);
 
 	/* page fault handler should be here */
-	if((dfsr & TRANSLATION_FLT_PG) == TRANSLATION_FLT_PG) {
+	if((dfsr & TRANSLATION_FLT_PG) == TRANSLATION_FLT_PG ||
+	   (dfsr & TRANSLATION_FLT_SEC) == TRANSLATION_FLT_SEC) {
 		print_msg("page fault\r\n");
 		/* to do : page fault handler should be here */
 		handle_fault();

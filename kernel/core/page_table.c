@@ -67,8 +67,8 @@ void init_pagetable(struct pagetable *ppagetable, PG_TYPE pagetype)
 		 * 4MB ~ 16MB : kernel heap
 		 */			
 		pcur = (unsigned int *)PGT_START_BASE;
-
-		for(i=0 ; i<2 ; i++) { /* 8MB kernel text, data,stack, kernel page table are directly mapped */
+		/* 8MB kernel text, data,stack, kernel page table are directly premapped */
+		for(i=0 ; i<2 ; i++) { 
 			for(j=0 ; j<4 ; j++) {
 				/* 0x11 is
 				   Bit[1:0] = 01 : 00:fualt, 01:page, 10:section, 11 : reserved
@@ -103,8 +103,9 @@ void init_pagetable(struct pagetable *ppagetable, PG_TYPE pagetype)
 		 */
 
 		pcur = (unsigned int *)(ppagetable->page_directory[0] & 0xfffffc00);
-		/* initialize 16MB(4 * 1024 entry * 4KB) direct mapped memory */
-		for(i=0 ; i<(int)(16/4) ; i++) {
+
+		/* initialize 8MB(2 * 1024 entry * 4KB) direct mapped memory */
+		for(i=0 ; i<(int)(8/4) ; i++) { /* 8MB direct pre-mapped memory */
 			/*pcur = (unsigned int *)(ppagetable->page_directory[i*4] & 0xfffffc00);*/
 			for(j=0 ; j<1024 ; j++) {
 				pcur[i*1024 + j] = (i*(0x1<<22) + j*(0x1<<12)) | 0x002;
@@ -191,50 +192,6 @@ void enable_paging()
 	/*while(i == 1) ;*/
 	/*i = 0;*/
 }
-#if 0
-void EnableMMU (void)
-{
-	static volatile __attribute__ ((aligned (0x4000))) unsigned PageTable[4096];
-
-	unsigned base;
-	for (base = 0; base < 512; base++)
-	{
-		// outer and inner write back, write allocate, shareable
-		PageTable[base] = base << 20 | 0x1140E;
-	}
-	for (; base < 4096; base++)
-	{
-		// shared device, never execute
-		PageTable[base] = base << 20 | 0x10416;
-	}
-
-	// restrict cache size to 16K (no page coloring)
-	unsigned auxctrl;
-	asm volatile ("mrc p15, 0, %0, c1, c0,  1" : "=r" (auxctrl));
-	auxctrl |= 1 << 6;
-	asm volatile ("mcr p15, 0, %0, c1, c0,  1" :: "r" (auxctrl));
-
-	// set domain 0 to client
-	asm volatile ("mcr p15, 0, %0, c3, c0, 0" :: "r" (1));
-
-	// always use TTBR0
-	asm volatile ("mcr p15, 0, %0, c2, c0, 2" :: "r" (0));
-
-	// set TTBR0 (page table walk inner cacheable, outer non-cacheable, shareable memory)
-	asm volatile ("mcr p15, 0, %0, c2, c0, 0" :: "r" (3 | (unsigned) &PageTable));
-
-	// invalidate data cache and flush prefetch buffer
-	asm volatile ("mcr p15, 0, %0, c7, c5,  4" :: "r" (0) : "memory");
-	asm volatile ("mcr p15, 0, %0, c7, c6,  0" :: "r" (0) : "memory");
-
-	// enable MMU, L1 cache and instruction cache, L2 cache, write buffer,
-	//   branch prediction and extended page table on
-	unsigned mode;
-	asm volatile ("mrc p15,0,%0,c1,c0,0" : "=r" (mode));
-	mode |= 0x0480180D;
-	asm volatile ("mcr p15,0,%0,c1,c0,0" :: "r" (mode) : "memory");
-}
-#endif
 
 void handle_fault()
 {

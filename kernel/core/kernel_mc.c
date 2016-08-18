@@ -88,7 +88,7 @@ void kernel_main_ctl(void)
 
 	/*pkernel_pt = &kernel_pt;*/
 
-	init_vmpool(&kheap, &pgt, 4 MB, 12 MB);
+	init_vmpool(&kheap, &pgt, 8 MB, 12 MB);
 	/*init_vmpool(&pheap, &pgt, 1 GB, 112 MB);*/
 
 	pvm_kernel = &kheap;

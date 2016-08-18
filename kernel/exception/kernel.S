@@ -134,18 +134,20 @@ prefetch_abort_handler:
 	b	.
 ;
 data_abort_handler:
+#if 0
 	mrc	p15, 0, r0, c5, c0, 0 /* read dfsr, test code */
 	mrc	p15, 0, r1, c5, c1, 0 /* read ifsr, test code */
 	mrc	p15, 0, r2, c6, c0, 0 /* read fault address, test code */
 	mrc 	p15, 0, r3, c2, c0, 0 /* read TTBR0, test code */
 	mrc 	p15, 0, r4, c2, c0, 1 /* read TTBR1, test code */
+#endif
+	msr 	cpsr_c, #MODE_SVC | I_BIT | F_BIT
 	stmfd	sp!, {r0-r12, r14}
-	sub	sp, sp,#12
-	mov 	r0, sp
-	mrs	r1, spsr
-	stmia	r0, {r1, r13-r14}^
 	b	platform_abort_handler
-	b	.
+	mrs	r0, CPSR
+	bic	r1, r0, #I_BIT|F_BIT
+	msr	cpsr_c, r1
+	ldmfd	sp!, {r0-r12, pc}^	
 ;
 reserved:
 	b	.
