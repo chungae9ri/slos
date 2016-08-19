@@ -75,12 +75,14 @@ void kernel_main_ctl(void)
 	/* initialize frame pools */
 	init_framepool(&kfp, KERNEL_START_FRAME, 
 			KERNEL_FRAME_NUM, 0);
-	mark_inaccessible(&kfp, KERNEL_INACC_FRAME, KERNEL_INACC_FRAME_NUM);
 	unsigned long process_mem_pool_info_frame = get_frame(&kfp);
 
 	init_framepool(&pfp,PROCESS_HEAP_START_FRAME,
 			PROCESS_HEAP_FRAME_NUM,
 			process_mem_pool_info_frame);
+	/* donot change the order */
+	mark_inaccessible(&kfp, KERNEL_INACC_FRAME, KERNEL_INACC_FRAME_NUM);
+
 	init_pageregion(&pgt, &kfp, &pfp, 0 MB);
 	init_pagetable(&pgt, PG_TABLE_KERN);
 	load_pagetable(&pgt);

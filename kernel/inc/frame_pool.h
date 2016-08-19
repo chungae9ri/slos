@@ -14,9 +14,9 @@
 #define KB * (0x1 << 10)
 #define KERNEL_START_FRAME ((0 KB) / (4 KB))
 #define KERNEL_FRAME_NUM ((16 MB) / (4 KB)) 
-#define KERNEL_INACC_FRAME ((16 KB) / (4 KB))
-#define KERNEL_INACC_FRAME_NUM ((8 MB - 16 KB) / (4 KB))
-#define KERNEL_HEAP_START_FRAME ((4 MB) / (4 KB))
+#define KERNEL_INACC_FRAME ((0 KB) / (4 KB))
+#define KERNEL_INACC_FRAME_NUM ((8 MB) / (4 KB))
+#define KERNEL_HEAP_START_FRAME ((8 MB) / (4 KB))
 #define KERNEL_HEAP_FRAME_NUM ((12 MB) / (4 KB))
 #define PROCESS_HEAP_START_FRAME ((16 MB) / (4 KB))
 #define PROCESS_HEAP_FRAME_NUM ((128 MB) / (4 KB)) - PROCESS_HEAP_START_FRAME

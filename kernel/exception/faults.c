@@ -67,15 +67,17 @@ void abort()
 void platform_abort_handler(void)
 {
 	/* here is the routine to check the page fault */
-	unsigned int dfsr, dfar;
+	unsigned int dfsr;
+	unsigned int fault_type;
 	/* read DFSR */
 	asm volatile ( "mrc p15, 0, %0, c5, c0, 0" : "=r" (dfsr) ::);
 
-	/* page fault handler should be here */
-	if((dfsr & TRANSLATION_FLT_PG) == TRANSLATION_FLT_PG ||
-	   (dfsr & TRANSLATION_FLT_SEC) == TRANSLATION_FLT_SEC) {
+	/* section/page fault handler */
+	if ((dfsr & TRANSLATION_FLT_PG) == TRANSLATION_FLT_PG) {
+		print_msg("section fault \n");
+		handle_fault();
+	} else if ((dfsr & TRANSLATION_FLT_SEC) == TRANSLATION_FLT_SEC) {
 		print_msg("page fault\r\n");
-		/* to do : page fault handler should be here */
 		handle_fault();
 	} else {
 		abort();

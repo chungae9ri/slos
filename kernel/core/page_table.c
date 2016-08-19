@@ -195,15 +195,15 @@ void enable_paging()
 
 void handle_fault()
 {
-	int i;
 	unsigned int *pda, *pta;
 	unsigned int *pfa;
 	unsigned int *pde, *pte;
 	unsigned int *page_table, *frame_addr;
+	unsigned int *pcur;
 
 	/* read DFAR */
 	asm volatile ("mrc p15, 0, %0, c6, c0, 0" : "=r" (pfa) ::);
-	/* read ttb */
+	/* read ttb0 */
 	asm volatile ("mrc p15, 0, %0, c2, c0, 0" : "=r" (pda) ::);
 #if 0
 	/* check fault address is in valid VM region */
@@ -217,22 +217,27 @@ void handle_fault()
 	}
 #endif
 	/* entry for 1st level descriptor */
-	pde = (unsigned int *)((0xffffc000 & *pda) | ((0xfff00000 & *pfa)>>18));
+	pde = (unsigned int *)((0xffffc000 & (unsigned int)pda) | ((0xfff00000 & (unsigned int)pfa)>>18));
 
-	if(*pde == 0x0) {
-		page_table = (unsigned int *)FRAMETOPHYADDR(get_frame(pcurrentpgt->process_framepool));
-		for(i=0 ; i<4 ; i++) {
-			/* set the value of 1st level descriptor */
-			pde[i] = (unsigned int)((unsigned int)page_table + (256*i)<<2 | 0x11); 
+	/* section fault */
+	if (*pde == 0x0) {
+		/* page direcoty/table entry in kernel region(<16MB)
+		 * are already alloced 
+		 * kernel page directory entry : 0x3f8000~0x3fc000
+		 * kernel page table entry : 0x400000 ~0x800000
+		 */
+		if ((unsigned int)pfa < 0x1000000) {
+			*pde = PGT_START_BASE + ((unsigned int)pfa>>10); /* 256 entry * 4B */
 		}
 	}
 
-	frame_addr = (unsigned int *)FRAMETOPHYADDR(get_frame(pcurrentpgt->process_framepool));
+	/* kernel heap fault only */
+	frame_addr = (unsigned int *)FRAMETOPHYADDR(get_frame(pcurrentpgt->kernel_framepool));
 
 	/* entry for 2nd level descriptor */
-	pte = (unsigned int *)((*pde & 0xfffffc00) | ((0x000ff000 & *pfa)>>10));
+	pte = (unsigned int *)((*pde & 0xfffffc00) | ((0x000ff000 & (unsigned int)pfa)>>10));
 	/* set the value of 2nd level descriptor */
-	*pte = ((unsigned int)frame_addr | 0x55E);
+	*pte = ((unsigned int)frame_addr | 0x002);
 }
 
 #if 0
