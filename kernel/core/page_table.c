@@ -227,7 +227,7 @@ void handle_fault()
 		 * kernel page table entry : 0x400000 ~0x800000
 		 */
 		if ((unsigned int)pfa < 0x1000000) {
-			*pde = PGT_START_BASE + ((unsigned int)pfa>>10); /* 256 entry * 4B */
+			*pde = PGT_START_BASE + ((unsigned int)pfa>>10) | 0x11; /* 256 entry * 4B */
 		}
 	}
 

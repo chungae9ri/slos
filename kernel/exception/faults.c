@@ -64,13 +64,12 @@ void abort()
 	for(;;);
 }
 
-void platform_abort_handler(void)
+void platform_abort_handler(unsigned int dfsr)
 {
 	/* here is the routine to check the page fault */
-	unsigned int dfsr;
-	unsigned int fault_type;
+	/*unsigned int dfsr;*/
 	/* read DFSR */
-	asm volatile ( "mrc p15, 0, %0, c5, c0, 0" : "=r" (dfsr) ::);
+	/*asm volatile ( "mrc p15, 0, %0, c5, c0, 0" : "=r" (dfsr) ::);*/
 
 	/* section/page fault handler */
 	if ((dfsr & TRANSLATION_FLT_PG) == TRANSLATION_FLT_PG) {

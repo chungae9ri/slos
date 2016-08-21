@@ -141,13 +141,17 @@ data_abort_handler:
 	mrc 	p15, 0, r3, c2, c0, 0 /* read TTBR0, test code */
 	mrc 	p15, 0, r4, c2, c0, 1 /* read TTBR1, test code */
 #endif
+	sub	r12, r14, #8
 	msr 	cpsr_c, #MODE_SVC | I_BIT | F_BIT
-	stmfd	sp!, {r0-r12, r14}
-	b	platform_abort_handler
+	stmfd	sp!, {r0-r11, r12}
+	push	{r14}
+	mrc	p15, 0, r0, c5, c0, 0 /* read dfsr, test code */
+	bl	platform_abort_handler
 	mrs	r0, CPSR
 	bic	r1, r0, #I_BIT|F_BIT
 	msr	cpsr_c, r1
-	ldmfd	sp!, {r0-r12, pc}^	
+	pop	{r14}
+	ldmfd	sp!, {r0-r11, pc}^	
 ;
 reserved:
 	b	.
