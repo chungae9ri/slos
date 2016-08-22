@@ -147,10 +147,10 @@ data_abort_handler:
 	push	{r14}
 	mrc	p15, 0, r0, c5, c0, 0 /* read dfsr, test code */
 	bl	platform_abort_handler
+	pop	{r14}
 	mrs	r0, CPSR
 	bic	r1, r0, #I_BIT|F_BIT
-	msr	cpsr_c, r1
-	pop	{r14}
+	/*msr	cpsr_c, r1*/
 	ldmfd	sp!, {r0-r11, pc}^	
 ;
 reserved:
@@ -183,7 +183,8 @@ irq_handler:
 	add 	r12,r12,#4
 	ldmia	r12,{r12}
 	msr 	spsr_cxsf, r12
-	add 	r12,r12,#4
+	mov 	r12, #CONTEXT_MEM
+	add 	r12, #0x44
 	ldr 	r12, [r12] /* load ttb addr */
 	mcr	p15, 0, r12, c2, c0, 0 /* write ttb addr */
 	ldr 	r12, =CONTEXT_MEM 

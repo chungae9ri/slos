@@ -71,7 +71,7 @@ inline uint64_t timer_get_phy_tick_cnt(void)
 	return ((uint64_t)phy_cnt_hi_1<<32) | phy_cnt_lo;
 }
 
-static void timer_enable()
+void timer_enable()
 {
 	uint32_t ctrl;
 
@@ -126,6 +126,7 @@ int timer_irq (void *arg)
 		writel(tc, QTMR_V1_CNTP_TVAL);
 		dsb();
 	}
+
 	return 0;
 }
 
@@ -146,5 +147,5 @@ void platform_init_timer()
 	dsb();
 	gic_register_int_handler(INT_QTMR_FRM_0_PHYSICAL_TIMER_EXP, timer_irq, 0);
 	qgic_unmask_interrupt(INT_QTMR_FRM_0_PHYSICAL_TIMER_EXP);
-	timer_enable();
+	/*timer_enable();*/
 }

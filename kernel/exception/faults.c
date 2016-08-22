@@ -73,10 +73,8 @@ void platform_abort_handler(unsigned int dfsr)
 
 	/* section/page fault handler */
 	if ((dfsr & TRANSLATION_FLT_PG) == TRANSLATION_FLT_PG) {
-		print_msg("section fault \n");
 		handle_fault();
 	} else if ((dfsr & TRANSLATION_FLT_SEC) == TRANSLATION_FLT_SEC) {
-		print_msg("page fault\r\n");
 		handle_fault();
 	} else {
 		abort();

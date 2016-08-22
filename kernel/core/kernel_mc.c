@@ -28,7 +28,7 @@ struct vmpool *pvm_user;
 void cpuidle(void) 
 {
 	while(1) {
-		drop_usrtask();
+		/*drop_usrtask();*/
 		if (show_stat) print_msg("cpuidle running....\r\n");
 	}
 }
@@ -103,5 +103,6 @@ void kernel_main_ctl(void)
 	enable_interrupt();
 	/* imsi out while virtual mem implementation */
 	/*load_ramdisk();*/
+	timer_enable();
 	cpuidle();
 }

@@ -468,7 +468,7 @@ void schedule(void *arg)
 
 	switch_context(current, next);
 	/* flush TLB */
-	asm ("mcr p15, 0, %0, c8, c7, 0" : : "r" (r0) :);
+	/*asm ("mcr p15, 0, %0, c8, c7, 0" : : "r" (r0) :);*/
 	current = next;
 }
 
