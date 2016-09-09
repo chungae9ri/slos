@@ -47,7 +47,7 @@ Elf32_Addr find_sym(const char* name, Elf32_Shdr* shdr, const char* strings, con
     Elf32_Sym* syms = (Elf32_Sym*)(src + shdr->sh_offset);
     int i;
     for(i = 0; i < shdr->sh_size / sizeof(Elf32_Sym); i++) {
-        if (strcmp(name, strings + syms[i].st_name) == 0) {
+        if (xstrcmp(name, strings + syms[i].st_name) == 0) {
             return (Elf32_Addr)(dst + syms[i].st_value);
         }
     }

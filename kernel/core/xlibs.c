@@ -71,14 +71,13 @@ int xsprintf(char *buf, const char *fmt, ...)
 	return i;
 }
 
-#if 0
 int xstrcmp(const char *p, const char *q)
 {
 	int ret=0;
+
 	while(*p++ == *q++) {
-		/*do nothing*/
+		if (*p == '\0' || *q == '\0') break;
 	}
 	if(*p=='\0' && *q=='\0') return 0;
 	else return 1;
 }
-#endif

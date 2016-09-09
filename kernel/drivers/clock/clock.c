@@ -97,7 +97,7 @@ struct clk *clk_get(const char *cid)
 		return NULL;
 	}
 	for (i=0; i<num; i++, cl++) {
-		if (!strcmp(cl->con_id, cid)) {
+		if (!xstrcmp(cl->con_id, cid)) {
 			return cl->clk;
 		}
 	}
