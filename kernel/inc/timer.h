@@ -10,3 +10,4 @@ static void qtimer_enable(void);
 void qtimer_disable(void);
 int timer_irq (void *arg);
 uint64_t timer_get_phy_tick_cnt(void);
+void timer_enable();

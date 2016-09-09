@@ -13,24 +13,7 @@ extern struct vmpool *pvm_user;
  */
 void *_sbrk(void *reent, unsigned int incr)
 {
-#if 0
-	static unsigned char *heap = NULL;
-	unsigned char *prev_heap;
-
-	if (!heap) {
-		heap = (unsigned char *)&__heap_start__;
-	}
-
-	prev_heap = heap;
-	if ((heap + incr) >= (unsigned char *)&__heap_end__) {
-		print_msg("\r\nheap overflow!!");
-		return 0;
-	}
-	heap += incr;
-	return (void *) prev_heap;
-#else
 	return (void *)(allocate(pvm_user, incr));
-#endif
 }
 
 void *kmalloc(unsigned int size)

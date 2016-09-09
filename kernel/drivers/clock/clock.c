@@ -1,6 +1,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <clock.h>
+#include <xlibs.h>
 
 static struct clk_list msm_clk_list;
 

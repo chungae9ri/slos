@@ -13,6 +13,7 @@
 #include <ktimer.h>
 #include <msgQ.h>
 #include <smm.h>
+#include <xlibs.h>
 
 #define TIMER_TEST
 #define WAIT_Q_TEST
@@ -75,7 +76,8 @@ void worker(void)
 
 void init_idle_task()
 {
-	sprintf(idle_task.name, "idle_task");
+	/*sprintf(idle_task.name, "idle_task");*/
+	xsprintf(idle_task.name, "idle_task\n");
 	idle_task.entry = (task_entry)cpuidle;
 }
 
@@ -87,10 +89,12 @@ void init_jiffies()
 void init_task()
 {
 	int i;
-	sprintf(task_arr[0].name,"idle task");
+	/*sprintf(task_arr[0].name,"idle task");*/
+	xsprintf(task_arr[0].name,"idle task\n");
 
 	for (i=1 ; i<MAX_TASK ; i++) {
-		sprintf(task_arr[i].name,"task:%d",i);
+		/*sprintf(task_arr[i].name,"task:%d",i);*/
+		xsprintf(task_arr[i].name,"task:%d\n",i);
 		if(i==1) task_arr[i].entry = (task_entry)func1;
 		else if (i==2) task_arr[i].entry = (task_entry)worker;
 	}
@@ -265,14 +269,18 @@ void print_task_stat(void)
 {
 	struct task_struct *next;
 	struct list_head *next_lh;
-	int idx=0, num=0;
-	char buff[128]={0,};
+	int i, idx=0, num=0;
+	char buff[128];
 
-	num = sprintf(buff,"\r\n####task:%s",current->name);
+	for (i=0 ; i<128 ; i++) buff[i] = 0;
+	/*num = sprintf(buff,"\r\n####task:%s",current->name);*/
+	num = xsprintf(buff,"####task:%s\n",current->name);
 	idx += num;
-	num = sprintf(&buff[idx], "\r\nvruntime:%d",current->se.vruntime);
+	/*num = sprintf(&buff[idx], "\r\nvruntime:%d",current->se.vruntime);*/
+	num = xsprintf(&buff[idx], "vruntime:%d\n",current->se.vruntime);
 	idx += num;
-	num = sprintf(&buff[idx], "\r\njiffies_consumed:%d",current->se.jiffies_consumed);
+	/*num = sprintf(&buff[idx], "\r\njiffies_consumed:%d",current->se.jiffies_consumed);*/
+	num = xsprintf(&buff[idx], "jiffies_consumed:%d\n",current->se.jiffies_consumed);
 
 	print_msg(buff);
 
@@ -286,11 +294,12 @@ void print_task_stat(void)
 		num=0; 
 		idx=0;
 
-		num = sprintf(&buff[idx],"\r\ntask:%s",next->name);
+		/*num = sprintf(&buff[idx],"\r\ntask:%s",next->name);*/
+		num = xsprintf(&buff[idx],"task:%s\n",next->name);
 		idx += num;
-		num = sprintf(&buff[idx], "\r\nvruntime:%d",next->se.vruntime);
+		num = xsprintf(&buff[idx], "vruntime:%d\n",next->se.vruntime);
 		idx += num;
-		num = sprintf(&buff[idx], "\r\njiffies_consumed:%d",next->se.jiffies_consumed);
+		num = xsprintf(&buff[idx], "jiffies_consumed:%d\n",next->se.jiffies_consumed);
 		print_msg(buff);
 	}
 }
@@ -374,7 +383,8 @@ void init_idletask(unsigned int *ppd)
 {
 	struct task_struct *pt = (struct task_struct *)kmalloc(sizeof(struct task_struct));
 	struct task_struct *temp;
-	sprintf(pt->name,"idle task");
+	/*sprintf(pt->name,"idle task");*/
+	xsprintf(pt->name,"idle task\n");
 	pt->task.next = NULL;
 	pt->task.prev = NULL;
 	pt->se.vruntime = 0;
@@ -431,7 +441,7 @@ struct task_struct *do_forkyi(char *name, task_entry fn, int idx, unsigned int *
 		pt = upt[idx];
 	} else pt = (struct task_struct *)kmalloc(sizeof(struct task_struct));
 
-	sprintf(pt->name,name);
+	xsprintf(pt->name,name);
 	pt->entry = fn;
 	pt->se.vruntime = 0;
 	pt->se.jiffies_consumed = 0;

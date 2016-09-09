@@ -6,6 +6,7 @@
 #include <task.h>
 #include <mem_layout.h>
 #include <stdbool.h>
+#include <xlibs.h>
 
 extern struct cfs_rq *runq;
 extern struct task_struct *upt[MAX_USR_TASK];
@@ -25,13 +26,15 @@ void load_ramdisk()
 	char temp[64];
 
 	tasknum = pramdisk[0] | pramdisk[1]<<8 | pramdisk[2]<<16 | pramdisk[3]<<24;
-	sprintf(temp, "\r\nuser task number : %d", tasknum);
+	/*sprintf(temp, "\r\nuser task number : %d", tasknum);*/
+	xsprintf(temp, "user task number : %d\n", tasknum);
 	print_msg(temp);
 	pramdisk+= 4;
 
 	for (i=0 ; i<tasknum ; i++) {
 		size = pramdisk[0] | pramdisk[1]<<8 | pramdisk[2]<<16 | pramdisk[3]<<24;
-		sprintf(temp, "\r\nload_bin cnt : %d, size : %d", i, size);
+		/*sprintf(temp, "\r\nload_bin cnt : %d, size : %d", i, size);*/
+		xsprintf(temp, "load_bin cnt : %d, size : %d\n", i, size);
 		print_msg(temp);
 		pramdisk+= 4;
 		ptr = (task_entry)load_elf(pramdisk, i);
@@ -60,7 +63,7 @@ task_entry load_elf (char *elf_start, int idx)
     char            *start   = NULL;
     char            *taddr   = NULL;
     task_entry 		entry   = NULL;
-    int i = 0;
+    int i = 0, j;
     char buff[32];
 
     hdr = (Elf32_Ehdr *) elf_start;
@@ -83,7 +86,9 @@ task_entry load_elf (char *elf_start, int idx)
             start = elf_start + phdr[i].p_offset;
             taddr = phdr[i].p_vaddr + exec;
 	    /* copy program to 0x1600000 */
-	    memmove(taddr,start,phdr[i].p_filesz);
+	    /*memmove(taddr,start,phdr[i].p_filesz);*/
+	    for (j=0 ; j<phdr[i].p_filesz ; j++) 
+		    taddr[j] = start[j];
     }
     shdr = (Elf32_Shdr *)(elf_start + hdr->e_shoff);
 
@@ -101,7 +106,8 @@ task_entry load_elf (char *elf_start, int idx)
     unsigned int *ppd = 0x0;
 
 /* user task is not inserted to rq. it should be called explicitly*/
-    sprintf(buff,"user%d",idx);
+    /*wsprintf(buff,"user%d",idx);*/
+    xsprintf(buff,"user%d\n",idx);
     upt[idx]= do_forkyi(buff, (task_entry)entry, idx, ppd); 
 
     set_priority(upt[idx], 4);
