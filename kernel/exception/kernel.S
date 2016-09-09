@@ -21,10 +21,10 @@
 .extern platform_data_abort_handler
 .extern qgic_platform_irq
 .extern qgic_platform_fiq
-.extern kernel_main_ctl
+.extern main 
 /*.extern USER_CODE_BASE*/
 
-	@IMPORT	kernel_main_ctl
+	@IMPORT	main
 	@IMPORT	qgic_platform_irq
 
 @AREA KERNEL_ENTRY, CODE, READONLY
@@ -97,8 +97,8 @@ reset_handler:
 	/*; Return to supervisor mode*/
 	msr     CPSR_c, #MODE_SVC
 
-	/*; jump to kernel_main_ctl*/
-	b	kernel_main_ctl
+	/*; jump to main */
+	b	main	
 @
 undefined_instruction_handler:
 	stmfd	sp!, {r0-r12, r14}

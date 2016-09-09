@@ -28,6 +28,7 @@ struct vmpool *pvm_user;
 void cpuidle(void) 
 {
 	while(1) {
+		/* imsi for test */
 		/*drop_usrtask();*/
 		if (show_stat) print_msg("cpuidle running....\r\n");
 	}
@@ -63,14 +64,17 @@ void mem_init()
 
 }
 
-void kernel_main_ctl(void) 
+int main(void) 
 {
 	struct framepool kfp, pfp;
 	static struct pagetable pgt;
 	struct vmpool kheap, pheap;
+	int i=1;
 
 	disable_interrupt();
 	mem_init();
+
+	while(i==1);
 
 	/* initialize frame pools */
 	init_framepool(&kfp, KERNEL_START_FRAME, 
@@ -105,4 +109,6 @@ void kernel_main_ctl(void)
 	/*load_ramdisk();*/
 	timer_enable();
 	cpuidle();
+
+	return 0;
 }
