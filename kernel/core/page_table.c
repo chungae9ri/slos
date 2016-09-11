@@ -136,6 +136,18 @@ void load_pagetable(struct pagetable *ppagetable)
 	int r0 = 0;
 
 	pcurrentpgt = ppagetable;
+	/* invalidate all TLBs */
+	/* invalidate I tlb */
+	asm ("mcr p15, 0, %0, c8, c5, 0" : : "r" (r0) :);
+	/* invalidate D tlb */
+	asm ("mcr p15, 0, %0, c8, c6, 0" : : "r" (r0) :);
+	/* invalidate unified tlb */
+	asm ("mcr p15, 0, %0, c8, c7, 0" : : "r" (r0) :);
+
+	/* invalidate i cache */
+	/*asm ("mcr p15, 0, %0, c7, c5, 1" : : "r"(r0) :);*/
+	/* invalidate d cache */
+	/*asm ("mcr p15, 0, %0, c7, c6, 1" : : "r"(r0) :);*/
 
 	/* write the translation table base 
 	 * currently, the userspace app and kernel uses the same memory space.
@@ -154,19 +166,12 @@ void load_pagetable(struct pagetable *ppagetable)
 	asm ("mcr p15, 0, %0, c2, c0, 0" : : "r" (ppagetable->page_directory) :);
 	/* set TTBR1 as kernel page directory base address */
 	asm ("mcr p15, 0, %0, c2, c0, 1" : : "r" (ppagetable->page_directory) :);
-	/* flush TLB */
-	/*asm ("mcr p15, 0, %0, c8, c7, 0" : : "r" (r0) :);*/
-
-	/* invalidate i cache */
-	/*asm ("mcr p15, 0, %0, c7, c5, 1" : : "r"(r0) :);*/
-	/* invalidate d cache */
-	/*asm ("mcr p15, 0, %0, c7, c6, 1" : : "r"(r0) :);*/
 }
 
 void enable_paging()
 {
 	int i;
-	unsigned int enable = 0; //ENABLE_MMU ;//| ENABLE_DCACHE | ENABLE_ICACHE;
+	unsigned int enable = ENABLE_MMU | ENABLE_DCACHE | ENABLE_ICACHE;
 	unsigned int mask = MASK_MMU | MASK_DCACHE | MASK_ICACHE;
 	unsigned int c1;
 	int r0 = 0;
@@ -182,7 +187,7 @@ void enable_paging()
 	/*asm ("mcr p15, 0, %0, c7, c6, 0" : : "r"(r0) :);*/
 
 	c1 &= ~mask;
-	enable = ENABLE_MMU; // | ENABLE_DCACHE | ENABLE_ICACHE;
+	//enable = ENABLE_MMU; // | ENABLE_DCACHE | ENABLE_ICACHE;
 	c1 |= enable;
 	/* write control register to enable MMU I/D cache */
 	asm("mcr p15, 0, %0, c1, c0, 0" : : "r" (c1):);
@@ -249,13 +254,13 @@ void PageTable::register_vmpool(VMPool *_pool)
 
 void free_page(unsigned int pageAddr)
 {
-	unsigned int *pda, *pde, *pte;
+	unsigned int pda, *pde, *pte;
 	unsigned int *frame_addr;
 	unsigned int frame_num, frame_num_k_heap;
 	/* read ttb */
 	asm volatile ("mrc p15, 0, %0, c2, c0, 0" : "=r" (pda) ::);
 	/* get the 1st level descriptor */
-	pde = (unsigned int *)((*pda & 0xfffc0000) | ((pageAddr & 0xfff00000)>>18));
+	pde = (unsigned int *)((pda & 0xffffc000) | ((pageAddr & 0xfff00000)>>18));
 	pte = (unsigned int *)((*pde & 0xfffffc00) | ((pageAddr & 0x000ff000)>>10));
 
 	/* physical address of frame */
@@ -275,4 +280,5 @@ void free_page(unsigned int pageAddr)
 	}
 
 	*pte = 0x0;
+	*pde = 0x0;
 }

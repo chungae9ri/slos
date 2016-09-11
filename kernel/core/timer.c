@@ -121,7 +121,7 @@ int timer_irq (void *arg)
 		   fix me */
 		pct->handler(arg);
 		del_timer(ptroot, pct);
-		free(pct);
+		kfree(pct);
 		/**/
 		writel(tc, QTMR_V1_CNTP_TVAL);
 		dsb();
