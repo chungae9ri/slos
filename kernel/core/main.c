@@ -69,12 +69,11 @@ int main(void)
 	struct framepool kfp, pfp;
 	static struct pagetable pgt;
 	struct vmpool kheap, pheap;
-	int i=1;
 
 	disable_interrupt();
 	mem_init();
 
-	while(i==1);
+	/*while(i==1);*/
 
 	/* initialize frame pools */
 	init_framepool(&kfp, KERNEL_START_FRAME, 
