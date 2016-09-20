@@ -10,9 +10,12 @@
 #include <uart_dm.h>
 #include <debug.h>
 #include <loader.h>
+
+#ifdef USE_MMU
 #include <frame_pool.h>
 #include <page_table.h>
 #include <vm_pool.h>
+#endif
 
 extern void enable_interrupt();
 extern void disable_interrupt();
@@ -22,8 +25,10 @@ extern uint64_t	jiffies;
 extern struct task_struct *current;
 extern uint32_t show_stat;
 
+#ifdef USE_MMU
 struct vmpool *pvm_kernel;
 struct vmpool *pvm_user;
+#endif
 
 void cpuidle(void) 
 {
@@ -53,11 +58,19 @@ void platform_init()
 	platform_init_timer();
 }
 
+#ifdef USE_MMU
 void core_init(unsigned int *ppd) 
 {
 	init_jiffies();
 	init_idletask(ppd);
 }
+#else
+void core_init() 
+{
+	init_jiffies();
+	init_idletask();
+}
+#endif
 
 void mem_init() 
 {
@@ -66,15 +79,22 @@ void mem_init()
 
 int main(void) 
 {
+#ifdef USE_MMU
 	struct framepool kfp, pfp;
 	static struct pagetable pgt;
 	struct vmpool kheap, pheap;
+#endif
+	int i=1;
 
 	disable_interrupt();
+
+#ifdef USE_MMU
 	mem_init();
+#endif
 
 	/*while(i==1);*/
 
+#ifdef USE_MMU
 	/* initialize frame pools */
 	init_framepool(&kfp, KERNEL_START_FRAME, 
 			KERNEL_FRAME_NUM, 0);
@@ -98,15 +118,26 @@ int main(void)
 
 	pvm_kernel = &kheap;
 	/*pvm_user = &pheap;*/
+#endif
 
 	platform_init();
 	target_early_init();
+
+#ifdef USE_MMU
 	core_init(pgt.page_directory);
 	init_shell(pgt.page_directory);
+#else
+	core_init();
+	init_shell();
+#endif
 	enable_interrupt();
 	/* imsi out while virtual mem implementation */
+#ifndef USE_MMU
 	/*load_ramdisk();*/
+#endif
+#ifdef USE_MMU
 	timer_enable();
+#endif
 	cpuidle();
 
 	return 0;

@@ -13,6 +13,8 @@
 
 static struct pagetable *pcurrentpgt;
 
+void flush_ent_cache(void);
+
 void init_pageregion(struct pagetable *ppagetable,
 		     struct framepool *pkernel_framepool,
 		     struct framepool *pprocess_framepool,
@@ -170,7 +172,6 @@ void load_pagetable(struct pagetable *ppagetable)
 
 void enable_paging()
 {
-	int i;
 	unsigned int enable = ENABLE_MMU | ENABLE_DCACHE | ENABLE_ICACHE;
 	unsigned int mask = MASK_MMU | MASK_DCACHE | MASK_ICACHE;
 	unsigned int c1;
@@ -191,11 +192,6 @@ void enable_paging()
 	c1 |= enable;
 	/* write control register to enable MMU I/D cache */
 	asm("mcr p15, 0, %0, c1, c0, 0" : : "r" (c1):);
-
-	/* for test */
-	/*i = 1;*/
-	/*while(i == 1) ;*/
-	/*i = 0;*/
 }
 
 void handle_fault()
@@ -207,9 +203,9 @@ void handle_fault()
 	unsigned int *pcur;
 
 	/* read DFAR */
-	asm volatile ("mrc p15, 0, %0, c6, c0, 0" : "=r" (pfa) ::);
+	asm ("mrc p15, 0, %0, c6, c0, 0" : "=r" (pfa) ::);
 	/* read ttb0 */
-	asm volatile ("mrc p15, 0, %0, c2, c0, 0" : "=r" (pda) ::);
+	asm ("mrc p15, 0, %0, c2, c0, 0" : "=r" (pda) ::);
 #if 0
 	/* check fault address is in valid VM region */
 	for(i=0 ; i<VMcnt ; i++) {
@@ -254,11 +250,12 @@ void PageTable::register_vmpool(VMPool *_pool)
 
 void free_page(unsigned int pageAddr)
 {
+	int r0 = 0;
 	unsigned int pda, *pde, *pte;
 	unsigned int *frame_addr;
 	unsigned int frame_num, frame_num_k_heap;
 	/* read ttb */
-	asm volatile ("mrc p15, 0, %0, c2, c0, 0" : "=r" (pda) ::);
+	asm ("mrc p15, 0, %0, c2, c0, 0" : "=r" (pda) ::);
 	/* get the 1st level descriptor */
 	pde = (unsigned int *)((pda & 0xffffc000) | ((pageAddr & 0xfff00000)>>18));
 	pte = (unsigned int *)((*pde & 0xfffffc00) | ((pageAddr & 0x000ff000)>>10));
@@ -281,4 +278,7 @@ void free_page(unsigned int pageAddr)
 
 	*pte = 0x0;
 	*pde = 0x0;
+
+	/* flush entire cache */
+	flush_ent_cache();
 }

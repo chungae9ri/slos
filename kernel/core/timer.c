@@ -147,5 +147,7 @@ void platform_init_timer()
 	dsb();
 	gic_register_int_handler(INT_QTMR_FRM_0_PHYSICAL_TIMER_EXP, timer_irq, 0);
 	qgic_unmask_interrupt(INT_QTMR_FRM_0_PHYSICAL_TIMER_EXP);
-	/*timer_enable();*/
+#ifndef USE_MMU
+	timer_enable();
+#endif
 }

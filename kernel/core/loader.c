@@ -108,7 +108,11 @@ task_entry load_elf (char *elf_start, int idx)
 /* user task is not inserted to rq. it should be called explicitly*/
     /*wsprintf(buff,"user%d",idx);*/
     xsprintf(buff,"user%d\n",idx);
+#ifdef USE_MMU
     upt[idx]= do_forkyi(buff, (task_entry)entry, idx, ppd); 
+#else
+    upt[idx]= do_forkyi(buff, (task_entry)entry, idx);
+#endif
 
     set_priority(upt[idx], 4);
     rb_init_node(&(upt[idx]->se).run_node);

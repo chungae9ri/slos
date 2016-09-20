@@ -51,7 +51,9 @@ struct task_context_struct {
 	uint32_t sp;
 	uint32_t r[13];
 	uint32_t spsr;
+#ifdef USE_MMU
 	uint32_t ttb; /* translation base address */
+#endif
 };
 
 struct task_struct {
@@ -71,15 +73,24 @@ void init_jiffies(void);
 void init_task(void);
 void create_all_task(void);
 void forkyi(struct task_struct *pbt, struct task_struct *pt);
+#ifdef USE_MMU
 struct task_struct *do_forkyi(char *name, task_entry fn, int idx, unsigned int *ppd);
+#else
+struct task_struct *do_forkyi(char *name, task_entry fn, int idx);
+#endif
 void switch_context(struct task_struct *prev, struct task_struct *next);
 void schedule(void *arg);
 void dequeue_se_to_exit(struct cfs_rq *rq, struct sched_entity *se);
 void enqueue_se_to_runq(struct cfs_rq *rq, struct sched_entity *se, bool update);
 void dequeue_se_to_waitq(struct cfs_rq *rq, struct sched_entity *se, bool update);
 void drop_usrtask();
-void init_idletask(unsigned int *ppd);
+#ifdef USE_MMU
 void init_shell(unsigned int *ppd);
+void init_idletask(unsigned int *ppd);
+#else
+void init_shell();
+void init_idletask();
+#endif
 void update_se();
 void set_priority(struct task_struct *pt, uint32_t pri);
 void put_to_sleep(char *dur, int idx);

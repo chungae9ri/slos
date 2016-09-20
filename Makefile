@@ -1,9 +1,7 @@
-#GCCINC :=$(HOME)/MentorGraphics/Sourcery_CodeBench_Lite_for_ARM_EABI/arm-none-eabi/include
-CPPFLAG := -fno-exceptions -fno-rtti
+#CFLAGS = -D USE_MMU
 LIBS := $(HOME)/bin/arm-2014.05/arm-none-eabi/lib
 LIBS2 :=$(HOME)/bin/arm-2014.05/lib/gcc/arm-none-eabi/4.8.3
 CC := arm-none-eabi-gcc
-#CPP := arm-none-eabi-g++
 ASM := arm-none-eabi-as
 LD := arm-none-eabi-ld
 AR := arm-none-eabi-ar
@@ -67,10 +65,7 @@ vpath %.S $(SRC_DIR)
 
 define make-obj
 $1/%.o: %.c
-	$(CC) $(INC) -o $$@ -c $$< -g
-
-#$1/%.o: %.cpp
-#	$(CPP) $(INC) $(CPPFLAG) -o $$@ -c $$< -g
+	$(CC) $(CFLAGS) $(INC) -o $$@ -c $$< -g
 
 $1/%.o: %.S
 	$(CC) $(INC) -o $$@ -c $$< 

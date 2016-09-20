@@ -419,7 +419,7 @@ void uart_dm_init(uint8_t id, uint32_t gsbi_base, uint32_t uart_dm_base)
 
 	msm_boot_uart_dm_write(uart_dm_base, data, 44);
 
-	/* kwangdo.yi@lge.com [jointlab] Thu 02 Jan 2014 S
+	/* kwangdo.yi
 	   temp out fix me
 	ASSERT(port < ARRAY_SIZE(port_lookup));
 */
