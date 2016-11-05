@@ -384,6 +384,9 @@ msm_boot_uart_dm_write(uint32_t base, char *data, uint32_t num_of_chars)
  * existing uart implemention. These functions are being called to initialize
  * UART and print debug messages in bootloader.
  */
+extern void clock_config_uart_dm(uint8_t id);
+extern void dsb(void);
+extern void gpio_config_uart_dm(uint8_t id);
 void uart_dm_init(uint8_t id, uint32_t gsbi_base, uint32_t uart_dm_base)
 {
 	static uint8_t port = 0;

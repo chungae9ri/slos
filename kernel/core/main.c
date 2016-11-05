@@ -135,6 +135,7 @@ int main(void)
 #ifndef USE_MMU
 	/*load_ramdisk();*/
 #endif
+
 #ifdef USE_MMU
 	timer_enable();
 #endif

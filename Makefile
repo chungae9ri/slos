@@ -1,6 +1,6 @@
 #CFLAGS = -D USE_MMU
-LIBS := $(HOME)/bin/arm-2014.05/arm-none-eabi/lib
-LIBS2 :=$(HOME)/bin/arm-2014.05/lib/gcc/arm-none-eabi/4.8.3
+LIBS := $(HOME)/bin/arm-2016q3/arm-none-eabi/lib
+LIBS2 :=$(HOME)/bin/arm-2016q3/lib/gcc/arm-none-eabi/5.4.1
 CC := arm-none-eabi-gcc
 ASM := arm-none-eabi-as
 LD := arm-none-eabi-ld
@@ -68,7 +68,7 @@ $1/%.o: %.c
 	$(CC) $(CFLAGS) $(INC) -o $$@ -c $$< -g
 
 $1/%.o: %.S
-	$(CC) $(INC) -o $$@ -c $$< 
+	$(CC) $(INC) -o $$@ -c $$< -mcpu=cortex-a9
 endef
 
 $(foreach bdir, $(OUT_DIR),$(eval $(call make-obj,$(bdir))))

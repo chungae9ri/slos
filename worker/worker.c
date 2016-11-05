@@ -1,6 +1,7 @@
 
 void exit(const int);
 int print_mesg(const char *a, const int idx);
+void sleep(char *c, int);
 
 void main(void)
 {

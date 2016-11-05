@@ -1,4 +1,5 @@
 
+int print_mesg(const char *a, const int idx);
 void exit(const int );
 void main(void)
 {

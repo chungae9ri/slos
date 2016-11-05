@@ -42,12 +42,21 @@ extern struct timer_root *ptroot;
 extern char *exec;
 volatile uint32_t rqlock;
 void oneshot_user_timer_handler(void *arg);
+extern void spin_lock_acquire_irqsafe(volatile uint32_t *pl);
+extern void spin_lock_release_irqsafe(volatile uint32_t *pl);
+extern int uart_getc(int port, int wait);
+extern void create_oneshot_timer(timer_handler oneshot_timer_handler, uint32_t msec, void *arg);
 
 #ifdef TIMER_TEST
 
 void oneshot_timer_testhandler(void *arg)
 {
-	print_msg("I am called by oneshot timer test handler!! \r\n");
+	/* caution : since this handler runs in interrupt context, 
+	   don't use print_msg
+	 */
+	/*print_msg("I am called by oneshot timer test handler!! \r\n");*/
+	int i;
+	i++;
 }
 
 #endif
@@ -65,12 +74,14 @@ void worker(void)
 	int val;
 	while (1) {
 		if (show_stat) print_msg("worker running....\r\n");
+#if 0
 		val = getmsg(MSG_USR0, false);
 		if (val != 0) {
 			dequeue_se_to_waitq(runq, &upt[MSG_USR0-1]->se, true);
 			create_oneshot_timer(oneshot_user_timer_handler, val, MSG_USR0-1);
 			setmsg(0, MSG_USR0, false);
 		}
+#endif
 	}
 }
 
@@ -310,6 +321,7 @@ void shell(void)
 	int byte;
 
 	while (1) {
+		print_msg("I am shell\n");
 		byte=uart_getc(0,1);
 		switch (byte) {
 			case 'D':
@@ -455,7 +467,7 @@ struct task_struct *do_forkyi(char *name, task_entry fn, int idx)
 #endif
 {
 	struct task_struct *pt;
-	if (task_created_num == MAX_TASK) return;
+	if (task_created_num == MAX_TASK) return NULL;
 
 	/* idx >=0 for user task */
 	if (idx >= 0) {
@@ -564,6 +576,8 @@ void put_to_sleep(char *dur, int idx)
 	if (upt[idx]->state == TASK_RUNNING) {
 		/*dequeue_se_to_waitq(runq, &upt[idx]->se, true);*/
 		/*create_oneshot_timer(oneshot_user_timer_handler, (*dur)*100, idx);*/
+#if 0
 		if (getmsg(MSG_USR0, false) == 0) setmsg(sleepdur, MSG_USR0, false);
+#endif
 	}
 }

@@ -16,6 +16,7 @@
 	EXPORT spin_lock_acquire
 	EXPORT spin_lock_release
 	*/
+.arm
 .text
 
 .global dsb

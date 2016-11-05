@@ -9,6 +9,7 @@ extern struct vmpool *pvm_kernel;
 extern struct vmpool *pvm_user;
 #endif
 
+extern int print_msg(const char *str);
 /* Simple memory management routine.
    1. without _sbrk, data abort happens while running. libc library might use this.
    2. fix linking error. 

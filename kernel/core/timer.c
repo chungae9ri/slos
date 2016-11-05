@@ -16,6 +16,7 @@ extern void dsb(void);
 extern struct timer_struct *sched_timer;
 extern struct timer_root *ptroot;
 uint32_t ticks_per_sec=0;
+extern void kfree(unsigned int free_addr);
 
 static void delay(uint64_t ticks)
 {
@@ -121,7 +122,7 @@ int timer_irq (void *arg)
 		   fix me */
 		pct->handler(arg);
 		del_timer(ptroot, pct);
-		kfree(pct);
+		kfree((unsigned int)pct);
 		/**/
 		writel(tc, QTMR_V1_CNTP_TVAL);
 		dsb();
