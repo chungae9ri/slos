@@ -183,10 +183,12 @@ irq_handler:
 	add 	r12,r12,#4
 	ldmia	r12,{r12}
 	msr 	spsr_cxsf, r12
+#ifdef USE_MMU
 	mov 	r12, #CONTEXT_MEM
 	add 	r12, #0x44
 	ldr 	r12, [r12] /* load ttb addr */
 	mcr	p15, 0, r12, c2, c0, 0 /* write ttb addr */
+#endif
 	ldr 	r12, =CONTEXT_MEM 
 	ldr	r12, [r12]
 	movs	pc,r12
