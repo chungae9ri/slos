@@ -163,7 +163,6 @@ void enqueue_se(struct cfs_rq *rq, struct sched_entity *se)
 	if (leftmost) 
 		rq->rb_leftmost = &se->run_node;
 
-
 	/* Put the new node there */
 	rb_link_node(&se->run_node, parent, link);
 	rb_insert_color(&se->run_node, &rq->root);
@@ -538,8 +537,8 @@ void update_se(void)
 
 	se = rb_entry(next_node, struct sched_entity, run_node);
 	if (se->vruntime < current->se.vruntime) {
-		dequeue_se_to_waitq(runq, &current->se, false);
-		enqueue_se_to_runq(runq, &current->se, false);
+		dequeue_se(runq, &current->se);
+		enqueue_se(runq, &current->se);
 	}
 }
 void switch_context(struct task_struct *prev, struct task_struct *next)

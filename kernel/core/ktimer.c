@@ -31,7 +31,6 @@ void update_oneshot_timer(void)
 	pcur = ptroot->rb_leftmost;
 	pct = container_of(pcur, struct timer_struct, run_node);
 	while (pcur != NULL) {
-
 		if (pct->type == ONESHOT_TIMER) {
 			pct->tc = pct->tc - sched_timer->tc;
 			if (pct->tc < sched_timer->tc) {
