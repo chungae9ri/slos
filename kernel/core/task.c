@@ -24,8 +24,10 @@
 uint32_t task_created_num = 1; /* cpuidle task is not created by do_forkyi. it is already made from start */
 struct task_struct task_arr[MAX_TASK];
 extern void do_switch_context(struct task_struct *, struct task_struct *);
+extern void switch_context_yield(struct task_struct *, struct task_struct *);
 extern uint64_t	jiffies;
 struct task_struct *current = NULL;
+struct task_struct *prev = NULL;
 struct task_struct *last = NULL;
 struct task_struct *first = NULL;
 struct task_struct idle_task;
@@ -48,7 +50,6 @@ extern int uart_getc(int port, int wait);
 extern void create_oneshot_timer(timer_handler oneshot_timer_handler, uint32_t msec, void *arg);
 
 #ifdef TIMER_TEST
-
 void oneshot_timer_testhandler(void *arg)
 {
 	/* caution : since this handler runs in interrupt context, 
@@ -58,8 +59,41 @@ void oneshot_timer_testhandler(void *arg)
 	int i;
 	i++;
 }
-
 #endif
+
+#ifdef USE_MMU
+#else
+void create_rt_task(char *name, task_entry handler, int dur)
+#endif
+{
+	struct task_struct *temp;
+
+	temp = do_forkyi(name, (task_entry)handler, -1, RT_TASK);
+	create_rt_timer(temp, dur, NULL);
+}
+
+void rt_task_handler(void *arg)
+{
+	int i, j = 10;
+	while (1) {
+		/* do some real time work here */
+		/*for(i = 10; i < 100; i++) {*/
+			j++;
+		/*}*/
+		j = 20;
+		/* should yield after finish current work */
+		/*yield();*/
+	}
+}
+
+void yield()
+{
+	struct task_struct *pt = prev;
+	switch_context_yield(current, prev);
+	prev = current;
+	current = prev;
+}
+
 
 void func1(void )
 {
@@ -87,8 +121,7 @@ void worker(void)
 
 void init_idle_task()
 {
-	/*sprintf(idle_task.name, "idle_task");*/
-	xsprintf(idle_task.name, "idle_task\n");
+	sprintf(idle_task.name, "idle_task");
 	idle_task.entry = (task_entry)cpuidle;
 }
 
@@ -100,12 +133,10 @@ void init_jiffies()
 void init_task()
 {
 	int i;
-	/*sprintf(task_arr[0].name,"idle task");*/
-	xsprintf(task_arr[0].name,"idle task\n");
+	sprintf(task_arr[0].name,"idle task");
 
 	for (i=1 ; i<MAX_TASK ; i++) {
-		/*sprintf(task_arr[i].name,"task:%d",i);*/
-		xsprintf(task_arr[i].name,"task:%d\n",i);
+		sprintf(task_arr[i].name,"task:%d",i);
 		if(i==1) task_arr[i].entry = (task_entry)func1;
 		else if (i==2) task_arr[i].entry = (task_entry)worker;
 	}
@@ -146,8 +177,7 @@ void enqueue_se(struct cfs_rq *rq, struct sched_entity *se)
 		else if (entry->vruntime < value) {
 			link = &(*link)->rb_right;
 			leftmost = 0;
-		}
-		else { 
+		} else { 
 			if (entry->priority > se->priority)
 				link = &(*link)->rb_left;
 			else {
@@ -190,12 +220,12 @@ void update_vruntime_runq(struct cfs_rq *rq, struct sched_entity *se)
 	cur_rb_node = rq->rb_leftmost;
 	se_leftmost = container_of(cur_rb_node, struct sched_entity, run_node);
 	cur_se = se_leftmost;
-	se->jiffies_consumed = se_leftmost->vruntime * rq->priority_sum / se->priority;
-	se->vruntime = se->jiffies_consumed * se->priority / rq->priority_sum;
+	se->ticks_consumed = se_leftmost->vruntime * rq->priority_sum / se->priority;
+	se->vruntime = se->ticks_consumed * se->priority / rq->priority_sum;
 
 	while (cur_se) {
-		cur_se->jiffies_consumed = se_leftmost->vruntime * rq->priority_sum / cur_se->priority;
-		cur_se->vruntime = cur_se->jiffies_consumed * cur_se->priority / rq->priority_sum;
+		cur_se->ticks_consumed = se_leftmost->vruntime * rq->priority_sum / cur_se->priority;
+		cur_se->vruntime = cur_se->ticks_consumed * cur_se->priority / rq->priority_sum;
 		cur_rb_node = rb_next(&cur_se->run_node);
 		if (cur_rb_node)
 			cur_se = container_of(cur_rb_node, struct sched_entity, run_node);
@@ -283,16 +313,18 @@ void print_task_stat(void)
 	char buff[128];
 
 	for (i=0 ; i<128 ; i++) buff[i] = 0;
-	/*num = sprintf(buff,"\r\n####task:%s",current->name);*/
-	num = xsprintf(buff,"####task:%s\n",current->name);
-	idx += num;
-	/*num = sprintf(&buff[idx], "\r\nvruntime:%d",current->se.vruntime);*/
-	num = xsprintf(&buff[idx], "vruntime:%d\n",current->se.vruntime);
-	idx += num;
-	/*num = sprintf(&buff[idx], "\r\njiffies_consumed:%d",current->se.jiffies_consumed);*/
-	num = xsprintf(&buff[idx], "jiffies_consumed:%d\n",current->se.jiffies_consumed);
-
-	print_msg(buff);
+	if (current->type == CFS_TASK) {
+		num = sprintf(buff,"\n####task:%s\n",current->name);
+		idx += num;
+		num = sprintf(&buff[idx], "vruntime:%lu\n",current->se.vruntime);
+		idx += num;
+		num = sprintf(&buff[idx], "jiffies_consumed:%lu\n",current->se.ticks_consumed);
+	} else if (current->type == RT_TASK) {
+		num = sprintf(buff,"\n####task:%s\n",current->name);
+		idx += num;
+		num = sprintf(&buff[idx], "missed deadline cnt : %u\n", current->missed_cnt);
+	}
+		print_msg(buff);
 
 	next = current;
 	for (;;)  {
@@ -303,18 +335,26 @@ void print_task_stat(void)
 
 		num=0; 
 		idx=0;
+		for (i=0 ; i<128 ; i++) buff[i] = 0;
 
-		/*num = sprintf(&buff[idx],"\r\ntask:%s",next->name);*/
-		num = xsprintf(&buff[idx],"task:%s\n",next->name);
-		idx += num;
-		num = xsprintf(&buff[idx], "vruntime:%d\n",next->se.vruntime);
-		idx += num;
-		num = xsprintf(&buff[idx], "jiffies_consumed:%d\n",next->se.jiffies_consumed);
+		if (next->type == CFS_TASK) {
+			num = sprintf(&buff[idx],"task:%s\n",next->name);
+			idx += num;
+			num = sprintf(&buff[idx], "vruntime:%lu\n",next->se.vruntime);
+			idx += num;
+			num = sprintf(&buff[idx], "ticks_consumed:%lu\n",next->se.ticks_consumed);
+		} else if (next->type == RT_TASK) {
+			num = sprintf(buff,"task:%s\n",next->name);
+			idx += num;
+			num = sprintf(&buff[idx], "missed deadline cnt : %u\n", next->missed_cnt);
+		}
 		print_msg(buff);
 	}
 }
 
-
+/* imsi for test */
+extern void enable_interrupt();
+extern void disable_interrupt();
 void shell(void)
 {
 	int byte;
@@ -340,7 +380,10 @@ void shell(void)
 #ifdef TIMER_TEST
 			case 'i':
 			case 'I':
-				create_oneshot_timer(oneshot_timer_testhandler, 5000, NULL);
+				disable_interrupt();
+				/*create_oneshot_timer(oneshot_timer_testhandler, 5000, NULL);*/
+				create_rt_task("real1", (task_entry)rt_task_handler, 5);
+				enable_interrupt();
 				break;
 #endif
 			case 'T':
@@ -384,7 +427,7 @@ void init_shell()
 #ifdef USE_MMU
 	temp = do_forkyi("shell", (task_entry)shell, -1, ppd);
 #else
-	temp = do_forkyi("shell", (task_entry)shell, -1);
+	temp = do_forkyi("shell", (task_entry)shell, -1, CFS_TASK);
 #endif
 	set_priority(temp, 2);
 	rb_init_node(&temp->se.run_node);
@@ -406,14 +449,15 @@ void init_idletask()
 {
 	struct task_struct *pt = (struct task_struct *)kmalloc(sizeof(struct task_struct));
 	struct task_struct *temp;
-	/*sprintf(pt->name,"idle task");*/
-	xsprintf(pt->name,"idle task\n");
+	sprintf(pt->name,"idle task");
 	pt->task.next = NULL;
 	pt->task.prev = NULL;
 	pt->se.vruntime = 0;
-	pt->se.jiffies_consumed = 0;
+	pt->se.ticks_consumed = 0;
+	pt->type = CFS_TASK;
+	pt->missed_cnt = 0;
 	set_priority(pt, 16);
-	current = first = last = pt;
+	prev = current = first = last = pt;
 
 	init_rq(pt);
 	init_waitq(&wq_sched);
@@ -422,7 +466,7 @@ void init_idletask()
 #ifdef USE_MMU
 	temp = do_forkyi("dummy1", (task_entry)func1, -1, ppd);
 #else
-	temp = do_forkyi("dummy1", (task_entry)func1, -1);
+	temp = do_forkyi("dummy1", (task_entry)func1, -1, CFS_TASK);
 #endif
 #ifdef WAIT_Q_TEST
 	fortest1 = temp;
@@ -433,7 +477,7 @@ void init_idletask()
 #ifdef USE_MMU
 	temp = do_forkyi("worker", (task_entry)worker, -1, ppd); 
 #else
-	temp = do_forkyi("worker", (task_entry)worker, -1); 
+	temp = do_forkyi("worker", (task_entry)worker, -1, CFS_TASK); 
 #endif
 	set_priority(temp, 2);
 	rb_init_node(&temp->se.run_node);
@@ -462,7 +506,7 @@ void forkyi(struct task_struct *pbt, struct task_struct *pt)
 #ifdef USE_MMU
 struct task_struct *do_forkyi(char *name, task_entry fn, int idx, unsigned int *ppd)
 #else
-struct task_struct *do_forkyi(char *name, task_entry fn, int idx)
+struct task_struct *do_forkyi(char *name, task_entry fn, int idx, TASKTYPE type)
 #endif
 {
 	struct task_struct *pt;
@@ -476,10 +520,12 @@ struct task_struct *do_forkyi(char *name, task_entry fn, int idx)
 		pt = upt[idx];
 	} else pt = (struct task_struct *)kmalloc(sizeof(struct task_struct));
 
-	xsprintf(pt->name,name);
+	sprintf(pt->name,name);
 	pt->entry = fn;
+	pt->type = type;
+	pt->missed_cnt = 0;
 	pt->se.vruntime = 0;
-	pt->se.jiffies_consumed = 0;
+	pt->se.ticks_consumed = 0;
 	pt->ct.sp = (uint32_t)(SVC_STACK_BASE - TASK_STACK_GAP * ++task_created_num);
 	pt->ct.lr = (uint32_t)pt->entry;
 	pt->ct.pc = (uint32_t)pt->entry;
@@ -496,12 +542,14 @@ struct task_struct *do_forkyi(char *name, task_entry fn, int idx)
 
 	return pt;
 }
-void schedule(void *arg)
+
+void schedule()
 {
 	int r0 = 0;
 	struct task_struct *next;
 	struct sched_entity *se;
 
+	/* Don't check task type since CSF task can interrupt RT task!! */
 	se = rb_entry(runq->rb_leftmost, struct sched_entity, run_node);
 	next = (struct task_struct *)to_task_from_se(se);
 
@@ -516,16 +564,18 @@ void schedule(void *arg)
 	switch_context(current, next);
 	/* flush TLB */
 	/*asm ("mcr p15, 0, %0, c8, c7, 0" : : "r" (r0) :);*/
+	prev = current;
 	current = next;
 }
 
-void update_se(void)
+void update_se(uint32_t elapsed)
 {
-	struct sched_entity *se;
+	struct sched_entity *next_se, *cur_se;
 	struct rb_node *next_node;
 
-	current->se.jiffies_consumed++;
-	current->se.vruntime = (current->se.jiffies_consumed) * (current->se.priority)/runq->priority_sum;
+#if 0
+	current->se.ticks_consumed += elapsed;
+	current->se.vruntime = (current->se.ticks_consumed) * (current->se.priority)/runq->priority_sum;
 
 	if (&current->se.run_node == runq->rb_leftmost) {
 		next_node = rb_next(&current->se.run_node);
@@ -534,13 +584,22 @@ void update_se(void)
 	} else {
 		next_node = runq->rb_leftmost;
 	}
-
 	se = rb_entry(next_node, struct sched_entity, run_node);
 	if (se->vruntime < current->se.vruntime) {
 		dequeue_se(runq, &current->se);
 		enqueue_se(runq, &current->se);
 	}
+#else
+	cur_se = container_of(runq->rb_leftmost, struct sched_entity, run_node);
+	next_node = rb_next(runq->rb_leftmost);
+	next_se = container_of(next_node, struct sched_entity, run_node);
+	if (next_se->vruntime < cur_se->vruntime) {
+		dequeue_se(runq, cur_se);
+		enqueue_se(runq, cur_se);
+	}
+#endif
 }
+
 void switch_context(struct task_struct *prev, struct task_struct *next)
 {
 	do_switch_context(prev, next);

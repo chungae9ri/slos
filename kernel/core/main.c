@@ -19,6 +19,7 @@
 
 extern void enable_interrupt();
 extern void disable_interrupt();
+extern void update_csd(void);
 
 extern struct task_struct task_arr[MAX_TASK];
 extern uint64_t	jiffies;
@@ -84,15 +85,11 @@ int main(void)
 	static struct pagetable pgt;
 	struct vmpool kheap, pheap;
 #endif
-	int i=1;
-
 	disable_interrupt();
 
 #ifdef USE_MMU
 	mem_init();
 #endif
-
-	/*while(i==1);*/
 
 #ifdef USE_MMU
 	/* initialize frame pools */
@@ -136,9 +133,8 @@ int main(void)
 	/*load_ramdisk();*/
 #endif
 
-#ifdef USE_MMU
+	update_csd();
 	timer_enable();
-#endif
 	cpuidle();
 
 	return 0;

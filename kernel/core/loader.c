@@ -26,15 +26,13 @@ void load_ramdisk()
 	char temp[64];
 
 	tasknum = pramdisk[0] | pramdisk[1]<<8 | pramdisk[2]<<16 | pramdisk[3]<<24;
-	/*sprintf(temp, "\r\nuser task number : %d", tasknum);*/
-	xsprintf(temp, "user task number : %d\n", tasknum);
+	sprintf(temp, "\r\nuser task number : %d", tasknum);
 	print_msg(temp);
 	pramdisk+= 4;
 
 	for (i=0 ; i<tasknum ; i++) {
 		size = pramdisk[0] | pramdisk[1]<<8 | pramdisk[2]<<16 | pramdisk[3]<<24;
-		/*sprintf(temp, "\r\nload_bin cnt : %d, size : %d", i, size);*/
-		xsprintf(temp, "load_bin cnt : %d, size : %d\n", i, size);
+		sprintf(temp, "\r\nload_bin cnt : %d, size : %d", i, size);
 		print_msg(temp);
 		pramdisk+= 4;
 		ptr = (task_entry)load_elf(pramdisk, i);
@@ -106,12 +104,11 @@ task_entry load_elf (char *elf_start, int idx)
     unsigned int *ppd = 0x0;
 
 /* user task is not inserted to rq. it should be called explicitly*/
-    /*wsprintf(buff,"user%d",idx);*/
-    xsprintf(buff,"user%d\n",idx);
+    sprintf(buff,"user%d",idx);
 #ifdef USE_MMU
     upt[idx]= do_forkyi(buff, (task_entry)entry, idx, ppd); 
 #else
-    upt[idx]= do_forkyi(buff, (task_entry)entry, idx);
+    upt[idx]= do_forkyi(buff, (task_entry)entry, idx,CFS_TASK);
 #endif
 
     set_priority(upt[idx], 4);

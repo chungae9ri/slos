@@ -17,25 +17,23 @@ void spin_lock_acquire_irqsafe(volatile uint32_t *lock)
 
 void spin_lock_release_irqsafe(volatile uint32_t *lock)
 {
-	int svc;
+	/*int svc;*/
 	spin_lock_release(lock);
-	svc = get_svc();
-	if(svc == MODE_SVC) enable_interrupt();
+	enable_interrupt();
+	/*svc = get_svc();*/
+	/*if(svc == MODE_SVC) enable_interrupt();*/
 }
 
 /* critical section function for UP*/
 inline void enter_critical_section()
 {
 	critical_section_count++;
-	if (critical_section_count == 1) {
-		disable_interrupt();
-	}
+	while (critical_section_count != 1) continue;
+	disable_interrupt();
 }
 
 inline void exit_critical_section()
 {
 	critical_section_count--;
-	if (critical_section_count == 0) {
-		enable_interrupt();
-	}
+	enable_interrupt();
 }

@@ -33,7 +33,8 @@ typedef int (*task_entry)(void);
 
 struct sched_entity {
 	uint64_t vruntime;
-	uint64_t jiffies_consumed;
+	/*uint64_t jiffies_consumed;*/
+	uint64_t ticks_consumed;
 	struct rb_node run_node;
 	uint32_t priority;
 };
@@ -56,6 +57,12 @@ struct task_context_struct {
 #endif
 };
 
+typedef enum {
+	CFS_TASK = 0,
+	RT_TASK,
+	ONESHOT_TASK,
+}TASKTYPE;
+
 struct task_struct {
 	struct task_context_struct ct;
 	/*struct task_context_struct ct;*/
@@ -64,6 +71,8 @@ struct task_struct {
 	struct sched_entity se;
 	struct list_head task;
 	struct list_head waitlist;
+	TASKTYPE type; 
+	uint32_t missed_cnt;
 	uint32_t state;
 };
 
@@ -76,10 +85,10 @@ void forkyi(struct task_struct *pbt, struct task_struct *pt);
 #ifdef USE_MMU
 struct task_struct *do_forkyi(char *name, task_entry fn, int idx, unsigned int *ppd);
 #else
-struct task_struct *do_forkyi(char *name, task_entry fn, int idx);
+struct task_struct *do_forkyi(char *name, task_entry fn, int idx, TASKTYPE type);
 #endif
 void switch_context(struct task_struct *prev, struct task_struct *next);
-void schedule(void *arg);
+void schedule(void);
 void dequeue_se_to_exit(struct cfs_rq *rq, struct sched_entity *se);
 void enqueue_se_to_runq(struct cfs_rq *rq, struct sched_entity *se, bool update);
 void dequeue_se_to_waitq(struct cfs_rq *rq, struct sched_entity *se, bool update);
@@ -91,9 +100,10 @@ void init_idletask(unsigned int *ppd);
 void init_shell();
 void init_idletask();
 #endif
-void update_se();
+void update_se(uint32_t elasped);
 void set_priority(struct task_struct *pt, uint32_t pri);
 void put_to_sleep(char *dur, int idx);
+void yield();
 
 
 void func1(void);

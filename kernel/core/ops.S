@@ -25,9 +25,14 @@ dsb:
 	mcr 	p15, 0, r0, c7, c10, 4
 	bx 	lr
 ;
+/* fix me */
+.global switch_context_yield
+switch_context_yield:
+	stmia	r0, {r0-r15}
+	ldmia	r1, {r0-r14, pc}^
 
 .global do_switch_context
-/* do_switch_context(struct task_struct *prev, struct task_struct *next) */
+/* do_switch_context(struct task_struct *curr, struct task_struct *next) */
 do_switch_context:
 	push	{r0-r4}
 	ldr	r2,=0x12

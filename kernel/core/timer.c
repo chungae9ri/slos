@@ -17,6 +17,9 @@ extern struct timer_struct *sched_timer;
 extern struct timer_root *ptroot;
 uint32_t ticks_per_sec=0;
 extern void kfree(unsigned int free_addr);
+extern struct task_struct *current;
+extern struct task_struct *prev;
+extern struct cfs_rq *runq;
 
 static void delay(uint64_t ticks)
 {
@@ -102,30 +105,58 @@ void timer_disable()
 int timer_irq (void *arg)
 {
 	struct rb_node *next_node;
-	struct timer_struct *next_timer, *pct = container_of(ptroot->rb_leftmost, struct timer_struct, run_node);
+	struct timer_struct *pnt, *pct; 
+	uint32_t elapsed;
 
-	if (pct->type == SCHED_TIMER) {
-		/* reprogram next periodic timer intr */
-		tc = pct->tc;
-		writel(tc, QTMR_V1_CNTP_TVAL);
-		dsb();
-		/* do something like context switch */
-		sched_timer->handler(arg);
-	} else if (pct->type == ONESHOT_TIMER) {
-		update_sched_timer();
-		next_node = rb_next(&pct->run_node);
-		next_timer = container_of(next_node, struct timer_struct, run_node);
-		tc = next_timer->tc;
-		/* call timer handler */
-		/* need to schedule oneshot timer handler instead of direct 
-		   call in interrupt context. this may result in broken rb tree.
-		   fix me */
-		pct->handler(arg);
-		del_timer(ptroot, pct);
-		kfree((unsigned int)pct);
-		/**/
-		writel(tc, QTMR_V1_CNTP_TVAL);
-		dsb();
+	elapsed = get_elapsedtime();
+	pct = container_of(ptroot->rb_leftmost, struct timer_struct, run_node);
+	update_timer_tree(elapsed);
+	pnt = container_of(ptroot->rb_leftmost, struct timer_struct, run_node);
+	tc = pnt->tc;
+	/* reprogram periodic timer intr */
+	writel(tc, QTMR_V1_CNTP_TVAL);
+	dsb();
+
+	if (current->type == CFS_TASK) {
+		current->se.ticks_consumed += elapsed;
+		current->se.vruntime = (current->se.ticks_consumed) * 
+					(current->se.priority) / runq->priority_sum;
+	}
+
+	switch(pct->type) {
+		case SCHED_TIMER:
+			sched_timer->handler(elapsed);
+			break;
+
+		case REALTIME_TIMER:
+			if (current != pct->pt) {
+				switch_context(current, pct->pt);
+				prev = current;
+				current = pct->pt;
+			}
+			break;
+
+		case ONESHOT_TIMER:
+#if 0
+			update_sched_timer();
+			next_node = rb_next(&pct->run_node);
+			next_timer = container_of(next_node, struct timer_struct, run_node);
+			tc = next_timer->tc;
+			/* call timer handler */
+			/* need to schedule oneshot timer handler instead of direct 
+			   call in interrupt context. this may result in broken rb tree.
+			   fix me */
+			pct->handler(arg);
+			del_timer(ptroot, pct);
+			kfree((unsigned int)pct);
+			/**/
+			writel(tc, QTMR_V1_CNTP_TVAL);
+			dsb();
+#endif
+			break;
+
+		default:
+			break;
 	}
 
 	return 0;
@@ -148,7 +179,4 @@ void platform_init_timer()
 	dsb();
 	gic_register_int_handler(INT_QTMR_FRM_0_PHYSICAL_TIMER_EXP, timer_irq, 0);
 	qgic_unmask_interrupt(INT_QTMR_FRM_0_PHYSICAL_TIMER_EXP);
-#ifndef USE_MMU
-	timer_enable();
-#endif
 }
