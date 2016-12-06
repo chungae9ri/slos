@@ -182,7 +182,8 @@ irq_handler:
 	ldmia	r12!,{r0-r11}
 	add 	r12,r12,#4
 	ldmia	r12,{r12}
-	msr 	spsr_cxsf, r12
+	msr 	cpsr_c, r12
+	/*msr 	spsr_cxsf, r12*/
 #ifdef USE_MMU
 	mov 	r12, #CONTEXT_MEM
 	add 	r12, #0x44

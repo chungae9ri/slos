@@ -27,7 +27,6 @@ extern void do_switch_context(struct task_struct *, struct task_struct *);
 extern void switch_context_yield(struct task_struct *, struct task_struct *);
 extern uint64_t	jiffies;
 struct task_struct *current = NULL;
-struct task_struct *prev = NULL;
 struct task_struct *last = NULL;
 struct task_struct *first = NULL;
 struct task_struct idle_task;
@@ -77,21 +76,28 @@ void rt_task_handler(void *arg)
 	int i, j = 10;
 	while (1) {
 		/* do some real time work here */
-		/*for(i = 10; i < 100; i++) {*/
+		for(i = 10; i < 100; i++) {
 			j++;
-		/*}*/
+		}
 		j = 20;
 		/* should yield after finish current work */
-		/*yield();*/
+		yield();
 	}
 }
 
+extern void enable_interrupt();
+extern void disable_interrupt();
+extern void update_csd(void);
+
 void yield()
 {
-	struct task_struct *pt = prev;
-	switch_context_yield(current, prev);
-	prev = current;
-	current = prev;
+	struct task_struct *temp;
+
+	disable_interrupt();
+	/*update_csd();*/
+	temp = current;
+	current = current->yield_task;
+	switch_context_yield(temp, current);
 }
 
 
@@ -352,9 +358,6 @@ void print_task_stat(void)
 	}
 }
 
-/* imsi for test */
-extern void enable_interrupt();
-extern void disable_interrupt();
 void shell(void)
 {
 	int byte;
@@ -380,10 +383,8 @@ void shell(void)
 #ifdef TIMER_TEST
 			case 'i':
 			case 'I':
-				disable_interrupt();
 				/*create_oneshot_timer(oneshot_timer_testhandler, 5000, NULL);*/
 				create_rt_task("real1", (task_entry)rt_task_handler, 5);
-				enable_interrupt();
 				break;
 #endif
 			case 'T':
@@ -452,12 +453,13 @@ void init_idletask()
 	sprintf(pt->name,"idle task");
 	pt->task.next = NULL;
 	pt->task.prev = NULL;
+	pt->yield_task = NULL;
 	pt->se.vruntime = 0;
 	pt->se.ticks_consumed = 0;
 	pt->type = CFS_TASK;
 	pt->missed_cnt = 0;
 	set_priority(pt, 16);
-	prev = current = first = last = pt;
+	current = first = last = pt;
 
 	init_rq(pt);
 	init_waitq(&wq_sched);
@@ -526,6 +528,7 @@ struct task_struct *do_forkyi(char *name, task_entry fn, int idx, TASKTYPE type)
 	pt->missed_cnt = 0;
 	pt->se.vruntime = 0;
 	pt->se.ticks_consumed = 0;
+	pt->yield_task = NULL;
 	pt->ct.sp = (uint32_t)(SVC_STACK_BASE - TASK_STACK_GAP * ++task_created_num);
 	pt->ct.lr = (uint32_t)pt->entry;
 	pt->ct.pc = (uint32_t)pt->entry;
@@ -564,7 +567,7 @@ void schedule()
 	switch_context(current, next);
 	/* flush TLB */
 	/*asm ("mcr p15, 0, %0, c8, c7, 0" : : "r" (r0) :);*/
-	prev = current;
+	next->yield_task = current;
 	current = next;
 }
 
@@ -573,6 +576,7 @@ void update_se(uint32_t elapsed)
 	struct sched_entity *next_se, *cur_se;
 	struct rb_node *next_node;
 
+/* updating vruntime of current is moved to timer_irq routine */
 #if 0
 	current->se.ticks_consumed += elapsed;
 	current->se.vruntime = (current->se.ticks_consumed) * (current->se.priority)/runq->priority_sum;

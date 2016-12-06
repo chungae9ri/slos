@@ -18,7 +18,6 @@ extern struct timer_root *ptroot;
 uint32_t ticks_per_sec=0;
 extern void kfree(unsigned int free_addr);
 extern struct task_struct *current;
-extern struct task_struct *prev;
 extern struct cfs_rq *runq;
 
 static void delay(uint64_t ticks)
@@ -131,7 +130,7 @@ int timer_irq (void *arg)
 		case REALTIME_TIMER:
 			if (current != pct->pt) {
 				switch_context(current, pct->pt);
-				prev = current;
+				pct->pt->yield_task = current;
 				current = pct->pt;
 			}
 			break;

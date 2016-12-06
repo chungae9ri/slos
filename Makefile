@@ -68,7 +68,7 @@ $1/%.o: %.c
 	$(CC) $(CFLAGS) $(INC) -o $$@ -c $$< -g
 
 $1/%.o: %.S
-	$(CC) $(INC) -o $$@ -c $$< -mcpu=cortex-a9
+	$(CC) $(INC) -o $$@ -c $$< 
 endef
 
 $(foreach bdir, $(OUT_DIR),$(eval $(call make-obj,$(bdir))))

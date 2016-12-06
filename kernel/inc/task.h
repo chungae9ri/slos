@@ -70,6 +70,7 @@ struct task_struct {
 	char name[32];
 	struct sched_entity se;
 	struct list_head task;
+	struct task_struct *yield_task;
 	struct list_head waitlist;
 	TASKTYPE type; 
 	uint32_t missed_cnt;

@@ -25,11 +25,25 @@ dsb:
 	mcr 	p15, 0, r0, c7, c10, 4
 	bx 	lr
 ;
-/* fix me */
 .global switch_context_yield
 switch_context_yield:
-	stmia	r0, {r0-r15}
-	ldmia	r1, {r0-r14, pc}^
+	mov	r12, r0
+	str	lr, [r12],#4
+	str	lr, [r12],#4
+	str	r13, [r12],#4
+	stmia	r12, {r0-r11}
+	mov 	r12, r1
+	add	r12, #56
+	ldmda	r12, {r0-r11}
+	sub	r12, #48
+	ldr	r13, [r12],#-4
+	ldr	r14, [r12],#-4
+	/* enable interrupt */
+	mrs	r1,	CPSR
+	bic	r1,	r1,#IF_BIT
+	msr	CPSR_c, r1	
+	ldr	pc, [r12]
+	nop
 
 .global do_switch_context
 /* do_switch_context(struct task_struct *curr, struct task_struct *next) */
