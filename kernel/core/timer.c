@@ -112,7 +112,7 @@ int timer_irq (void *arg)
 	update_timer_tree(elapsed);
 	pnt = container_of(ptroot->rb_leftmost, struct timer_struct, run_node);
 	tc = pnt->tc;
-	/* reprogram periodic timer intr */
+	/* reprogram next earliest deadline timer intr */
 	writel(tc, QTMR_V1_CNTP_TVAL);
 	dsb();
 
@@ -120,6 +120,8 @@ int timer_irq (void *arg)
 		current->se.ticks_consumed += elapsed;
 		current->se.vruntime = (current->se.ticks_consumed) * 
 					(current->se.priority) / runq->priority_sum;
+	} else if (current->type == RT_TASK) {
+		current->se.ticks_consumed += elapsed;
 	}
 
 	switch(pct->type) {

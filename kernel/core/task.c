@@ -71,15 +71,29 @@ void create_rt_task(char *name, task_entry handler, int dur)
 	create_rt_timer(temp, dur, NULL);
 }
 
+void rt_task_handler2(void *arg)
+{
+	int i, j = 10;
+	while (1) {
+		/* do some real time work here */
+		for (i = 0; i < 10; i++) {
+			j++;
+		}
+		if (show_stat) 	print_msg("I am rt worker2 \n");
+		/* should yield after finish current work */
+		yield();
+	}
+}
+
 void rt_task_handler(void *arg)
 {
 	int i, j = 10;
 	while (1) {
 		/* do some real time work here */
-		for(i = 10; i < 100; i++) {
+		for (i = 0; i < 10; i++) {
 			j++;
 		}
-		j = 20;
+		if (show_stat) 	print_msg("I am rt worker\n");
 		/* should yield after finish current work */
 		yield();
 	}
@@ -91,15 +105,22 @@ extern void update_csd(void);
 
 void yield()
 {
+	uint32_t elapsed;
 	struct task_struct *temp;
 
 	disable_interrupt();
-	/*update_csd();*/
+	/* need to update ticks_consumed of RT task
+	   but data abort exception happens. Fix me
+	 */
+#if 0
+	elapsed = get_elapsedtime();
+	update_timer_tree(elapsed);
+	current->se.ticks_consumed += elapsed;
+#endif
 	temp = current;
 	current = current->yield_task;
 	switch_context_yield(temp, current);
 }
-
 
 void func1(void )
 {
@@ -127,7 +148,7 @@ void worker(void)
 
 void init_idle_task()
 {
-	sprintf(idle_task.name, "idle_task");
+	strcpy(idle_task.name, "idle_task");
 	idle_task.entry = (task_entry)cpuidle;
 }
 
@@ -139,7 +160,7 @@ void init_jiffies()
 void init_task()
 {
 	int i;
-	sprintf(task_arr[0].name,"idle task");
+	strcpy(task_arr[0].name,"idle task");
 
 	for (i=1 ; i<MAX_TASK ; i++) {
 		sprintf(task_arr[i].name,"task:%d",i);
@@ -324,9 +345,11 @@ void print_task_stat(void)
 		idx += num;
 		num = sprintf(&buff[idx], "vruntime:%lu\n",current->se.vruntime);
 		idx += num;
-		num = sprintf(&buff[idx], "jiffies_consumed:%lu\n",current->se.ticks_consumed);
+		num = sprintf(&buff[idx], "ticks_consumed:%lu\n",current->se.ticks_consumed);
 	} else if (current->type == RT_TASK) {
 		num = sprintf(buff,"\n####task:%s\n",current->name);
+		idx += num;
+		num = sprintf(&buff[idx], "vruntime:%lu\n",current->se.vruntime);
 		idx += num;
 		num = sprintf(&buff[idx], "missed deadline cnt : %u\n", current->missed_cnt);
 	}
@@ -351,6 +374,8 @@ void print_task_stat(void)
 			num = sprintf(&buff[idx], "ticks_consumed:%lu\n",next->se.ticks_consumed);
 		} else if (next->type == RT_TASK) {
 			num = sprintf(buff,"task:%s\n",next->name);
+			idx += num;
+			num = sprintf(&buff[idx], "ticks_consumed:%lu\n",next->se.ticks_consumed);
 			idx += num;
 			num = sprintf(&buff[idx], "missed deadline cnt : %u\n", next->missed_cnt);
 		}
@@ -380,13 +405,22 @@ void shell(void)
 				print_msg("z:dequeue dummy1 task, x:enqueue dummy1 task\r\n");
 #endif
 				break;
-#ifdef TIMER_TEST
+			case 'j':
+			case 'J':
+				/*create_oneshot_timer(oneshot_timer_testhandler, 5000, NULL);*/
+				/*disable_interrupt();*/
+				create_rt_task("real2", (task_entry)rt_task_handler2, 17);
+				/*enable_interrupt();*/
+				break;
+
 			case 'i':
 			case 'I':
 				/*create_oneshot_timer(oneshot_timer_testhandler, 5000, NULL);*/
-				create_rt_task("real1", (task_entry)rt_task_handler, 5);
+				/*disable_interrupt();*/
+				create_rt_task("real1", (task_entry)rt_task_handler, 15);
+				/*enable_interrupt();*/
 				break;
-#endif
+
 			case 'T':
 			case 't':
 				print_task_stat();
@@ -450,7 +484,7 @@ void init_idletask()
 {
 	struct task_struct *pt = (struct task_struct *)kmalloc(sizeof(struct task_struct));
 	struct task_struct *temp;
-	sprintf(pt->name,"idle task");
+	strcpy(pt->name,"idle task");
 	pt->task.next = NULL;
 	pt->task.prev = NULL;
 	pt->yield_task = NULL;
@@ -522,7 +556,7 @@ struct task_struct *do_forkyi(char *name, task_entry fn, int idx, TASKTYPE type)
 		pt = upt[idx];
 	} else pt = (struct task_struct *)kmalloc(sizeof(struct task_struct));
 
-	sprintf(pt->name,name);
+	strcpy(pt->name,name);
 	pt->entry = fn;
 	pt->type = type;
 	pt->missed_cnt = 0;

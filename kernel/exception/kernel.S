@@ -161,27 +161,29 @@ irq_handler:
 	mov	r4, r13
 	sub 	r5, lr, #4
 	msr	cpsr_c,#MODE_SVC | I_BIT | F_BIT /* irq/fiq disabled, SVC mode */
-	ldr	r6,=CONTEXT_MEM
-	stmia	r6!, {r5} /* save return addr */
-	stmia	r6!, {lr} /* save SVC lr */
-	stmia	r6!, {r13} /* save sp */
+	mov	r6,#CONTEXT_MEM
+	str	r5, [r6],#4 /* save return addr */
+	str	lr, [r6],#4  /* save current task lr */
+	str	r13, [r6],#4 /* save sp */
 	stmia	r6!, {r0-r3} 
 	mov	r1, r6
 	ldmia	r4, {r4-r6} /* restore r4-r6 */
 	stmia	r1!,{r4-r12}
 	mrs	r5, spsr
-	stmia	r1!, {r5} /* save spsr */
+	str	r5, [r1],#4 /* save spsr */
+#ifdef USE_MMU
 	mrc	p15, 0, r12, c2, c0, 0 /* read ttb addr */
 	str	r12, [r1] /* str ttb addr to Mem */
+#endif
 	bl 	qgic_platform_irq
 ;	
-	ldr 	r12, =CONTEXT_MEM 
+	mov 	r12, #CONTEXT_MEM 
 	add 	r12,r12,#4
-	ldmia	r12!, {r14}
-	ldmia	r12!, {r13}
+	ldr	r14,[r12],#4
+	ldr	r13,[r12],#4
 	ldmia	r12!,{r0-r11}
 	add 	r12,r12,#4
-	ldmia	r12,{r12}
+	ldr	r12,[r12]
 	msr 	cpsr_c, r12
 	/*msr 	spsr_cxsf, r12*/
 #ifdef USE_MMU
@@ -190,8 +192,8 @@ irq_handler:
 	ldr 	r12, [r12] /* load ttb addr */
 	mcr	p15, 0, r12, c2, c0, 0 /* write ttb addr */
 #endif
-	ldr 	r12, =CONTEXT_MEM 
-	ldr	r12, [r12]
+	mov 	r12,#CONTEXT_MEM 
+	ldr	r12,[r12]
 	movs	pc,r12
 ;
 

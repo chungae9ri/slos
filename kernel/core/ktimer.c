@@ -38,31 +38,27 @@ uint32_t get_elapsedtime()
 void update_timer_tree(uint32_t elapsed)
 {
 	struct rb_node *pcur = NULL;
-	struct timer_struct *pct = NULL, *ptemp;
+	struct timer_struct *pct = NULL;
 
 	pcur = ptroot->rb_leftmost;
 	while (pcur != NULL) {
+		pct = container_of(pcur, struct timer_struct, run_node);
 		if (pcur == ptroot->rb_leftmost) {
-			pct = container_of(pcur, struct timer_struct, run_node);
 			pct->tc = pct->intvl;
-			ptemp = pct;
 		} else {
 			if (pct->tc <= elapsed) {
 				if (pct->type == REALTIME_TIMER) {
 					pct->pt->missed_cnt++;
 				}
-				/* timer irq after 100usec */
-				pct->tc = get_ticks_per_sec() / 10000;
 			} else {
 				pct->tc = pct->tc - elapsed;
 			}
 		}
-		pcur = rb_next(pcur);
-		pct = container_of(pcur, struct timer_struct, run_node);
-	}
 
-	del_timer(ptroot, ptemp);
-	insert_timer(ptroot, ptemp);
+		del_timer(ptroot, pct);
+		insert_timer(ptroot, pct);
+		pcur = rb_next(pcur);
+	}
 }
 
 void do_timer(uint32_t elapsed)
