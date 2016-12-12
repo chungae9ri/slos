@@ -374,8 +374,8 @@ void print_task_stat(void)
 			num = sprintf(&buff[idx], "ticks_consumed:%lu\n",next->se.ticks_consumed);
 		} else if (next->type == RT_TASK) {
 			num = sprintf(buff,"task:%s\n",next->name);
-			idx += num;
-			num = sprintf(&buff[idx], "ticks_consumed:%lu\n",next->se.ticks_consumed);
+			/*idx += num;*/
+			/*num = sprintf(&buff[idx], "ticks_consumed:%lu\n",next->se.ticks_consumed);*/
 			idx += num;
 			num = sprintf(&buff[idx], "missed deadline cnt : %u\n", next->missed_cnt);
 		}
@@ -386,10 +386,23 @@ void print_task_stat(void)
 void shell(void)
 {
 	int byte;
+	int i = 0;
 
+	show_stat = 1;
+
+	create_rt_task("real1", (task_entry)rt_task_handler, 15);
+	create_rt_task("real2", (task_entry)rt_task_handler2, 17);
 	while (1) {
+#if 0
+		if (i == 1000) {
+			/*print_task_stat();*/
+			i = 0;
+		}
+		i++;
 		print_msg("I am shell\n");
+#else
 		byte=uart_getc(0,1);
+		print_msg("I am shell\n");
 		switch (byte) {
 			case 'D':
 			case 'd':
@@ -447,7 +460,8 @@ void shell(void)
 				break;
 		}
 		/* sleep for sometime to avoid prefetch abort */
-		mdelay(1);
+		/*mdelay(1);*/
+#endif
 	}
 }
 
