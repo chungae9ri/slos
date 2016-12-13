@@ -14,14 +14,15 @@ Implementation list
 2. Timer frame work
    - realtime timer, sched timer, oneshot timer
    - timer interrupt handler
-3. Realtime scheduler
+3. Realtime scheduler for rt task
    - Earliest Deadline First scheduler
-4. CFS scheduler
+   - preemptive context switch
+4. CFS scheduler for task others
    - run q and wait q
    - task fork - forkyi()
    - imitate Linux run q and CFS scheduler 
    - sched entity
-   - shell task, cpu idle task, and dummy task
+   - shell task, worker task, cpu idle task, and dummy task
 4. syscalls - exit, print_msg
 5. ram disk and elf loader 
 6. task synchronization(spin lock)
