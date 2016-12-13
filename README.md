@@ -12,9 +12,11 @@ Implementation list
    - page fault handler
    - lazy memory allocation
 2. Timer frame work
-   - sched tick, oneshot tick
+   - realtime timer, sched timer, oneshot timer
    - timer interrupt handler
-3. CFS scheduler
+3. Realtime scheduler
+   - Earliest Deadline First scheduler
+4. CFS scheduler
    - run q and wait q
    - task fork - forkyi()
    - imitate Linux run q and CFS scheduler 
