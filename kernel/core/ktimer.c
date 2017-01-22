@@ -14,6 +14,9 @@ volatile uint32_t timertree_lock;
 extern void spin_lock_acquire(volatile uint32_t *lock);
 extern void spin_lock_release(volatile uint32_t *lock);
 
+#define MIN_TIME_INT 	(get_ticks_per_sec() / 200)
+#define MSEC_MARGIN	(get_ticks_per_sec() / 1000)
+
 void timertree_init(void)
 {
 	ptroot = (struct timer_root *) kmalloc(sizeof(struct timer_root));
@@ -37,6 +40,7 @@ uint32_t get_elapsedtime()
 
 void update_timer_tree(uint32_t elapsed)
 {
+	uint32_t temp;
 	struct rb_node *pcur = NULL;
 	struct timer_struct *pct = NULL;
 
@@ -46,12 +50,24 @@ void update_timer_tree(uint32_t elapsed)
 		if (pcur == ptroot->rb_leftmost) {
 			pct->tc = pct->intvl;
 		} else {
-			if (pct->tc <= elapsed) {
+			/* important!
+			   deadline has a margin since the timer intr
+			   has some overhead
+			 */
+			/* if miss the deadline with margin */
+			if (pct->tc + MSEC_MARGIN <= elapsed) {
 				if (pct->type == REALTIME_TIMER) {
 					pct->pt->missed_cnt++;
-				}
+					/* set the next deadline as 5msec */
+				} 
+				pct->tc = MIN_TIME_INT;
 			} else {
-				pct->tc = pct->tc - elapsed;
+				if (pct->tc <= elapsed) {
+					pct->tc = MIN_TIME_INT;
+				} else {
+					temp = (pct->tc - elapsed); 
+					pct->tc = temp > MIN_TIME_INT ? temp : MIN_TIME_INT;
+				}
 			}
 		}
 
@@ -74,7 +90,9 @@ void update_sched_timer(void)
 	uint64_t tick_prev = csd.current_tick;
 	update_csd();
 	elapsed = (uint32_t)((csd.current_tick - tick_prev) & 0xffffffff);
-	sched_timer->tc -= elapsed;
+	if (elapsed > sched_timer->tc - MIN_TIME_INT) 
+		sched_timer->tc = MIN_TIME_INT;
+	else sched_timer->tc -= elapsed;
 	/* don't need this. fixed */
 #if 0 
 	/* if next sched tick is under 5msec */

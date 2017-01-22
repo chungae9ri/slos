@@ -29,7 +29,6 @@ extern uint64_t	jiffies;
 struct task_struct *current = NULL;
 struct task_struct *last = NULL;
 struct task_struct *first = NULL;
-struct task_struct idle_task;
 extern void cpuidle(void);
 struct cfs_rq *runq = NULL;
 uint32_t show_stat = 0;
@@ -47,6 +46,8 @@ extern void spin_lock_acquire_irqsafe(volatile uint32_t *pl);
 extern void spin_lock_release_irqsafe(volatile uint32_t *pl);
 extern int uart_getc(int port, int wait);
 extern void create_oneshot_timer(timer_handler oneshot_timer_handler, uint32_t msec, void *arg);
+
+struct task_struct *idle_task;
 
 #ifdef TIMER_TEST
 void oneshot_timer_testhandler(void *arg)
@@ -93,7 +94,7 @@ void rt_task_handler(void *arg)
 		for (i = 0; i < 10; i++) {
 			j++;
 		}
-		if (show_stat) 	print_msg("I am rt worker\n");
+		if (show_stat) 	print_msg("I am rt worker1\n");
 		/* should yield after finish current work */
 		yield();
 	}
@@ -118,7 +119,9 @@ void yield()
 	current->se.ticks_consumed += elapsed;
 #endif
 	temp = current;
-	current = current->yield_task;
+	if (current->yield_task->state == TASK_RUNNING)
+		current = current->yield_task;
+	else current = idle_task;
 	switch_context_yield(temp, current);
 }
 
@@ -146,12 +149,6 @@ void worker(void)
 	}
 }
 
-void init_idle_task()
-{
-	strcpy(idle_task.name, "idle_task");
-	idle_task.entry = (task_entry)cpuidle;
-}
-
 void init_jiffies()
 {
 	jiffies = 0;
@@ -162,7 +159,7 @@ void init_task()
 	int i;
 	strcpy(task_arr[0].name,"idle task");
 
-	for (i=1 ; i<MAX_TASK ; i++) {
+	for (i = 1; i < MAX_TASK; i++) {
 		sprintf(task_arr[i].name,"task:%d",i);
 		if(i==1) task_arr[i].entry = (task_entry)func1;
 		else if (i==2) task_arr[i].entry = (task_entry)worker;
@@ -174,7 +171,7 @@ void init_task()
 void drop_usrtask()
 {
 	int i;
-	for (i=0 ; i<MAX_USR_TASK ; i++) {
+	for (i = 0; i < MAX_USR_TASK; i++) {
 		if ( upt[i] != NULL && upt[i]->state == TASK_STOP_RUNNING) {
 			dequeue_se_to_exit(runq, &(upt[i]->se));
 			task_created_num--;
@@ -339,7 +336,7 @@ void print_task_stat(void)
 	int i, idx=0, num=0;
 	char buff[128];
 
-	for (i=0 ; i<128 ; i++) buff[i] = 0;
+	for (i = 0; i < 128; i++) buff[i] = 0;
 	if (current->type == CFS_TASK) {
 		num = sprintf(buff,"\n####task:%s\n",current->name);
 		idx += num;
@@ -364,7 +361,7 @@ void print_task_stat(void)
 
 		num=0; 
 		idx=0;
-		for (i=0 ; i<128 ; i++) buff[i] = 0;
+		for (i = 0; i < 128; i++) buff[i] = 0;
 
 		if (next->type == CFS_TASK) {
 			num = sprintf(&buff[idx],"task:%s\n",next->name);
@@ -390,8 +387,10 @@ void shell(void)
 
 	show_stat = 1;
 
+	/*
 	create_rt_task("real1", (task_entry)rt_task_handler, 15);
 	create_rt_task("real2", (task_entry)rt_task_handler2, 17);
+	*/
 	while (1) {
 #if 0
 		if (i == 1000) {
@@ -507,7 +506,7 @@ void init_idletask()
 	pt->type = CFS_TASK;
 	pt->missed_cnt = 0;
 	set_priority(pt, 16);
-	current = first = last = pt;
+	idle_task = current = first = last = pt;
 
 	init_rq(pt);
 	init_waitq(&wq_sched);
@@ -537,7 +536,7 @@ void init_idletask()
 void create_all_task()
 {
 	int i;
-	for (i=1 ; i<MAX_TASK ; i++) {
+	for (i = 1; i < MAX_TASK; i++) {
 		forkyi(&task_arr[0], &task_arr[i]);
 	}
 	current = &task_arr[0]; /* current is idle task*/
