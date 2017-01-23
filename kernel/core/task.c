@@ -42,8 +42,9 @@ extern struct timer_root *ptroot;
 extern char *exec;
 volatile uint32_t rqlock;
 void oneshot_user_timer_handler(void *arg);
-extern void spin_lock_acquire_irqsafe(volatile uint32_t *pl);
-extern void spin_lock_release_irqsafe(volatile uint32_t *pl);
+extern void spin_lock_acquire(volatile uint32_t *pl);
+extern void spin_lock_release(volatile uint32_t *pl);
+
 extern int uart_getc(int port, int wait);
 extern void create_oneshot_timer(timer_handler oneshot_timer_handler, uint32_t msec, void *arg);
 
@@ -267,15 +268,15 @@ void enqueue_se_to_runq(struct cfs_rq *rq, struct sched_entity *se, bool update)
 		rq->priority_sum += se->priority;
 		remove_from_waitq(&wq_sched, tp);
 		tp->state = TASK_RUNNING;
-		spin_lock_acquire_irqsafe(&rqlock);
+		spin_lock_acquire(&rqlock);
 		update_vruntime_runq(rq, se);
-		spin_lock_release_irqsafe(&rqlock);
+		spin_lock_release(&rqlock);
 
 	}
 
-	spin_lock_acquire_irqsafe(&rqlock);
+	spin_lock_acquire(&rqlock);
 	enqueue_se(rq, se);
-	spin_lock_release_irqsafe(&rqlock);
+	spin_lock_release(&rqlock);
 }
 
 void dequeue_se_to_exit(struct cfs_rq *rq, struct sched_entity *se)
@@ -284,15 +285,15 @@ void dequeue_se_to_exit(struct cfs_rq *rq, struct sched_entity *se)
 	tp = container_of(se, struct task_struct, se);
 	if (tp->state == TASK_RUNNING || tp->state == TASK_STOP_RUNNING){
 		rq->priority_sum -= se->priority;
-		spin_lock_acquire_irqsafe(&rqlock);
+		spin_lock_acquire(&rqlock);
 		update_vruntime_runq(rq, se);
 		dequeue_se(rq, se);
-		spin_lock_release_irqsafe(&rqlock);
+		spin_lock_release(&rqlock);
 		tp->state = TASK_STOP;
 	} else if (tp->state == TASK_WAITING) {
-		spin_lock_acquire_irqsafe(&rqlock);
+		spin_lock_acquire(&rqlock);
 		remove_from_waitq(&wq_sched, tp);
-		spin_lock_release_irqsafe(&rqlock);
+		spin_lock_release(&rqlock);
 		tp->state = TASK_STOP;
 	}
 }
@@ -307,14 +308,14 @@ void dequeue_se_to_waitq(struct cfs_rq *rq, struct sched_entity *se, bool update
 		add_to_waitq(&wq_sched, tp);
 		tp->state = TASK_WAITING;
 
-		spin_lock_acquire_irqsafe(&rqlock);
+		spin_lock_acquire(&rqlock);
 		update_vruntime_runq(rq, se);
-		spin_lock_release_irqsafe(&rqlock);
+		spin_lock_release(&rqlock);
 	}
 
-	spin_lock_acquire_irqsafe(&rqlock);
+	spin_lock_acquire(&rqlock);
 	dequeue_se(rq, se);
-	spin_lock_release_irqsafe(&rqlock);
+	spin_lock_release(&rqlock);
 }
 
 void init_cfs_rq(void)
