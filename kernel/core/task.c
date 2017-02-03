@@ -335,9 +335,9 @@ void print_task_stat(void)
 	struct task_struct *next;
 	struct list_head *next_lh;
 	int i, idx=0, num=0;
-	char buff[128];
+	char buff[256];
 
-	for (i = 0; i < 128; i++) buff[i] = 0;
+	for (i = 0; i < 256; i++) buff[i] = '\0';
 	if (current->type == CFS_TASK) {
 		num = sprintf(buff,"\n####task:%s\n",current->name);
 		idx += num;
@@ -362,7 +362,7 @@ void print_task_stat(void)
 
 		num=0; 
 		idx=0;
-		for (i = 0; i < 128; i++) buff[i] = 0;
+		for (i = 0; i < 256; i++) buff[i] = '\0';
 
 		if (next->type == CFS_TASK) {
 			num = sprintf(&buff[idx],"task:%s\n",next->name);
@@ -386,7 +386,7 @@ void shell(void)
 	int byte;
 	int i = 0;
 
-	show_stat = 1;
+	show_stat = 0;
 
 	/*
 	create_rt_task("real1", (task_entry)rt_task_handler, 15);

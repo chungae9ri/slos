@@ -67,6 +67,7 @@ struct task_struct {
 	struct task_context_struct ct;
 	/*struct task_context_struct ct;*/
 	task_entry entry;
+	void *arg;
 	char name[32];
 	struct sched_entity se;
 	struct list_head task;
@@ -105,6 +106,7 @@ void update_se(uint32_t elasped);
 void set_priority(struct task_struct *pt, uint32_t pri);
 void put_to_sleep(char *dur, int idx);
 void yield();
+void create_rt_task(char *name, task_entry handler, int dur);
 
 
 void func1(void);

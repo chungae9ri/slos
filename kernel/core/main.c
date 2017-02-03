@@ -17,6 +17,13 @@
 #include <vm_pool.h>
 #endif
 
+#define USE_FS
+
+#ifdef USE_FS
+#include <file_system.h>
+#include <file.h>
+#endif
+
 extern void enable_interrupt();
 extern void disable_interrupt();
 extern void update_csd(void);
@@ -29,6 +36,11 @@ extern uint32_t show_stat;
 #ifdef USE_MMU
 struct vmpool *pvm_kernel;
 struct vmpool *pvm_user;
+#endif
+
+
+#ifdef USE_FS
+struct file_system *pfs;
 #endif
 
 void cpuidle(void) 
@@ -85,6 +97,12 @@ int main(void)
 	static struct pagetable pgt;
 	struct vmpool kheap, pheap;
 #endif
+#ifdef USE_FS
+	char buf[32] = "hello world. this is slfs!\n";
+	char temp[32];
+	int len;
+	struct file *fp;
+#endif
 	disable_interrupt();
 
 #ifdef USE_MMU
@@ -131,6 +149,20 @@ int main(void)
 	/* imsi out while virtual mem implementation */
 #ifndef USE_MMU
 	/*load_ramdisk();*/
+#endif
+
+#ifdef USE_FS
+	pfs = init_file_system();
+	mount_file_system(pfs);
+	format_file_system(pfs);
+	fp = create_file(1, "test");
+	len = strlen(buf);
+	write(fp, len, buf);
+	reset(fp);
+	read(fp, len, temp);
+	temp[len] = '\0';
+	print_msg("#####: ");
+	print_msg(temp);
 #endif
 
 	update_csd();
