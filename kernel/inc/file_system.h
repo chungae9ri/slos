@@ -6,7 +6,7 @@
 /* inode entry number in iNode table */
 #define INODETBL_NUM 80
 /* physical addr, 48MB from mem start */
-#define META_BLK_SIZE		0x1000 /* 4KB block size */
+#define META_BLK_SIZE		0x1000 /* 4KB meta block size */
 #define SUPER_BLK_START		0x0
 #define INODE_BITMAP_START	(SUPER_BLK_START + META_BLK_SIZE)
 #define INODE_BITMAP_START_BLK	(INODE_BITMAP_START / DATA_BLK_SIZE)
@@ -18,15 +18,14 @@
 #define DATA_BLK_START		(INODE_TABLE_START + INODE_TABLE_SIZE)
 #define DATA_BLK_START_BLK	(DATA_BLK_START / DATA_BLK_SIZE)
 
+#define inodeBlkMax	50
 /* inode size is same as 1blk size(256 byte) */
 struct inode {
 	unsigned int iNum;
-	unsigned int fileSize;
-	/* max file size has 50 data blks
-	   file size = 256 * 50 bytes
-	 */
-	/* index of data blk */
-	unsigned int blkloc[50]; 
+	unsigned int file_size;
+
+	/* index of data blk max file size = 800KB = 50 * 256 / 4 * 256 B */
+	unsigned int blkloc[inodeBlkMax]; 
 };
 
 struct file_system {

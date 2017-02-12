@@ -21,14 +21,13 @@ struct file *create_file(int _fd, char *str)
 
 int read(struct file *fp, int _n, char *_buf)
 {
-	char temp[256];
-	int i, j;
-	int inodeLoc, BlkIdx, BlkNum, off, r;
+	char temp[DATA_BLK_SIZE], temp2[DATA_BLK_SIZE];
+	int i, j, first_entry, sec_entries, sec_entry;
+	int inodeLoc, BlkNum, BlkNum2, off, r;
 	struct inode iNode;
 	int BlkSize = DATA_BLK_SIZE;
 
-	BlkIdx = (int)(fp->pos / BlkSize);
-	off = (int)(fp->pos % BlkSize); 
+	sec_entries = (int)(DATA_BLK_SIZE / sizeof(int)); /* must be 64 */
 
 	/* read inode
 	 * since there is not a root directory, fd is the index
@@ -37,32 +36,47 @@ int read(struct file *fp, int _n, char *_buf)
 	inodeLoc = pfs->inodeTableStartBlk + fp->fd;
 	read_ramdisk(inodeLoc, (char *)(&iNode));
 
-	BlkNum = iNode.blkloc[BlkIdx];
+	if (iNode.file_size <= _n + fp->pos) _n = iNode.file_size - fp->pos;
+
+	first_entry = (int)(fp->pos / (BlkSize * sec_entries));
+	sec_entry = (int)(fp->pos / BlkSize) % sec_entries;
+	off = (int)(fp->pos % BlkSize); 
+
+	BlkNum = iNode.blkloc[first_entry];
 	read_ramdisk(BlkNum, temp);
 
 	if (off + _n < BlkSize) {
+		BlkNum2 = temp[sec_entry];
+		read_ramdisk(BlkNum2, temp2);
 		for(i = 0; i < _n; i++) {
-			_buf[i] = temp[off + i];
+			_buf[i] = temp2[off + i];
 		}
 	} else {
-		for (i = 0; i < BlkSize-off; i++) {
-			_buf[i] = temp[off + i];
+		BlkNum2 = temp[sec_entry];
+		read_ramdisk(BlkNum2, temp2);
+		for (i = 0; i < BlkSize - off; i++) {
+			_buf[i] = temp2[off + i];
 		}
-
 		r = _n - i;
-		BlkNum = (unsigned long)(r / BlkSize);
-		off = (unsigned int)(r % BlkSize);
-		BlkIdx++;
-		for (j = 0; j < BlkNum; j++) {
-			read_ramdisk(iNode.blkloc[BlkIdx], &_buf[i]);
-			i += BlkSize;
-			BlkIdx++;
-		}
+		while (r) {
+			sec_entry++;
+			if (sec_entry == sec_entries) {
+				first_entry++;
+				sec_entry = 0;
+			}
 
-		if (off) {
-			read_ramdisk(iNode.blkloc[BlkIdx], temp);
-			for (j = 0; j < off; j++) {
-				_buf[i + j] = temp[j];
+			if (r < BlkSize) {
+				BlkNum2 = temp[sec_entry];
+				read_ramdisk(BlkNum2,temp2); 
+				for (j = 0; j < r; j++) {
+					_buf[i + j] = temp2[j];
+				}
+				r = 0;
+			} else {
+				BlkNum2 = temp[sec_entry];
+				read_ramdisk(BlkNum2,&_buf[i]); 
+				i += BlkSize;
+				r -= BlkSize;
 			}
 		}
 	}
@@ -74,11 +88,13 @@ int read(struct file *fp, int _n, char *_buf)
 
 int write(struct file *fp, int _n, unsigned char * _buf)
 {
-	char temp[256];
-	int i, j, k;
-	int BlkNum, off, BlkIdx, r, inodeLoc;
+	char temp[DATA_BLK_SIZE], temp2[DATA_BLK_SIZE];
+	int i, j, first_entry, sec_entries, sec_entry;
+	int inodeLoc, BlkNum, BlkNum2, off, r;
 	struct inode iNode;
 	int BlkSize = DATA_BLK_SIZE;
+
+	sec_entries = (int)(DATA_BLK_SIZE / sizeof(int)); /* must be 64 */
 
 	/* read inode
 	 * since there is not a root directory, fd is the index
@@ -87,62 +103,87 @@ int write(struct file *fp, int _n, unsigned char * _buf)
 	inodeLoc = pfs->inodeTableStartBlk + fp->fd;
 	read_ramdisk(inodeLoc, (char *)&iNode);
 
-	BlkIdx = (int)(fp->pos / BlkSize);
-	off = (int)(fp->pos % BlkSize);
+	if (iNode.file_size + _n >= inodeBlkMax * sec_entries * DATA_BLK_SIZE)
+		_n = inodeBlkMax * sec_entries * DATA_BLK_SIZE - iNode.file_size;
 
-	/* need to check the BlkIdx >= max len 
-	 * but we don't. fix me
-	 */
+	if (_n == 0) return 0;
+
+	first_entry = (int)(iNode.file_size / (BlkSize * sec_entries));
+	sec_entry = (int)(iNode.file_size / BlkSize) % sec_entries;
+	off = (int)(iNode.file_size % BlkSize); 
+
+	BlkNum = iNode.blkloc[first_entry];
+	if (BlkNum == 0) {
+		BlkNum = find_datablk(pfs);
+		iNode.blkloc[first_entry] = BlkNum;
+	}
+	read_ramdisk(BlkNum, temp);
 
 	if (off + _n < BlkSize) {
 		if (off) {
-			read_ramdisk(iNode.blkloc[BlkIdx], temp);
+			/*read_ramdisk(iNode.blkloc[first_entry], temp);*/
+			BlkNum2 = temp[sec_entry];
+			read_ramdisk(BlkNum2, temp2);
 		} else {
-			iNode.blkloc[BlkIdx] = find_datablk(pfs);
+			/*read_ramdisk(iNode.blkloc[first_entry], temp);*/
+			BlkNum2 = temp[sec_entry] = find_datablk(pfs);
+			write_ramdisk(iNode.blkloc[first_entry], temp);
+			read_ramdisk(BlkNum2, temp2);
 		}
 
 		for (i = 0; i < _n; i++) {
-			temp[off + i] = _buf[i];
+			temp2[off + i] = _buf[i];
 		}
 		/* write data to data blk */
-		write_ramdisk(iNode.blkloc[BlkIdx], temp);
+		write_ramdisk(BlkNum2, temp2);
 	} else {
-		if (off) {
-			read_ramdisk(iNode.blkloc[BlkIdx], temp);
+		if (off == 0) {
+			temp[sec_entry] = find_datablk(pfs);
+			write_ramdisk(iNode.blkloc[first_entry], temp);
+		}
+		/*if (off) {*/
+			/*read_ramdisk(iNode.blkloc[first_entry], temp);*/
+			BlkNum2 = temp[sec_entry];
+			read_ramdisk(BlkNum2, temp2);
 			for (i = 0; i < BlkSize - off; i++) {
-				temp[off + i] = _buf[i];
+				temp2[off + i] = _buf[i];
 			}
-			write_ramdisk(iNode.blkloc[BlkIdx], temp);
-			BlkIdx++;
-		} 
+			write_ramdisk(BlkNum2, temp2);
+		/*} */
 
 		r = _n - i;
-		BlkNum = (int)(r / BlkSize); 
-		off = (int)(r % BlkSize);
-		for (j = 0; j < BlkNum; j++) {
-			iNode.blkloc[BlkIdx] = find_datablk(pfs);
-			/* write data to data blk */
-			write_ramdisk(iNode.blkloc[BlkIdx], &_buf[i + j * BlkSize]);
-			BlkIdx++;
-			/* need to check the BlkIdx >= max len 
-			 * but we don't. fix me
-			 */
-		}
-		if (off) {
-			for (k = 0; k < 256; k++) temp[k] = 0x00;
-
-			for (k = 0; k < off; k++) {
-				temp[k] = _buf[i + j * BlkSize + k];
+		while (r) {
+			sec_entry++;
+			if (sec_entry == sec_entries) {
+				first_entry++;
+				iNode.blkloc[first_entry] = find_datablk(pfs);
+				sec_entry = 0;
 			}
-			iNode.blkloc[BlkIdx] = find_datablk(pfs);
-			/* write data to data blk */
-			write_ramdisk(iNode.blkloc[BlkIdx], temp);
+			read_ramdisk(iNode.blkloc[first_entry], temp);
+			BlkNum2 = temp[sec_entry] = find_datablk(pfs);
+			write_ramdisk(iNode.blkloc[first_entry], temp);
+
+			if (r < BlkSize) {
+				for (j = 0; j < r; j++) {
+					temp2[j] = _buf[i + j];
+				}
+				write_ramdisk(BlkNum2, temp2);
+				r = 0;
+			} else {
+				for (j = 0; j < BlkSize; j++) {
+					temp2[j] = _buf[i + j];
+				}
+				write_ramdisk(BlkNum2, temp2);
+				r -= BlkSize;
+				i += BlkSize;
+			}
 		}
 	}
 
 	/* update current inode in inode table */
-	iNode.fileSize += _n;
+	iNode.file_size += _n;
 	write_ramdisk(inodeLoc, (char *)&iNode);
+	return _n;
 }
 
 void reset(struct file *fp)
@@ -164,7 +205,7 @@ int eof(struct file *fp)
 	inodeLoc = pfs->inodeTableStartBlk + fp->fd;
 	read_ramdisk(inodeLoc, (char *)&iNode);
 
-	if (fp->pos >= iNode.fileSize) return 1;
+	if (fp->pos >= iNode.file_size) return 1;
 	else return 0;
 }
 

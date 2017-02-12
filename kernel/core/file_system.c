@@ -38,7 +38,7 @@ void mount_file_system(struct file_system *pfs)
 int format_file_system(struct file_system *pfs)
 {
 	int i;
-	unsigned char zeroBlk[256] = {0,};
+	unsigned char zeroBlk[DATA_BLK_SIZE] = {0,};
 
 	/* wipe out all the data in the disk, 
 	 * but for simplicity, wipe out just meta blks
@@ -54,35 +54,34 @@ int format_file_system(struct file_system *pfs)
 
 int file_system_create_file(struct file_system *pfs, int _file_id)
 {
-	int i, j, q, r, blk_off;
+	int i, j, blk_off, blk_r, bit;
 	struct inode *pinodeDat;
-	char blk_data[256] = {0,};
+	char blk_data[DATA_BLK_SIZE] = {0,};
 
 	/* there is not a directory
 	 * file id is same with inode index 
 	 * mas file num is limited by inode table size 
 	 * whitch is 160
 	 */
-	if (_file_id >= pfs->inodeTableSize) return 1;
+	if (_file_id >= pfs->inodeTableSize * 8) return 1;
 
-	i = _file_id % pfs->BlkSize;
-	q = (int)(i / 8);
-	r = i % 8;
+	blk_off = (int)((_file_id >> 3) / pfs->BlkSize);
+	blk_r = (_file_id >> 3) % pfs->BlkSize;
+	bit = _file_id % 8;
 
 	/* if file already exists, return already exist */
-	blk_off = (int)(_file_id / pfs->BlkSize);
 	read_ramdisk(pfs->inodeBmpStartBlk + blk_off, blk_data);
-	if ((blk_data[q] & (0x1 << r)) != 0x00) {
+	if ((blk_data[blk_r] & (0x1 << bit)) != 0x00) {
 		return 2;
 	}
 	/* update Inode bitmap */
-	blk_data[q] |= (0x01 << r);
+	blk_data[blk_r] |= (0x01 << bit);
 	write_ramdisk(pfs->inodeBmpStartBlk + blk_off, blk_data);
 
-	for (i = 0; i < 256; i++) blk_data[i] = 0x00;
+	for (i = 0; i < DATA_BLK_SIZE; i++) blk_data[i] = 0x00;
 	pinodeDat = (struct inode *)(blk_data);
 	pinodeDat->iNum = _file_id;
-	pinodeDat->fileSize = 0;
+	pinodeDat->file_size = 0;
 
 	/* write inode data for new file to inode table */
 	write_ramdisk(pfs->inodeTableStartBlk + _file_id, blk_data);
@@ -131,7 +130,8 @@ struct file *find_file(struct file_system *pfs, int _file_id)
 
 int delete_file(struct file_system *pfs, int _file_id)
 {
-	int i, j, k, d;
+	int i, j, k, l, d, i2, j2, d2;
+	char temp[DATA_BLK_SIZE];
 	struct inode iNode;
 
 	i = (int)(_file_id / 8);
@@ -144,12 +144,21 @@ int delete_file(struct file_system *pfs, int _file_id)
 	read_ramdisk(pfs->inodeTableStartBlk + _file_id, (char *)&iNode);
 	k = 0;
 	while(iNode.blkloc[k]) {
-		d = iNode.blkloc[k] - pfs->DataBlkStartBlk;
+		d = iNode.blkloc[k];
 		i = (int)(d / 8);
 		j = d % 8;
-		iNode.blkloc[k] = 0;
-		/* clear data bitmap */
+		/* read 2nd data block and clear it*/
+		read_ramdisk(d, temp);
+		for (l = 0; l < DATA_BLK_SIZE / sizeof(int); l++) {
+			d2 = temp[l * 4];
+			i2 = (int)(d2 / 8);
+			j2 = d2 % 8;
+			pfs->pDBmp[i2] = (pfs->pDBmp[i2] & ~(0x1 << j2));
+		}
+		/* clear 1st data bitmap */
 		pfs->pDBmp[i] = (pfs->pDBmp[i] & ~(0x1 << j));
+		/* clear inode blkloc */
+		iNode.blkloc[k] = 0;
 		k++;
 	}
 
@@ -163,7 +172,8 @@ int delete_file(struct file_system *pfs, int _file_id)
 
 int release_blks(struct file_system *pfs, int _file_id)
 {
-	int i, j, k, d;
+	int i, j, k, l, d, i2, j2, d2;
+	char temp[DATA_BLK_SIZE];
 	struct inode iNode;
 
 	i = (int)(_file_id / 8);
@@ -176,16 +186,25 @@ int release_blks(struct file_system *pfs, int _file_id)
 	read_ramdisk(pfs->inodeTableStartBlk + _file_id, (char *)&iNode);
 	k = 0;
 	while(iNode.blkloc[k]) {
-		d = iNode.blkloc[k] - pfs->DataBlkStartBlk;
+		d = iNode.blkloc[k];
 		i = (int)(d / 8);
 		j = d % 8;
-		/* clear data bitmap */
-		iNode.blkloc[k] = 0;
+		/* read 2nd data block and clear it*/
+		read_ramdisk(d, temp);
+		for (l = 0; l < DATA_BLK_SIZE / sizeof(int); l++) {
+			d2 = temp[l * 4];
+			i2 = (int)(d2 / 8);
+			j2 = d2 % 8;
+			pfs->pDBmp[i2] = (pfs->pDBmp[i2] & ~(0x1 << j2));
+		}
+		/* clear 1st data bitmap */
 		pfs->pDBmp[i] = (pfs->pDBmp[i] & ~(0x1 << j));
+		/* clear inode blkloc */
+		iNode.blkloc[k] = 0;
 		k++;
 	}
 
-	iNode.fileSize = 0;
+	iNode.file_size = 0;
 	write_ramdisk(pfs->inodeTableStartBlk + _file_id, (char *)&iNode);
 	return 0;
 }
@@ -195,8 +214,4 @@ void register_file(struct file_system *pfs, struct file *fp)
 	if(fp->fd >= INODE_TABLE_SIZE) return;
 	pfs->fpList[fp->fd] = fp;
 }
-
-
-
-
 

@@ -90,6 +90,9 @@ void mem_init()
 
 }
 
+#ifdef USE_FS
+#define FILE_TEST_LEN	5000
+#endif
 int main(void) 
 {
 #ifdef USE_MMU
@@ -98,8 +101,8 @@ int main(void)
 	struct vmpool kheap, pheap;
 #endif
 #ifdef USE_FS
-	char buf[32] = "hello world. this is slfs!\n";
-	char temp[32];
+	char buf[FILE_TEST_LEN];
+	char temp[FILE_TEST_LEN];
 	int len;
 	struct file *fp;
 #endif
@@ -156,13 +159,19 @@ int main(void)
 	mount_file_system(pfs);
 	format_file_system(pfs);
 	fp = create_file(1, "test");
-	len = strlen(buf);
-	write(fp, len, buf);
+	for (i = 0; i < FILE_TEST_LEN; i++) 
+		buf[i] = i % 256;
+	write(fp, FILE_TEST_LEN, buf);
 	reset(fp);
-	read(fp, len, temp);
-	temp[len] = '\0';
-	print_msg("#####: ");
-	print_msg(temp);
+	read(fp, FILE_TEST_LEN, temp);
+	print_msg("file test : ");
+	for (i = 0; i < FILE_TEST_LEN; i++) {
+		if (buf[i] != temp[i]) {
+			print_msg("fail!!\n");
+			break;
+		}
+	}
+	if (i == FILE_TEST_LEN) print_msg("pass!!\n");
 #endif
 
 	update_csd();
