@@ -390,7 +390,7 @@ extern void gpio_config_uart_dm(uint8_t id);
 void uart_dm_init(uint8_t id, uint32_t gsbi_base, uint32_t uart_dm_base)
 {
 	static uint8_t port = 0;
-	char *data = "UART_DM Initialized!!!\n";
+	char *data = "UART_DM Initialized!!\n";
 
 	/* Configure the uart clock */
 	clock_config_uart_dm(id);
@@ -420,13 +420,13 @@ void uart_dm_init(uint8_t id, uint32_t gsbi_base, uint32_t uart_dm_base)
 	/* Intialize UART_DM */
 	msm_boot_uart_dm_init(uart_dm_base);
 
-	msm_boot_uart_dm_write(uart_dm_base, data, 44);
+	msm_boot_uart_dm_write(uart_dm_base, data, 20);
 
 	/* kwangdo.yi
 	   temp out fix me
-	ASSERT(port < ARRAY_SIZE(port_lookup));
 */
-	port_lookup[port++] = uart_dm_base;
+	/*ASSERT(port < ARRAY_SIZE(port_lookup));*/
+	port_lookup[port] = uart_dm_base;
 
 	/* Set UART init flag */
 	uart_init_flag = 1;
