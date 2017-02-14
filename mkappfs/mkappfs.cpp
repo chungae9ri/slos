@@ -21,7 +21,7 @@ int main(int argc, char **argv)
 	/*sprintf(cnt, "%d", argc-2);*/
 	fwrite(&cnt, 1, sizeof(unsigned int), outfp);
 
-	for (i=2 ; i<argc ; i++) {
+	for (i = 2; i < argc; i++) {
 		infp = fopen(argv[i], "r");
 		if (!infp) return 0;
 
@@ -30,12 +30,12 @@ int main(int argc, char **argv)
 		size = 0;
 		fseek(outfp, 0, SEEK_END);
 		memset(buff, 0x0, sizeof(buff));
-		size = fread (buff, sizeof(char), sizeof(buff), infp);
+		size = fread(buff, sizeof(char), sizeof(buff), infp);
 		cout << "read : " << size << endl;
 		padding = size % 4;
-		if(padding != 0)  {
-			padding = 4-padding;
-			while(padding > 0) {
+		if (padding != 0)  {
+			padding = 4 - padding;
+			while (padding > 0) {
 				buff[size] = 0x00;
 				padding--;
 				size++;

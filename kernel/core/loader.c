@@ -14,29 +14,29 @@ char *exec = NULL;
 
 void exit_elf(int idx)
 {
-	if(upt[idx] != NULL)
-		upt[idx]->state=TASK_STOP_RUNNING;
+	if (upt[idx] != NULL)
+		upt[idx]->state = TASK_STOP_RUNNING;
 }
 
 void load_ramdisk()
 {
 	int tasknum = 0, i, size, buf0, buf1, buf2, buf3;
-	char *pramdisk= (char *)(SCRATCH_BASE);
+	char *pramdisk = (char *)(SCRATCH_BASE);
 	task_entry ptr;
 	char temp[64];
 
-	tasknum = pramdisk[0] | pramdisk[1]<<8 | pramdisk[2]<<16 | pramdisk[3]<<24;
+	tasknum = pramdisk[0] | (pramdisk[1] << 8) | (pramdisk[2] << 16) | (pramdisk[3] << 24);
 	sprintf(temp, "\r\nuser task number : %d", tasknum);
 	print_msg(temp);
-	pramdisk+= 4;
+	pramdisk += 4;
 
-	for (i=0 ; i<tasknum ; i++) {
-		size = pramdisk[0] | pramdisk[1]<<8 | pramdisk[2]<<16 | pramdisk[3]<<24;
+	for (i = 0; i < tasknum; i++) {
+		size = pramdisk[0] | (pramdisk[1] << 8) | (pramdisk[2] << 16) | (pramdisk[3] << 24);
 		sprintf(temp, "\r\nload_bin cnt : %d, size : %d", i, size);
 		print_msg(temp);
-		pramdisk+= 4;
+		pramdisk += 4;
 		ptr = (task_entry)load_elf(pramdisk, i);
-		pramdisk+= size;
+		pramdisk += size;
 	}
 }
 
@@ -44,7 +44,7 @@ Elf32_Addr find_sym(const char* name, Elf32_Shdr* shdr, const char* strings, con
 {
     Elf32_Sym* syms = (Elf32_Sym*)(src + shdr->sh_offset);
     int i;
-    for(i = 0; i < shdr->sh_size / sizeof(Elf32_Sym); i++) {
+    for (i = 0; i < shdr->sh_size / sizeof(Elf32_Sym); i++) {
         if (xstrcmp(name, strings + syms[i].st_name) == 0) {
             return (Elf32_Addr)(dst + syms[i].st_value);
         }
@@ -69,15 +69,15 @@ task_entry load_elf (char *elf_start, int idx)
     exec = (char *)(USER_CODE_BASE + idx*USER_CODE_GAP);
     phdr = (Elf32_Phdr *)(elf_start + hdr->e_phoff);
 
-    for(i=0; i < hdr->e_phnum; ++i) {
-            if(phdr[i].p_type != PT_LOAD) {
+    for (i = 0; i < hdr->e_phnum; ++i) {
+            if (phdr[i].p_type != PT_LOAD) {
                     continue;
             }
-            if(phdr[i].p_filesz > phdr[i].p_memsz) {
+            if (phdr[i].p_filesz > phdr[i].p_memsz) {
                     print_msg("load_elf:: p_filesz > p_memsz\n");
                     return 0;
             }
-            if(!phdr[i].p_filesz) {
+            if (!phdr[i].p_filesz) {
                     continue;
             }
 
@@ -85,12 +85,12 @@ task_entry load_elf (char *elf_start, int idx)
             taddr = phdr[i].p_vaddr + exec;
 	    /* copy program to 0x1600000 */
 	    /*memmove(taddr,start,phdr[i].p_filesz);*/
-	    for (j=0 ; j<phdr[i].p_filesz ; j++) 
+	    for (j = 0; j < phdr[i].p_filesz; j++) 
 		    taddr[j] = start[j];
     }
     shdr = (Elf32_Shdr *)(elf_start + hdr->e_shoff);
 
-    for (i=0 ; i<hdr->e_shnum ; i++) {
+    for (i = 0; i < hdr->e_shnum; i++) {
 	    if (shdr[i].sh_type == SHT_SYMTAB) {
 		syms = (Elf32_Sym *)(elf_start + shdr[i].sh_offset);
 		strings = elf_start + shdr[shdr[i].sh_link].sh_offset;

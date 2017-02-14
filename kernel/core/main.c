@@ -45,9 +45,8 @@ struct file_system *pfs;
 
 void cpuidle(void) 
 {
-	while(1) {
-		/* imsi for test */
-		/*drop_usrtask();*/
+	while (1) {
+		drop_usrtask();
 		if (show_stat) print_msg("cpuidle running....\r\n");
 	}
 }
@@ -103,7 +102,7 @@ int main(void)
 #ifdef USE_FS
 	char buf[FILE_TEST_LEN];
 	char temp[FILE_TEST_LEN];
-	int len;
+	int len, i;
 	struct file *fp;
 #endif
 	disable_interrupt();
@@ -150,10 +149,6 @@ int main(void)
 #endif
 	enable_interrupt();
 	/* imsi out while virtual mem implementation */
-#ifndef USE_MMU
-	/*load_ramdisk();*/
-#endif
-
 #ifdef USE_FS
 	pfs = init_file_system();
 	mount_file_system(pfs);
@@ -176,6 +171,9 @@ int main(void)
 
 	update_csd();
 	timer_enable();
+#ifndef USE_MMU
+	load_ramdisk();
+#endif
 	cpuidle();
 
 	return 0;
