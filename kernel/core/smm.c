@@ -29,13 +29,13 @@ void *_sbrk(void *reent, unsigned int size)
 	static unsigned char *heap = NULL;
 	unsigned char *prev_heap;
 	if (!heap) {
-		/*heap = (unsigned char *)__kernel_heap_start__;*/
-		heap = (unsigned char *)0x800000;
+		heap = (unsigned char *)__kernel_heap_start__;
+		/*heap = (unsigned char *)0x800000;*/
 	}
 
 	prev_heap = heap;
-	/*if ((heap + size) >= __kernel_heap_end__) {*/
-	if ((heap + size) >= (unsigned char *)0x1000000) {
+	if ((heap + size) >= (unsigned char *)__kernel_heap_end__) {
+	/*if ((heap + size) >= (unsigned char *)0x1000000) {*/
 		print_msg("heap overflow!!\n");
 		return 0;
 	}
@@ -52,13 +52,13 @@ void *kmalloc(unsigned int size)
 	static unsigned char *heap = NULL;
 	unsigned char *prev_heap;
 	if (!heap) {
-		/*heap = (unsigned char *)__kernel_heap_start__;*/
-		heap = (unsigned char *)0x800000;
+		heap = (unsigned char *)__kernel_heap_start__;
+		/*heap = (unsigned char *)0x800000;*/
 	}
 
 	prev_heap = heap;
-	/*if ((heap + size) >= __kernel_heap_end__) {*/
-	if ((heap + size) >= (unsigned char *)0x1000000) {
+	if ((heap + size) >= (unsigned char *)__kernel_heap_end__) {
+	/*if ((heap + size) >= (unsigned char *)0x1000000) {*/
 		print_msg("heap overflow!!\n");
 		return 0;
 	}

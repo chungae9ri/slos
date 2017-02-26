@@ -19,34 +19,17 @@
 .extern platform_syscall_handler
 .extern platform_prefetch_abort_handler
 .extern platform_data_abort_handler
-.extern qgic_platform_irq
-.extern qgic_platform_fiq
+/*.extern platform_irq*/
+/*.extern platform_fiq*/
 .extern main 
 /*.extern USER_CODE_BASE*/
 
-	@IMPORT	main
-	@IMPORT	qgic_platform_irq
-
-@AREA KERNEL_ENTRY, CODE, READONLY
-	@CODE32
-	@PRESERVE8
-	@ENTRY
 .section EXCEPTIONS, "ax"
 .arm
-/* For RVCT exception vectors
-; Exception vector
-	b reset_handler			; reset vector
-	b undefined_instruction_handler 	; undef 
-	b syscall_handler		; swi_vector
-	b prefetch_abort_handler		; prefetch_abort
-	b data_abort_handler		; data_abort
-	b reserved			; reserved_vector
-	b irq_handler			; riq_vector
-	b fiq_handler			; fiq_vector
-	*/
 .global exceptions
 exceptions :
-	b reset_handler		
+	/*b reset_handler		*/
+	b _boot
 	b undefined_instruction_handler
 	b syscall_handler	
 	b prefetch_abort_handler
@@ -175,7 +158,7 @@ irq_handler:
 	mrc	p15, 0, r12, c2, c0, 0 /* read ttb addr */
 	str	r12, [r1] /* str ttb addr to Mem */
 #endif
-	bl 	qgic_platform_irq
+	/*kyi imsi for test bl 	platform_irq*/
 ;	
 	mov 	r12, #CONTEXT_MEM 
 	add 	r12,r12,#4
@@ -200,7 +183,7 @@ irq_handler:
 fiq_handler:
 	sub	lr, lr,#4
 	stmfd	sp!, {r0-r3, r12, lr}
-	bl 	qgic_platform_fiq
+	/*kyi imsi for test bl 	platform_fiq*/
 	ldmfd	sp!, {r0-r3, r12, pc}^
 ;
 @ end of program

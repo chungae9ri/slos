@@ -401,7 +401,6 @@ void shell(void)
 		i++;
 		print_msg("I am shell\n");
 #else
-		byte=uart_getc(0,1);
 		print_msg("I am shell\n");
 		switch (byte) {
 			case 'D':

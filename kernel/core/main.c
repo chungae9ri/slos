@@ -1,13 +1,7 @@
 #include <stdint.h>
 #include <string.h>
-#include <reg.h>
-#include <arch/qgic.h>
-#include <irqs.h>
 #include <timer.h>
 #include <task.h>
-#include <msm8226-clock.h>
-#include <acpuclock.h>
-#include <uart_dm.h>
 #include <debug.h>
 #include <loader.h>
 
@@ -51,23 +45,12 @@ void cpuidle(void)
 	}
 }
 
-int get_uart_input() 
-{
-	int byte;
-	byte = uart_getc(0, 1);
-	return byte;
-}
-
 void target_early_init(void) 
 {
-	uart_dm_init(1, 0, BLSP1_UART2_BASE);
 }
 
 void platform_init() 
 {
-	platform_clock_init();
-	platform_qgic_init();
-	platform_init_timer();
 }
 
 #ifdef USE_MMU

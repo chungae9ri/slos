@@ -1,6 +1,3 @@
-#include <reg.h>
-#include <iomap.h>
-
 static void delay(uint64_t ticks);
 void mdelay(unsigned msecs);
 void udelay(unsigned usecs);

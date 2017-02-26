@@ -6,119 +6,76 @@ ASM := arm-none-eabi-as
 LD := arm-none-eabi-ld
 AR := arm-none-eabi-ar
 OBJCOPY :=arm-none-eabi-objcopy
+LIBXIL := libxil.a
 
 TOP_DIR :=$(shell pwd)
 OUT_TOP := $(TOP_DIR)/out
 
-MODULES := arch core exception drivers/clock drivers/uart drivers/gpio
-SRC_DIR := $(addprefix kernel/,$(MODULES))
-OUT_DIR := $(addprefix out/,$(MODULES)) 
-LIB_DIR := lib
-WORKER_DIR := worker 
-HELLO_DIR := helloworld
-TEST1_DIR := test1
-TEST2_DIR := test2
+KERNMODULES := core exception 
+KERNSRCDIR := $(addprefix kernel/,$(KERNMODULES))
+KERNOUTDIR := $(addprefix out/kernel/,$(KERNMODULES)) 
 
-CPPSRC := $(foreach sdir,$(SRC_DIR),$(wildcard $(sdir)/*.cpp))
-CPPOBJ := $(patsubst kernel/%.cpp,out/%.o,$(CPPSRC))
+KERNCSRC := $(foreach sdir,$(KERNSRCDIR),$(wildcard $(sdir)/*.c))
+#$(info ${KERNCSRC})
+KERNCOBJ := $(patsubst %.c,out/%.o,$(KERNCSRC))
+#$(info ${KERNCOBJ})
+KERNASMSRC := $(foreach sdir,$(KERNSRCDIR),$(wildcard $(sdir)/*.S))
+KERNASMOBJ := $(patsubst %.S,out/%.o,$(KERNASMSRC))
 
-CSRC := $(foreach sdir,$(SRC_DIR),$(wildcard $(sdir)/*.c))
-COBJ := $(patsubst kernel/%.c,out/%.o,$(CSRC))
+#LIBMODULESTEMP:= canps_v3_2 coresightps_dcc_v1_3 cpu_cortexa9_v2_3 ddrps_v1_0 devcfg_v3_4 dmaps_v2_3 emacps_v3_3 generic_v2_0 gpiops_v3_1 iicps_v3_4 qspips_v3_3 scugic_v3_5 scutimer_v2_1 scuwdt_v2_1 sdps_v3_1 standalone_v6_1 ttcps_v3_2 uartps_v3_3 usbps_v2_4 xadcps_v2_2
+LIBMODULESTEMP:= ddrps_v1_0 devcfg_v3_4 generic_v2_0 scugic_v3_5 uartps_v3_3 
+LIBMODULES:= $(addsuffix /src, $(LIBMODULESTEMP))
+LIBSRCDIR := $(addprefix libxil/libsrc/,$(LIBMODULES))
+LIBOUTDIR := $(addprefix out/libxil/libsrc/,$(LIBMODULES)) 
+#$(info ${LIBSRCDIR})
+LIBCSRC := $(foreach sdir,$(LIBSRCDIR),$(wildcard $(sdir)/*.c))
+#$(info ${LIBCSRC})
+LIBCOBJ := $(patsubst %.c,out/%.o,$(LIBCSRC))
+#$(info ${LIBCOBJ})
+LIBASMSRC := $(foreach sdir,$(LIBSRCDIR),$(wildcard $(sdir)/*.S))
+LIBASMOBJ := $(patsubst %.S,out/%.o,$(LIBASMSRC))
 
-ASMSRC := $(foreach sdir,$(SRC_DIR),$(wildcard $(sdir)/*.S))
-ASMOBJ := $(patsubst kernel/%.S,out/%.o,$(ASMSRC))
-
-LIBCSRC := $(foreach sdir,$(LIB_DIR),$(wildcard $(sdir)/*.c))
-LIBASMSRC := $(foreach sdir,$(LIB_DIR),$(wildcard $(sdir)/*.S))
-LIBCOBJ := $(patsubst lib/%.c,lib/%.o,$(LIBCSRC))
-LIBASMOBJ := $(patsubst lib/%.S,lib/%.o,$(LIBASMSRC))
-
-WORKERCSRC := $(foreach sdir,$(WORKER_DIR),$(wildcard $(sdir)/*.c))
-WORKERASMSRC := $(foreach sdir,$(WORKER_DIR),$(wildcard $(sdir)/*.S))
-WORKERCOBJ := $(patsubst worker/%.c,worker/%.o,$(WORKERCSRC))
-WORKERASMOBJ := $(patsubst worker/%.S,worker/%.o,$(WORKERASMSRC))
-
-
-HELLOCSRC := $(foreach sdir,$(HELLO_DIR),$(wildcard $(sdir)/*.c))
-HELLOASMSRC := $(foreach sdir,$(HELLO_DIR),$(wildcard $(sdir)/*.S))
-HELLOCOBJ := $(patsubst helloworld/%.c,helloworld/%.o,$(HELLOCSRC))
-HELLOASMOBJ := $(patsubst helloworld/%.S,helloworld/%.o,$(HELLOASMSRC))
-
-TEST1CSRC := $(foreach sdir,$(TEST1_DIR),$(wildcard $(sdir)/*.c))
-TEST1ASMSRC := $(foreach sdir,$(TEST1_DIR),$(wildcard $(sdir)/*.S))
-TEST1COBJ := $(patsubst test1/%.c,test1/%.o,$(TEST1CSRC))
-TEST1ASMOBJ := $(patsubst test1/%.S,test1/%.o,$(TEST1ASMSRC))
-
-TEST2CSRC := $(foreach sdir,$(TEST2_DIR),$(wildcard $(sdir)/*.c))
-TEST2ASMSRC := $(foreach sdir,$(TEST2_DIR),$(wildcard $(sdir)/*.S))
-TEST2COBJ := $(patsubst test2/%.c,test2/%.o,$(TEST2CSRC))
-TEST2ASMOBJ := $(patsubst test2/%.S,test2/%.o,$(TEST2ASMSRC))
-
-INC := -I$(TOP_DIR)/kernel/inc
+INC := -I$(TOP_DIR)/kernel/inc -I$(TOP_DIR)/libxil/include
 LDS :=$(TOP_DIR)/kernel/linker/kernel.lds
-SCL := $(TOP_DIR)/kernel/linker/kernel.scl
-MISC_DIR := $(TOP_DIR)/misc
 
-vpath %.c $(SRC_DIR)
-vpath %.cpp $(SRC_DIR)
-vpath %.S $(SRC_DIR)
+vpath %.c $(KERNSRCDIR)
+vpath %.S $(KERNSRCDIR)
+vpath %.c $(LIBSRCDIR)
+vpath %.S $(LIBSRCDIR)
 
 define make-obj
 $1/%.o: %.c
-	$(CC) $(CFLAGS) $(INC) -o $$@ -c $$< -g
+	$(CC) $(CFLAGS) $(INC) -o $$@ -c $$< -g -mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=softfp
 
 $1/%.o: %.S
-	$(CC) $(INC) -o $$@ -c $$< 
+	$(CC) $(INC) -o $$@ -c $$< -mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=softfp
 endef
 
-$(foreach bdir, $(OUT_DIR),$(eval $(call make-obj,$(bdir))))
+$(foreach bdir, $(KERNOUTDIR),$(eval $(call make-obj,$(bdir))))
+$(foreach bdir, $(LIBOUTDIR),$(eval $(call make-obj,$(bdir))))
 
-#TARGET := $(OUT_TOP)/slos.img
+all: checkdirs $(LIBXIL) slos.img
 
-all: checkdirs app ramdisk slos
+checkdirs : $(LIBOUTDIR) $(KERNOUTDIR)
 
-slos : checkdirs app ramdisk $(COBJ) $(CPPOBJ) $(ASMOBJ)
-	$(LD) -T $(LDS) -o $(OUT_TOP)/kernel.elf $(COBJ) $(CPPOBJ) $(ASMOBJ) -L$(LIBS) -L$(LIBS2) -lc -lgcc 
-	$(OBJCOPY) -O binary $(OUT_TOP)/kernel.elf $(OUT_TOP)/kernel.bin 
-	cp mkappfs/ramdisk.img $(OUT_TOP)/
-	cp $(MISC_DIR)/emmc_appsboot_jump_to_pilot.mbn  $(OUT_TOP)/
-	$(MISC_DIR)/mkbootimg --kernel $(OUT_TOP)/kernel.bin --ramdisk $(OUT_TOP)/ramdisk.img --ramdisk_offset 0x2000000 --pagesize 2048 --base 0x00000000 --kernel_offset 0x00008000 --output $(OUT_TOP)/slos.img
-
-checkdirs : $(OUT_DIR)
-
-$(OUT_DIR) :
+$(LIBOUTDIR) :
 	@mkdir -p $@
 
-app : lib/libslos.a worker/worker helloworld/helloworld test1/test1 test2/test2
+$(KERNOUTDIR) :
+	@mkdir -p $@
 
-lib/libslos.a : $(LIBCOBJ) $(LIBASMOBJ)
-	$(AR) rc $@ $(LIBCOBJ) $(LIBASMOBJ)
+$(LIBXIL) : $(LIBCOBJ) $(LIBASMOBJ)
+	$(AR) rc $(OUT_TOP)/libxil/$@ $(LIBCOBJ) $(LIBASMOBJ)
 
-worker/worker: $(WORKERCOBJ)
-	$(CC) -o $@ $< -L$(TOP_DIR)/lib -lslos -static
-	
+slos.img : $(KERNCOBJ) $(KERNASMOBJ)
+	$(LD) -T $(LDS) -o $(OUT_TOP)/kernel/kernel.elf $(KERNCOBJ) $(KERNASMOBJ) -L$(OUT_TOP)/libxil -L$(LIBS) -L$(LIBS2) -lxil -lc -lgcc 
+#$(OBJCOPY) -O binary $(OUT_TOP)/kernel.elf $(OUT_TOP)/kernel.bin 
+#cp mkappfs/ramdisk.img $(OUT_TOP)/
+#cp $(MISC_DIR)/emmc_appsboot_jump_to_pilot.mbn  $(OUT_TOP)/
+#$(MISC_DIR)/mkbootimg --kernel $(OUT_TOP)/kernel.bin --ramdisk $(OUT_TOP)/ramdisk.img --ramdisk_offset 0x2000000 --pagesize 2048 --base 0x00000000 --kernel_offset 0x00008000 --output $(OUT_TOP)/slos.img
 
-helloworld/helloworld : $(HELLOCOBJ)
-	$(CC) -o $@ $< -L$(TOP_DIR)/lib -lslos -static
-	
-test1/test1 : $(TEST1COBJ)
-	$(CC) -o $@ $< -L$(TOP_DIR)/lib -lslos -static
-
-test2/test2: $(TEST2COBJ)
-	$(CC) -o $@ $< -L$(TOP_DIR)/lib -lslos -static
-
-ramdisk : app mkappfs/mkappfs
-	mkappfs/mkappfs mkappfs/ramdisk.img worker/worker helloworld/helloworld test1/test1 test2/test2
-
-mkappfs/mkappfs : mkappfs/mkappfs.cpp
-	g++ -o $@ $<
 
 clean :
-	@rm -rf $(OUT_TOP) a
-	@rm -f lib/*.a $(LIBCOBJ) $(LIBASMOBJ) 
-	@rm -f worker/worker $(WORKERCOBJ) $(WORKERASMOBJ) 
-	@rm -f helloworld/helloworld $(HELLOCOBJ) $(HELLOASMOBJ) 
-	@rm -f test1/test1 $(TEST1COBJ) $(TEST1ASMOBJ) 
-	@rm -f test2/test2 $(TEST2COBJ) $(TEST2ASMOBJ)
-	@rm -f mkappfs/mkappfs mkappfs/ramdisk.img
+	@rm -rf $(OUT_TOP) libxil.a
+	@rm -f libxil/*.a $(LIBCOBJ) $(LIBASMOBJ) 
 

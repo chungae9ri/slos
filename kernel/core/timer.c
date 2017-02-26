@@ -1,8 +1,6 @@
 #include <stdlib.h>
 #include <stdint-gcc.h>
 #include <timer.h>
-#include <arch/qgic.h>
-#include <irqs.h>
 #include <task.h>
 #include <ktimer.h>
 #include <defs.h>
@@ -11,6 +9,7 @@
 #define QTMR_TIMER_CTRL_INT_MASK 	(0x1 << 1)
 #define QTMR_PHY_CNT_MAX_VALUE		0xFFFFFFFFFFFFFFFF
 
+#if 0
 static uint32_t tc;
 extern void dsb(void);
 extern struct timer_struct *sched_timer;
@@ -181,3 +180,48 @@ void platform_init_timer()
 	gic_register_int_handler(INT_QTMR_FRM_0_PHYSICAL_TIMER_EXP, timer_irq, 0);
 	qgic_unmask_interrupt(INT_QTMR_FRM_0_PHYSICAL_TIMER_EXP);
 }
+#else
+static void delay(uint64_t ticks)
+{
+}
+
+void mdelay(unsigned msecs)
+{
+}
+
+void udelay(unsigned usecs)
+{
+}
+
+uint32_t get_timer_freq()
+{
+	return 0;
+}
+
+inline uint64_t timer_get_phy_tick_cnt(void)
+{
+	return 0;
+}
+
+void timer_enable()
+{
+}
+
+void timer_disable()
+{
+}
+
+int timer_irq (void *arg)
+{
+	return 0;
+}
+
+uint32_t get_ticks_per_sec()
+{
+	return 0;
+}
+
+void platform_init_timer()
+{
+}
+#endif
