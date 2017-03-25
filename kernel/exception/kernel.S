@@ -12,8 +12,8 @@
 .set I_BIT, 0x80
 .set F_BIT, 0x40
 .set IF_BIT, 0xC0
-.set CONTEXT_MEM, 0x4000
-.set SP_MEM, 0x4100
+.set CONTEXT_MEM, 0xF4000
+.set SP_MEM, 0xF4100
 
 .extern platform_undefined_handler
 .extern platform_syscall_handler
@@ -28,8 +28,8 @@
 .arm
 .global exceptions
 exceptions :
-	/*b reset_handler		*/
-	b _boot
+	b reset_handler		
+	/*b _boot*/
 	b undefined_instruction_handler
 	b syscall_handler	
 	b prefetch_abort_handler
@@ -40,8 +40,8 @@ exceptions :
 
 @ Exception handler
 reset_handler:
-	 /*set VBAR with 0x8000*/
-	ldr	r0, =0x8000
+	 /*set VBAR with 0x100000*/
+	ldr	r0, =0x100000
 	mcr	p15,0,r0,c12,c0,0 
 
 	 /*change to supervisor*/

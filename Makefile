@@ -11,7 +11,7 @@ LIBXIL := libxil.a
 TOP_DIR :=$(shell pwd)
 OUT_TOP := $(TOP_DIR)/out
 
-KERNMODULES := core exception 
+KERNMODULES := core exception xil_standalone
 KERNSRCDIR := $(addprefix kernel/,$(KERNMODULES))
 KERNOUTDIR := $(addprefix out/kernel/,$(KERNMODULES)) 
 

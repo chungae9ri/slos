@@ -4,6 +4,7 @@
 #include <task.h>
 #include <debug.h>
 #include <loader.h>
+#include "xil_printf.h"
 
 #ifdef USE_MMU
 #include <frame_pool.h>
@@ -77,6 +78,7 @@ void mem_init()
 #endif
 int main(void) 
 {
+	xil_printf("###hello world\n");
 #ifdef USE_MMU
 	struct framepool kfp, pfp;
 	static struct pagetable pgt;
