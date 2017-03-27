@@ -1,11 +1,7 @@
 OUTPUT_ARCH(arm)
 ENTRY(exceptions) 
-KERNEL_HEAP_SIZE = 0x800000; /* 8M */
-KERNEL_HEAP_START = 0x800000; /* 8M */
-USER_HEAP_SIZE = 0x7000000; /* 112M */
-USER_HEAP_START = 0x1000000; /* 16M */
-/* Define Memories in the system */
 
+/* Define Memories in the system */
 MEMORY
 {
 	ps7_ddr_0_S_AXI_BASEADDR : ORIGIN = 0x100000, LENGTH = 0x3FF00000
@@ -26,21 +22,5 @@ SECTIONS
 	} > ps7_ddr_0_S_AXI_BASEADDR
 	.bss : { 
 		*(.bss); 
-	} > ps7_ddr_0_S_AXI_BASEADDR
-	.kheap : {
-		. = KERNEL_HEAP_START;
-		__kernel_heap_start__ = KERNEL_HEAP_START;
-		*(.kheap)
-		. = __kernel_heap_start__ + KERNEL_HEAP_SIZE;
-		__kernel_heap_end__ = .;
-
-	} > ps7_ddr_0_S_AXI_BASEADDR
-	.uheap : {
-		. = USER_HEAP_START;
-		__user_heap_start__ = USER_HEAP_START;
-		*(.uheap)
-		. = __user_heap_start__ + USER_HEAP_SIZE;
-		__user_heap_end__ = .;
-
 	} > ps7_ddr_0_S_AXI_BASEADDR
 }
