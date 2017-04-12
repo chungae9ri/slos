@@ -47,7 +47,7 @@ endef
 $(foreach bdir, $(KERNOUTDIR),$(eval $(call make-obj,$(bdir))))
 $(foreach bdir, $(LIBOUTDIR),$(eval $(call make-obj,$(bdir))))
 
-all: checkdirs $(LIBXIL) slos.img
+all: checkdirs $(LIBXIL) kernel.elf
 
 checkdirs : $(LIBOUTDIR) $(KERNOUTDIR)
 
@@ -60,7 +60,7 @@ $(KERNOUTDIR) :
 $(LIBXIL) : $(LIBCOBJ) $(LIBASMOBJ)
 	$(AR) rc $(OUT_TOP)/libxil/$@ $(LIBCOBJ) $(LIBASMOBJ)
 
-slos.img : $(KERNCOBJ) $(KERNASMOBJ)
+kernel.elf : $(KERNCOBJ) $(KERNASMOBJ)
 	$(LD) -T $(LDS) -o $(OUT_TOP)/kernel/kernel.elf $(KERNCOBJ) $(KERNASMOBJ) -L$(OUT_TOP)/libxil -L$(LIBS) -L$(LIBS2) -lxil -lc -lgcc 
 
 clean :
