@@ -1,6 +1,5 @@
-#CFLAGS = -D USE_MMU
-LIBS := $(HOME)/bin/arm-2016q3/arm-none-eabi/lib
-LIBS2 :=$(HOME)/bin/arm-2016q3/lib/gcc/arm-none-eabi/5.4.1
+LIBS := $(HOME)/bin/arm-2017q1/arm-none-eabi/lib
+LIBS2 :=$(HOME)/bin/arm-2017q1/lib/gcc/arm-none-eabi/6.3.1
 CC := arm-none-eabi-gcc
 ASM := arm-none-eabi-as
 LD := arm-none-eabi-ld
