@@ -1,5 +1,6 @@
 #include <xil_printf.h>
-
+#include <gic.h>
+#include <timer.h>
 
 void cpuidle()
 {
@@ -10,6 +11,8 @@ void cpuidle()
 int main(void) 
 {
 	xil_printf("###hello world\n");
+	gic_init();
+	timer_init();
 	cpuidle();
 
 	return 0;

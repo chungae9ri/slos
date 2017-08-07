@@ -40,10 +40,10 @@ vpath %.S $(LIBSRCDIR)
 
 define make-obj
 $1/%.o: %.c
-	$(CC) $(CFLAGS) $(INC) -o $$@ -c $$< -g -mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=softfp
+	$(CC) $(CFLAGS) $(INC) -o $$@ -c $$< -g -mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=softfp -Wall
 
 $1/%.o: %.S
-	$(CC) $(INC) -o $$@ -c $$< -mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=softfp
+	$(CC) $(INC) -o $$@ -c $$< -mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=softfp -Wall
 endef
 
 $(foreach bdir, $(KERNOUTDIR),$(eval $(call make-obj,$(bdir))))
@@ -54,10 +54,10 @@ all: checkdirs $(LIBXIL) kernel.elf
 checkdirs : $(LIBOUTDIR) $(KERNOUTDIR)
 
 $(LIBOUTDIR) :
-	@mkdir -p $@
+	mkdir -p $@
 
 $(KERNOUTDIR) :
-	@mkdir -p $@
+	mkdir -p $@
 
 $(LIBXIL) : $(LIBCOBJ) $(LIBASMOBJ)
 	$(AR) rc $(OUT_TOP)/libxil/$@ $(LIBCOBJ) $(LIBASMOBJ)
@@ -66,6 +66,6 @@ kernel.elf : $(KERNCOBJ) $(KERNASMOBJ)
 	$(LD) -T $(LDS) -o $(OUT_TOP)/kernel/kernel.elf $(KERNCOBJ) $(KERNASMOBJ) -L$(OUT_TOP)/libxil -L$(LIBS) -L$(LIBS2) -lxil -lc -lgcc 
 
 clean :
-	@rm -rf $(OUT_TOP) libxil.a
-	@rm -f libxil/*.a $(LIBCOBJ) $(LIBASMOBJ) 
+	rm -rf $(OUT_TOP) libxil.a
+	rm -f libxil/*.a $(LIBCOBJ) $(LIBASMOBJ) 
 
