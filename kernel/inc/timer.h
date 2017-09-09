@@ -19,6 +19,9 @@
 #define SPI_TTC0_0_CNT_CTRL	XPAR_XTTCPS_0_BASEADDR + 0x000C
 #define SPI_TTC0_1_CNT_CTRL	XPAR_XTTCPS_0_BASEADDR + 0x0010
 #define SPI_TTC0_2_CNT_CTRL	XPAR_XTTCPS_0_BASEADDR + 0x0014
+
+void mdelay(unsigned msecs);
+void udelay(unsigned usecs);
 uint32_t get_ticks_per_sec();
 uint32_t get_timer_freq(void);
 int timer_irq (void *arg);
