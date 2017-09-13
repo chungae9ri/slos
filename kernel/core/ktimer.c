@@ -11,8 +11,6 @@ struct timer_root *ptroot = NULL;
 struct timer_struct *sched_timer = NULL;
 uint64_t jiffies;
 volatile uint32_t timertree_lock;
-extern void spin_lock_acquire(volatile uint32_t *lock);
-extern void spin_lock_release(volatile uint32_t *lock);
 
 #define MIN_TIME_INT 	(get_ticks_per_sec() / 1000)
 #define MSEC_MARGIN	(get_ticks_per_sec() / 1000)
@@ -134,7 +132,6 @@ void insert_timer(struct timer_root *ptr, struct timer_struct *pts)
 	uint64_t value = pts->tc;
 	int leftmost = 1;
 
-	spin_lock_acquire(&timertree_lock);
 	/* Go to the bottom of the tree */
 	while (*link) {
 		parent = *link;
@@ -153,7 +150,6 @@ void insert_timer(struct timer_root *ptr, struct timer_struct *pts)
 	/* put the new node there */
 	rb_link_node(&pts->run_node, parent, link);
 	rb_insert_color(&pts->run_node, &ptr->root);
-	spin_lock_release(&timertree_lock);
 }
 
 void del_timer(struct timer_root *ptr, struct timer_struct *pts)
