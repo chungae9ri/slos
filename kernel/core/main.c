@@ -2,7 +2,7 @@
 #include <gic.h>
 #include <timer.h>
 
-void cpuidle()
+void cpuidle(void)
 {
 	/* do nothing for now */
 	for (;;);

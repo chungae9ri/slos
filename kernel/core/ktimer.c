@@ -27,7 +27,7 @@ void update_csd(void)
 	/*csd.current_time = (uint64_t)(csd.current_tick / get_ticks_per_sec());*/
 }
 
-uint32_t get_elapsedtime()
+uint32_t get_elapsedtime(void)
 {
 	return (uint32_t)(readl(PRIV_TMR_LD));
 }
@@ -125,7 +125,6 @@ void create_sched_timer(timer_handler sched_handler, uint32_t msec, uint32_t idx
 	insert_timer(ptroot, sched_timer);
 }
 
-/* thread safe timer tree insert */
 void insert_timer(struct timer_root *ptr, struct timer_struct *pts)
 {
 	struct rb_node **link = &ptr->root.rb_node, *parent = NULL;

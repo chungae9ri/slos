@@ -63,7 +63,7 @@ inline uint32_t timer_get_phy_tick_cnt(void)
 	return (uint32_t)readl(PRIV_TMR_CNTR);
 }
 
-void timer_enable()
+void timer_enable(void)
 {
 	int ctrl;
 
@@ -75,7 +75,7 @@ void timer_enable()
 	writel(ctrl, PRIV_TMR_CTRL);
 }
 
-void timer_disable()
+void timer_disable(void)
 {
 	int ctrl;
 
@@ -117,7 +117,7 @@ int timer_irq (void *arg)
 	return 0;
 }
 
-uint32_t get_ticks_per_sec()
+uint32_t get_ticks_per_sec(void)
 {
 	return ticks_per_sec;
 }
@@ -145,7 +145,7 @@ timer_handler rt_timer_handler[RT_TIMER_NUM] = {
 	rt_timer3,
 };
 
-void create_rt_timers()
+void create_rt_timers(void)
 {
 	int i;
 	for (i = 0; i < RT_TIMER_NUM; i++) {
@@ -153,7 +153,7 @@ void create_rt_timers()
 	}
 }
 
-void timer_init()
+void timer_init(void)
 {
 	struct timer_struct *pct;
 	ticks_per_sec = get_timer_freq();
