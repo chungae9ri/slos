@@ -3,6 +3,7 @@
 
 #include <rbtree.h>
 #include <stdint-gcc.h>
+#include <task.h>
 
 typedef void (*timer_handler)(uint32_t el);
 
@@ -26,19 +27,21 @@ struct timer_struct {
 	uint32_t tc;
 	uint32_t intvl;
 	timer_handler handler;
+	struct task_struct *pt;
 	uint32_t type;
 	struct rb_node run_node;
 	uint32_t idx;
 	void *arg;
 };
 
-void timertree_init(void);
-void create_sched_timer(timer_handler sched_handler, uint32_t msec, uint32_t idx, void *arg);
+void create_sched_timer(struct task_struct *cfs_sched_task, uint32_t msec, uint32_t idx, void *arg);
+void create_rt_timer(struct task_struct *rt_task, uint32_t msec, uint32_t idx, void *arg);
+void create_oneshot_timer(struct task_struct *oneshot_task, uint32_t msec, uint32_t idx, void *arg);
+void init_timertree(void);
+void update_csd(void);
 void insert_timer(struct timer_root *ptr, struct timer_struct *pts);
 void del_timer(struct timer_root *ptr, struct timer_struct *pts);
 void sched_timer_handler(uint32_t elapsed);
-void create_rt_timer(timer_handler rt_handler, uint32_t msec, uint32_t idx, void *arg);
 void update_timer_tree(uint32_t elapsed);
 uint32_t get_elapsedtime(void);
-
 #endif

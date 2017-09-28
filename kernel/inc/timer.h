@@ -23,8 +23,9 @@
 void mdelay(unsigned msecs);
 void udelay(unsigned usecs);
 uint32_t get_ticks_per_sec(void);
+void set_ticks_per_sec(uint32_t tps);
 uint32_t get_timer_freq(void);
 int timer_irq (void *arg);
 uint32_t timer_get_phy_tick_cnt(void);
-void timer_init(void);
+void init_timer(void);
 void timer_enable(void);

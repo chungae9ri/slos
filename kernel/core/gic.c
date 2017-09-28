@@ -37,7 +37,7 @@ void platform_prefetch_abort_handler(void)
 
 /* temp, move to proper file E */
 
-void gic_dist_init(void)
+void init_gic_dist(void)
 {
 	uint32_t i;
 	uint32_t num_irq = 0;
@@ -81,16 +81,16 @@ void gic_dist_init(void)
 	writel(1, GIC_ICDDCR);
 }
 
-void gic_cpu_init(void)
+void init_gic_cpu(void)
 {
 	writel(0xF0, GIC_ICCPMR);
 	writel(0x07, GIC_ICCICR);
 }
 
-void gic_init(void)
+void init_gic(void)
 {
-	gic_dist_init();
-	gic_cpu_init();
+	init_gic_dist();
+	init_gic_cpu();
 }
 
 void gic_fiq(void)

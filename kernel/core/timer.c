@@ -14,6 +14,7 @@ static uint32_t tc;
 static uint32_t ticks_per_sec;
 extern struct timer_struct *sched_timer;
 extern struct timer_root *ptroot;
+extern struct task_struct *current;
 
 static void delay(uint32_t ticks)
 {
@@ -98,13 +99,19 @@ int timer_irq (void *arg)
 	/* reprogram next earliest deadline timer intr */
 	writel(tc, PRIV_TMR_LD);
 
+	update_current(elapsed);
+
 	switch(pct->type) {
 		case SCHED_TIMER:
 			sched_timer->handler(elapsed);
 			break;
 
 		case REALTIME_TIMER:
-			pct->handler(elapsed);
+			if (current != pct->pt) {
+				switch_context(current, pct->pt);
+				pct->pt->yield_task = current;
+				current = pct->pt;
+			}   
 			break;
 
 		case ONESHOT_TIMER:
@@ -122,6 +129,12 @@ uint32_t get_ticks_per_sec(void)
 	return ticks_per_sec;
 }
 
+void set_ticks_per_sec(uint32_t tps)
+{
+	ticks_per_sec = tps;
+}
+
+#if 0
 #define RT_TIMER_NUM		3
 
 void rt_timer1(uint32_t el)
@@ -152,14 +165,14 @@ void create_rt_timers(void)
 		create_rt_timer(rt_timer_handler[i], 200 + 20 * i, i + 1, NULL);
 	}
 }
+#endif
 
-void timer_init(void)
+void init_timer(void)
 {
 	struct timer_struct *pct;
-	ticks_per_sec = get_timer_freq();
-	timertree_init();
-	create_sched_timer(sched_timer_handler, 1000, 0, NULL);
-	create_rt_timers();
+	/*init_timertree();*/
+	/*create_sched_timer(cfs_sched_task, 10, 0, NULL);*/
+	/*create_rt_timers();*/
 
 	/*tc = sched_timer->tc;*/
 	pct = container_of(ptroot->rb_leftmost, struct timer_struct, run_node);
@@ -167,6 +180,5 @@ void timer_init(void)
 	writel(tc, PRIV_TMR_LD);
 	gic_register_int_handler(PRIV_TMR_INT_VEC, timer_irq, NULL);
 	gic_mask_interrupt(PRIV_TMR_INT_VEC);
-	timer_enable();
 }
 

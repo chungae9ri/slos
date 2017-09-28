@@ -26,3 +26,8 @@ void kfree(uint32_t addr)
 {
 
 }
+
+void *_sbrk(uint32_t size)
+{
+	return NULL;
+}

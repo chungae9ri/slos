@@ -5,6 +5,7 @@
 #include <slmm.h>
 #include <xil_printf.h>
 #include <regops.h>
+#include <task.h>
 
 struct clock_source_device csd;
 struct timer_root *ptroot = NULL;
@@ -15,12 +16,13 @@ volatile uint32_t timertree_lock;
 #define MIN_TIME_INT 	(get_ticks_per_sec() / 1000)
 #define MSEC_MARGIN	(get_ticks_per_sec() / 1000)
 
-void timertree_init(void)
+void init_timertree(void)
 {
 	ptroot = (struct timer_root *) kmalloc(sizeof(struct timer_root));
 	ptroot->root = RB_ROOT;
 }
 
+/* need to use 64bit Global Timer */
 void update_csd(void)
 {
 	csd.current_tick = timer_get_phy_tick_cnt();
@@ -74,19 +76,22 @@ void update_timer_tree(uint32_t elapsed)
 
 void do_sched_timer(uint32_t elapsed)
 {
-	xil_printf("do_sched_timer\n");
+	update_se(elapsed);
+	schedule();
 }
 
-void sched_timer_handler(uint32_t elapsed)
+void cfs_scheduler(uint32_t elapsed)
 {
 	jiffies++;	
 	do_sched_timer(elapsed);
 }
 
-void create_rt_timer(timer_handler rt_handler, uint32_t msec, uint32_t idx, void *arg)
+void create_rt_timer(struct task_struct *rt_task, 
+		uint32_t msec, uint32_t idx, void *arg)
 {
 	struct timer_struct *rt_timer = (struct timer_struct *)kmalloc(sizeof(struct timer_struct));
-	rt_timer->handler = rt_handler;
+	rt_timer->pt = rt_task;
+	rt_timer->handler = NULL;
 	rt_timer->type = REALTIME_TIMER;
 	rt_timer->tc = get_ticks_per_sec() / 1000 * msec;
 	rt_timer->intvl = rt_timer->tc;
@@ -96,10 +101,12 @@ void create_rt_timer(timer_handler rt_handler, uint32_t msec, uint32_t idx, void
 	insert_timer(ptroot, rt_timer);
 }
 
-void create_oneshot_timer(timer_handler oneshot_timer_handler, uint32_t msec, uint32_t idx, void *arg)
+void create_oneshot_timer(struct task_struct *oneshot_task, 
+		uint32_t msec, uint32_t idx, void *arg)
 {
 	struct timer_struct *oneshot_timer = (struct timer_struct *)kmalloc(sizeof(struct timer_struct));
-	oneshot_timer->handler = oneshot_timer_handler;
+	oneshot_timer->pt = oneshot_task;
+	oneshot_timer->handler = NULL;
 	oneshot_timer->type = ONESHOT_TIMER;
 	oneshot_timer->tc = get_ticks_per_sec() / 1000 * msec;
 	oneshot_timer->intvl = 0;
@@ -109,19 +116,19 @@ void create_oneshot_timer(timer_handler oneshot_timer_handler, uint32_t msec, ui
 	insert_timer(ptroot, oneshot_timer);
 }
 
-void create_sched_timer(timer_handler sched_handler, uint32_t msec, uint32_t idx, void *arg)
+void create_sched_timer(struct task_struct *cfs_sched_task, 
+		uint32_t msec, uint32_t idx, void *arg)
 {
 	sched_timer = (struct timer_struct *)kmalloc(sizeof(struct timer_struct));
-	/*sched_timer->handler = sched_timer_handler;*/
-	sched_timer->handler = sched_handler;
+	sched_timer->pt = cfs_sched_task;
+	sched_timer->handler = cfs_scheduler;
 	sched_timer->type = SCHED_TIMER;
 	/* 10msec sched timer tick */
 	sched_timer->tc = get_ticks_per_sec() / 1000 * msec;
 	sched_timer->intvl = sched_timer->tc;
-	sched_timer->idx = 0;
+	sched_timer->idx = idx;
 	sched_timer->arg = arg;
 
-	jiffies = 0;
 	insert_timer(ptroot, sched_timer);
 }
 
