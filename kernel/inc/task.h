@@ -72,7 +72,7 @@ void init_idletask(void);
 void init_jiffies(void);
 void init_cfs_workers(void);
 void init_cfs_scheduler(void);
-struct task_struct *do_forkyi(char *name, task_entry fn, TASKTYPE type);
+struct task_struct *forkyi(char *name, task_entry fn, TASKTYPE type);
 void switch_context(struct task_struct *prev, struct task_struct *next);
 void schedule(void);
 void update_se(uint32_t elasped);

@@ -14,7 +14,7 @@
 
 #define SVCSPSR 0x13 
 
-uint32_t task_created_num = 1; /* cpuidle task is not created by do_forkyi. it is already made from start */
+uint32_t task_created_num = 1; /* cpuidle task is not created by forkyi. it is already made from start */
 extern void do_switch_context(struct task_struct *, struct task_struct *);
 extern void switch_context_yield(struct task_struct *, struct task_struct *);
 extern uint32_t	jiffies;
@@ -36,7 +36,7 @@ void create_cfs_task(char *name, task_entry cfs_task, uint32_t pri)
 {
 	struct task_struct *temp;
 
-	temp = do_forkyi(name, (task_entry)cfs_task, CFS_TASK);
+	temp = forkyi(name, (task_entry)cfs_task, CFS_TASK);
 	set_priority(temp, pri);
 	rb_init_node(&temp->se.run_node);
 	enqueue_se_to_runq(runq, &temp->se, true);
@@ -47,7 +47,7 @@ void create_rt_task(char *name, task_entry handler, uint32_t dur)
 	static uint32_t rt_timer_idx = 0;
 	struct task_struct *temp;
 
-	temp = do_forkyi(name, (task_entry)handler, RT_TASK);
+	temp = forkyi(name, (task_entry)handler, RT_TASK);
 	create_rt_timer(temp, dur, rt_timer_idx++, NULL);
 }
 
@@ -288,9 +288,9 @@ void print_task_stat(void)
 	if (current->type == CFS_TASK) {
 		num = sprintf(buff,"\ntask:%s\n",current->name);
 		idx += num;
-		num = sprintf(&buff[idx], "ticks_vruntime:%lu\n",current->se.jiffies_vruntime);
+		num = sprintf(&buff[idx], "jiffies_vruntime:%lu\n",current->se.jiffies_vruntime);
 		idx += num;
-		num = sprintf(&buff[idx], "ticks_consumed:%lu\n",current->se.jiffies_consumed);
+		num = sprintf(&buff[idx], "jiffies_consumed:%lu\n",current->se.jiffies_consumed);
 	} 
 	xil_printf("%s\n", buff);
 
@@ -308,15 +308,16 @@ void print_task_stat(void)
 		if (next->type == CFS_TASK) {
 			num = sprintf(&buff[idx],"task:%s\n",next->name);
 			idx += num;
-			num = sprintf(&buff[idx], "vruntime:%lu\n",next->se.jiffies_vruntime);
+			num = sprintf(&buff[idx], "jiffies_vruntime:%lu\n",next->se.jiffies_vruntime);
 			idx += num;
-			num = sprintf(&buff[idx], "ticks_consumed:%lu\n",next->se.jiffies_consumed);
+			num = sprintf(&buff[idx], "jiffies_consumed:%lu\n",next->se.jiffies_consumed);
 		} 
 		xil_printf("%s\n", buff);
 	}
 }
 
 #define CMD_LEN		32	
+
 void shell(void)
 {
 	char byte;
@@ -345,9 +346,9 @@ void shell(void)
 			show_stat = 1;
 		} else if (!strcmp(cmdline, "hide whoami")) {
 			show_stat = 0;
-		} else if (!strcmp(cmdline, "add cfs task")){
+		} else if (!strcmp(cmdline, "add cfs task")) {
 			xil_printf("add cfs task \n");
-		} else if (!strcmp(cmdline, "add rt task")){
+		} else if (!strcmp(cmdline, "add rt task")) {
 			xil_printf("add rt task \n");
 		} else if (!strcmp(cmdline, "dequeue cfs task")) {
 			xil_printf("dequeue cfs task\n");
@@ -365,7 +366,7 @@ void init_shell(void)
 {
 	struct task_struct *temp;
 
-	temp = do_forkyi("shell", (task_entry)shell, CFS_TASK);
+	temp = forkyi("shell", (task_entry)shell, CFS_TASK);
 	set_priority(temp, 2);
 	rb_init_node(&temp->se.run_node);
 	enqueue_se_to_runq(runq, &temp->se, true);
@@ -412,7 +413,7 @@ void init_cfs_workers(void)
 	create_cfs_task("cfs_worker2", cfs_worker2, 2);
 }
 
-struct task_struct *do_forkyi(char *name, task_entry fn, TASKTYPE type)
+struct task_struct *forkyi(char *name, task_entry fn, TASKTYPE type)
 {
 	static uint32_t pid = 0;
 	struct task_struct *pt;
