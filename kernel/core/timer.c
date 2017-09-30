@@ -1,40 +1,43 @@
 #include <stdlib.h>
 #include <stdint-gcc.h>
 #include <timer.h>
-#include <task.h>
+#include <gic.h>
+#include <xparameters_ps.h>
+#include <regops.h>
+#include <xil_printf.h>
+#include <rbtree.h>
 #include <ktimer.h>
 #include <defs.h>
 
-#define QTMR_TIMER_CTRL_ENABLE		(0x1 << 0)
-#define QTMR_TIMER_CTRL_INT_MASK 	(0x1 << 1)
-#define QTMR_PHY_CNT_MAX_VALUE		0xFFFFFFFFFFFFFFFF
-
-#if 0
+/*static uint32_t tc;*/
 static uint32_t tc;
-extern void dsb(void);
+static uint32_t ticks_per_sec;
 extern struct timer_struct *sched_timer;
 extern struct timer_root *ptroot;
-uint32_t ticks_per_sec=0;
-extern void kfree(unsigned int free_addr);
 extern struct task_struct *current;
-extern struct cfs_rq *runq;
 
-static void delay(uint64_t ticks)
+static void delay(uint32_t ticks)
 {
-	volatile uint64_t cnt;
-	uint64_t init_cnt;
-	uint64_t timeout = 0;
+	volatile uint32_t cnt;
+	uint32_t init_cnt;
+	uint32_t timeout = 0;
 
 	cnt = timer_get_phy_tick_cnt();
 	init_cnt = cnt;
 
-	timeout = (cnt + ticks) & (uint64_t)(QTMR_PHY_CNT_MAX_VALUE);
+	if (init_cnt < ticks) {
+		while (init_cnt >= cnt)
+			cnt = timer_get_phy_tick_cnt();
+		timeout = ticks - init_cnt;
+		init_cnt = cnt;
+		while (init_cnt - cnt <= timeout) 
+			cnt = timer_get_phy_tick_cnt();
+	} else {
+		timeout = init_cnt - ticks;
+		while (init_cnt - cnt <= timeout) 
+			cnt = timer_get_phy_tick_cnt();
+	}
 
-	while (timeout < cnt && init_cnt <= cnt)
-		cnt = timer_get_phy_tick_cnt();
-
-	while (timeout > cnt)
-		cnt = timer_get_phy_tick_cnt();
 }
 
 void mdelay(unsigned msecs)
@@ -51,58 +54,40 @@ void udelay(unsigned usecs)
 	delay(ticks);
 }
 
-uint32_t get_timer_freq()
+inline uint32_t get_timer_freq()
 {
-	uint32_t freq;
-	freq = readl(QTMR_V1_CNTFRQ);
-	return freq;
+	return (XPAR_CPU_CORTEXA9_0_CPU_CLK_FREQ_HZ / 2);
 }
 
-inline uint64_t timer_get_phy_tick_cnt(void)
+inline uint32_t timer_get_phy_tick_cnt(void)
 {
-	uint32_t phy_cnt_lo;
-	uint32_t phy_cnt_hi_1;
-	uint32_t phy_cnt_hi_2;
-
-	do {
-		phy_cnt_hi_1 = readl(QTMR_V1_CNTPCT_HI);
-		phy_cnt_lo = readl(QTMR_V1_CNTPCT_LO);
-		phy_cnt_hi_2 = readl(QTMR_V1_CNTPCT_HI);
-	} while (phy_cnt_hi_1 != phy_cnt_hi_2);
-
-	return ((uint64_t)phy_cnt_hi_1<<32) | phy_cnt_lo;
+	return (uint32_t)readl(PRIV_TMR_CNTR);
 }
 
-void timer_enable()
+void timer_enable(void)
 {
-	uint32_t ctrl;
+	int ctrl;
 
-	ctrl = readl(QTMR_V1_CNTP_CTL);
-
-	/* Program CTRL Register */
-	ctrl |= QTMR_TIMER_CTRL_ENABLE;
-	ctrl &= ~QTMR_TIMER_CTRL_INT_MASK;
-	writel(ctrl, QTMR_V1_CNTP_CTL);
-	dsb();
+	ctrl = readl(PRIV_TMR_CTRL);
+	ctrl = ctrl | (PRIV_TMR_EN_MASK 
+			| PRIV_TMR_AUTO_RE_MASK
+			| PRIV_TMR_IRQ_EN_MASK);
+		
+	writel(ctrl, PRIV_TMR_CTRL);
 }
 
-void timer_disable()
+void timer_disable(void)
 {
-	uint32_t ctrl;
+	int ctrl;
 
-	ctrl = readl(QTMR_V1_CNTP_CTL);
-
-	/* program cntrl register */
-	ctrl &= ~QTMR_TIMER_CTRL_ENABLE;
-	ctrl |= QTMR_TIMER_CTRL_INT_MASK;
-
-	writel(ctrl, QTMR_V1_CNTP_CTL);
-	dsb();
+	ctrl = readl(PRIV_TMR_CTRL);
+	ctrl = ctrl & ~PRIV_TMR_EN_MASK;
+		
+	writel(ctrl, PRIV_TMR_CTRL);
 }
 
 int timer_irq (void *arg)
 {
-	struct rb_node *next_node;
 	struct timer_struct *pnt, *pct; 
 	uint32_t elapsed;
 
@@ -112,16 +97,9 @@ int timer_irq (void *arg)
 	pnt = container_of(ptroot->rb_leftmost, struct timer_struct, run_node);
 	tc = pnt->tc;
 	/* reprogram next earliest deadline timer intr */
-	writel(tc, QTMR_V1_CNTP_TVAL);
-	dsb();
+	writel(tc, PRIV_TMR_LD);
 
-	if (current->type == CFS_TASK) {
-		current->se.ticks_consumed += elapsed;
-		current->se.vruntime = (current->se.ticks_consumed) * 
-					(current->se.priority) / runq->priority_sum;
-	} else if (current->type == RT_TASK) {
-		current->se.ticks_consumed += elapsed;
-	}
+	update_current(elapsed);
 
 	switch(pct->type) {
 		case SCHED_TIMER:
@@ -133,26 +111,10 @@ int timer_irq (void *arg)
 				switch_context(current, pct->pt);
 				pct->pt->yield_task = current;
 				current = pct->pt;
-			}
+			}   
 			break;
 
 		case ONESHOT_TIMER:
-#if 0
-			update_sched_timer();
-			next_node = rb_next(&pct->run_node);
-			next_timer = container_of(next_node, struct timer_struct, run_node);
-			tc = next_timer->tc;
-			/* call timer handler */
-			/* need to schedule oneshot timer handler instead of direct 
-			   call in interrupt context. this may result in broken rb tree.
-			   fix me */
-			pct->handler(arg);
-			del_timer(ptroot, pct);
-			kfree((unsigned int)pct);
-			/**/
-			writel(tc, QTMR_V1_CNTP_TVAL);
-			dsb();
-#endif
 			break;
 
 		default:
@@ -162,66 +124,61 @@ int timer_irq (void *arg)
 	return 0;
 }
 
-uint32_t get_ticks_per_sec()
+uint32_t get_ticks_per_sec(void)
 {
 	return ticks_per_sec;
 }
 
-void platform_init_timer()
+void set_ticks_per_sec(uint32_t tps)
 {
-	ticks_per_sec = get_timer_freq();
-
-	timertree_init();
-	sched_timer_init();
-
-	tc = sched_timer->tc;
-	writel(tc, QTMR_V1_CNTP_TVAL);
-	dsb();
-	gic_register_int_handler(INT_QTMR_FRM_0_PHYSICAL_TIMER_EXP, timer_irq, 0);
-	qgic_unmask_interrupt(INT_QTMR_FRM_0_PHYSICAL_TIMER_EXP);
-}
-#else
-static void delay(uint64_t ticks)
-{
+	ticks_per_sec = tps;
 }
 
-void mdelay(unsigned msecs)
+#if 0
+#define RT_TIMER_NUM		3
+
+void rt_timer1(uint32_t el)
 {
+	xil_printf("rt timer 1!!\n");
 }
 
-void udelay(unsigned usecs)
+void rt_timer2(uint32_t el)
 {
+	xil_printf("rt timer 2!!\n");
 }
 
-uint32_t get_timer_freq()
+void rt_timer3(uint32_t el)
 {
-	return 0;
+	xil_printf("rt timer 3!!\n");
 }
 
-inline uint64_t timer_get_phy_tick_cnt(void)
-{
-	return 0;
-}
+timer_handler rt_timer_handler[RT_TIMER_NUM] = {
+	rt_timer1,
+	rt_timer2,
+	rt_timer3,
+};
 
-void timer_enable()
+void create_rt_timers(void)
 {
-}
-
-void timer_disable()
-{
-}
-
-int timer_irq (void *arg)
-{
-	return 0;
-}
-
-uint32_t get_ticks_per_sec()
-{
-	return 0;
-}
-
-void platform_init_timer()
-{
+	int i;
+	for (i = 0; i < RT_TIMER_NUM; i++) {
+		create_rt_timer(rt_timer_handler[i], 200 + 20 * i, i + 1, NULL);
+	}
 }
 #endif
+
+void init_timer(void)
+{
+	struct timer_struct *pct;
+	/*init_timertree();*/
+	/*create_sched_timer(cfs_sched_task, 10, 0, NULL);*/
+	/*create_rt_timers();*/
+
+	/*tc = sched_timer->tc;*/
+	pct = container_of(ptroot->rb_leftmost, struct timer_struct, run_node);
+	tc = pct->tc;
+	writel(tc, PRIV_TMR_LD);
+	gic_register_int_handler(PRIV_TMR_INT_VEC, timer_irq, NULL);
+	gic_mask_interrupt(PRIV_TMR_INT_VEC);
+}
+

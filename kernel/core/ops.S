@@ -6,16 +6,6 @@
 .set LOCKED, 0x1
 .set UNLOCKED, 0x0
 
-	/*PRESERVE8
-	AREA OPS, CODE, READONLY
-	
-	EXPORT dsb
-	EXPORT do_switch_context
-	EXPORT enable_interrupt
-	EXPORT disable_interrupt
-	EXPORT spin_lock_acquire
-	EXPORT spin_lock_release
-	*/
 .arm
 .text
 
@@ -49,22 +39,14 @@ switch_context_yield:
 /* do_switch_context(struct task_struct *curr, struct task_struct *next) */
 do_switch_context:
 	push	{r0-r4}
-#ifdef USE_MMU
-	mov	r2,#0x12
-#else
 	mov 	r2,#0x11
-#endif
 	mov	r4,#CONTEXT_MEM
 savectxt:
 	ldr	r3,[r4],#4
 	str	r3,[r0],#4
 	subs	r2,r2,#1
 	bne	savectxt
-#ifdef USE_MMU
-	mov	r2,#0x12
-#else
 	mov 	r2,#0x11
-#endif
 	mov	r4,#CONTEXT_MEM
 restrctxt:
 	ldr	r3,[r1],#4
@@ -113,5 +95,4 @@ spin_lock_release:
 	DMB
 	str	r1,[r0]
 	bx	lr
-@END
 .end

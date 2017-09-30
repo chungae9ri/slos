@@ -8,15 +8,6 @@
 #include <mem_layout.h>
 
 #define MAX_TASK	((SVC_STACK_BASE-SYS_STACK_BASE)/(TASK_STACK_GAP))
-#define MAX_USR_TASK	5 /* max user task num is 5 */
-
-enum {
-	USR_TASK0=0,
-	USR_TASK1,
-	USR_TASK2,
-	USR_TASK3,
-	USR_TASK4
-};
 
 enum {
 	TASK_RUNNING,
@@ -29,12 +20,13 @@ struct list_head {
 	struct list_head *prev, *next;
 };
 
-typedef int (*task_entry)(void);
+typedef uint32_t (*task_entry)(void);
 
 struct sched_entity {
-	uint64_t vruntime;
-	/*uint64_t jiffies_consumed;*/
+	uint64_t ticks_vruntime;
+	uint32_t jiffies_vruntime;
 	uint64_t ticks_consumed;
+	uint32_t jiffies_consumed;
 	struct rb_node run_node;
 	uint32_t priority;
 };
@@ -52,9 +44,6 @@ struct task_context_struct {
 	uint32_t sp;
 	uint32_t r[13];
 	uint32_t spsr;
-#ifdef USE_MMU
-	uint32_t ttb; /* translation base address */
-#endif
 };
 
 typedef enum {
@@ -65,10 +54,10 @@ typedef enum {
 
 struct task_struct {
 	struct task_context_struct ct;
-	/*struct task_context_struct ct;*/
 	task_entry entry;
 	void *arg;
 	char name[32];
+	uint32_t pid;
 	struct sched_entity se;
 	struct list_head task;
 	struct task_struct *yield_task;
@@ -78,48 +67,35 @@ struct task_struct {
 	uint32_t state;
 };
 
-void init_cpuidle_task(void);
-void init_task(void);
+void init_rq(void);
+void init_idletask(void);
 void init_jiffies(void);
-void init_task(void);
-void create_all_task(void);
-void forkyi(struct task_struct *pbt, struct task_struct *pt);
-#ifdef USE_MMU
-struct task_struct *do_forkyi(char *name, task_entry fn, int idx, unsigned int *ppd);
-#else
-struct task_struct *do_forkyi(char *name, task_entry fn, int idx, TASKTYPE type);
-#endif
+void init_cfs_workers(void);
+void init_cfs_scheduler(void);
+struct task_struct *forkyi(char *name, task_entry fn, TASKTYPE type);
 void switch_context(struct task_struct *prev, struct task_struct *next);
 void schedule(void);
+void update_se(uint32_t elasped);
 void dequeue_se_to_exit(struct cfs_rq *rq, struct sched_entity *se);
 void enqueue_se_to_runq(struct cfs_rq *rq, struct sched_entity *se, bool update);
 void dequeue_se_to_waitq(struct cfs_rq *rq, struct sched_entity *se, bool update);
-void drop_usrtask();
-#ifdef USE_MMU
-void init_shell(unsigned int *ppd);
-void init_idletask(unsigned int *ppd);
-#else
-void init_shell();
-void init_idletask();
-#endif
-void update_se(uint32_t elasped);
+void init_shell(void);
+void init_workers(void);
 void set_priority(struct task_struct *pt, uint32_t pri);
-void put_to_sleep(char *dur, int idx);
-void yield();
-void create_rt_task(char *name, task_entry handler, int dur);
+void yield(void);
+void create_cfs_task(char *name, task_entry cfs_task, uint32_t pri);
+void create_rt_task(char *name, task_entry handler, uint32_t dur);
+void update_current(uint32_t elapsed);
 
-
-void func1(void);
-void func2(void);
 static inline struct task_struct *to_task_from_listhead(struct list_head *t)
 {       
 	/*return container_of(t, struct task_struct, task);*/
-	return ((struct task_struct *)((unsigned int)t-offsetof(struct task_struct, task)));
+	return ((struct task_struct *)((uint32_t)t-offsetof(struct task_struct, task)));
 }
 
 static inline struct task_struct *to_task_from_se(struct sched_entity *s)
 {       
 	/*return container_of(t, struct task_struct, task);*/
-	return ((struct task_struct *)((unsigned int)s-offsetof(struct task_struct, se)));
+	return ((struct task_struct *)((uint32_t)s-offsetof(struct task_struct, se)));
 }
 #endif

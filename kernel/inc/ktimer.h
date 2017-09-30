@@ -3,13 +3,13 @@
 
 #include <rbtree.h>
 #include <stdint-gcc.h>
+#include <task.h>
 
 typedef void (*timer_handler)(uint32_t el);
-typedef uint64_t (*csd_get_current_tick)(void);
 
 struct clock_source_device {
-	uint64_t current_tick;
-	uint64_t current_time;
+	uint32_t current_tick;
+	uint32_t current_time;
 };
 
 struct timer_root {
@@ -28,20 +28,20 @@ struct timer_struct {
 	uint32_t intvl;
 	timer_handler handler;
 	struct task_struct *pt;
-	int type;
+	uint32_t type;
 	struct rb_node run_node;
+	uint32_t idx;
 	void *arg;
 };
 
-void do_timer(uint32_t elapsed);
-void timertree_init(void);
+void create_sched_timer(struct task_struct *cfs_sched_task, uint32_t msec, uint32_t idx, void *arg);
+void create_rt_timer(struct task_struct *rt_task, uint32_t msec, uint32_t idx, void *arg);
+void create_oneshot_timer(struct task_struct *oneshot_task, uint32_t msec, uint32_t idx, void *arg);
+void init_timertree(void);
+void update_csd(void);
 void insert_timer(struct timer_root *ptr, struct timer_struct *pts);
-void sched_timer_handler(uint32_t elapsed);
-void sched_timer_init(void);
 void del_timer(struct timer_root *ptr, struct timer_struct *pts);
-void update_sched_timer(void);
-void create_rt_timer(struct task_struct *rt_task, uint32_t msec, void *arg);
+void sched_timer_handler(uint32_t elapsed);
 void update_timer_tree(uint32_t elapsed);
 uint32_t get_elapsedtime(void);
-
 #endif

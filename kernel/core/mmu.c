@@ -1,6 +1,0 @@
-
-
-void mmu_init()
-{
-	
-}

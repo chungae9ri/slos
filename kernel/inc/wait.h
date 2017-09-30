@@ -1,13 +1,13 @@
 #include <stdint-gcc.h>
 #include <task.h>
 
-struct wait_queue_t {
+struct wait_queue {
 	int magic;
 	volatile uint32_t queuelock;
 	struct list_head task_list;
 	int count;
 };
 
-void init_waitq(struct wait_queue_t *wq);
-void add_to_waitq(struct wait_queue_t *wq, struct task_struct *tp);
-void remove_from_waitq(struct wait_queue_t *wq, struct task_struct *tp);
+void init_wq(void);
+void add_to_wq(struct task_struct *tp);
+void remove_from_wq(struct task_struct *tp);

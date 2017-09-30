@@ -3,40 +3,42 @@
 #include <stdbool.h>
 #include <defs.h>
 
-void init_waitq(struct wait_queue_t *wq)
+struct wait_queue wq;
+
+void init_wq(void)
 {
-	wq->magic = 1;
-	wq->task_list.next = NULL;
-	wq->task_list.prev = NULL;
-	wq->count = 0;
+	wq.magic = 1;
+	wq.task_list.next = NULL;
+	wq.task_list.prev = NULL;
+	wq.count = 0;
 }
 
-void wake_all_waitq(struct wait_queue_t *wq)
+void wake_all_wq(void)
 {
 	struct list_head *cur, *next;
 
-	cur = wq->task_list.next;
+	cur = wq.task_list.next;
 	while (cur) {
 		next = cur->next;
 		cur->next = NULL;
 		cur->prev = NULL;
 		cur = next;
 	}
-	wq->count = 0;
+	wq.count = 0;
 }
 
-void destroy_waitq(struct wait_queue_t *wq)
+void destroy_wq(void)
 {
-	wake_all_waitq(wq);
-	wq->magic = 0;
+	wake_all_wq();
+	wq.magic = 0;
 }
 
-void add_to_waitq(struct wait_queue_t *wq, struct task_struct *p)
+void add_to_wq(struct task_struct *p)
 {
 	struct list_head *cur_p, *temp_p;
 
-	cur_p = wq->task_list.next;
-	temp_p = &wq->task_list;
+	cur_p = wq.task_list.next;
+	temp_p = &wq.task_list;
 
 	while (cur_p) {
 		temp_p = cur_p;
@@ -45,15 +47,15 @@ void add_to_waitq(struct wait_queue_t *wq, struct task_struct *p)
 	temp_p->next = &p->waitlist;
 	p->waitlist.prev = temp_p;
 	p->waitlist.next = NULL;
-	wq->count++;
+	wq.count++;
 }
 
-void remove_from_waitq(struct wait_queue_t *wq, struct task_struct *p)
+void remove_from_wq(struct task_struct *p)
 {
 	struct list_head *cur_p;
 	struct task_struct *pt;
 
-	cur_p = wq->task_list.next;
+	cur_p = wq.task_list.next;
 	while (cur_p) {
 		pt = container_of(cur_p, struct task_struct, waitlist);
 		if (pt == p) {
@@ -61,23 +63,25 @@ void remove_from_waitq(struct wait_queue_t *wq, struct task_struct *p)
 			pt->waitlist.next->prev = pt->waitlist.prev;
 			pt->waitlist.prev = NULL;
 			pt->waitlist.next = NULL;
-			wq->count--;
+			wq.count--;
 			break;
-		} else cur_p = cur_p->next;
+		} else {
+			cur_p = cur_p->next;
+		}
 	}
 }
 
-int wait_queue_block(struct wait_queue_t *wq, unsigned long timeout)
+int wait_queue_block(unsigned long timeout)
 {
 	return 0;
 }
 
-int wait_queue_wake_one(struct wait_queue_t *wq, bool resched)
+int wait_queue_wake_one(bool resched)
 {
 	return 0;
 }
 
-int wait_queue_wake_all(struct wait_queue_t *wq, bool resched)
+int wait_queue_wake_all(bool resched)
 {
 	return 0;
 }

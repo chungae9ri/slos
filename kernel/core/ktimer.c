@@ -1,41 +1,37 @@
+#include <stdlib.h>
 #include <ktimer.h>
 #include <timer.h>
-#include <task.h>
-#include <stdlib.h>
 #include <defs.h>
-#include <smm.h>
+#include <slmm.h>
+#include <xil_printf.h>
+#include <regops.h>
+#include <task.h>
 
 struct clock_source_device csd;
 struct timer_root *ptroot = NULL;
 struct timer_struct *sched_timer = NULL;
 uint64_t jiffies;
-extern struct task_struct *current;
 volatile uint32_t timertree_lock;
-extern void spin_lock_acquire(volatile uint32_t *lock);
-extern void spin_lock_release(volatile uint32_t *lock);
 
-#define MIN_TIME_INT 	(get_ticks_per_sec() / 200)
+#define MIN_TIME_INT 	(get_ticks_per_sec() / 1000)
 #define MSEC_MARGIN	(get_ticks_per_sec() / 1000)
 
-void timertree_init(void)
+void init_timertree(void)
 {
 	ptroot = (struct timer_root *) kmalloc(sizeof(struct timer_root));
 	ptroot->root = RB_ROOT;
 }
 
+/* need to use 64bit Global Timer */
 void update_csd(void)
 {
 	csd.current_tick = timer_get_phy_tick_cnt();
 	/*csd.current_time = (uint64_t)(csd.current_tick / get_ticks_per_sec());*/
 }
 
-uint32_t get_elapsedtime()
+uint32_t get_elapsedtime(void)
 {
-	uint32_t elapsed;
-	uint64_t tick_prev = csd.current_tick;
-
-	update_csd();
-	return (uint32_t)(csd.current_tick - tick_prev);
+	return (uint32_t)(readl(PRIV_TMR_LD));
 }
 
 void update_timer_tree(uint32_t elapsed)
@@ -45,72 +41,53 @@ void update_timer_tree(uint32_t elapsed)
 	struct timer_struct *pct = NULL;
 
 	pcur = ptroot->rb_leftmost;
+	/* update timer tree according to elapsed value */
 	while (pcur != NULL) {
 		pct = container_of(pcur, struct timer_struct, run_node);
 		if (pcur == ptroot->rb_leftmost) {
 			pct->tc = pct->intvl;
 		} else {
-			/* important!
-			   deadline has a margin since the timer intr
+			/* deadline has a margin since the timer intr
 			   has some overhead
 			 */
 			/* if miss the deadline with margin */
 			if (pct->tc + MSEC_MARGIN <= elapsed) {
 				if (pct->type == REALTIME_TIMER) {
-					pct->pt->missed_cnt++;
-					/* set the next deadline as 5msec */
+					/* do nothing for now */
 				} 
 				pct->tc = MIN_TIME_INT;
 			} else {
-				if (pct->tc <= elapsed) {
-					pct->tc = MIN_TIME_INT;
-				} else {
-					temp = (pct->tc - elapsed); 
-					pct->tc = temp > MIN_TIME_INT ? temp : MIN_TIME_INT;
-				}
+				temp = (pct->tc - elapsed); 
+				pct->tc = temp > MIN_TIME_INT ? temp : MIN_TIME_INT;
 			}
 		}
-
-		del_timer(ptroot, pct);
-		insert_timer(ptroot, pct);
 		pcur = rb_next(pcur);
 	}
+
+	/* Update the location of the left-most node only.
+	   All other nodes are already sorted and
+	   updated only the tc value with elapsed time.
+	 */
+	pcur = ptroot->rb_leftmost;
+	pct = container_of(pcur, struct timer_struct, run_node);
+	del_timer(ptroot, pct);
+	insert_timer(ptroot, pct);
 }
 
-void do_timer(uint32_t elapsed)
+void do_sched_timer(uint32_t elapsed)
 {
-	/*if (!current || jiffies <= 100) return;*/
 	update_se(elapsed);
 	schedule();
 }
 
-void update_sched_timer(void)
-{
-	uint32_t elapsed;
-	uint64_t tick_prev = csd.current_tick;
-	update_csd();
-	elapsed = (uint32_t)((csd.current_tick - tick_prev) & 0xffffffff);
-	if (elapsed > sched_timer->tc - MIN_TIME_INT) 
-		sched_timer->tc = MIN_TIME_INT;
-	else sched_timer->tc -= elapsed;
-	/* don't need this. fixed */
-#if 0 
-	/* if next sched tick is under 5msec */
-	if (elapsed >= get_ticks_per_sec()/200) {
-		sched_timer->tc = get_ticks_per_sec()/100; /* set to default value */
-	} else {
-		sched_timer->tc -= elapsed;
-	}
-#endif
-}
-
-void sched_timer_handler(uint32_t elapsed)
+void cfs_scheduler(uint32_t elapsed)
 {
 	jiffies++;	
-	do_timer(elapsed);
+	do_sched_timer(elapsed);
 }
 
-void create_rt_timer(struct task_struct *rt_task, uint32_t msec, void *arg)
+void create_rt_timer(struct task_struct *rt_task, 
+		uint32_t msec, uint32_t idx, void *arg)
 {
 	struct timer_struct *rt_timer = (struct timer_struct *)kmalloc(sizeof(struct timer_struct));
 	rt_timer->pt = rt_task;
@@ -118,43 +95,49 @@ void create_rt_timer(struct task_struct *rt_task, uint32_t msec, void *arg)
 	rt_timer->type = REALTIME_TIMER;
 	rt_timer->tc = get_ticks_per_sec() / 1000 * msec;
 	rt_timer->intvl = rt_timer->tc;
+	rt_timer->idx = idx;
 	rt_timer->arg = arg;
 
 	insert_timer(ptroot, rt_timer);
 }
 
-void create_oneshot_timer(timer_handler oneshot_timer_handler, uint32_t msec, void *arg)
+void create_oneshot_timer(struct task_struct *oneshot_task, 
+		uint32_t msec, uint32_t idx, void *arg)
 {
 	struct timer_struct *oneshot_timer = (struct timer_struct *)kmalloc(sizeof(struct timer_struct));
-	oneshot_timer->handler = oneshot_timer_handler;
+	oneshot_timer->pt = oneshot_task;
+	oneshot_timer->handler = NULL;
 	oneshot_timer->type = ONESHOT_TIMER;
 	oneshot_timer->tc = get_ticks_per_sec() / 1000 * msec;
+	oneshot_timer->intvl = 0;
+	oneshot_timer->idx = idx;
 	oneshot_timer->arg = arg;
 
 	insert_timer(ptroot, oneshot_timer);
 }
 
-void sched_timer_init(void)
+void create_sched_timer(struct task_struct *cfs_sched_task, 
+		uint32_t msec, uint32_t idx, void *arg)
 {
 	sched_timer = (struct timer_struct *)kmalloc(sizeof(struct timer_struct));
-	sched_timer->handler = sched_timer_handler;
+	sched_timer->pt = cfs_sched_task;
+	sched_timer->handler = cfs_scheduler;
 	sched_timer->type = SCHED_TIMER;
 	/* 10msec sched timer tick */
-	sched_timer->tc = get_ticks_per_sec()/100;
+	sched_timer->tc = get_ticks_per_sec() / 1000 * msec;
 	sched_timer->intvl = sched_timer->tc;
+	sched_timer->idx = idx;
+	sched_timer->arg = arg;
 
-	jiffies = 0;
 	insert_timer(ptroot, sched_timer);
 }
 
-/* thread safe timer tree insert */
 void insert_timer(struct timer_root *ptr, struct timer_struct *pts)
 {
 	struct rb_node **link = &ptr->root.rb_node, *parent = NULL;
 	uint64_t value = pts->tc;
 	int leftmost = 1;
 
-	spin_lock_acquire(&timertree_lock);
 	/* Go to the bottom of the tree */
 	while (*link) {
 		parent = *link;
@@ -173,7 +156,6 @@ void insert_timer(struct timer_root *ptr, struct timer_struct *pts)
 	/* put the new node there */
 	rb_link_node(&pts->run_node, parent, link);
 	rb_insert_color(&pts->run_node, &ptr->root);
-	spin_lock_release(&timertree_lock);
 }
 
 void del_timer(struct timer_root *ptr, struct timer_struct *pts)
