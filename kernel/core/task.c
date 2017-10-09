@@ -60,6 +60,8 @@ void create_oneshot_task(char *name, task_entry handler, uint32_t dur)
 	struct task_struct *temp;
 
 	temp = forkyi(name, (task_entry)handler, ONESHOT_TASK);
+	temp->timeinterval = dur;
+	temp->state = TASK_RUNNING;
 	create_oneshot_timer(temp, dur, oneshot_timer_idx++, NULL);
 }
 
@@ -72,7 +74,7 @@ uint32_t rt_worker2(void)
 			j++;
 		}
 		j = 0;
-		if (show_stat) xil_printf("I am rt worker2 \n");
+		xil_printf("I am rt worker2 \n");
 		/* should yield after finish current work */
 		yield();
 	}
@@ -88,7 +90,7 @@ uint32_t rt_worker1(void)
 			j++;
 		}
 		j = 0;
-		if (show_stat) xil_printf("I am rt worker1\n");
+		xil_printf("I am rt worker1\n");
 		/* should yield after finish current work */
 		yield();
 	}
@@ -105,11 +107,11 @@ uint32_t oneshot_worker(void)
 		}
 		j = 0;
 
+		xil_printf("I am oneshot_worker\n");
+		/* should yield after finish current work */
+		yield();
 	}
 
-	xil_printf("I am oneshot_worker\n");
-	/* should yield after finish current work */
-	yield();
 	return 0;
 }
 

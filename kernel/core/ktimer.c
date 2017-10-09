@@ -109,7 +109,7 @@ void create_oneshot_timer(struct task_struct *oneshot_task,
 	oneshot_timer->handler = NULL;
 	oneshot_timer->type = ONESHOT_TIMER;
 	oneshot_timer->tc = get_ticks_per_sec() / 1000 * msec;
-	oneshot_timer->intvl = 0;
+	oneshot_timer->intvl = oneshot_timer->tc;
 	oneshot_timer->idx = idx;
 	oneshot_timer->arg = arg;
 
