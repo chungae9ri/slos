@@ -21,7 +21,7 @@ extern uint32_t	jiffies;
 struct task_struct *current = NULL;
 struct task_struct *last = NULL;
 struct task_struct *first = NULL;
-struct cfs_rq *runq = NULL;
+static struct cfs_rq *runq = NULL;
 uint32_t show_stat = 0;
 extern struct timer_root *ptroot;
 volatile uint32_t rqlock = 0;
@@ -39,7 +39,8 @@ void create_cfs_task(char *name, task_entry cfs_task, uint32_t pri)
 	temp = forkyi(name, (task_entry)cfs_task, CFS_TASK);
 	set_priority(temp, pri);
 	rb_init_node(&temp->se.run_node);
-	enqueue_se_to_runq(runq, &temp->se, true);
+	enqueue_se_to_runq(&temp->se, true);
+	runq->cfs_task_num++;
 }
 
 void create_rt_task(char *name, task_entry handler, uint32_t dur)
@@ -48,35 +49,68 @@ void create_rt_task(char *name, task_entry handler, uint32_t dur)
 	struct task_struct *temp;
 
 	temp = forkyi(name, (task_entry)handler, RT_TASK);
+	temp->timeinterval = dur;
+	temp->state = TASK_RUNNING;
 	create_rt_timer(temp, dur, rt_timer_idx++, NULL);
 }
 
-void rt_worker2(void *arg)
+void create_oneshot_task(char *name, task_entry handler, uint32_t dur)
 {
-	int i, j = 10;
-	while (1) {
-		/* do some real time work here */
-		for (i = 0; i < 10; i++) {
-			j++;
-		}
-		if (show_stat) 	xil_printf("I am rt worker2 \n");
-		/* should yield after finish current work */
-		yield();
-	}
+	static uint32_t oneshot_timer_idx = 0;
+	struct task_struct *temp;
+
+	temp = forkyi(name, (task_entry)handler, ONESHOT_TASK);
+	create_oneshot_timer(temp, dur, oneshot_timer_idx++, NULL);
 }
 
-void rt_worker1(void *arg)
+uint32_t rt_worker2(void)
 {
-	int i, j = 10;
+	int i, j = 0;
 	while (1) {
 		/* do some real time work here */
-		for (i = 0; i < 10; i++) {
+		for (i = 0; i < 10000; i++) {
 			j++;
 		}
-		if (show_stat) 	xil_printf("I am rt worker1\n");
+		j = 0;
+		if (show_stat) xil_printf("I am rt worker2 \n");
 		/* should yield after finish current work */
 		yield();
 	}
+	return 0;
+}
+
+uint32_t rt_worker1(void)
+{
+	int i, j = 0;
+	while (1) {
+		/* do some real time work here */
+		for (i = 0; i < 10000; i++) {
+			j++;
+		}
+		j = 0;
+		if (show_stat) xil_printf("I am rt worker1\n");
+		/* should yield after finish current work */
+		yield();
+	}
+	return 0;
+}
+
+uint32_t oneshot_worker(void)
+{
+	int i, j = 0;
+	while (1) {
+		/* do some real time work here */
+		for (i = 0; i < 1000; i++) {
+			j++;
+		}
+		j = 0;
+
+	}
+
+	xil_printf("I am oneshot_worker\n");
+	/* should yield after finish current work */
+	yield();
+	return 0;
 }
 
 extern void enable_interrupt();
@@ -131,10 +165,10 @@ void init_jiffies(void)
 }
 
 /* from lwn.net/Articles/184495 */
-void enqueue_se(struct cfs_rq *rq, struct sched_entity *se)
+void enqueue_se(struct sched_entity *se)
 {
-	struct rb_node **link = &rq->root.rb_node, *parent=NULL;
-	uint64_t value = se->ticks_vruntime;
+	struct rb_node **link = &runq->root.rb_node, *parent=NULL;
+	uint64_t value = se->jiffies_vruntime;
 	int leftmost = 1;
 
 	/* Go to the bottom of the tree */
@@ -142,67 +176,67 @@ void enqueue_se(struct cfs_rq *rq, struct sched_entity *se)
 		parent = *link;
 		struct sched_entity *entry= rb_entry(parent, struct sched_entity, run_node);
 
-		if (entry->ticks_vruntime > value)
+		if (entry->jiffies_vruntime >= value)
 			link = &(*link)->rb_left;
-		else if (entry->ticks_vruntime < value) {
+		else if (entry->jiffies_vruntime < value) {
 			link = &(*link)->rb_right;
 			leftmost = 0;
-		} else { 
+		} /*else { 
 			if (entry->priority > se->priority)
 				link = &(*link)->rb_left;
 			else {
 				link = &(*link)->rb_right;
 				leftmost = 0;
 			}
-		}
+		}*/
 	}
 	/*
 	 * Maintain a cache of leftmost tree entries (it is frequently
 	 * used):
 	 */
 	if (leftmost) 
-		rq->rb_leftmost = &se->run_node;
+		runq->rb_leftmost = &se->run_node;
 
 	/* Put the new node there */
 	rb_link_node(&se->run_node, parent, link);
-	rb_insert_color(&se->run_node, &rq->root);
+	rb_insert_color(&se->run_node, &runq->root);
 }
 
-void dequeue_se(struct cfs_rq *rq, struct sched_entity *se)
+void dequeue_se(struct sched_entity *se)
 {
-	if (rq->rb_leftmost == (struct rb_node *)&se->run_node) {
+	if (runq->rb_leftmost == (struct rb_node *)&se->run_node) {
 		struct rb_node *next_node;
 
 		next_node = rb_next(&se->run_node);
-		rq->rb_leftmost = next_node;
+		runq->rb_leftmost = next_node;
 	}
 
-	rb_erase(&se->run_node, &rq->root);
+	rb_erase(&se->run_node, &runq->root);
 }
 
-void update_vruntime_runq(struct cfs_rq *rq, struct sched_entity *se)
+void update_vruntime_runq(struct sched_entity *se)
 {
 	struct sched_entity *cur_se, *se_leftmost;
 	struct rb_node *cur_rb_node;
 
-	if (!rq->rb_leftmost) return; /* in very first time, the leftmost should be null */
+	if (!runq->rb_leftmost) return; /* in very first time, the leftmost should be null */
 
-	cur_rb_node = rq->rb_leftmost;
+	cur_rb_node = runq->rb_leftmost;
 	se_leftmost = container_of(cur_rb_node, struct sched_entity, run_node);
 	cur_se = se_leftmost;
-	se->ticks_consumed = se_leftmost->ticks_vruntime * rq->priority_sum / se->priority;
-	se->ticks_vruntime = se->ticks_consumed * se->priority / rq->priority_sum;
+	/*se->ticks_consumed = se_leftmost->ticks_vruntime * runq->priority_sum / se->priority;*/
+	/*se->ticks_vruntime = se->ticks_consumed * se->priority / runq->priority_sum;*/
 
-	se->jiffies_consumed = se_leftmost->jiffies_vruntime * rq->priority_sum / se->priority;
-	se->jiffies_vruntime = se->jiffies_consumed * se->priority / rq->priority_sum;
+	se->jiffies_consumed = se_leftmost->jiffies_vruntime * runq->priority_sum / se->priority;
+	se->jiffies_vruntime = se->jiffies_consumed * se->priority / runq->priority_sum;
 
 	while (cur_se) {
 		xil_printf("cur_se : 0x%x\n", cur_se);
-		cur_se->ticks_consumed = se_leftmost->ticks_vruntime * rq->priority_sum / cur_se->priority;
-		cur_se->ticks_vruntime = cur_se->ticks_consumed * cur_se->priority / rq->priority_sum;
+		/*cur_se->ticks_consumed = se_leftmost->ticks_vruntime * runq->priority_sum / cur_se->priority;*/
+		/*cur_se->ticks_vruntime = cur_se->ticks_consumed * cur_se->priority / runq->priority_sum;*/
 
-		cur_se->jiffies_consumed = se_leftmost->jiffies_vruntime * rq->priority_sum / cur_se->priority;
-		cur_se->jiffies_vruntime = cur_se->jiffies_consumed * cur_se->priority / rq->priority_sum;
+		cur_se->jiffies_consumed = se_leftmost->jiffies_vruntime * runq->priority_sum / cur_se->priority;
+		cur_se->jiffies_vruntime = cur_se->jiffies_consumed * cur_se->priority / runq->priority_sum;
 
 		cur_rb_node = rb_next(&cur_se->run_node);
 		if (cur_rb_node)
@@ -211,36 +245,36 @@ void update_vruntime_runq(struct cfs_rq *rq, struct sched_entity *se)
 	}
 }
 
-void enqueue_se_to_runq(struct cfs_rq *rq, struct sched_entity *se, bool update)
+void enqueue_se_to_runq(struct sched_entity *se, bool update)
 {
 	/*struct sched_entity *se_leftmost;*/
 	struct task_struct *tp;
 
 	if (update) {
 		tp = container_of(se, struct task_struct, se);
-		rq->priority_sum += se->priority;
+		runq->priority_sum += se->priority;
 		remove_from_wq(tp);
 		tp->state = TASK_RUNNING;
 		spin_lock_acquire(&rqlock);
-		update_vruntime_runq(rq, se);
+		update_vruntime_runq(se);
 		spin_lock_release(&rqlock);
 
 	}
 
 	spin_lock_acquire(&rqlock);
-	enqueue_se(rq, se);
+	enqueue_se(se);
 	spin_lock_release(&rqlock);
 }
 
-void dequeue_se_to_exit(struct cfs_rq *rq, struct sched_entity *se)
+void dequeue_se_to_exit(struct sched_entity *se)
 {
 	struct task_struct *tp;
 	tp = container_of(se, struct task_struct, se);
 	if (tp->state == TASK_RUNNING || tp->state == TASK_STOP_RUNNING){
-		rq->priority_sum -= se->priority;
+		runq->priority_sum -= se->priority;
 		spin_lock_acquire(&rqlock);
-		update_vruntime_runq(rq, se);
-		dequeue_se(rq, se);
+		update_vruntime_runq(se);
+		dequeue_se(se);
 		spin_lock_release(&rqlock);
 		tp->state = TASK_STOP;
 	} else if (tp->state == TASK_WAITING) {
@@ -251,23 +285,23 @@ void dequeue_se_to_exit(struct cfs_rq *rq, struct sched_entity *se)
 	}
 }
 
-void dequeue_se_to_wq(struct cfs_rq *rq, struct sched_entity *se, bool update)
+void dequeue_se_to_wq(struct sched_entity *se, bool update)
 {
 	struct task_struct *tp;
 
 	if (update) {
 		tp = container_of(se, struct task_struct, se);
-		rq->priority_sum -= se->priority;
+		runq->priority_sum -= se->priority;
 		add_to_wq(tp);
 		tp->state = TASK_WAITING;
 
 		spin_lock_acquire(&rqlock);
-		update_vruntime_runq(rq, se);
+		update_vruntime_runq(se);
 		spin_lock_release(&rqlock);
 	}
 
 	spin_lock_acquire(&rqlock);
-	dequeue_se(rq, se);
+	dequeue_se(se);
 	spin_lock_release(&rqlock);
 }
 
@@ -276,9 +310,55 @@ void set_priority(struct task_struct *pt, uint32_t pri)
 	pt->se.priority = pri;
 }
 
+void create_cfs_workers(void)
+{
+	create_cfs_task("cfs_worker1", cfs_worker1, 8);
+	create_cfs_task("cfs_worker2", cfs_worker2, 4);
+}
+
+void create_rt_workers(void)
+{
+	create_rt_task("rt_worker1", rt_worker1, 20);
+	create_rt_task("rt_worker2", rt_worker2, 30);
+}
+
 #include <inttypes.h>
 void print_task_stat(void)
 {
+#if 1
+	char buff[256];
+	int i, num = 0;
+	struct task_struct *pcur = NULL;
+	struct list_head *next_lh = NULL;
+
+	next_lh = &first->task;
+	pcur = (struct task_struct *)to_task_from_listhead(next_lh);
+	/*for (i = 0; i < runq->cfs_task_num; i++) {*/
+	do {
+		if (!pcur) break;
+
+		num = 0;
+		for (i = 0; i < 256; i++) buff[i] = '\0';
+		if (pcur->type == CFS_TASK) {
+			num += sprintf(&buff[num],"cfs task:%s\n", pcur->name);
+			num += sprintf(&buff[num], "pid: %lu\n", pcur->pid);
+			num += sprintf(&buff[num], "priority: %lu\n", pcur->se.priority);
+			num += sprintf(&buff[num], "jiffies_vruntime: %lu\n", pcur->se.jiffies_vruntime);
+			num = sprintf(&buff[num], "jiffies_consumed: %lu\n", pcur->se.jiffies_consumed);
+			xil_printf("%s\n", buff);
+		} else if (pcur->type == RT_TASK) {
+			num += sprintf(&buff[num],"rt task:%s\n", pcur->name);
+			num += sprintf(&buff[num], "pid: %lu\n", pcur->pid);
+			num += sprintf(&buff[num], "time interval: %lu\n", pcur->timeinterval);
+			num += sprintf(&buff[num], "deadline %lu times missed\n", pcur->missed_cnt);
+			xil_printf("%s\n", buff);
+		}
+
+		next_lh = next_lh->next;
+		pcur = (struct task_struct *)to_task_from_listhead(next_lh);
+	} while (pcur != first);
+
+#else
 	struct task_struct *next;
 	struct list_head *next_lh;
 	int i, idx=0, num=0;
@@ -296,7 +376,7 @@ void print_task_stat(void)
 
 	next = current;
 	for (;;)  {
-		next_lh = next->task.next;
+		next_lh = &next->task.next;
 		next = (struct task_struct *)to_task_from_listhead(next_lh);
 		if (next == current || !next)
 			break;
@@ -314,6 +394,7 @@ void print_task_stat(void)
 		} 
 		xil_printf("%s\n", buff);
 	}
+#endif
 }
 
 #define CMD_LEN		32	
@@ -322,7 +403,9 @@ void shell(void)
 {
 	char byte;
 	char cmdline[CMD_LEN];
-	int i;
+	int i, j, pid;
+	struct task_struct *pwait_task;
+	struct list_head *next_lh = NULL;
 
 	show_stat = 0;
 
@@ -340,7 +423,15 @@ void shell(void)
 		cmdline[--i] = '\0';
 
 		xil_printf("\n");
-		if (!strcmp(cmdline, "show taskstat")) {
+		if (cmdline[0] == '\0') {
+			xil_printf("show taskstat, show whoami, hide whoami\n");
+			xil_printf("add cfs task, add rt task, add oneshot task\n");
+			xil_printf("sleep cfs task, run cfs task\n");
+		} else if (!strcmp(cmdline, "help")) {
+			xil_printf("show taskstat, show whoami, hide whoami\n");
+			xil_printf("add cfs task, add rt task, add oneshot task\n");
+			xil_printf("sleep cfs task, run cfs task\n");
+		} else if (!strcmp(cmdline, "show taskstat")) {
 			print_task_stat();
 		} else if (!strcmp(cmdline, "show whoami")) {
 			show_stat = 1;
@@ -348,14 +439,49 @@ void shell(void)
 			show_stat = 0;
 		} else if (!strcmp(cmdline, "add cfs task")) {
 			xil_printf("add cfs task \n");
+			create_cfs_workers();
 		} else if (!strcmp(cmdline, "add rt task")) {
 			xil_printf("add rt task \n");
-		} else if (!strcmp(cmdline, "dequeue cfs task")) {
-			xil_printf("dequeue cfs task\n");
-		} else if (!strcmp(cmdline, "enqueue cfs task")) {
-			xil_printf("enqueue cfs task\n");
-		} else if (!strcmp(cmdline, "help")) {
-			xil_printf("show taskstat, show whoami, hide whoami\n");
+			create_rt_workers();
+		} else if (!strcmp(cmdline, "add oneshot task")) {
+			xil_printf("add oneshottask \n");
+			create_oneshot_task("oneshot_task", oneshot_worker, 1000);
+		} else if (!strcmp(cmdline, "sleep cfs task")) {
+			xil_printf("input task pid: \n");
+			byte = inbyte();
+			outbyte(byte);
+			pid = byte - '0';
+
+			next_lh = &first->task;
+			for (j = 0; j < runq->cfs_task_num; j++) {
+				pwait_task = (struct task_struct *)to_task_from_listhead(next_lh);
+				if (pwait_task->pid == pid) break;
+				next_lh = next_lh->next;
+			}
+			if (j < runq->cfs_task_num && pwait_task->state == TASK_RUNNING) {
+				dequeue_se_to_wq(&pwait_task->se, true);
+			} else {
+				xil_printf("no %d task in runq\n", pid);
+			}
+
+		} else if (!strcmp(cmdline, "run cfs task")) {
+			xil_printf("input task pid: \n");
+			byte = inbyte();
+			outbyte(byte);
+			pid = byte - '0';
+
+			next_lh = &first->task;
+			for (j = 0; j < runq->cfs_task_num; j++) {
+				pwait_task = (struct task_struct *)to_task_from_listhead(next_lh);
+				if (pwait_task->pid == pid) break;
+				next_lh = next_lh->next;
+			}
+			if (j < runq->cfs_task_num && pwait_task->state == TASK_WAITING) {
+				enqueue_se_to_runq(&pwait_task->se, true);
+			} else {
+				xil_printf("no %d task in runq\n", pid);
+			}
+
 		} else {
 			xil_printf("I don't know.... ^^;\n");
 		}
@@ -369,7 +495,8 @@ void init_shell(void)
 	temp = forkyi("shell", (task_entry)shell, CFS_TASK);
 	set_priority(temp, 2);
 	rb_init_node(&temp->se.run_node);
-	enqueue_se_to_runq(runq, &temp->se, true);
+	enqueue_se_to_runq(&temp->se, true);
+	runq->cfs_task_num++;
 }
 
 void init_rq(void)
@@ -378,9 +505,11 @@ void init_rq(void)
 	runq->root = RB_ROOT;
 	runq->priority_sum = 0;
 	runq->rb_leftmost = &idle_task->se.run_node;
+	runq->cfs_task_num = 0;
 	
 	rb_init_node(&idle_task->se.run_node);
-	enqueue_se_to_runq(runq, &idle_task->se, true);
+	enqueue_se_to_runq(&idle_task->se, true);
+	runq->cfs_task_num++;
 }
 
 void init_idletask(void)
@@ -390,12 +519,13 @@ void init_idletask(void)
 	pt->task.next = NULL;
 	pt->task.prev = NULL;
 	pt->yield_task = NULL;
-	pt->se.ticks_vruntime = 0LL;
-	pt->se.ticks_consumed = 0LL;
+	/*pt->se.ticks_vruntime = 0LL;*/
+	/*pt->se.ticks_consumed = 0LL;*/
 	pt->se.jiffies_vruntime = 0L;
 	pt->se.jiffies_consumed = 0L;
 	pt->type = CFS_TASK;
 	pt->missed_cnt = 0;
+	pt->pid = 0;
 	set_priority(pt, 16);
 	idle_task = current = first = last = pt;
 }
@@ -407,15 +537,11 @@ void init_cfs_scheduler(void)
 	init_jiffies();
 }
 
-void init_cfs_workers(void)
-{
-	create_cfs_task("cfs_worker1", cfs_worker1, 8);
-	create_cfs_task("cfs_worker2", cfs_worker2, 2);
-}
-
 struct task_struct *forkyi(char *name, task_entry fn, TASKTYPE type)
 {
-	static uint32_t pid = 0;
+	/* cpuidle is pid 0 */
+	uint32_t lr = 0;
+	static uint32_t pid = 1;
 	struct task_struct *pt;
 	if (task_created_num == MAX_TASK) return NULL;
 
@@ -426,13 +552,15 @@ struct task_struct *forkyi(char *name, task_entry fn, TASKTYPE type)
 	pt->entry = fn;
 	pt->type = type;
 	pt->missed_cnt = 0;
-	pt->se.ticks_vruntime = 0LL;
-	pt->se.ticks_consumed = 0LL;
+	/*pt->se.ticks_vruntime = 0LL;*/
+	/*pt->se.ticks_consumed = 0LL;*/
 	pt->se.jiffies_vruntime = 0L;
 	pt->se.jiffies_consumed = 0L;
 	pt->yield_task = NULL;
 	pt->ct.sp = (uint32_t)(SVC_STACK_BASE - TASK_STACK_GAP * ++task_created_num);
-	pt->ct.lr = (uint32_t)pt->entry;
+	asm ("mov %0, r14" : "+r" (lr) : : );
+	/*pt->ct.lr = (uint32_t)pt->entry;*/
+	pt->ct.lr = (uint32_t)lr;
 	pt->ct.pc = (uint32_t)pt->entry;
 	pt->ct.spsr = SVCSPSR;
 
@@ -487,16 +615,16 @@ void update_se(uint32_t elapsed)
 	}
 	se = rb_entry(next_node, struct sched_entity, run_node);
 	if (se->ticks_vruntime < current->se.ticks_vruntime) {
-		dequeue_se(runq, &current->se);
+		dequeue_se(&current->se);
 		enqueue_se(runq, &current->se);
 	}
 #else
 	cur_se = container_of(runq->rb_leftmost, struct sched_entity, run_node);
 	next_node = rb_next(runq->rb_leftmost);
 	next_se = container_of(next_node, struct sched_entity, run_node);
-	if (next_se->ticks_vruntime < cur_se->ticks_vruntime) {
-		dequeue_se(runq, cur_se);
-		enqueue_se(runq, cur_se);
+	if (next_se->jiffies_vruntime < cur_se->jiffies_vruntime) {
+		dequeue_se(cur_se);
+		enqueue_se(cur_se);
 	}
 #endif
 }
@@ -511,9 +639,10 @@ void update_current(uint32_t elapsed)
 	if (current->type == CFS_TASK) {
 		jiffies++;
 		current->se.jiffies_consumed++;
-		current->se.ticks_consumed += elapsed;
-		current->se.ticks_vruntime = (current->se.ticks_consumed) *
+		/*current->se.ticks_consumed += elapsed;*/
+		/*current->se.ticks_vruntime = (current->se.ticks_consumed) *
 			(current->se.priority) / runq->priority_sum;
+			*/
 		current->se.jiffies_vruntime = (current->se.jiffies_consumed) *
 			(current->se.priority) / runq->priority_sum;
 	} else if (current->type == RT_TASK) {

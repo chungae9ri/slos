@@ -23,7 +23,7 @@ struct list_head {
 typedef uint32_t (*task_entry)(void);
 
 struct sched_entity {
-	uint64_t ticks_vruntime;
+	/*uint64_t ticks_vruntime;*/
 	uint32_t jiffies_vruntime;
 	uint64_t ticks_consumed;
 	uint32_t jiffies_consumed;
@@ -36,6 +36,7 @@ struct cfs_rq {
 	struct rb_root root;
 	struct rb_node *rb_leftmost;
 	uint32_t priority_sum;
+	uint32_t cfs_task_num;
 };
 /* do not change the order */
 struct task_context_struct {
@@ -65,6 +66,7 @@ struct task_struct {
 	TASKTYPE type; 
 	uint32_t missed_cnt;
 	uint32_t state;
+	uint32_t timeinterval;
 };
 
 void init_rq(void);
@@ -76,9 +78,9 @@ struct task_struct *forkyi(char *name, task_entry fn, TASKTYPE type);
 void switch_context(struct task_struct *prev, struct task_struct *next);
 void schedule(void);
 void update_se(uint32_t elasped);
-void dequeue_se_to_exit(struct cfs_rq *rq, struct sched_entity *se);
-void enqueue_se_to_runq(struct cfs_rq *rq, struct sched_entity *se, bool update);
-void dequeue_se_to_waitq(struct cfs_rq *rq, struct sched_entity *se, bool update);
+void dequeue_se_to_exit(struct sched_entity *se);
+void enqueue_se_to_runq(struct sched_entity *se, bool update);
+void dequeue_se_to_waitq(struct sched_entity *se, bool update);
 void init_shell(void);
 void init_workers(void);
 void set_priority(struct task_struct *pt, uint32_t pri);

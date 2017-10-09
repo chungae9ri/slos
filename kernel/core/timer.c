@@ -107,14 +107,16 @@ int timer_irq (void *arg)
 			break;
 
 		case REALTIME_TIMER:
+		case ONESHOT_TIMER:
 			if (current != pct->pt) {
 				switch_context(current, pct->pt);
 				pct->pt->yield_task = current;
 				current = pct->pt;
-			}   
-			break;
-
-		case ONESHOT_TIMER:
+			}
+			if (pct->type == ONESHOT_TIMER) {
+				/* remove oneshot timer from timer tree */
+				del_timer(ptroot, pct);
+			}
 			break;
 
 		default:

@@ -53,7 +53,7 @@ void update_timer_tree(uint32_t elapsed)
 			/* if miss the deadline with margin */
 			if (pct->tc + MSEC_MARGIN <= elapsed) {
 				if (pct->type == REALTIME_TIMER) {
-					/* do nothing for now */
+					pct->pt->missed_cnt++;
 				} 
 				pct->tc = MIN_TIME_INT;
 			} else {
