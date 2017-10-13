@@ -103,7 +103,9 @@ int timer_irq (void *arg)
 
 	switch(pct->type) {
 		case SCHED_TIMER:
-			sched_timer->handler(elapsed);
+			if (current->type != RT_TASK) {
+				sched_timer->handler(elapsed);
+			}
 			break;
 
 		case REALTIME_TIMER:

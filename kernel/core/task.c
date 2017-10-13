@@ -70,11 +70,14 @@ uint32_t rt_worker2(void)
 	int i, j = 0;
 	while (1) {
 		/* do some real time work here */
-		for (i = 0; i < 10000; i++) {
+		for (i = 0; i < 500; i++) {
 			j++;
 		}
 		j = 0;
-		xil_printf("I am rt worker2 \n");
+
+		if (show_stat) {
+			xil_printf("I am rt worker2 \n");
+		}
 		/* should yield after finish current work */
 		yield();
 	}
@@ -86,11 +89,14 @@ uint32_t rt_worker1(void)
 	int i, j = 0;
 	while (1) {
 		/* do some real time work here */
-		for (i = 0; i < 10000; i++) {
+		for (i = 0; i < 1000; i++) {
 			j++;
 		}
 		j = 0;
-		xil_printf("I am rt worker1\n");
+
+		if (show_stat) {
+			xil_printf("I am rt worker1\n");	
+		}
 		/* should yield after finish current work */
 		yield();
 	}
@@ -321,7 +327,7 @@ void create_cfs_workers(void)
 void create_rt_workers(void)
 {
 	create_rt_task("rt_worker1", rt_worker1, 20);
-	create_rt_task("rt_worker2", rt_worker2, 30);
+	create_rt_task("rt_worker2", rt_worker2, 25);
 }
 
 #include <inttypes.h>
@@ -351,7 +357,7 @@ void print_task_stat(void)
 		} else if (pcur->type == RT_TASK) {
 			num += sprintf(&buff[num],"rt task:%s\n", pcur->name);
 			num += sprintf(&buff[num], "pid: %lu\n", pcur->pid);
-			num += sprintf(&buff[num], "time interval: %lu\n", pcur->timeinterval);
+			num += sprintf(&buff[num], "time interval: %lu msec\n", pcur->timeinterval);
 			num += sprintf(&buff[num], "deadline %lu times missed\n", pcur->missed_cnt);
 			xil_printf("%s\n", buff);
 		}
@@ -522,7 +528,7 @@ void init_idletask(void)
 	pt->task.prev = NULL;
 	pt->yield_task = NULL;
 	/*pt->se.ticks_vruntime = 0LL;*/
-	/*pt->se.ticks_consumed = 0LL;*/
+	pt->se.ticks_consumed = 0LL;
 	pt->se.jiffies_vruntime = 0L;
 	pt->se.jiffies_consumed = 0L;
 	pt->type = CFS_TASK;
@@ -555,7 +561,7 @@ struct task_struct *forkyi(char *name, task_entry fn, TASKTYPE type)
 	pt->type = type;
 	pt->missed_cnt = 0;
 	/*pt->se.ticks_vruntime = 0LL;*/
-	/*pt->se.ticks_consumed = 0LL;*/
+	pt->se.ticks_consumed = 0LL;
 	pt->se.jiffies_vruntime = 0L;
 	pt->se.jiffies_consumed = 0L;
 	pt->yield_task = NULL;
@@ -641,13 +647,13 @@ void update_current(uint32_t elapsed)
 	if (current->type == CFS_TASK) {
 		jiffies++;
 		current->se.jiffies_consumed++;
-		/*current->se.ticks_consumed += elapsed;*/
+		current->se.ticks_consumed += (uint64_t) elapsed;
 		/*current->se.ticks_vruntime = (current->se.ticks_consumed) *
 			(current->se.priority) / runq->priority_sum;
 			*/
 		current->se.jiffies_vruntime = (current->se.jiffies_consumed) *
 			(current->se.priority) / runq->priority_sum;
 	} else if (current->type == RT_TASK) {
-		current->se.ticks_consumed += elapsed;
+		current->se.ticks_consumed += (uint64_t)elapsed;
 	}
 }

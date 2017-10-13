@@ -1,4 +1,5 @@
 export PATH:=$(HOME)/bin/arm-2017q1/bin:$(PATH)
+
 LIBS := $(HOME)/bin/arm-2017q1/arm-none-eabi/lib
 LIBS2 :=$(HOME)/bin/arm-2017q1/lib/gcc/arm-none-eabi/6.3.1
 CC := arm-none-eabi-gcc
@@ -39,10 +40,10 @@ vpath %.S $(LIBSRCDIR)
 
 define make-obj
 $1/%.o: %.c
-	$(CC) $(CFLAGS) $(INC) -o $$@ -c $$< -g -mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=softfp -Wall
+	$(CC) $(CFLAGS) $(INC) -o $$@ -c $$< -g -mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=softfp -Wall -fno-omit-frame-pointer
 
 $1/%.o: %.S
-	$(CC) $(INC) -o $$@ -c $$< -mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=softfp -Wall
+	$(CC) $(INC) -o $$@ -c $$< -mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=softfp -Wall -fno-omit-frame-pointer
 endef
 
 $(foreach bdir, $(KERNOUTDIR),$(eval $(call make-obj,$(bdir))))
