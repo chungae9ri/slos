@@ -239,7 +239,6 @@ void update_vruntime_runq(struct sched_entity *se)
 	se->jiffies_vruntime = se->jiffies_consumed * se->priority / runq->priority_sum;
 
 	while (cur_se) {
-		xil_printf("cur_se : 0x%x\n", cur_se);
 		/*cur_se->ticks_consumed = se_leftmost->ticks_vruntime * runq->priority_sum / cur_se->priority;*/
 		/*cur_se->ticks_vruntime = cur_se->ticks_consumed * cur_se->priority / runq->priority_sum;*/
 
@@ -333,7 +332,6 @@ void create_rt_workers(void)
 #include <inttypes.h>
 void print_task_stat(void)
 {
-#if 1
 	char buff[256];
 	int i, num = 0;
 	struct task_struct *pcur = NULL;
@@ -350,6 +348,7 @@ void print_task_stat(void)
 		if (pcur->type == CFS_TASK) {
 			num += sprintf(&buff[num],"cfs task:%s\n", pcur->name);
 			num += sprintf(&buff[num], "pid: %lu\n", pcur->pid);
+			num += sprintf(&buff[num], "state: %lu\n", pcur->state);
 			num += sprintf(&buff[num], "priority: %lu\n", pcur->se.priority);
 			num += sprintf(&buff[num], "jiffies_vruntime: %lu\n", pcur->se.jiffies_vruntime);
 			num = sprintf(&buff[num], "jiffies_consumed: %lu\n", pcur->se.jiffies_consumed);
@@ -357,6 +356,7 @@ void print_task_stat(void)
 		} else if (pcur->type == RT_TASK) {
 			num += sprintf(&buff[num],"rt task:%s\n", pcur->name);
 			num += sprintf(&buff[num], "pid: %lu\n", pcur->pid);
+			num += sprintf(&buff[num], "state: %lu\n", pcur->state);
 			num += sprintf(&buff[num], "time interval: %lu msec\n", pcur->timeinterval);
 			num += sprintf(&buff[num], "deadline %lu times missed\n", pcur->missed_cnt);
 			xil_printf("%s\n", buff);
@@ -365,44 +365,6 @@ void print_task_stat(void)
 		next_lh = next_lh->next;
 		pcur = (struct task_struct *)to_task_from_listhead(next_lh);
 	} while (pcur != first);
-
-#else
-	struct task_struct *next;
-	struct list_head *next_lh;
-	int i, idx=0, num=0;
-	char buff[256];
-
-	for (i = 0; i < 256; i++) buff[i] = '\0';
-	if (current->type == CFS_TASK) {
-		num = sprintf(buff,"\ntask:%s\n",current->name);
-		idx += num;
-		num = sprintf(&buff[idx], "jiffies_vruntime:%lu\n",current->se.jiffies_vruntime);
-		idx += num;
-		num = sprintf(&buff[idx], "jiffies_consumed:%lu\n",current->se.jiffies_consumed);
-	} 
-	xil_printf("%s\n", buff);
-
-	next = current;
-	for (;;)  {
-		next_lh = &next->task.next;
-		next = (struct task_struct *)to_task_from_listhead(next_lh);
-		if (next == current || !next)
-			break;
-
-		num=0; 
-		idx=0;
-		for (i = 0; i < 256; i++) buff[i] = '\0';
-
-		if (next->type == CFS_TASK) {
-			num = sprintf(&buff[idx],"task:%s\n",next->name);
-			idx += num;
-			num = sprintf(&buff[idx], "jiffies_vruntime:%lu\n",next->se.jiffies_vruntime);
-			idx += num;
-			num = sprintf(&buff[idx], "jiffies_consumed:%lu\n",next->se.jiffies_consumed);
-		} 
-		xil_printf("%s\n", buff);
-	}
-#endif
 }
 
 #define CMD_LEN		32	
@@ -431,33 +393,30 @@ void shell(void)
 		cmdline[--i] = '\0';
 
 		xil_printf("\n");
-		if (cmdline[0] == '\0') {
-			xil_printf("show taskstat, show whoami, hide whoami\n");
-			xil_printf("add cfs task, add rt task, add oneshot task\n");
-			xil_printf("sleep cfs task, run cfs task\n");
-		} else if (!strcmp(cmdline, "help")) {
-			xil_printf("show taskstat, show whoami, hide whoami\n");
-			xil_printf("add cfs task, add rt task, add oneshot task\n");
-			xil_printf("sleep cfs task, run cfs task\n");
-		} else if (!strcmp(cmdline, "show taskstat")) {
+		if (cmdline[0] == '\0' || !strcmp(cmdline, "help")) {
+			xil_printf("taskstat, whoami, hide whoami\n");
+			xil_printf("cfs task, rt task, oneshot task\n");
+			xil_printf("sleep, run \n");
+		} else if (!strcmp(cmdline, "taskstat")) {
 			print_task_stat();
-		} else if (!strcmp(cmdline, "show whoami")) {
+		} else if (!strcmp(cmdline, "whoami")) {
 			show_stat = 1;
 		} else if (!strcmp(cmdline, "hide whoami")) {
 			show_stat = 0;
-		} else if (!strcmp(cmdline, "add cfs task")) {
+		} else if (!strcmp(cmdline, "cfs task")) {
 			xil_printf("add cfs task \n");
 			create_cfs_workers();
-		} else if (!strcmp(cmdline, "add rt task")) {
+		} else if (!strcmp(cmdline, "rt task")) {
 			xil_printf("add rt task \n");
 			create_rt_workers();
-		} else if (!strcmp(cmdline, "add oneshot task")) {
+		} else if (!strcmp(cmdline, "oneshot task")) {
 			xil_printf("add oneshottask \n");
 			create_oneshot_task("oneshot_task", oneshot_worker, 1000);
-		} else if (!strcmp(cmdline, "sleep cfs task")) {
-			xil_printf("input task pid: \n");
+		} else if (!strcmp(cmdline, "sleep")) {
+			xil_printf("input task pid: ");
 			byte = inbyte();
 			outbyte(byte);
+			outbyte('\n');
 			pid = byte - '0';
 
 			next_lh = &first->task;
@@ -469,13 +428,14 @@ void shell(void)
 			if (j < runq->cfs_task_num && pwait_task->state == TASK_RUNNING) {
 				dequeue_se_to_wq(&pwait_task->se, true);
 			} else {
-				xil_printf("no %d task in runq\n", pid);
+				xil_printf("task %d is not in runq\n", pid);
 			}
 
-		} else if (!strcmp(cmdline, "run cfs task")) {
-			xil_printf("input task pid: \n");
+		} else if (!strcmp(cmdline, "run")) {
+			xil_printf("input task pid: ");
 			byte = inbyte();
 			outbyte(byte);
+			outbyte('\n');
 			pid = byte - '0';
 
 			next_lh = &first->task;
@@ -487,9 +447,8 @@ void shell(void)
 			if (j < runq->cfs_task_num && pwait_task->state == TASK_WAITING) {
 				enqueue_se_to_runq(&pwait_task->se, true);
 			} else {
-				xil_printf("no %d task in runq\n", pid);
+				xil_printf("task %d is not in runq\n", pid);
 			}
-
 		} else {
 			xil_printf("I don't know.... ^^;\n");
 		}
