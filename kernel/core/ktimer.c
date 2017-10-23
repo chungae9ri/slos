@@ -82,8 +82,8 @@ void do_sched_timer(uint32_t elapsed)
 
 void cfs_scheduler(uint32_t elapsed)
 {
-	jiffies++;	
-	do_sched_timer(elapsed);
+	update_se(elapsed);
+	schedule();
 }
 
 void create_rt_timer(struct task_struct *rt_task, 

@@ -226,22 +226,18 @@ void update_vruntime_runq(struct sched_entity *se)
 {
 	struct sched_entity *cur_se, *se_leftmost;
 	struct rb_node *cur_rb_node;
-
-	if (!runq->rb_leftmost) return; /* in very first time, the leftmost should be null */
+	/* in very first time, the leftmost should be null */
+	if (!runq->rb_leftmost) 
+		return; 
 
 	cur_rb_node = runq->rb_leftmost;
 	se_leftmost = container_of(cur_rb_node, struct sched_entity, run_node);
 	cur_se = se_leftmost;
-	/*se->ticks_consumed = se_leftmost->ticks_vruntime * runq->priority_sum / se->priority;*/
-	/*se->ticks_vruntime = se->ticks_consumed * se->priority / runq->priority_sum;*/
 
 	se->jiffies_consumed = se_leftmost->jiffies_vruntime * runq->priority_sum / se->priority;
 	se->jiffies_vruntime = se->jiffies_consumed * se->priority / runq->priority_sum;
 
 	while (cur_se) {
-		/*cur_se->ticks_consumed = se_leftmost->ticks_vruntime * runq->priority_sum / cur_se->priority;*/
-		/*cur_se->ticks_vruntime = cur_se->ticks_consumed * cur_se->priority / runq->priority_sum;*/
-
 		cur_se->jiffies_consumed = se_leftmost->jiffies_vruntime * runq->priority_sum / cur_se->priority;
 		cur_se->jiffies_vruntime = cur_se->jiffies_consumed * cur_se->priority / runq->priority_sum;
 
