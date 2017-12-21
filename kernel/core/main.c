@@ -4,6 +4,7 @@
 #include <timer.h>
 #include <task.h>
 #include <wait.h>
+#include <mm.h>
 
 extern uint32_t show_stat;
 
@@ -21,8 +22,9 @@ void cpuidle(void)
 	}
 }
 
-int main(void) 
+int start_kernel(void) 
 {
+	/*init_kernmem();*/
 	init_gic();
 	init_idletask();
 	init_rq();

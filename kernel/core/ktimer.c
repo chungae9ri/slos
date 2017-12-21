@@ -2,7 +2,7 @@
 #include <ktimer.h>
 #include <timer.h>
 #include <defs.h>
-#include <slmm.h>
+#include <mm.h>
 #include <xil_printf.h>
 #include <regops.h>
 #include <task.h>

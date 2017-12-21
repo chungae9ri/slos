@@ -1,10 +1,9 @@
-.set I_Bit, 0x80
-.set F_Bit, 0x40
-.set IF_BIT, 0xC0
-.set MODE_SVC, 0x13
-.set CONTEXT_MEM, 0x4000
-.set LOCKED, 0x1
-.set UNLOCKED, 0x0
+.include "mem_layout.h"
+
+/*.set CONTEXT_MEM, 0x4000*/
+
+.set LOCKED,0x1
+.set UNLOCKED,0x0
 
 .arm
 .text
@@ -40,14 +39,16 @@ switch_context_yield:
 do_switch_context:
 	push	{r0-r4}
 	mov 	r2,#0x11
-	mov	r4,#CONTEXT_MEM
+	/*mov	r4,#CONTEXT_MEM*/
+	ldr	r4,=CONTEXT_MEM
 savectxt:
 	ldr	r3,[r4],#4
 	str	r3,[r0],#4
 	subs	r2,r2,#1
 	bne	savectxt
 	mov 	r2,#0x11
-	mov	r4,#CONTEXT_MEM
+	/*mov	r4,#CONTEXT_MEM*/
+	ldr 	r4,=CONTEXT_MEM
 restrctxt:
 	ldr	r3,[r1],#4
 	str	r3,[r4],#4

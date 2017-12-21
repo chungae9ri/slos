@@ -1,17 +1,6 @@
-#include "mem_layout.h"
+.include "mem_layout.h"
 
 /* arm exception code */
-.set MODE_SVC, 0x13
-.set MODE_ABT, 0x17
-.set MODE_UND, 0x1b
-.set MODE_SYS, 0x1f
-.set MODE_FIQ, 0x11
-.set MODE_IRQ, 0x12
-.set I_BIT, 0x80
-.set F_BIT, 0x40
-.set IF_BIT, 0xC0
-.set CONTEXT_MEM, 0x4000
-.set SP_MEM, 0x4100
 
 .extern platform_undefined_handler
 .extern platform_syscall_handler
@@ -19,11 +8,12 @@
 .extern platform_data_abort_handler
 .extern gic_irq_handler
 .extern platform_fiq_handler
+.extern start_kernel 
 
-.extern main 
 .section EXCEPTIONS, "ax"
 .arm
 .global exceptions
+.global reset_handler
 
 exceptions :
 	b reset_handler		
@@ -37,7 +27,8 @@ exceptions :
 
 reset_handler:
 	 /*set VBAR with 0x100000 */
-	ldr	r0, =0x100000
+	/*ldr	r0, =KERNEL_EXCEPTION_START*/
+	ldr	r0, =0x101000
 	mcr	p15,0,r0,c12,c0,0 
 
 	 /*change to supervisor*/
@@ -74,9 +65,7 @@ reset_handler:
 
 	/*; Return to supervisor mode*/
 	msr     CPSR_c, #MODE_SVC
-
-	/*; jump to main */
-	b	main	
+	b	start_kernel
 ;
 undefined_instruction_handler:
 	b	platform_undefined_handler

@@ -9,7 +9,7 @@
 #include <wait.h>
 #include <defs.h>
 #include <ktimer.h>
-#include <slmm.h>
+#include <mm.h>
 #include <xil_printf.h>
 
 #define SVCSPSR 0x13 
