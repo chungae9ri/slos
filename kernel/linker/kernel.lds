@@ -1,6 +1,6 @@
 OUTPUT_ARCH(arm)
 ENTRY(ssbl) 
-KERNEL_HEAP_START = 0x600000;
+KERNEL_HEAP_START = 0xC0600000;
 KERNEL_HEAP_SIZE = 0x200000;
 
 SECTIONS
@@ -10,20 +10,20 @@ SECTIONS
 		*(SSBL);
 		*(PGT_INIT);
 	}
-	. = 0x101000;
-	.text : {
+	. = 0xC0101000;
+	.boot : AT(ADDR(.boot) - 0xC0000000) {
 		*(EXCEPTIONS);
 		*(.text);
 	}
-	.data : { 
+	.data : AT(ADDR(.data) - 0xC0000000) { 
 		*(.data)
 	}
-	.bss : { 
+	.bss : AT(ADDR(.bss) - 0xC0000000) { 
 		*(.bss) 
 	}
-	.kheap : {
-		. = KERNEL_HEAP_START;
-		__kernel_heap_start__ = KERNEL_HEAP_START;
+	. = KERNEL_HEAP_START;
+	.kheap : AT(ADDR(.kheap) - 0xC0000000) {
+		__kernel_heap_start__ = .;
 		*(.kheap)
 		. = __kernel_heap_start__ + KERNEL_HEAP_SIZE;
 		__kernel_heap_end__ = .;

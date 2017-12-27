@@ -13,7 +13,7 @@ struct vmpool *pvm_user;
 
 void init_pgt(void)
 {
-	int i, j;
+	unsigned int i, j;
 	unsigned int *pcur, *ppage_dir, *ppage_tbl;
 
 	/* 
@@ -91,7 +91,7 @@ void init_pgt(void)
 	 * 0xE0000000 ~ 0xFFFFFFFF: 512MB, System(M_AXI_GP0/1, I/O peri, SLCR, 
 	 *                          PS system reg, cpu private reg) directly mapped address.
 	 */
-	/* The first 3GB direct mapped address */
+	/* The 4GB direct mapped address */
 	for (i = 0; i < 1024 * 4; i++) {
 	/*for (i = 0; i < 0xF89; i++) {*/
 		for (j = 0; j < 256; j++) {
@@ -111,8 +111,17 @@ void init_pgt(void)
 		}
 	}
 
-	/* cpu private register must be Device or Strongly-ordered area
-	 * Cortex-A9 MPCore TRM
+	/* 
+	 * remap kernel area(0xC0000000 ~ 0xDFFFFFFF) to 0x00000000 ~ 0x20000000 physical address
+	 */
+	for (i = (0xC00 * 256), j = 0; i < (0xC00 * 256) + 0x1FFFF; i++, j++) {
+		ppage_tbl[i] = (j * 4096) | 0x472;
+	}
+
+	/* 
+	 * remap cpu private register.
+	 * cpu private register(0xF8900000~0xF8F02FFFF) must be Device or Strongly-ordered area
+	 * in Cortex-A9 MPCore TRM
 	 */
 	for (i = (0xF88 * 256); i < (0xF88 * 256) + 0x602FFF; i++) {
 			/* 0x432 is

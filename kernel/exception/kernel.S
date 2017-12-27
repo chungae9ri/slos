@@ -14,6 +14,7 @@
 .arm
 .global exceptions
 .global reset_handler
+.set KERNEL_EXCEPTION_START, 0xC0101000			
 
 exceptions :
 	b reset_handler		
@@ -27,8 +28,7 @@ exceptions :
 
 reset_handler:
 	 /*set VBAR with 0x100000 */
-	/*ldr	r0, =KERNEL_EXCEPTION_START*/
-	ldr	r0, =0x101000
+	ldr	r0, =KERNEL_EXCEPTION_START
 	mcr	p15,0,r0,c12,c0,0 
 
 	 /*change to supervisor*/

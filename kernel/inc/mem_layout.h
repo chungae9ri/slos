@@ -1,6 +1,5 @@
 #ifdef __ASSEMBLY__
 .set KERNEL_CODE_BASE, 				0x100000
-.set KERNEL_EXCEPTION_START, 			0x100000
 .set USER_CODE_BASE, 				0x800000 /* user task code base */
 .set USER_CODE_GAP, 				0x10000  /* 128KB user code gap */
 .set KERNEL_END, 				0x200000
@@ -16,8 +15,6 @@
 .set KERN_PGT_START_BASE, 			0x21A000 /* page table base 4MB = 4K page tables * 256 entries * 4B size */
 .set KERN_PGD_START_BASE, 			0x00000000 /* page directory base16KB = 1 page directory * 4KEntries * 4B size */
 .set KERNEL_FRAME_BITMAP,			0x215000 /* need 1 bitmap for 4MB kernel memory */
-.set KERNEL_HEAP_START,				0x600000
-.set KERNEL_HEAP_SIZE,				0x200000
 .set KENEL_END,					0x800000
 .set PROCESS1_START,				0x800000
 .set MODE_SVC, 					0x13
@@ -31,7 +28,6 @@
 .set IF_BIT, 					0xC0
 #else
 #define KERNEL_CODE_BASE			0x100000
-#define KERNEL_EXCEPTION_START			0x100000
 #define USER_CODE_BASE 				0x800000 /* user task code base */
 #define USER_CODE_GAP 				0x10000  /* 128KB user code gap */
 #define KERNEL_END 				0x200000
@@ -48,8 +44,6 @@
 #define KERN_PGD_START_BASE			0x00000000 /* page directory base16KB = 1 page directory * 4KEntries * 4B size */
 //#define KERN_PGD_START_BASE			0x216000 /* page directory base16KB = 1 page directory * 4KEntries * 4B size */
 #define KERNEL_FRAME_BITMAP			0x215000 /* need 1 bitmap for 4MB kernel memory */
-#define KERNEL_HEAP_START			0x600000
-#define KERNEL_HEAP_SIZE			0x200000
 #define KENEL_END				0x800000
 #define PROCESS1_START				0x800000
 
