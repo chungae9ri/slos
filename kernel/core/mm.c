@@ -123,7 +123,7 @@ void init_pgt(void)
 	 * cpu private register(0xF8900000~0xF8F02FFFF) must be Device or Strongly-ordered area
 	 * in Cortex-A9 MPCore TRM
 	 */
-	for (i = (0xF88 * 256); i < (0xF88 * 256) + 0x602FFF; i++) {
+	for (i = (0xF89 * 256), j = 0; i < (0xF89 * 256) + 0x602; i++, j++) {
 			/* 0x432 is
 	 		* Bit[0] = 1'b0 : XN(eXecution Never)
 	 		* Bit[1] = 1'b1 : 0: Large page, 1: Small page
@@ -135,7 +135,7 @@ void init_pgt(void)
 	 		* Bit[10] = 1'b1: S: shareable
 	 		* Bit[11] = 1'b0: nG(non-Global) bit. 0 for global
 	 		*/
-			ppage_tbl[i] = (i * 4096) | 0x432;
+			ppage_tbl[i] = (0xF8900000 + (j * 4096)) | 0x432;
 	}
 #if 0
 
