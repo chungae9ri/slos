@@ -44,21 +44,14 @@
 #define KERN_PGD_START_BASE			0x00000000 /* page directory base16KB = 1 page directory * 4KEntries * 4B size */
 //#define KERN_PGD_START_BASE			0x216000 /* page directory base16KB = 1 page directory * 4KEntries * 4B size */
 #define KERNEL_FRAME_BITMAP			0x215000 /* need 1 bitmap for 4MB kernel memory */
-#define KENEL_END				0x800000
-#define PROCESS1_START				0x800000
 
 #define GB * (0x1 << 30)
 #define MB * (0x1 << 20)
 #define KB * (0x1 << 10)
-#define KERNEL_START_FRAME ((0 MB) / (4 KB))
-#define PROCESS1_START_FRAME ((PROCESS1_START) / (4 KB))
-#define KERNEL_FRAME_NUM ((8 MB) / (4 KB)) 
-#define PROCESS_FRAME_NUM ((4 MB) / (4 KB)) 
-#define KERNEL_INACC_BASE_FRAME ((0 KB) / (4 KB))
-#define KERNEL_INACC_FRAME_NUM ((1 MB) / (4 KB))
-#define KERNEL_HEAP_START_FRAME ((6 MB) / (4 KB))
-#define KERNEL_HEAP_FRAME_NUM ((2 MB) / (4 KB))
-#define PROCESS_HEAP_START_FRAME ((28 MB) / (4 KB))
-#define PROCESS_HEAP_FRAME_NUM ((4 MB) / (4 KB))
-
+#define KERN_FRAME_START ((0 MB) / (4 KB))
+#define KERN_FRAME_NUM ((128 MB) / (4 KB))
+#define HEAP_FRAME_START ((64 MB) / (4 KB))
+#define HEAP_FRAME_NUM ((64 MB) / (4 KB))
+#define PREALLOC_FRAME_START ((0 MB) / (4 KB))
+#define PREALLOC_FRAME_NUM ((64 MB) / (4 KB))
 #endif

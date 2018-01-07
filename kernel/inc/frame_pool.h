@@ -42,9 +42,8 @@ void init_framepool(struct framepool *pframe,
  */
 int  get_frame(struct framepool *pframe);
 
-/* Mark the area of physical memory as inaccessible. */
-void mark_inaccessible(struct framepool *pframe,
-		       unsigned long _base_frame_no,
+void mark_prealloc_frame(struct framepool *pframe,
+		       unsigned long _base_frame_no, 
 		       unsigned long _nframes);
 
 int release_frame(struct framepool *pframe,

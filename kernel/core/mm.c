@@ -66,6 +66,14 @@ void init_pgt(void)
 		}
 	}
 
+	/* remap pgd for kernel heap area 64MB (0xC4000000 ~ 0xC8000000).
+	 * entries for kernel heap is not allocated in page table.
+	 * lazy allocator. set zero.
+	 */
+	for (i = 0; i < 64; i++) {
+		ppage_dir[1024 * 3 + 64 + i] = 0x0;
+	}
+
 	/* 
 	 * assign prealloced 4 contiguous memory frames 
 	 * for page_directory : 4K entry 
@@ -137,65 +145,50 @@ void init_pgt(void)
 	 		*/
 			ppage_tbl[i] = (0xF8900000 + (j * 4096)) | 0x432;
 	}
-#if 0
 
-	/* For kernel virtual address mapping table 
-	 * These region(0xC0000000 ~0xDFFFFFFF) is mapped to
-	 * system address 0x00000000~0x20000000 
+	/* remap page table for kernel heap area 64MB (0xC4000000 ~ 0xC8000000).
 	 */
-	pcur = (unsigned int *)(0x0);
-	ppage_tbl = &ppage_tbl[i * 256 + j];
-	for (i = 0; i < 512; i++) {
-		for (j = 0; j < 256; j++) {
-			ppage_tbl[i * 256 + j] = ((unsigned int)pcur + ((i * 256 + j) * 4096)) | 0x472;
-		}
+	for (i = 0; i < 64 * 256; i++) {
+		ppage_tbl[0xC4000 + i] = 0;
 	}
-
-	/* For I/O peripheral, SMC, SLCR, PS system reg, CPU private reg.
-	 * This area is directly mapped to system address 0xE0000000 ~ 0xFFFFFFFF
-	 */
-	pcur = (unsigned int *)0xE0000000;
-	ppage_tbl = &ppage_tbl[i * 256 + j];
-	for (i = 0; i < 512; i++) {
-		for (j = 0; j < 256; j++) {
-			ppage_tbl[i * 256 + j] = ((unsigned int)pcur + ((i * 256 + j) * 4096)) | 0x472; 
-		}
-	}
-#endif
 
 	return;
 }
 
-void init_kernmem(void)
+void init_kernmem(struct framepool *kfp, 
+		struct pagetable *pgt, 
+		struct vmpool *kheap)
 {
-	struct framepool kfp;
-	static struct pagetable pgt;
-	struct vmpool kheap;
-
 	/* initialize kernel frame pools */
-	init_framepool(&kfp, KERNEL_START_FRAME, 
-			KERNEL_FRAME_NUM, 0); 
+	init_framepool(kfp, KERN_FRAME_START, 
+			KERN_FRAME_NUM, 0); 
 
-	/* donot change the order */
-	mark_inaccessible(&kfp, KERNEL_INACC_BASE_FRAME, KERNEL_INACC_FRAME_NUM);
+#if 0
+	mark_prealloc_frame(kfp, 
+			PREALLOC_FRAME_START, 
+			PREALLOC_FRAME_NUM);
+#endif
 
-	init_pageregion(&pgt, &kfp, 0 MB);
-	init_pagetable(&pgt, PG_TABLE_KERN);
-	load_pagetable(&pgt);
-	enable_paging();
+	init_pageregion(pgt, kfp, 0 MB);
+	init_pagetable(pgt, PG_TABLE_KERN);
+	load_pagetable(pgt);
 
-	/*pkernel_pt = &kernel_pt;*/
-
-	init_vmpool(&kheap, &pgt, 8 MB, 8 MB);
+	/* 
+	 * Since mmu is on, should use virtual address.
+	 * Heap memory starts from address 64MB,size 64MB.
+	 */
+	init_vmpool(kheap, pgt, 
+			(unsigned int)(&__kernel_heap_start__), 
+			(unsigned int)(&__kernel_heap_end__) - (unsigned int)(&__kernel_heap_start__));
 	/*init_vmpool(&pheap, &pgt, 1 GB, 112 MB);*/
 
-	pvm_kernel = &kheap;
+	pvm_kernel = kheap;
 	/*pvm_user = &pheap;*/
 }
 
 void *kmalloc(uint32_t size)
 {
-#if 1
+#if 0
 	static uint8_t *heap = NULL;
 	uint8_t *prev_heap;
 

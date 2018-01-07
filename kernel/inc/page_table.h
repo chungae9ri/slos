@@ -32,9 +32,7 @@ void init_pageregion(struct pagetable *ppagetable,
 		     const unsigned int _shared_size);
 
 void init_pagetable(struct pagetable *ppagetable, PG_TYPE pagetype);
-
 void load_pagetable(struct pagetable *ppagetable);
-void enable_paging();
 
 /* page fault handler*/
 void handle_fault();

@@ -16,9 +16,9 @@ struct region_desc {
 struct vmpool {
 	unsigned int base_address;
 	unsigned int size;
-	struct region_desc *pcur_region;
+	struct region_desc *plast_region;
 	unsigned int region_num;
-	unsigned int region_page_total;
+	unsigned int region_size_total;
 	struct pagetable *ppagetable;
 };
 

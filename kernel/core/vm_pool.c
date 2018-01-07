@@ -18,18 +18,15 @@ void init_vmpool(struct vmpool *pvmpool,
 
 	/* alloc a frame for region descriptor
 	 * to do this, generate a page fault 
-	 * at the base address
+	 * at the base address.
+	 * region descriptor has 4KB size limit.
 	 */
-	pvmpool->pcur_region = (struct region_desc *)(pvmpool->base_address);
-	/* generate a page fault 
-	 * set the bit[0] with 1 as it is allocated 
-	 * for region descriptor
-	 */
-	pvmpool->pcur_region->startAddr = pvmpool->base_address;
-	pvmpool->pcur_region->size = PAGE_SIZE;
-	pvmpool->pcur_region->prev = 0;
-	pvmpool->pcur_region->next = 0;
-	pvmpool->region_page_total = PAGE_SIZE;
+	pvmpool->plast_region = (struct region_desc *)(pvmpool->base_address);
+	pvmpool->plast_region->startAddr = pvmpool->base_address;
+	pvmpool->plast_region->size = PAGE_SIZE;
+	pvmpool->plast_region->prev = 0;
+	pvmpool->plast_region->next = 0;
+	pvmpool->region_size_total = PAGE_SIZE;
 }
 
 /* lazy allocator */
@@ -37,27 +34,27 @@ unsigned int allocate(struct vmpool *pvmpool, unsigned int _size)
 {
 	unsigned int pgnum;
 
-	/* allocate multiple of page, internal fragmentation allowed */
-	pgnum = (int)(_size/PAGE_SIZE) + (_size%PAGE_SIZE ? 1 : 0);
+	/* allocate multiple of pages, internal fragmentation allowed */
+	pgnum = (int)(_size / PAGE_SIZE) + (_size % PAGE_SIZE ? 1 : 0);
 
-	if (!pvmpool->pcur_region) {
-		pvmpool->pcur_region = (struct region_desc *)(pvmpool->base_address);
-		while (pvmpool->pcur_region->next) {
-			pvmpool->pcur_region = pvmpool->pcur_region->next; 
+	if (!pvmpool->plast_region) {
+		pvmpool->plast_region = (struct region_desc *)(pvmpool->base_address);
+		while (pvmpool->plast_region->next) {
+			pvmpool->plast_region = pvmpool->plast_region->next; 
 		}
 	}
 
-	pvmpool->pcur_region->next = pvmpool->pcur_region + 1;
-	pvmpool->pcur_region->next->prev = pvmpool->pcur_region;
-	pvmpool->pcur_region = pvmpool->pcur_region->next;
-	pvmpool->pcur_region->startAddr = pvmpool->base_address + pvmpool->region_page_total;
-	pvmpool->pcur_region->size = _size;
-	pvmpool->pcur_region->next = 0;
+	pvmpool->plast_region->next = pvmpool->plast_region + 1;
+	pvmpool->plast_region->next->prev = pvmpool->plast_region;
+	pvmpool->plast_region = pvmpool->plast_region->next;
+	pvmpool->plast_region->startAddr = pvmpool->base_address + pvmpool->region_size_total;
+	pvmpool->plast_region->size = _size;
+	pvmpool->plast_region->next = 0;
 
 	/* always allocate multiples of page size */
-	pvmpool->region_page_total += (PAGE_SIZE * pgnum);
+	pvmpool->region_size_total += (PAGE_SIZE * pgnum);
 
-	return pvmpool->pcur_region->startAddr;
+	return pvmpool->plast_region->startAddr;
 }
 
 void release(struct vmpool *pvmpool, unsigned int _start_address)
@@ -73,24 +70,24 @@ void release(struct vmpool *pvmpool, unsigned int _start_address)
 			if (pcur->next) 
 				pcur->next->prev = pcur->prev;
 			region_size = pcur->size;
-			pgnum = (int)(region_size/PAGE_SIZE) + (region_size%PAGE_SIZE ? 1 : 0);
+			pgnum = (int)(region_size / PAGE_SIZE) + (region_size % PAGE_SIZE ? 1 : 0);
 			for (i = 0; i < pgnum; i++) {
-				free_page((unsigned int)(_start_address+(PAGE_SIZE*i)));
+				free_page((unsigned int)(_start_address + (PAGE_SIZE * i)));
 			}
 			if (i == pgnum) {
 				/* flushing TLB and reload page table */
 				load_pagetable(pvmpool->ppagetable);
-				pvmpool->region_page_total -= (pgnum * PAGE_SIZE);
+				pvmpool->region_size_total -= (pgnum * PAGE_SIZE);
 			}
 			break;
 		}
 		pcur = pcur->next;
 	}
 
-	if (pvmpool->pcur_region->startAddr == _start_address) {
-		pvmpool->pcur_region = (struct region_desc *)(pvmpool->base_address);
-		while (pvmpool->pcur_region->next) {
-			pvmpool->pcur_region = pvmpool->pcur_region->next; 
+	if (pvmpool->plast_region->startAddr == _start_address) {
+		pvmpool->plast_region = (struct region_desc *)(pvmpool->base_address);
+		while (pvmpool->plast_region->next) {
+			pvmpool->plast_region = pvmpool->plast_region->next; 
 		}
 	}
 }

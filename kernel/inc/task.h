@@ -6,6 +6,7 @@
 #include <stddef.h>
 #include <rbtree.h>
 #include <mem_layout.h>
+#include <mm.h>
 
 #define MAX_TASK	((SVC_STACK_BASE-SYS_STACK_BASE)/(TASK_STACK_GAP))
 
@@ -67,6 +68,7 @@ struct task_struct {
 	uint32_t missed_cnt;
 	uint32_t state;
 	uint32_t timeinterval;
+	struct mm_struct mm;
 };
 
 void init_rq(void);

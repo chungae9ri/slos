@@ -22,9 +22,14 @@ void cpuidle(void)
 	}
 }
 
+extern void enable_interrupt(void);
 int start_kernel(void) 
 {
-	/*init_kernmem();*/
+	struct framepool fp;
+	struct pagetable pgt;
+	struct vmpool kheap;
+
+	init_kernmem(&fp, &pgt, &kheap);
 	init_gic();
 	init_idletask();
 	init_rq();
@@ -34,6 +39,7 @@ int start_kernel(void)
 	init_cfs_scheduler();
 	init_timer();
 	update_csd();
+	enable_interrupt();
 	timer_enable();
 	cpuidle();
 

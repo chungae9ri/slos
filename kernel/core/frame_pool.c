@@ -4,7 +4,7 @@
 
 /* 
  * one bitmap frame(4KB) can address 4K * 8 * 4KB = 128MB memory
- * one bitmap is enough for kernel
+ * one bitmap frame is enough for kernel
  */
 void init_framepool(struct framepool *pframe,
 		unsigned long base_frame_idx,
@@ -42,20 +42,13 @@ void init_framepool(struct framepool *pframe,
 		pBitmapEntry[i] = 0;
 	}
 
-	/* initialize(clear) the remainder bits */
-	if (pframe->nRemainderBitmapEntry) {
-		for (i = 0; i < pframe->nRemainderBitmapEntry; i++) {
-			*pBitmapEntry &= ~(0x1 << i);
-		}
-	}
-
 	if (bitmap_frame_idx == 0) {
 		/* 
 		 * initialize the kernel frames with 
 		 * preallocated memory frames.
 		 * mark it with 1'b0 if it is prealloced.
 		 */
-		prealloc_num = ((KERN_PGD_START_BASE) / (4 KB));
+		prealloc_num = PREALLOC_FRAME_NUM;
 
 		for (i = 0; i < prealloc_num / 8; i++) {
 			pframe->pBitmap[i] = 0xFF;
@@ -109,7 +102,7 @@ int get_frame(struct framepool *pframe)
 	return -1;
 }
 
-void mark_inaccessible(struct framepool *pframe,
+void mark_prealloc_frame(struct framepool *pframe,
 		       unsigned long _base_frame_no, 
 		       unsigned long _nframes)
 {

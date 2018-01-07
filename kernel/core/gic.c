@@ -3,40 +3,6 @@
 #include <gic.h>
 #include <timer.h>
 
-/* temp, move to proper file S */
-void platform_irq_handler(void)
-{
-
-}
-
-/* temporary handlers */
-void platform_fiq_handler(void)
-{
-
-}
-
-void platform_undefined_handler(void)
-{
-
-}
-
-void platform_syscall_handler(void)
-{
-
-}
-
-void platform_data_abort_handler(void)
-{
-
-}
-
-void platform_prefetch_abort_handler(void)
-{
-
-}
-
-/* temp, move to proper file E */
-
 void init_gic_dist(void)
 {
 	uint32_t i;

@@ -9,7 +9,6 @@
 #include <wait.h>
 #include <defs.h>
 #include <ktimer.h>
-#include <mm.h>
 #include <xil_printf.h>
 
 #define SVCSPSR 0x13 
@@ -121,8 +120,8 @@ uint32_t oneshot_worker(void)
 	return 0;
 }
 
-extern void enable_interrupt();
-extern void disable_interrupt();
+extern void enable_interrupt(void);
+extern void disable_interrupt(void);
 
 void yield(void)
 {
@@ -510,11 +509,11 @@ struct task_struct *forkyi(char *name, task_entry fn, TASKTYPE type)
 
 	pt = (struct task_struct *)kmalloc(sizeof(struct task_struct));
 
-	strcpy(pt->name,name);
 	pt->pid = pid++;
 	pt->entry = fn;
 	pt->type = type;
 	pt->missed_cnt = 0;
+	strcpy(pt->name,name);
 	/*pt->se.ticks_vruntime = 0LL;*/
 	pt->se.ticks_consumed = 0LL;
 	pt->se.jiffies_vruntime = 0L;
