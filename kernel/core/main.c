@@ -22,7 +22,6 @@ void cpuidle(void)
 	}
 }
 
-extern void enable_interrupt(void);
 int start_kernel(void) 
 {
 	struct framepool fp;
@@ -39,7 +38,6 @@ int start_kernel(void)
 	init_cfs_scheduler();
 	init_timer();
 	update_csd();
-	enable_interrupt();
 	timer_enable();
 	cpuidle();
 

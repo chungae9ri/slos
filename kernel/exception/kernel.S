@@ -93,8 +93,8 @@ data_abort_handler:
 	pop	{r14}
 	mrs	r0, CPSR
 	bic	r1, r0, #I_BIT|F_BIT
-	/*msr	cpsr_c, r1*/
-	ldmfd	sp!, {r0-r11, pc}^	
+	msr	cpsr_c, r1
+	ldmfd	sp!, {r0-r11, pc}
 ;
 reserved:
 	b	.
