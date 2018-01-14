@@ -144,14 +144,39 @@ void yield(void)
 	switch_context_yield(temp, current);
 }
 
+#define TEST_KMALLOC_SZ 	4096
 uint32_t cfs_worker1(void )
 {
+	uint8_t *pc;
+	uint8_t t;
+	int i;
+
 	xil_printf("I am cfs_worker1....\n");
+	pc = (uint8_t *)kmalloc(sizeof(uint8_t) * TEST_KMALLOC_SZ);
+	if (pc != NULL) {
+		for (i = 0; i < TEST_KMALLOC_SZ; i++) {
+			t = (uint8_t)(i % 256);
+			pc[i] = t;
+		}
+	} 
+
+	kfree((uint32_t)pc);
+	pc = NULL;
+
+	pc = (uint8_t *)kmalloc(sizeof(uint8_t) * TEST_KMALLOC_SZ);
 	while (1) {
 		if (show_stat) {
 			xil_printf("cfs_worker1 is running....\n");
 		}
+
+		if (pc != NULL) {
+			for (i = 0; i < TEST_KMALLOC_SZ; i++) {
+				t = (uint8_t)(i % 256);
+				pc[i] = t;
+			}
+		} 
 	}
+
 	return 0;
 }
 

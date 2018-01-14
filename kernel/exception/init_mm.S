@@ -7,6 +7,7 @@
 .section SSBL
 .arm
 .global ssbl
+.global invalidate_dcache
 
 ssbl:
 	/* set SVC mode, PL1 */

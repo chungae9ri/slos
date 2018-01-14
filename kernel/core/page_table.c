@@ -49,6 +49,7 @@ void init_pagetable(struct pagetable *ppagetable, PG_TYPE pagetype)
 
 void load_pagetable(struct pagetable *ppagetable)
 {
+	/*flush_ent_cache();*/
 	pcurrentpgt = ppagetable;
 }
 
@@ -104,16 +105,21 @@ void PageTable::register_vmpool(VMPool *_pool)
 }
 #endif
 
-void free_page(unsigned int pageAddr)
+void free_page(unsigned int freedAddr)
 {
+	unsigned int pgdIdx, pgtIdx;
 	unsigned int pda, *pde, *pte;
 	unsigned int *frame_addr;
 	unsigned int frame_num;
 	/* read ttb */
 	asm ("mrc p15, 0, %0, c2, c0, 0" : "=r" (pda) ::);
-	/* get the 1st level descriptor */
-	pde = (unsigned int *)((pda & 0xffffc000) | ((pageAddr & 0xfff00000) >> 18));
-	pte = (unsigned int *)((*pde & 0xfffffc00) | ((pageAddr & 0x000ff000) >> 10));
+	/* entry for 1st level descriptor */
+	pgdIdx = ((unsigned int)freedAddr & 0xFFF00000) >> 20;
+	pde = (unsigned int *)(((unsigned int)pda) + (pgdIdx << 2));
+
+	/* entry for 2nd level descriptor */
+	pgtIdx = ((unsigned int)freedAddr & 0x000FF000) >> 12;
+	pte = (unsigned int *)(KERN_PGT_START_BASE + ((pgdIdx << 8) << 2) + (pgtIdx << 2));
 
 	/* physical address of frame */
 	frame_addr = (unsigned int *)(*pte);
@@ -131,6 +137,6 @@ void free_page(unsigned int pageAddr)
 	*pte = 0x0;
 	*pde = 0x0;
 
-	/* flush entire cache */
+	/* flush tlb */
 	flush_ent_cache();
 }
