@@ -1,3 +1,22 @@
+/*
+  kernel/core/mm.c memory manager
+  (C) 2018 Kwangdo Yi <kwangdo.yi@gmail.com>
+ 
+  This program is free software; you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation; either version 2 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program; if not, write to the Free Software
+  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+*/
+
 #include <stdlib.h>
 #include <stdint.h>
 #include <frame_pool.h>
@@ -214,6 +233,7 @@ void kfree(uint32_t addr)
 
 void *_sbrk(uint32_t size)
 {
+#if 0
 	static uint8_t *heap = NULL;
 	uint8_t *prev_heap;
 
@@ -227,4 +247,7 @@ void *_sbrk(uint32_t size)
 	}
 	heap += size;
 	return (void *) prev_heap;
+#else
+	return (void *)(allocate(pvm_kernel, size));
+#endif
 }
