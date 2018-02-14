@@ -28,6 +28,7 @@
 #include <defs.h>
 #include <ktimer.h>
 #include <xil_printf.h>
+#include <file.h>
 
 #define SVCSPSR 0x13 
 
@@ -200,9 +201,44 @@ uint32_t cfs_worker1(void )
 	return 0;
 }
 
+#define FILE_TEST_LEN 1024	
+
 uint32_t cfs_worker2(void)
 {
+	char buf[FILE_TEST_LEN];
+	char temp[FILE_TEST_LEN];
+	int i;
+	struct file *fp;
+
 	xil_printf("I am cfs_worker2....\n");
+
+	/*
+	buf = (char *)kmalloc(sizeof(char) * FILE_TEST_LEN);
+	temp = (char *)kmalloc(sizeof(char) * FILE_TEST_LEN);
+	*/
+
+	fp = open_file("test");
+	for (i = 0; i < FILE_TEST_LEN; i++) 
+		buf[i] = i % 256;
+	write(fp, FILE_TEST_LEN, buf);
+	reset(fp);
+	read(fp, FILE_TEST_LEN, temp);
+	xil_printf("file test : ");
+	for (i = 0; i < FILE_TEST_LEN; i++) {
+		if (buf[i] != temp[i]) {
+			xil_printf("fail!!\n");
+			break;
+		}
+	}
+	if (i == FILE_TEST_LEN) {
+		xil_printf("pass!!\n");
+	} else {
+		xil_printf("fail!! i: %d\n", i);
+	}
+
+	close_file(fp);
+	fp = NULL;
+
 	while (1) {
 		if (show_stat) {
 			xil_printf("cfs_worker2 running....\n");

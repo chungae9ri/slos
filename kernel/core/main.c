@@ -23,6 +23,7 @@
 #include <task.h>
 #include <wait.h>
 #include <mm.h>
+#include <file_system.h>
 
 extern uint32_t show_stat;
 
@@ -42,11 +43,11 @@ void cpuidle(void)
 
 int start_kernel(void) 
 {
-	struct framepool fp;
+	struct framepool framepool;
 	struct pagetable pgt;
 	struct vmpool kheap;
 
-	init_kernmem(&fp, &pgt, &kheap);
+	init_kernmem(&framepool, &pgt, &kheap);
 	init_gic();
 	init_idletask();
 	init_rq();
@@ -57,6 +58,10 @@ int start_kernel(void)
 	init_timer();
 	update_csd();
 	timer_enable();
+	init_file_system();
+	mount_file_system();
+	format_file_system();
+
 	cpuidle();
 
 	return 0;
