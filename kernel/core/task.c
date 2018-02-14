@@ -181,18 +181,20 @@ uint32_t cfs_worker1(void )
 	kfree((uint32_t)pc);
 	pc = NULL;
 
-	pc = (uint8_t *)kmalloc(sizeof(uint8_t) * TEST_KMALLOC_SZ);
 	while (1) {
 		if (show_stat) {
 			xil_printf("cfs_worker1 is running....\n");
 		}
 
+		pc = (uint8_t *)kmalloc(sizeof(uint8_t) * TEST_KMALLOC_SZ);
 		if (pc != NULL) {
 			for (i = 0; i < TEST_KMALLOC_SZ; i++) {
 				t = (uint8_t)(i % 256);
 				pc[i] = t;
 			}
 		} 
+		kfree((uint32_t)pc);
+		pc = NULL;
 	}
 
 	return 0;

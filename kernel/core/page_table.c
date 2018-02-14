@@ -30,7 +30,6 @@
 #define MMIO_START_ADDR		0xF8000000 /* size : 128MB */
 
 static struct pagetable *pcurrentpgt;
-void flush_ent_cache(void);
 
 void init_pageregion(struct pagetable *ppagetable,
 		     struct framepool *pframepool,
@@ -67,7 +66,10 @@ void init_pagetable(struct pagetable *ppagetable, PG_TYPE pagetype)
 
 void load_pagetable(struct pagetable *ppagetable)
 {
-	/*flush_ent_cache();*/
+	unsigned int r0 = 0;
+
+	/* invalidate tlb */
+	asm ("mcr p15, 0, %0, c8, c7, 0" : :"r" (r0) :);
 	pcurrentpgt = ppagetable;
 }
 
@@ -125,15 +127,16 @@ void PageTable::register_vmpool(VMPool *_pool)
 
 void free_page(unsigned int freedAddr)
 {
+	unsigned int r0 = 0;
 	unsigned int pgdIdx, pgtIdx;
-	unsigned int pda, *pde, *pte;
+	unsigned int pda, *pte;
 	unsigned int *frame_addr;
 	unsigned int frame_num;
 	/* read ttb */
 	asm ("mrc p15, 0, %0, c2, c0, 0" : "=r" (pda) ::);
 	/* entry for 1st level descriptor */
 	pgdIdx = ((unsigned int)freedAddr & 0xFFF00000) >> 20;
-	pde = (unsigned int *)(((unsigned int)pda) + (pgdIdx << 2));
+	/*pde = (unsigned int *)(((unsigned int)pda) + (pgdIdx << 2));*/
 
 	/* entry for 2nd level descriptor */
 	pgtIdx = ((unsigned int)freedAddr & 0x000FF000) >> 12;
@@ -153,8 +156,11 @@ void free_page(unsigned int freedAddr)
 	}
 
 	*pte = 0x0;
-	*pde = 0x0;
+	/*
+	 * should not clean the 1st level entry
+	 */
+	/**pde = 0x0;*/
 
-	/* flush tlb */
-	flush_ent_cache();
+	/* invalidate tlb */
+	asm ("mcr p15, 0, %0, c8, c7, 0" : :"r" (r0) :);
 }

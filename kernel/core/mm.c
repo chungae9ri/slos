@@ -84,7 +84,8 @@ void init_pgt(void)
 		}
 	}
 
-	/* remap pgd for kernel heap area 64MB (0xC4000000 ~ 0xC8000000).
+	/* 
+	 * remap pgd for kernel heap area 64MB (0xC4000000 ~ 0xC8000000).
 	 * entries for kernel heap is not allocated in page table.
 	 * lazy allocator. set zero.
 	 */
@@ -121,18 +122,19 @@ void init_pgt(void)
 	for (i = 0; i < 1024 * 4; i++) {
 	/*for (i = 0; i < 0xF89; i++) {*/
 		for (j = 0; j < 256; j++) {
-			/* 0x472 is
-	 		* Bit[0] = 1'b0 : XN(eXecution Never)
-	 		* Bit[1] = 1'b1 : 0: Large page, 1: Small page
-	 		* Bit[2] = 1'b0 : Bufferable
-	 		* Bit[3] = 1'b0 : Cacheable
-	 		* Bit[5:4] = 2'b11: AP[1:0] R/W full access with AP[2]=1'b0
-	 		* Bit[8:6] = 3'b001: TEX[2:0] should be 001 with C = 1'b0, B = 1'b0. 
+			/* 
+			 * 0x472 is
+	 		 * Bit[0] = 1'b0 : XN(eXecution Never)
+	 		 * Bit[1] = 1'b1 : 0: Large page, 1: Small page
+	 		 * Bit[2] = 1'b0 : Bufferable
+	 		 * Bit[3] = 1'b0 : Cacheable
+	 		 * Bit[5:4] = 2'b11: AP[1:0] R/W full access with AP[2]=1'b0
+	 		 * Bit[8:6] = 3'b001: TEX[2:0] should be 001 with C = 1'b0, B = 1'b0. 
 	                      		This is Outer and Inner Non Cacheable mode
-	 		* Bit[9] = 1'b0: AP[2] should be 0 for full access
-	 		* Bit[10] = 1'b1: S: shareable
-	 		* Bit[11] = 1'b0: nG(non-Global) bit. 0 for global
-	 		*/
+	 		 * Bit[9] = 1'b0: AP[2] should be 0 for full access
+	 		 * Bit[10] = 1'b1: S: shareable
+	 		 * Bit[11] = 1'b0: nG(non-Global) bit. 0 for global
+	 		 */
 			ppage_tbl[i * 256 + j] = ((i * 256 + j) * 4096) | 0x472;
 		}
 	}
@@ -150,21 +152,23 @@ void init_pgt(void)
 	 * in Cortex-A9 MPCore TRM
 	 */
 	for (i = (0xF89 * 256), j = 0; i < (0xF89 * 256) + 0x602; i++, j++) {
-			/* 0x432 is
-	 		* Bit[0] = 1'b0 : XN(eXecution Never)
-	 		* Bit[1] = 1'b1 : 0: Large page, 1: Small page
-	 		* Bit[2] = 1'b0 : Bufferable, 0 for Device or Strongly-ordered memory
-	 		* Bit[3] = 1'b0 : Cacheable, 0 for Device or Strongly-ordered memory
-	 		* Bit[5:4] = 2'b11: AP[1:0] R/W full access with AP[2]=1'b0
-	 		* Bit[8:6] = 3'b000: TEX[2:0] should be 000 for Device or Strongly-ordered memory
-	 		* Bit[9] = 1'b0: AP[2] should be 0 for full access
-	 		* Bit[10] = 1'b1: S: shareable
-	 		* Bit[11] = 1'b0: nG(non-Global) bit. 0 for global
-	 		*/
+			/* 
+			 *  0x432 is
+	 		 * Bit[0] = 1'b0 : XN(eXecution Never)
+	 		 * Bit[1] = 1'b1 : 0: Large page, 1: Small page
+	 		 * Bit[2] = 1'b0 : Bufferable, 0 for Device or Strongly-ordered memory
+	 		 * Bit[3] = 1'b0 : Cacheable, 0 for Device or Strongly-ordered memory
+	 		 * Bit[5:4] = 2'b11: AP[1:0] R/W full access with AP[2]=1'b0
+	 		 * Bit[8:6] = 3'b000: TEX[2:0] should be 000 for Device or Strongly-ordered memory
+	 		 * Bit[9] = 1'b0: AP[2] should be 0 for full access
+	 		 * Bit[10] = 1'b1: S: shareable
+	 		 * Bit[11] = 1'b0: nG(non-Global) bit. 0 for global
+	 		 */
 			ppage_tbl[i] = (0xF8900000 + (j * 4096)) | 0x432;
 	}
 
-	/* remap page table for kernel heap area 64MB (0xC4000000 ~ 0xC8000000).
+	/* 
+	 *  remap page table for kernel heap area 64MB (0xC4000000 ~ 0xC8000000).
 	 */
 	for (i = 0; i < 64 * 256; i++) {
 		ppage_tbl[0xC4000 + i] = 0;
