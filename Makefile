@@ -64,7 +64,7 @@ endef
 $(foreach bdir, $(KERNOUTDIR),$(eval $(call make-obj,$(bdir))))
 $(foreach bdir, $(LIBOUTDIR),$(eval $(call make-obj,$(bdir))))
 
-all: checkdirs $(LIBXIL) kernel.elf
+all: checkdirs $(LIBXIL) kernel.elf ramdisk 
 
 checkdirs : $(LIBOUTDIR) $(KERNOUTDIR)
 
@@ -73,12 +73,24 @@ $(LIBOUTDIR) :
 
 $(KERNOUTDIR) :
 	mkdir -p $@
+	mkdir -p $(OUT_TOP)/ramdisk
 
 $(LIBXIL) : $(LIBCOBJ) $(LIBASMOBJ)
 	$(AR) rc $(OUT_TOP)/libxil/$@ $(LIBCOBJ) $(LIBASMOBJ)
 
 kernel.elf : $(KERNCOBJ) $(KERNASMOBJ)
 	$(LD) -T $(LDS) -o $(OUT_TOP)/kernel/kernel.elf $(KERNCOBJ) $(KERNASMOBJ) -L$(OUT_TOP)/libxil -L$(LIBS) -L$(LIBS2) -lxil -lc -lgcc 
+
+APPS := $(OUT_TOP)/ramdisk/helloworld
+
+ramdisk : $(OUT_TOP)/ramdisk/mkfs $(APPS)
+	$(OUT_TOP)/ramdisk/mkfs $(OUT_TOP)/ramdisk/ramdisk.img $(APPS)
+
+$(OUT_TOP)/ramdisk/mkfs : mkfs/mkfs.cpp
+	g++ -o $@ $<
+
+$(OUT_TOP)/ramdisk/helloworld : apps/helloworld.c
+	$(CC) -o $@ $< -L$(LIBS) -L$(LIBS2) -lc -lgcc 
 
 clean :
 	rm -rf $(OUT_TOP) libxil.a

@@ -16,15 +16,14 @@
   along with this program; if not, see <http://www.gnu.org/licenses/>
 */
 
-#ifndef _RAMDISK_IO_
-#define _RAMDISK_IO_
 
-#include <file_system.h>
+void main(void)
+{
+	const char *a="hello world!!\r\n";
+	const char *b="nice to meet you!!\r\n";
+}
 
-#define RAMDISK_START		0x03000000  /* 48MB */
-#define RAMDISK_SIZE		0x400000 /* 4MB */
-#define TOTAL_BLK_NUM		(RAMDISK_SIZE / DATA_BLK_SIZE)
-
-void write_ramdisk(int mem_blk_num, char *buf);
-void read_ramdisk(int mem_blk_num, char *buf);
-#endif
+void _exit(int status)
+{
+	for(;;);
+}
