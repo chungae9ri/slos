@@ -90,7 +90,7 @@ $(OUT_TOP)/ramdisk/mkfs : mkfs/mkfs.cpp
 	g++ -o $@ $<
 
 $(OUT_TOP)/ramdisk/helloworld : apps/helloworld.c
-	$(CC) -o $@ $< -L$(LIBS) -L$(LIBS2) -lc -lgcc 
+	$(CC) -o $@ $< -nostdlib -s
 
 clean :
 	rm -rf $(OUT_TOP) libxil.a

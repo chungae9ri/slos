@@ -18,6 +18,8 @@
 
 #ifndef _FILE_
 #define _FILE_
+#include <stdint-gcc.h>
+
 struct file {
 	struct file_system *pfs;
 	int fd;
@@ -28,9 +30,9 @@ struct file {
 struct file *create_file(int _fd, char *str);
 struct file *open_file(char *str);
 int close_file(struct file *fp);
-int read(struct file *fp, int _n, char *_buf);
-int write(struct file *fp, int _n, char * _buf);
+uint32_t read(struct file *fp, uint32_t _n, char *_buf);
+uint32_t write(struct file *fp, uint32_t _n, char * _buf);
 void reset(struct file *fp);
 void rewrite(struct file *fp);
-int eof(struct file *fp);
+int is_eof(struct file *fp);
 #endif

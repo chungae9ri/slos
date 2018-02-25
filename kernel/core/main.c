@@ -24,6 +24,7 @@
 #include <wait.h>
 #include <mm.h>
 #include <file_system.h>
+#include <loader.h>
 
 extern uint32_t show_stat;
 
@@ -48,8 +49,17 @@ int start_kernel(void)
 	struct vmpool kheap;
 
 	init_kernmem(&framepool, &pgt, &kheap);
+	xil_printf("### init_kernmem done.\n");
 	init_gic();
 	init_idletask();
+
+	init_file_system();
+	mount_file_system();
+	format_file_system();
+	xil_printf("### mount slfs file system.\n");
+	load_ramdisk_img();
+	xil_printf("### load user app to slfs.\n");
+
 	init_rq();
 	init_wq();
 	init_shell();
@@ -58,9 +68,12 @@ int start_kernel(void)
 	init_timer();
 	update_csd();
 	timer_enable();
+#if 0
 	init_file_system();
 	mount_file_system();
 	format_file_system();
+	load_ramdisk_img();
+#endif
 
 	cpuidle();
 

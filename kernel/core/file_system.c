@@ -62,12 +62,47 @@ int32_t format_file_system(void)
 	unsigned char zeroBlk[DATA_BLK_SIZE] = {0,};
 
 	/*
-	 * wipe out all the data in the disk, 
-	 * but for simplicity, wipe out just meta blks
-	 * which are the first 104 blks
+	 * clear the super block
 	 */
-	for (i = pfs->inodeBmpStartBlk; 
-		i < TOTAL_BLK_NUM - pfs->inodeBmpStartBlk; i++) {
+	for (i = 0; 
+		i < INODE_BITMAP_START_BLK;
+		i++) {
+		write_ramdisk(i, (char *)zeroBlk);
+	}
+
+	/*
+	 * clear the inode bitmap page
+	 */
+	for (i = INODE_BITMAP_START_BLK; 
+		i < DATA_BLK_BITMAP_START_BLK;
+		i++) {
+		write_ramdisk(i, (char *)zeroBlk);
+	}
+
+	/* 
+	 * clear the data bitmap page
+	 */
+	for (i = DATA_BLK_BITMAP_START_BLK;
+		i < INODE_TABLE_START_BLK;
+		i++) {
+		write_ramdisk(i, (char *)zeroBlk);
+	}
+
+	/*
+	 * clear the inode table blks
+	 */
+	for (i = INODE_TABLE_START_BLK; 
+		i < DATA_BLK_START_BLK;
+		i++) {
+		write_ramdisk(i, (char *)zeroBlk);
+	}
+
+	/*
+	 * wipe out all the data in data blks
+	 */
+	for (i = DATA_BLK_START_BLK; 
+		i < TOTAL_BLK_NUM - DATA_BLK_START_BLK;
+		i++) {
 		write_ramdisk(i, (char *)zeroBlk);
 	}
 
@@ -95,11 +130,11 @@ int32_t file_system_create_file(struct file *fp)
 	/*
 	 * Since every disk RW is done by block, 
 	 * need to calculate the block offset(quotient).
-	 * But our max file_id is 80, the quotient is 
+	 * But our max file_id is 7, the quotient is 
 	 * always 0. 
 	 */
 	blk_off = (int)((inodeIdx >> 3) / pfs->BlkSize);
-	byte = (inodeIdx>> 3) % pfs->BlkSize;
+	byte = (inodeIdx >> 3) % pfs->BlkSize;
 	bit = inodeIdx % 8;
 
 	/* if file already exists, return already exist */
@@ -245,7 +280,7 @@ int32_t release_blks(struct file *fp)
 	return 0;
 }
 
-int32_t register_file(struct file *fp)
+int register_file(struct file *fp)
 {
 	int i;
 
@@ -258,21 +293,27 @@ int32_t register_file(struct file *fp)
 			break;
 	}
 
+	if (i == INODE_NUM) {
+		return -1;
+	}
+
 	pfs->fpList[i] = fp; 
+	pfs->fdCnt += 1;
 	/* the location in the fpList is the fd value(0 ~ 79) */
 	return i;
 }
 
-int32_t unregister_file(struct file *fp)
+int unregister_file(struct file *fp)
 {
-	uint32_t _file_id;
+	uint32_t _file_idx;
 
-	_file_id = fp->fd;
-	if(_file_id >= INODE_TABLE_SIZE) {
+	_file_idx = fp->fd;
+	if(_file_idx >= INODE_NUM) {
 		return 1;
 	}
 
-	pfs->fpList[_file_id] = NULL;
+	pfs->fpList[_file_idx] = NULL;
+	pfs->fdCnt -= 1;
 
 	return 0;
 }

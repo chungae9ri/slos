@@ -22,10 +22,10 @@
 #include <stdint-gcc.h>
 
 /* inode entry number in iNode table */
-#define INODE_NUM 			80
+#define INODE_NUM 			8 /* 8 = 4KB / 512B*/	
 /* physical addr, 48MB from mem start */
 #define META_BLK_SIZE			0x1000 /* 4KB meta block size */
-#define DATA_BLK_SIZE			0x100
+#define DATA_BLK_SIZE			0x200  /* data block size 512B */
 #define SUPER_BLK_START			0x0
 #define SUPER_BLK_START_BLK		(SUPER_BLK_START / DATA_BLK_SIZE)
 #define INODE_BITMAP_START		(SUPER_BLK_START + META_BLK_SIZE)
@@ -38,14 +38,14 @@
 #define DATA_BLK_START			(INODE_TABLE_START + INODE_TABLE_SIZE)
 #define DATA_BLK_START_BLK		(DATA_BLK_START / DATA_BLK_SIZE)
 
-#define inodeBlkMax			50
-/* inode size is same as 1blk size(256 byte) */
+#define INODEBLKMAX			((DATA_BLK_SIZE - sizeof(uint32_t) * 2)	 / sizeof(uint32_t))
+/* inode size is same as 1blk size(512 byte) */
 struct inode {
 	uint32_t iNum;
 	uint32_t file_size;
 
-	/* index of data blk max file size = 800KB = 50 * 256 / 4 * 256 B */
-	uint32_t blkloc[inodeBlkMax]; 
+	/* index of data blk max file size = 63KB  = 126(entries) *  512 B */
+	uint32_t blkloc[INODEBLKMAX]; 
 };
 
 struct file_system {
@@ -73,8 +73,8 @@ int32_t format_file_system(void);
 void mount_file_system(void);
 int32_t release_blks(struct file *fp);
 int32_t find_datablk(void);
-int32_t register_file(struct file *fp);
-int32_t unregister_file(struct file *fp);
+int register_file(struct file *fp);
+int unregister_file(struct file *fp);
 int32_t file_system_create_file(struct file *fp);
 uint32_t delete_file(struct file *fp);
 #endif
