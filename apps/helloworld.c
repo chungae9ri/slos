@@ -21,4 +21,5 @@ void main(void)
 {
 	const char *a="hello world!!\r\n";
 	const char *b="nice to meet you!!\r\n";
+	while (1);
 }

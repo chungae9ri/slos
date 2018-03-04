@@ -1,5 +1,5 @@
 /*
-  kernel/core/gic.c general interrupt controller 
+  kernel/core/ramdisk_io.c
   (C) 2018 Kwangdo Yi <kwangdo.yi@gmail.com>
  
   This program is free software; you can redistribute it and/or modify

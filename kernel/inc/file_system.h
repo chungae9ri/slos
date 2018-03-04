@@ -1,5 +1,5 @@
 /*
-  kernel/core/gic.c general interrupt controller 
+  kernel/core/file_system.h slfs
   (C) 2018 Kwangdo Yi <kwangdo.yi@gmail.com>
  
   This program is free software; you can redistribute it and/or modify
@@ -76,5 +76,7 @@ int32_t find_datablk(void);
 int register_file(struct file *fp);
 int unregister_file(struct file *fp);
 int32_t file_system_create_file(struct file *fp);
-uint32_t delete_file(struct file *fp);
+uint32_t file_system_delete_file(struct file *fp);
+struct file *find_file(struct file *fp);
+struct file *find_file_by_name(char *name);
 #endif

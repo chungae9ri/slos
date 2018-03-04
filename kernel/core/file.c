@@ -1,5 +1,5 @@
 /*
-  kernel/core/gic.c general interrupt controller 
+  kernel/core/file.c slfs 
   (C) 2018 Kwangdo Yi <kwangdo.yi@gmail.com>
  
   This program is free software; you can redistribute it and/or modify
@@ -28,7 +28,13 @@ struct file *open_file(char *str)
 {
 	int _fd;
 	struct file *fp;
-	
+
+	fp = find_file_by_name(str);
+	if (fp != NULL) {
+		fp->oCnt++;
+		return fp;
+	}
+
 	fp = (struct file *)kmalloc(sizeof(struct file));
 
 	_fd = register_file(fp);
@@ -40,17 +46,24 @@ struct file *open_file(char *str)
 	fp->pfs = pfs;
 	fp->fd = _fd;
 	fp->pos = 0;
+	fp->fsz = 0;
 	strcpy(fp->name, str);
 	file_system_create_file(fp);
-
+	fp->oCnt = 1;
 	
 	return fp;
 }
 
-int close_file(struct file *fp)
+uint32_t close_file(struct file *fp)
+{
+	fp->oCnt--;
+	return 0;
+}
+
+uint32_t delete_file(struct file *fp)
 {
 	unregister_file(fp);
-	delete_file(fp);
+	file_system_delete_file(fp);
 	release_blks(fp);
 	kfree((uint32_t)fp);
 	return 0;
@@ -220,6 +233,8 @@ uint32_t write(struct file *fp, uint32_t _n, char * _buf)
 
 	/* update current inode in inode table */
 	iNode.file_size += _n;
+	fp->fsz += _n;
+
 	write_ramdisk(inodeLoc, (char *)&iNode);
 	return _n;
 }
@@ -235,7 +250,7 @@ void rewrite(struct file *fp)
 	release_blks(fp);
 }
 
-int is_eof(struct file *fp)
+uint32_t is_eof(struct file *fp)
 {
 	unsigned long inodeLoc;
 	struct inode iNode;

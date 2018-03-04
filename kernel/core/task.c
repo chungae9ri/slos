@@ -29,6 +29,7 @@
 #include <ktimer.h>
 #include <xil_printf.h>
 #include <file.h>
+#include <loader.h>
 
 #define SVCSPSR 0x13 
 
@@ -49,6 +50,20 @@ extern char inbyte(void);
 extern struct timer_struct *sched_timer;
 
 struct task_struct *idle_task;
+
+extern struct task_struct *upt[MAX_USR_TASK];
+
+void create_usr_cfs_task(char *name, 
+		task_entry cfs_task, 
+		uint32_t pri, 
+		uint32_t appIdx)
+{
+	upt[appIdx] = forkyi(name, (task_entry)cfs_task, CFS_TASK);
+	set_priority(upt[appIdx], pri);
+	rb_init_node(&(upt[appIdx]->se).run_node);
+	enqueue_se_to_runq(&(upt[appIdx]->se), true);
+	runq->cfs_task_num++;
+}
 
 void create_cfs_task(char *name, task_entry cfs_task, uint32_t pri)
 {
@@ -464,6 +479,7 @@ void shell(void)
 			xil_printf("taskstat, whoami, hide whoami\n");
 			xil_printf("cfs task, rt task, oneshot task\n");
 			xil_printf("sleep, run \n");
+			xil_printf("apprun\n");
 		} else if (!strcmp(cmdline, "taskstat")) {
 			print_task_stat();
 		} else if (!strcmp(cmdline, "whoami")) {
@@ -516,6 +532,8 @@ void shell(void)
 			} else {
 				xil_printf("task %d is not in runq\n", pid);
 			}
+		} else if (!strcmp(cmdline, "apprun")) {
+			load_ramdisk_app(0);
 		} else {
 			xil_printf("I don't know.... ^^;\n");
 		}

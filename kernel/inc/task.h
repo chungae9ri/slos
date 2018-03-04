@@ -105,6 +105,11 @@ void init_shell(void);
 void init_workers(void);
 void set_priority(struct task_struct *pt, uint32_t pri);
 void yield(void);
+
+void create_usr_cfs_task(char *name, 
+		task_entry cfs_task, 
+		uint32_t pri, 
+		uint32_t appIdx);
 void create_cfs_task(char *name, task_entry cfs_task, uint32_t pri);
 void create_rt_task(char *name, task_entry handler, uint32_t dur);
 void update_current(uint32_t elapsed);

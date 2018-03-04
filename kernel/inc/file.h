@@ -1,5 +1,5 @@
 /*
-  kernel/core/gic.c general interrupt controller 
+  kernel/core/file.h slfs
   (C) 2018 Kwangdo Yi <kwangdo.yi@gmail.com>
  
   This program is free software; you can redistribute it and/or modify
@@ -22,17 +22,20 @@
 
 struct file {
 	struct file_system *pfs;
-	int fd;
-	int pos;
+	uint32_t fd;
+	uint32_t pos;
+	uint32_t fsz;
+	uint32_t oCnt;
 	char name[128];
 };
 
 struct file *create_file(int _fd, char *str);
 struct file *open_file(char *str);
-int close_file(struct file *fp);
+uint32_t close_file(struct file *fp);
+uint32_t delete_file(struct file *fp);
 uint32_t read(struct file *fp, uint32_t _n, char *_buf);
 uint32_t write(struct file *fp, uint32_t _n, char * _buf);
 void reset(struct file *fp);
 void rewrite(struct file *fp);
-int is_eof(struct file *fp);
+uint32_t is_eof(struct file *fp);
 #endif

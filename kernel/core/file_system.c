@@ -1,5 +1,5 @@
 /*
-  kernel/core/gic.c general interrupt controller 
+  kernel/core/file_system.c slfs
   (C) 2018 Kwangdo Yi <kwangdo.yi@gmail.com>
  
   This program is free software; you can redistribute it and/or modify
@@ -17,6 +17,7 @@
 */
 
 #include <stdio.h>
+#include <string.h>
 #include <ramdisk_io.h>
 #include <file_system.h>
 #include <mm.h>
@@ -196,7 +197,20 @@ struct file *find_file(struct file *fp)
 	} else return NULL;
 }
 
-uint32_t delete_file(struct file *fp)
+struct file *find_file_by_name(char *name)
+{
+	uint32_t i;
+
+	for (i = 0; i < pfs->fdCnt; i++) {
+		if (!strcmp(pfs->fpList[i]->name, name)) {
+			return pfs->fpList[i];
+		}
+	}
+
+	return NULL;
+}
+
+uint32_t file_system_delete_file(struct file *fp)
 {
 	int i, j, k, l, d, i2, j2, d2, inodeIdx;
 	char temp[DATA_BLK_SIZE];

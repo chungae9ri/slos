@@ -18,8 +18,8 @@
 
 #ifdef __ASSEMBLY__
 .set KERNEL_CODE_BASE, 				0x100000
-.set USER_CODE_BASE, 				0x800000 /* user task code base */
-.set USER_CODE_GAP, 				0x10000  /* 128KB user code gap */
+.set USER_APP_BASE, 				0x1000000 /* user app base */
+.set USER_APP_GAP, 				0x100000  /* 1MB user app gap */
 .set KERNEL_END, 				0x200000
 .set SVC_STACK_BASE, 				0x214FFC /* 3M + 4KB*16 support 16 kernel threads */
 .set SYS_STACK_BASE, 				0x204FFC /* 3M + 4KB*5 */
@@ -46,8 +46,8 @@
 .set IF_BIT, 					0xC0
 #else
 #define KERNEL_CODE_BASE			0x100000
-#define USER_CODE_BASE 				0x800000 /* user task code base */
-#define USER_CODE_GAP 				0x10000  /* 128KB user code gap */
+#define USER_APP_BASE 				0x1000000 /* user app base */
+#define USER_APP_GAP 				0x100000  /* 1MB user app gap */
 #define KERNEL_END 				0x200000
 #define SVC_STACK_BASE 				0x214FFC /* 3M + 4KB*16 support 16 kernel threads */
 #define SYS_STACK_BASE 				0x204FFC /* 3M + 4KB*5 */
