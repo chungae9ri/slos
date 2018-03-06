@@ -1,5 +1,5 @@
 /*
-  kernel/core/helloworld.c
+  libslos/print_mesg.c
   (C) 2018 Kwangdo Yi <kwangdo.yi@gmail.com>
  
   This program is free software; you can redistribute it and/or modify
@@ -16,17 +16,10 @@
   along with this program; if not, see <http://www.gnu.org/licenses/>
 */
 
-int print_mesg(const char *buf, const int idx);
+void write(const char *buf, const int idx);
 
-void main(void)
+int print_mesg(const char *buf, const int idx)
 {
-	const char *a = "hello world!!\n";
-	const char *b = "nice to meet you!!\n";
-	const char *c = "I am user_0 app!!\n";
-
-	print_mesg(a, 0);
-	print_mesg(b, 0);
-	print_mesg(c, 0);
-
-	while (1);
+	write(buf, idx);
+	return 0;
 }

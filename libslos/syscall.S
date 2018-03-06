@@ -1,5 +1,5 @@
 /*
-  kernel/core/helloworld.c
+  libslos/syscall.S slos system call
   (C) 2018 Kwangdo Yi <kwangdo.yi@gmail.com>
  
   This program is free software; you can redistribute it and/or modify
@@ -16,17 +16,33 @@
   along with this program; if not, see <http://www.gnu.org/licenses/>
 */
 
-int print_mesg(const char *buf, const int idx);
+.global exit
+exit:
+	swi     #0
+loooop:
+    b       loooop
 
-void main(void)
-{
-	const char *a = "hello world!!\n";
-	const char *b = "nice to meet you!!\n";
-	const char *c = "I am user_0 app!!\n";
+.global syscmd
+syscmd:
+	mov r12, lr
+	swi	#1
+	mov pc, r12
 
-	print_mesg(a, 0);
-	print_mesg(b, 0);
-	print_mesg(c, 0);
+.global write
+write:
+	mov r12, lr
+	swi      #2
+	mov pc, r12
 
-	while (1);
-}
+.global read
+read:
+	mov r12, lr
+	swi      #3
+	mov pc, r12
+
+.global sleep
+sleep:
+	mov r12, lr
+	swi      #4
+	mov pc, r12
+.end

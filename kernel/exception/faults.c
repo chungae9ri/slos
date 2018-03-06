@@ -40,11 +40,36 @@ void platform_undefined_handler(void)
 	for(;;);
 }
 
-void platform_syscall_handler(char *msg, int idx, int sys_num)
+int platform_syscall_handler(char *msg, int idx, int sys_num)
 {
-	/* do nothing for now */
-	xil_printf("syscall exception!!\n");
-	for(;;);
+	int ret = 0;
+
+	switch (sys_num) {
+		/* syscall exit */
+		case 0x0:
+			break;
+
+		/* syscal shellcmd */
+		case 0x1: 
+			break;
+
+		/* syscal write */
+		case 0x2: 
+			msg = msg + (USER_APP_BASE + USER_APP_GAP * idx);
+			xil_printf(msg);
+			break;
+		/* syscal read */
+		case 0x3:
+			break;
+
+		/* syscal sleep*/
+		case 0x4:
+			break;
+
+		default:
+			break;
+	}
+	return ret;
 }
 
 void platform_prefetch_abort_handler(void)

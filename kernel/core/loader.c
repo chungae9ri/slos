@@ -166,7 +166,7 @@ task_entry load_elf(char *elf_start, uint32_t idx)
 	 * For now, share the kernel page table.
 	 */
 
-	sprintf(buff,"user%u",(unsigned int)idx);
+	sprintf(buff,"user_%u",(unsigned int)idx);
 	create_usr_cfs_task(buff, (task_entry)entry, 4, idx);
 
 	return entry;

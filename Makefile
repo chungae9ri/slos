@@ -74,6 +74,7 @@ $(LIBOUTDIR) :
 $(KERNOUTDIR) :
 	mkdir -p $@
 	mkdir -p $(OUT_TOP)/ramdisk
+	mkdir -p $(OUT_TOP)/libslos
 
 $(LIBXIL) : $(LIBCOBJ) $(LIBASMOBJ)
 	$(AR) rc $(OUT_TOP)/libxil/$@ $(LIBCOBJ) $(LIBASMOBJ)
@@ -83,16 +84,25 @@ kernel.elf : $(KERNCOBJ) $(KERNASMOBJ)
 
 APPS := $(OUT_TOP)/ramdisk/helloworld
 
-ramdisk : $(OUT_TOP)/ramdisk/mkfs $(APPS)
+ramdisk : $(OUT_TOP)/libslos/libslos.a $(OUT_TOP)/ramdisk/mkfs $(APPS)
 	$(OUT_TOP)/ramdisk/mkfs $(OUT_TOP)/ramdisk/ramdisk.img $(APPS)
 
+$(OUT_TOP)/libslos/libslos.a : $(OUT_TOP)/libslos/syscall.o $(OUT_TOP)/libslos/print_mesg.o 
+	$(AR) rc $@ $^
+
+$(OUT_TOP)/libslos/syscall.o : $(TOP_DIR)/libslos/syscall.S
+	$(CC) -o $@ -c $<
+
+$(OUT_TOP)/libslos/print_mesg.o : $(TOP_DIR)/libslos/print_mesg.c
+	$(CC) -o $@ -c $<
+	
 $(OUT_TOP)/ramdisk/mkfs : mkfs/mkfs.cpp
 	g++ -o $@ $<
 
-$(OUT_TOP)/ramdisk/helloworld : apps/helloworld.c
-	$(CC) -o $@ $< -nostdlib
+$(APPS) : apps/helloworld.c
+	$(CC) -o $(OUT_TOP)/ramdisk/helloworld.o -c $< -g 
+	$(LD) -o $(APPS) $(OUT_TOP)/ramdisk/helloworld.o -nostdlib -e main -L$(OUT_TOP)/libslos -lslos -static
 
 clean :
 	rm -rf $(OUT_TOP) libxil.a
 	rm -f libxil/*.a $(LIBCOBJ) $(LIBASMOBJ) 
-

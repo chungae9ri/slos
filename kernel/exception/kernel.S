@@ -89,7 +89,19 @@ undefined_instruction_handler:
 	b	platform_undefined_handler
 ;
 syscall_handler:
+	msr	cpsr_c, #MODE_SVC | I_BIT | F_BIT
+	stmfd	sp!, {r0-r12,lr}
+	ldr 	r12, [lr,#-4]
+	bic	r12, #0xff000000
+	/* r0 for message buffer, r1 is idx for user task
+	   r2 is for syscall number
+	 */
+	mov 	r2, r12
 	bl	platform_syscall_handler
+	mrs	r0, CPSR
+	bic	r1, r0, #I_BIT|F_BIT
+	msr     cpsr_c, r1
+	ldmfd	sp!, {r0-r12,pc}
 ;
 prefetch_abort_handler:
 	b	.
