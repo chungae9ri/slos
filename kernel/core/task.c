@@ -178,7 +178,7 @@ void yield(void)
 	switch_context_yield(temp, current);
 }
 
-#define TEST_KMALLOC_SZ 	4096
+#define TEST_KMALLOC_SZ 	1024 * 1024	
 uint32_t cfs_worker1(void )
 {
 	uint8_t *pc;

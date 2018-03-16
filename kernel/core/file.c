@@ -49,7 +49,7 @@ struct file *open_file(char *str)
 	fp->fsz = 0;
 	strcpy(fp->name, str);
 	file_system_create_file(fp);
-	fp->oCnt = 1;
+	fp->oCnt += 1;
 	
 	return fp;
 }

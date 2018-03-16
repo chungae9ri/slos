@@ -57,8 +57,6 @@ int start_kernel(void)
 	mount_file_system();
 	format_file_system();
 	xil_printf("### mount slfs file system.\n");
-	load_ramdisk_img();
-	xil_printf("### load user app to slfs.\n");
 
 	init_rq();
 	init_wq();
@@ -68,13 +66,9 @@ int start_kernel(void)
 	init_timer();
 	update_csd();
 	timer_enable();
-#if 0
-	init_file_system();
-	mount_file_system();
-	format_file_system();
-	load_ramdisk_img();
-#endif
 
+	load_ramdisk_img();
+	xil_printf("### load user app to slfs.\n");
 	cpuidle();
 
 	return 0;
