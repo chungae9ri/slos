@@ -28,7 +28,7 @@
 #include <file.h>
 #include <xil_printf.h>
 
-int32_t load_ramdisk_img(void)
+int32_t create_ramdisk_fs(void)
 {
 	char *psrc;
 	char fname[16];

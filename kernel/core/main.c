@@ -67,7 +67,7 @@ int start_kernel(void)
 	update_csd();
 	timer_enable();
 
-	load_ramdisk_img();
+	create_ramdisk_fs();
 	xil_printf("### load user app to slfs.\n");
 	cpuidle();
 

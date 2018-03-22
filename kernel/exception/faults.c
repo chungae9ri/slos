@@ -34,6 +34,12 @@
 #define BUS_ERR_OTH_SEC		0x8
 #define BUS_ERR_OTH_PG		0xa
 
+#define SYS_EXIT		0x0
+#define SYS_CMD			0x1
+#define SYS_WRITE		0x2
+#define SYS_READ		0x3
+#define SYS_SLEEP		0x4
+
 void platform_undefined_handler(void)
 {
 	xil_printf("undefined cmd exception!!\n");
@@ -46,24 +52,24 @@ int platform_syscall_handler(char *msg, int idx, int sys_num)
 
 	switch (sys_num) {
 		/* syscall exit */
-		case 0x0:
+		case SYS_EXIT:
 			break;
 
 		/* syscal shellcmd */
-		case 0x1: 
+		case SYS_CMD: 
 			break;
 
 		/* syscal write */
-		case 0x2: 
+		case SYS_WRITE: 
 			msg = msg + (USER_APP_BASE + USER_APP_GAP * idx);
 			xil_printf(msg);
 			break;
 		/* syscal read */
-		case 0x3:
+		case SYS_READ:
 			break;
 
 		/* syscal sleep*/
-		case 0x4:
+		case SYS_SLEEP:
 			break;
 
 		default:
