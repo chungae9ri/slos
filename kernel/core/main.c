@@ -32,13 +32,15 @@ void cpuidle(void)
 {
 	uint32_t i = 0;
 	xil_printf("I am cpuidle.....\n");
-	/* do nothing for now */
+
 	while (1) {
 		if (show_stat) {
 			xil_printf("cpuidle is running....\n");
 		}
 		if (i == 0xFFFFFFF) i = 0;
 		else i++;
+		asm ("DSB" :::);
+		asm ("WFI" :::);
 	}
 }
 
