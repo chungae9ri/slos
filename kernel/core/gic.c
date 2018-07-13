@@ -100,8 +100,10 @@ uint32_t gic_irq_handler(void)
 	
 	/*ret = handler[num].func(frame);*/
 	ret = handler[num].func(0);
-	/* clear int status bit */
-	writel(1, PRIV_TMR_INTSTAT);
+	/* clear timer int(29U) status bit */
+	if (num == PRIV_TMR_INT_VEC) {
+		writel(1, PRIV_TMR_INTSTAT);
+	}
 
 	writel(val, GIC_ICCEOIR);
 	return ret;

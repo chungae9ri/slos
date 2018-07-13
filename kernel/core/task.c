@@ -136,6 +136,8 @@ uint32_t rt_worker1(void)
 	return 0;
 }
 
+#include <dma.h>
+
 uint32_t oneshot_worker(void)
 {
 	int i, j = 0;
@@ -147,6 +149,9 @@ uint32_t oneshot_worker(void)
 		j = 0;
 
 		xil_printf("I am oneshot_worker\n");
+
+		set_dma_work(0x20000000, 0x20001000, 0x100);
+		start_dma();
 		/* should yield after finish current work */
 		yield();
 	}

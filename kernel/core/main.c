@@ -25,6 +25,7 @@
 #include <mm.h>
 #include <file_system.h>
 #include <loader.h>
+#include <dma.h>
 
 extern uint32_t show_stat;
 
@@ -71,6 +72,7 @@ int start_kernel(void)
 
 	create_ramdisk_fs();
 	xil_printf("### load user app to slfs.\n");
+	init_dma();
 	cpuidle();
 
 	return 0;
