@@ -18,6 +18,7 @@
 
 #include <vm_pool.h>
 #include <page_table.h>
+#include <xil_printf.h>
 
 #define PAGE_SIZE	(4 * 1024)
 
@@ -26,6 +27,8 @@ void init_vmpool(struct vmpool *pvmpool,
    	    	unsigned int _base_address,
 	    	unsigned int _size)
 {
+	int region_num_supported;
+
 	pvmpool->ppagetable = _pagetable;
 	pvmpool->base_address = _base_address;
 	pvmpool->size = _size;
@@ -45,6 +48,10 @@ void init_vmpool(struct vmpool *pvmpool,
 	pvmpool->plast_region->prev = 0;
 	pvmpool->plast_region->next = 0;
 	pvmpool->region_size_total = PAGE_SIZE;
+
+	region_num_supported = (int)(PAGE_SIZE / sizeof(struct vmpool));
+
+	xil_printf("Total %d number of kmalloc calls(vm region desc) supported!\n", region_num_supported);
 }
 
 /* lazy allocator */

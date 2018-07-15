@@ -142,7 +142,14 @@ uint32_t oneshot_worker(void)
 {
 	int i, j = 0;
 	while (1) {
-		/* do some real time work here */
+		/* do some one time work here */
+#if 0
+		if (i == 0) {
+			set_dma_work(0x20000000, 0x30000000, 0x1000);
+			start_dma();
+		}
+#endif
+
 		for (i = 0; i < 1000; i++) {
 			j++;
 		}
@@ -150,8 +157,6 @@ uint32_t oneshot_worker(void)
 
 		xil_printf("I am oneshot_worker\n");
 
-		set_dma_work(0x20000000, 0x20001000, 0x100);
-		start_dma();
 		/* should yield after finish current work */
 		yield();
 	}
@@ -258,6 +263,31 @@ uint32_t cfs_worker2(void)
 	return 0;
 }
 
+uint32_t cfs_worker3(void )
+{
+	int i, j, k;
+
+	xil_printf("I am cfs_worker3....\n");
+
+	i = 0;
+	while (1) {
+		for (j = 0, k = 0; j < 10000; j++) {
+			k++;
+		}
+
+		if (show_stat) {
+			xil_printf("cfs_worker3 is running....\n");
+		}
+
+		if (i == 0) {
+			set_dma_work(0x20000000, 0x30000000, 0x10000);
+			start_dma();
+			i++;
+		}
+	}
+
+	return 0;
+}
 void init_jiffies(void)
 {
 	jiffies = 0;
@@ -408,6 +438,7 @@ void create_cfs_workers(void)
 {
 	create_cfs_task("cfs_worker1", cfs_worker1, 8);
 	create_cfs_task("cfs_worker2", cfs_worker2, 4);
+	create_cfs_task("cfs_worker3", cfs_worker3, 8);
 }
 
 void create_rt_workers(void)
