@@ -263,16 +263,22 @@ uint32_t cfs_worker2(void)
 	return 0;
 }
 
+#define COPROC_SRC_ADDR		0x20000000
+#define COPROC_DST_ADDR		0x30000000
+#define COPROC_DAT_LEN		0x10000
+
 uint32_t cfs_worker3(void )
 {
-	int i, j, k;
+	uint8_t *psrc;
+	int i, j;
 
 	xil_printf("I am cfs_worker3....\n");
 
 	i = 0;
 	while (1) {
-		for (j = 0, k = 0; j < 10000; j++) {
-			k++;
+		psrc = (uint8_t *)COPROC_SRC_ADDR;
+		for (j = 0; j < COPROC_DAT_LEN; j++) {
+			psrc[j] = (uint8_t)(j % 256);
 		}
 
 		if (show_stat) {
@@ -280,7 +286,7 @@ uint32_t cfs_worker3(void )
 		}
 
 		if (i == 0) {
-			set_dma_work(0x20000000, 0x30000000, 0x10000);
+			set_dma_work(COPROC_SRC_ADDR, COPROC_DST_ADDR, COPROC_DAT_LEN);
 			start_dma();
 			i++;
 		}
