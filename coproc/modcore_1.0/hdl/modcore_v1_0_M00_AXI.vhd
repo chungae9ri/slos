@@ -4,7 +4,7 @@ use unisim.vcomponents.all;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-entity swathcore_v1_0_M00_AXI is
+entity modcore_v1_0_M00_AXI is
 	generic (
 		-- Users to add parameters here
 
@@ -160,9 +160,9 @@ entity swathcore_v1_0_M00_AXI is
     -- accept the read data and response informationr.
 		M_AXI_RREADY	: out std_logic
 	);
-end swathcore_v1_0_M00_AXI;
+end modcore_v1_0_M00_AXI;
   
-architecture implementation of swathcore_v1_0_M00_AXI is
+architecture implementation of modcore_v1_0_M00_AXI is
 
 	-- function called clogb2 that returns an integer which has the
 	--value of the ceiling of the log base 2

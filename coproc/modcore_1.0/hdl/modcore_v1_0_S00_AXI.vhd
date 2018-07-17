@@ -2,7 +2,7 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-entity swathcore_v1_0_S00_AXI is
+entity modcore_v1_0_S00_AXI is
 	generic (
 		-- Users to add parameters here
 --        U_DEF_SRC_LEN : integer :=256;
@@ -86,9 +86,9 @@ entity swathcore_v1_0_S00_AXI is
     		-- accept the read data and response information.
 		S_AXI_RREADY	: in std_logic
 	);
-end swathcore_v1_0_S00_AXI;
+end modcore_v1_0_S00_AXI;
 
-architecture arch_imp of swathcore_v1_0_S00_AXI is
+architecture arch_imp of modcore_v1_0_S00_AXI is
 
 	-- AXI4LITE signals
 	signal axi_awaddr	: std_logic_vector(C_S_AXI_ADDR_WIDTH-1 downto 0);
