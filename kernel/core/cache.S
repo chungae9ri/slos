@@ -34,7 +34,8 @@ loop2:
 loop3:
 	orr	r11, r10, r9, lsl r5		/* factor in the way number and cache number into r11 */
 	orr	r11, r11, r7, lsl r2		/* factor in the index number */
-	mcr	p15, 0, r11, c7, c6, 2		/* invalidate by set/way */
+	/*mcr	p15, 0, r11, c7, c6, 2	*/	/* DCISW: Data Cache Invalidate by Set/Way */
+	mcr	p15, 0, r11, c7, c10, 2		/* DCCSW: Data Cache Clean by Set/Way */
 	subs	r9, r9, #1			/* decrement the way number */
 	bge	loop3
 	subs	r7, r7, #1			/* decrement the index */
