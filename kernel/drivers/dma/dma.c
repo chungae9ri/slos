@@ -23,34 +23,24 @@
 #include <xil_printf.h>
 
 #define DMA_BURST_LEN	0x1000
-#define TEST_DMA	0
 
-#if TEST_DMA
-struct dma_work_order dma_work_order;
-#else
 struct dma_work_order *p_dma_work_order;
-#endif
+int bFirst;
 
 
 void init_dma(void)
 {
 	gic_register_int_handler(DMA_IRQ_ID, dma_irq, NULL);
 	gic_mask_interrupt(DMA_IRQ_ID);
-#if TEST_DMA
-#else
 	p_dma_work_order = NULL;
-#endif
 }
 
 void set_dma_work(uint32_t src, uint32_t dst, uint32_t len)
 {
-#if TEST_DMA
-	dma_work_order.src = src;
-	dma_work_order.dst = dst;
-	dma_work_order.len = len;
-#else
 	int i, q, r;
 	struct dma_work_order *pcur, *ptemp;
+
+	bFirst = 1;
 
 	if (len > DMA_BURST_LEN) {
 		q = (int)(len / DMA_BURST_LEN);
@@ -94,33 +84,19 @@ void set_dma_work(uint32_t src, uint32_t dst, uint32_t len)
 
 		p_dma_work_order = ptemp;
 	}
-#endif
 }
 
 int start_dma(void)
 {
-#if TEST_DMA
-	uint32_t cntl, src, dst, len;
-
-	src = dma_work_order.src;
-	dst = dma_work_order.dst;
-	len = dma_work_order.len;
-
-	writel(src, DMA_REG_SRC_ADDR);
-	writel(dst, DMA_REG_DST_ADDR);
-	writel(len, DMA_REG_LEN);
-
-	cntl = readl(DMA_REG_CNTL);
-	cntl |= DMA_START;
-	writel(cntl, DMA_REG_CNTL);
-
-	return 0;
-
-#else
 	uint32_t cntl, src, dst, len;
 	struct dma_work_order *ptemp;
 
 	if (p_dma_work_order) {
+		if (bFirst) {
+			flush_ent_cache();
+			bFirst = 0;
+		}
+
 		src = p_dma_work_order->src;
 		dst = p_dma_work_order->dst;
 		len = p_dma_work_order->len;
@@ -141,21 +117,10 @@ int start_dma(void)
 	} else {
 		return 1;
 	}
-#endif
 }
 
 int dma_irq (void *arg)
 {
-#if TEST_DMA
-	uint32_t cntl;
-
-	cntl = readl(DMA_REG_CNTL);
-	cntl |= DMA_IRQ_DONE;
-	cntl &= ~DMA_START;
-	writel(cntl, DMA_REG_CNTL);
-
-	xil_printf("dma done!\n");
-#else
 	uint32_t cntl;
 
 	cntl = readl(DMA_REG_CNTL);
@@ -172,5 +137,4 @@ int dma_irq (void *arg)
 	} 
 
 	return 0;
-#endif
 }
