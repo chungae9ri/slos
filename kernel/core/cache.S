@@ -4,10 +4,10 @@ flush_ent_cache:
 	push  	{r0-r12, lr}
 	mov	r0, #0
 	mcr	p15, 0, r0, c8, c7, 0	/* invalidate TLBs */
-	bl 	invalidate_dcache 	/* invalidate dcache */
+	bl 	clean_dcache 	/* clean dcache */
 	pop	{r0-r12, pc}
 
-invalidate_dcache:
+clean_dcache:
 	mrc	p15, 1, r0, c0, c0, 1		/* read CLIDR */
 	ands	r3, r0, #0x7000000
 	mov	r3, r3, lsr #23			/* cache level value (naturally aligned) */
