@@ -93,7 +93,7 @@ int start_dma(void)
 
 	if (p_dma_work_order) {
 		if (bFirst) {
-			flush_ent_cache();
+			flush_ent_dcache();
 			bFirst = 0;
 		}
 

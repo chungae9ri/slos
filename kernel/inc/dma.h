@@ -29,7 +29,7 @@
 #define DMA_START		0x1
 #define DMA_IRQ_DONE		0x2
 
-extern void flush_ent_cache(void);
+extern void flush_ent_dcache(void);
 
 struct dma_work_order {
 	uint32_t order_num;
