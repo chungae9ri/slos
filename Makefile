@@ -1,3 +1,4 @@
+export PATH:=$(HOME)/bin/arm-2017q1/bin:$(PATH)
 LIBS := $(HOME)/bin/arm-2017q1/arm-none-eabi/lib
 LIBS2 :=$(HOME)/bin/arm-2017q1/lib/gcc/arm-none-eabi/6.3.1
 CC := arm-none-eabi-gcc
