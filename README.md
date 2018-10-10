@@ -23,8 +23,11 @@ Implementation list
    - imitate Linux run q and CFS scheduler 
    - sched entity
    - shell task, worker task, cpu idle task, and dummy task
-4. syscalls - exit, print_msg
-5. ram disk and elf loader 
-6. task synchronization(spin lock)
+5. slfs(Simple Light File System) 
+   - based on ramdisk
+   - 2 level file system : file size up to 800KB
+6. syscalls - exit, print_msg
+7. ram disk and elf loader 
+8. task synchronization(spin lock)
 
 Refer Doc/SLOS.pdf for more information.

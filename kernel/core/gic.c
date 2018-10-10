@@ -4,40 +4,40 @@
 #include <timer.h>
 
 /* temp, move to proper file S */
-void platform_irq_handler()
+void platform_irq_handler(void)
 {
 
 }
 
 /* temporary handlers */
-void platform_fiq_handler()
+void platform_fiq_handler(void)
 {
 
 }
 
-void platform_undefined_handler()
+void platform_undefined_handler(void)
 {
 
 }
 
-void platform_syscall_handler()
+void platform_syscall_handler(void)
 {
 
 }
 
-void platform_data_abort_handler()
+void platform_data_abort_handler(void)
 {
 
 }
 
-void platform_prefetch_abort_handler()
+void platform_prefetch_abort_handler(void)
 {
 
 }
 
 /* temp, move to proper file E */
 
-void gic_dist_init()
+void init_gic_dist(void)
 {
 	uint32_t i;
 	uint32_t num_irq = 0;
@@ -81,25 +81,25 @@ void gic_dist_init()
 	writel(1, GIC_ICDDCR);
 }
 
-void gic_cpu_init()
+void init_gic_cpu(void)
 {
 	writel(0xF0, GIC_ICCPMR);
 	writel(0x07, GIC_ICCICR);
 }
 
-void gic_init()
+void init_gic(void)
 {
-	gic_dist_init();
-	gic_cpu_init();
+	init_gic_dist();
+	init_gic_cpu();
 }
 
-void gic_fiq()
+void gic_fiq(void)
 {
 	/* do nothing */
 }
 
 /*imsi for test uint32_t gic_irq(struct task_struct *frame)*/
-uint32_t gic_irq_handler()
+uint32_t gic_irq_handler(void)
 {
 	uint32_t ret = 0;
 	uint32_t num, val;
