@@ -26,8 +26,11 @@ Implementation list
 5. slfs(Simple Light File System) 
    - based on ramdisk
    - 2 level file system : file size up to 800KB
-6. syscalls - exit, print_msg
+6. syscalls - print_msg
 7. ram disk and elf loader 
 8. task synchronization(spin lock)
+9. Hardware-Software codesign
+   - design custom peripheral device in PL subsystem
+   - a device driver for custom peripheral device
 
 Refer Doc/SLOS.pdf for more information.
