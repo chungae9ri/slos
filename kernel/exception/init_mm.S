@@ -20,7 +20,7 @@
 .set MASK_MMU, 			0x00000001
 .set MASK_DCACHE,		0x00000004
 .set MASK_ICACHE,		0x00001000
-.set MASK_ACCESSPERM,		0x20000000
+.set MASK_AFE,			0x20000000
 
 .section SSBL
 .arm
@@ -91,11 +91,11 @@ ssbl:
 	/* Outer-cacheable, WB */
 	/*orr	r0, r0, #0x5B	*/
 	mcr	p15, 0, r0, c2, c0, 0
-	/* read control (c1) register of cp 15 */
+	/* read system control register (SCTLR) of cp 15 */
 	mrc	p15, 0, r0, c1, c0, 0	
 	orr	r0, r0, #MASK_MMU | MASK_DCACHE
 	orr	r0, r0, #MASK_ICACHE
-	orr	r0, r0, #MASK_ACCESSPERM
+	bic	r0, r0, #MASK_AFE /* clear AFE bit, Access flag is disabled, AP[2:0] is used */
 	/* enable MMU, D cache, I cache */
 	mcr	p15, 0, r0, c1, c0, 0
 	/* Write to ACTLR */
