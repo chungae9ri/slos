@@ -1,16 +1,14 @@
 # slos
 SLOS represents Simple Light OS. 
 This repository is for the source code of SLOS running in ARM processor. 
-It is tested in Qualcomm msm8626 but seems to be expanded to other products.
+It is tested in Cortex-A9 in Xilinx Zynq7000 chipset but seems to be expanded to other products.
 
 Implementation list 
-
-1. Memory Management 
-   - page frame pool
-   - page table walk
-   - virtual memory manager
-   - page fault handler
-   - lazy memory allocation
+1. Process Management
+   - TCB (Task Control Block)
+   - task fork - forkyi()
+   - GIC - interrupt handler
+   - task synchronization(spin lock)
 2. Timer frame work
    - realtime timer, sched timer, oneshot timer
    - timer interrupt handler
@@ -19,18 +17,22 @@ Implementation list
    - preemptive context switch
 4. CFS scheduler for task others
    - run q and wait q
-   - task fork - forkyi()
    - imitate Linux run q and CFS scheduler 
-   - sched entity
+   - sched entity with virtual runtime
    - shell task, worker task, cpu idle task, and dummy task
-5. slfs(Simple Light File System) 
+5. Memory Management 
+   - page frame pool
+   - small page table walk
+   - virtual memory manager
+   - page fault handler
+   - demand paging
+6. slfs(Simple Light File System) 
    - based on ramdisk
    - 2 level file system : file size up to 800KB
-6. syscalls - print_msg
-7. ram disk and elf loader 
-8. task synchronization(spin lock)
-9. Hardware-Software codesign
-   - design custom peripheral device in PL subsystem
-   - a device driver for custom peripheral device
+   - ram disk and elf loader for use applications
+7. syscalls through the svc instruction - libslos.a
+8. Hardware-Software codesign
+   - FPGA design for a custom peripheral device in PL subsystem
+   - a device driver with DMA interrupt handler
 
-Refer Doc/SLOS.pdf for more information.
+Refer A little book on custom OS developement from scratch.pdf for more information.
