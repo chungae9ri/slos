@@ -128,7 +128,7 @@ void init_pgt(void)
 	 		 * Bit[1] = 1'b1 : 0: Large page, 1: Small page
 	 		 * Bit[2] = 1'b0 : Bufferable
 	 		 * Bit[3] = 1'b0 : Cacheable
-	 		 * Bit[5:4] = 2'b11: AP[1:0] R/W full access with AP[2]=1'b0
+	 		 * Bit[5:4] = 2'b11: SCTLR.AFE is 0. AP[1:0] R/W full access with AP[2]=1'b0
 	 		 * Bit[8:6] = 3'b001: TEX[2:0] should be 001 with C = 1'b0, B = 1'b0. 
 	                      		This is Outer and Inner Non Cacheable mode
 	 		 * Bit[9] = 1'b0: AP[2] should be 0 for full access
