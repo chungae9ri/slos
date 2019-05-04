@@ -65,6 +65,7 @@ extern "C" {
 #define XPS_VERSION_2 0x1
 
 #define XPLAT_INFO_MASK (0xF)
+#define XPLAT_INFO_SHIFT (0xC)
 #define XPS_VERSION_INFO_MASK (0xF)
 
 /**************************** Type Definitions *******************************/
@@ -72,9 +73,9 @@ extern "C" {
 /***************** Macros (Inline Functions) Definitions *********************/
 
 
-u32 XGetPlatform_Info();
+u32 XGetPlatform_Info(void);
 
-#if defined (ARMR5) || (__aarch64__) || (ARMA53_32)
+#if defined (ARMR5) || (__aarch64__) || (ARMA53_32) || (PSU_PMU)
 u32 XGetPSVersion_Info();
 #endif
 

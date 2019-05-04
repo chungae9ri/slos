@@ -144,7 +144,7 @@ s32 XUartPs_CfgInitialize(XUartPs *InstancePtr,
 	InstancePtr->Config.ModemPinsConnected = Config->ModemPinsConnected;
 
 	/* Initialize other instance data to default values */
-	InstancePtr->Handler = XUartPs_StubHandler;
+	InstancePtr->Handler = (XUartPs_Handler)XUartPs_StubHandler;
 
 	InstancePtr->SendBuffer.NextBytePtr = NULL;
 	InstancePtr->SendBuffer.RemainingBytes = 0U;
@@ -463,7 +463,7 @@ u32 XUartPs_ReceiveBuffer(XUartPs *InstancePtr)
 	 * Loop until there is no more data in RX FIFO or the specified
 	 * number of bytes has been received
 	 */
-	while((ReceivedCount <= InstancePtr->ReceiveBuffer.RemainingBytes)&&
+	while((ReceivedCount < InstancePtr->ReceiveBuffer.RemainingBytes)&&
 		(((CsrRegister & XUARTPS_SR_RXEMPTY) == (u32)0))){
 
 		if (InstancePtr->is_rxbs_error) {
@@ -635,7 +635,7 @@ s32 XUartPs_SetBaudRate(XUartPs *InstancePtr, u32 BaudRate)
 static void XUartPs_StubHandler(void *CallBackRef, u32 Event,
 				 u32 ByteCount)
 {
-	(void *) CallBackRef;
+	(void) CallBackRef;
 	(void) Event;
 	(void) ByteCount;
 	/* Assert occurs always since this is a stub and should never be called */

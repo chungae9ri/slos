@@ -71,7 +71,7 @@ extern "C" {
 
 #if defined (__aarch64__)
 /* pseudo assembler instructions */
-#define mfcpsr()	({u32 rval; \
+#define mfcpsr()	({u32 rval = 0U; \
 			   asm volatile("mrs %0,  DAIF" : "=r" (rval));\
 			  rval;\
 			 })
@@ -120,10 +120,17 @@ extern "C" {
 			  rval;\
 			 })
 
+#define mfelrel3() ({u64 rval = 0U; \
+                   asm volatile("mrs %0,  ELR_EL3" : "=r" (rval));\
+                  rval;\
+                 })
+
+#define mtelrel3(v) __asm__ __volatile__ ("msr ELR_EL3, %0" : : "r" (v))
+
 #else
 
 /* pseudo assembler instructions */
-#define mfcpsr()	({u32 rval; \
+#define mfcpsr()	({u32 rval = 0U; \
 			  __asm__ __volatile__(\
 			    "mrs	%0, cpsr\n"\
 			    : "=r" (rval)\
@@ -215,7 +222,7 @@ extern "C" {
 #define mtcptlbi(reg)	__asm__ __volatile__("tlbi " #reg)
 #define mtcpat(reg,val)	__asm__ __volatile__("at " #reg ",%0"  : : "r" (val))
 /* CP15 operations */
-#define mfcp(reg)	({u64 rval;\
+#define mfcp(reg)	({u64 rval = 0U;\
 			__asm__ __volatile__("mrs	%0, " #reg : "=r" (rval));\
 			rval;\
 			})
@@ -229,7 +236,7 @@ extern "C" {
 			 : : "r" (v)\
 			);
 
-#define mfcp(rn)	({u32 rval; \
+#define mfcp(rn)	({u32 rval = 0U; \
 			 __asm__ __volatile__(\
 			   "mrc " rn "\n"\
 			   : "=r" (rval)\

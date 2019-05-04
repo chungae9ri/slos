@@ -163,7 +163,7 @@ void XUartPs_SetHandler(XUartPs *InstancePtr, XUartPs_Handler FuncPtr,
 	Xil_AssertVoid(FuncPtr != NULL);
 	Xil_AssertVoid(InstancePtr->IsReady == XIL_COMPONENT_IS_READY);
 
-	InstancePtr->Handler = FuncPtr;
+	InstancePtr->Handler = (XUartPs_Handler)FuncPtr;
 	InstancePtr->CallBackRef = CallBackRef;
 }
 

@@ -256,7 +256,7 @@ extern "C" {
  *
  * @{
  */
-#define XUARTPS_MODEMCR_FCM	0x00000010U  /**< Flow control mode */
+#define XUARTPS_MODEMCR_FCM	0x00000020U  /**< Flow control mode */
 #define XUARTPS_MODEMCR_RTS	0x00000002U  /**< Request to send */
 #define XUARTPS_MODEMCR_DTR	0x00000001U  /**< Data terminal ready */
 /* @} */
