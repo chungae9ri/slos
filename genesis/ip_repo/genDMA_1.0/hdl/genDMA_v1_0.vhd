@@ -2,7 +2,7 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-entity modcore_v1_0 is
+entity genDMA_v1_0 is
 	generic (
 		-- Users to add parameters here
 
@@ -104,14 +104,14 @@ entity modcore_v1_0 is
 		m00_axi_rvalid	: in std_logic;
 		m00_axi_rready	: out std_logic
 	);
-end modcore_v1_0;
+end genDMA_v1_0;
 
-architecture arch_imp of modcore_v1_0 is
+architecture arch_imp of genDMA_v1_0 is
 
 	signal sig_trig_mem_cpy : std_logic;
-	signal sig_src_addr : std_logic_vector(C_M00_AXI_DATA_WIDTH-1 downto 0);
-	signal sig_src_len : std_logic_vector(C_M00_AXI_DATA_WIDTH-1 downto 0);
-	signal sig_tgt_addr : std_logic_vector(C_M00_AXI_DATA_WIDTH-1 downto 0);
+	signal sig_src_addr : std_logic_vector(C_M00_AXI_ADDR_WIDTH-1 downto 0);
+	signal sig_src_len : std_logic_vector(C_M00_AXI_ADDR_WIDTH-1 downto 0);
+	signal sig_tgt_addr : std_logic_vector(C_M00_AXI_ADDR_WIDTH-1 downto 0);
 	signal sig_intr_done : std_logic;
 	signal sig_dma_irq_done : std_logic;
 	
@@ -119,7 +119,7 @@ architecture arch_imp of modcore_v1_0 is
     attribute MARK_DEBUG of sig_dma_irq_done : signal is "TRUE";
 	
 	-- component declaration
-	component modcore_v1_0_S00_AXI is
+	component genDMA_v1_0_S00_AXI is
 		generic (
 		C_S_AXI_DATA_WIDTH	: integer	:= 32;
 		C_S_AXI_ADDR_WIDTH	: integer	:= 5
@@ -154,9 +154,9 @@ architecture arch_imp of modcore_v1_0 is
 		S_AXI_RVALID	: out std_logic;
 		S_AXI_RREADY	: in std_logic
 		);
-	end component modcore_v1_0_S00_AXI;
+	end component genDMA_v1_0_S00_AXI;
 
-	component modcore_v1_0_M00_AXI is
+	component genDMA_v1_0_M00_AXI is
 		generic (
 		C_M_TARGET_SLAVE_BASE_ADDR	: std_logic_vector	:= x"40000000";
 		C_M_AXI_BURST_LEN	: integer	:= 16;
@@ -223,12 +223,12 @@ architecture arch_imp of modcore_v1_0 is
 		M_AXI_RVALID	: in std_logic;
 		M_AXI_RREADY	: out std_logic
 		);
-	end component modcore_v1_0_M00_AXI;
+	end component genDMA_v1_0_M00_AXI;
 
 begin
 
 -- Instantiation of Axi Bus Interface S00_AXI
-modcore_v1_0_S00_AXI_inst : modcore_v1_0_S00_AXI
+genDMA_v1_0_S00_AXI_inst : genDMA_v1_0_S00_AXI
 	generic map (
 		C_S_AXI_DATA_WIDTH	=> C_S00_AXI_DATA_WIDTH,
 		C_S_AXI_ADDR_WIDTH	=> C_S00_AXI_ADDR_WIDTH
@@ -264,7 +264,7 @@ modcore_v1_0_S00_AXI_inst : modcore_v1_0_S00_AXI
 	);
 
 -- Instantiation of Axi Bus Interface M00_AXI
-modcore_v1_0_M00_AXI_inst : modcore_v1_0_M00_AXI
+genDMA_v1_0_M00_AXI_inst : genDMA_v1_0_M00_AXI
 	generic map (
 		C_M_TARGET_SLAVE_BASE_ADDR	=> C_M00_AXI_TARGET_SLAVE_BASE_ADDR,
 		C_M_AXI_BURST_LEN	=> C_M00_AXI_BURST_LEN,

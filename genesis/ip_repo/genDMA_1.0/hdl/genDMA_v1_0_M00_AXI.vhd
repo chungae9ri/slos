@@ -4,7 +4,7 @@ use unisim.vcomponents.all;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-entity modcore_v1_0_M00_AXI is
+entity genDMA_v1_0_M00_AXI is
 	generic (
 		-- Users to add parameters here
 
@@ -38,9 +38,9 @@ entity modcore_v1_0_M00_AXI is
 		-- Initiate AXI transactions
 		M_DMA_IRQ_DONE : out std_logic;
 		INIT_AXI_TXN	: in std_logic;
-        M_SRC_ADDR : in std_logic_vector(C_M_AXI_DATA_WIDTH-1 downto 0);
+        M_SRC_ADDR : in std_logic_vector(C_M_AXI_ADDR_WIDTH-1 downto 0);
         M_SRC_LEN : in std_logic_vector(C_M_AXI_ADDR_WIDTH-1 downto 0);
-        M_TGT_ADDR : in std_logic_vector(C_M_AXI_DATA_WIDTH-1 downto 0);
+        M_TGT_ADDR : in std_logic_vector(C_M_AXI_ADDR_WIDTH-1 downto 0);
         M_DMA_IRQ : out std_logic;
         M_INTR_DONE : in std_logic;
 		-- User ports ends
@@ -157,16 +157,17 @@ entity modcore_v1_0_M00_AXI is
     -- is signaling the required read data.
 		M_AXI_RVALID	: in std_logic;
 		-- Read ready. This signal indicates that the master can
-    -- accept the read data and response informationr.
+    -- accept the read data and response information.
 		M_AXI_RREADY	: out std_logic
 	);
-end modcore_v1_0_M00_AXI;
-  
-architecture implementation of modcore_v1_0_M00_AXI is
+end genDMA_v1_0_M00_AXI;
+
+architecture implementation of genDMA_v1_0_M00_AXI is
+
 
 	-- function called clogb2 that returns an integer which has the
 	--value of the ceiling of the log base 2
-  
+
 	function clogb2 (bit_depth : integer) return integer is            
 	 	variable depth  : integer := bit_depth;                               
 	 	variable count  : integer := 1;                                       
@@ -211,7 +212,7 @@ architecture implementation of modcore_v1_0_M00_AXI is
 	 							-- of the written data with the read data
 
 	 signal mst_exec_state  : state ; 
-  
+
 	-- AXI4FULL signals
 	--AXI4 internal temp signals
 	signal axi_awaddr	: std_logic_vector(C_M_AXI_ADDR_WIDTH-1 downto 0);
@@ -1228,7 +1229,7 @@ DIPBDIP => b"0000" -- 4-bit input: B port parity/MSB parity
             reg_tgt_addr <= x"0000_0000";
          else 
             reg_src_addr <= M_SRC_ADDR;
-            burst_trans_len <= std_logic_vector(unsigned(M_SRC_LEN) / (C_M_AXI_BURST_LEN * C_M_AXI_DATA_WIDTH / 8)) ;
+            burst_trans_len <= std_logic_vector(unsigned(M_SRC_LEN) / (C_M_AXI_BURST_LEN * C_M_AXI_ADDR_WIDTH / 8)) ;
             reg_tgt_addr <= M_TGT_ADDR;
          end if;
       end if;
