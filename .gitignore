@@ -13,7 +13,7 @@ a
 libslos.a
 mkappfs/mkappfs
 ramdisk.img
-genesis
+genesis/genesis
 .Xil
 *.jou
 *.log

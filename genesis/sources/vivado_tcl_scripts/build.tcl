@@ -1,0 +1,31 @@
+# This script is to be run in a complete zSDP project. It builds everything.
+#
+# now synthesize design
+#
+reset_run synth_1
+launch_runs synth_1
+wait_on_run synth_1
+#
+#
+# run implementation
+#
+launch_runs impl_1
+wait_on_run impl_1
+#
+#
+# generate bitstream
+#
+launch_runs impl_1 -to_step write_bitstream
+wait_on_run impl_1
+##
+##
+## export hardware
+##
+#file copy -force C:/work/zBundle/Zynq/viv/zSDP/zSDP.runs/impl_1/system_wrapper.sysdef C:/work/zBundle/Zynq/viv/zSDP/zSDP.sdk/system_wrapper.hdf
+##
+##
+## now launch SDK
+##
+#launch_sdk -workspace C:/work/zBundle/Zynq/viv/zSDP/zSDP.sdk -hwspec C:/work/zBundle/Zynq/viv/zSDP/zSDP.sdk/system_wrapper.hdf
+##
+## you should now be in SDK ready to download
