@@ -19,12 +19,12 @@ entity genDMA_v1_0 is
 		C_M00_AXI_BURST_LEN	: integer	:= 16;
 		C_M00_AXI_ID_WIDTH	: integer	:= 1;
 		C_M00_AXI_ADDR_WIDTH	: integer	:= 32;
-		C_M00_AXI_DATA_WIDTH	: integer	:= 32;
-		C_M00_AXI_AWUSER_WIDTH	: integer	:= 0;
-		C_M00_AXI_ARUSER_WIDTH	: integer	:= 0;
-		C_M00_AXI_WUSER_WIDTH	: integer	:= 0;
-		C_M00_AXI_RUSER_WIDTH	: integer	:= 0;
-		C_M00_AXI_BUSER_WIDTH	: integer	:= 0
+		C_M00_AXI_DATA_WIDTH	: integer	:= 32
+-- kyi		C_M00_AXI_AWUSER_WIDTH	: integer	:= 0;
+-- kyi		C_M00_AXI_ARUSER_WIDTH	: integer	:= 0;
+-- kyi		C_M00_AXI_WUSER_WIDTH	: integer	:= 0;
+-- kyi		C_M00_AXI_RUSER_WIDTH	: integer	:= 0;
+-- kyi		C_M00_AXI_BUSER_WIDTH	: integer	:= 0
 	);
 	port (
 		-- Users to add ports here
@@ -70,18 +70,18 @@ entity genDMA_v1_0 is
 		m00_axi_awcache	: out std_logic_vector(3 downto 0);
 		m00_axi_awprot	: out std_logic_vector(2 downto 0);
 		m00_axi_awqos	: out std_logic_vector(3 downto 0);
-		m00_axi_awuser	: out std_logic_vector(C_M00_AXI_AWUSER_WIDTH-1 downto 0);
+-- kyi		m00_axi_awuser	: out std_logic_vector(C_M00_AXI_AWUSER_WIDTH-1 downto 0);
 		m00_axi_awvalid	: out std_logic;
 		m00_axi_awready	: in std_logic;
 		m00_axi_wdata	: out std_logic_vector(C_M00_AXI_DATA_WIDTH-1 downto 0);
 		m00_axi_wstrb	: out std_logic_vector(C_M00_AXI_DATA_WIDTH/8-1 downto 0);
 		m00_axi_wlast	: out std_logic;
-		m00_axi_wuser	: out std_logic_vector(C_M00_AXI_WUSER_WIDTH-1 downto 0);
+-- kyi		m00_axi_wuser	: out std_logic_vector(C_M00_AXI_WUSER_WIDTH-1 downto 0);
 		m00_axi_wvalid	: out std_logic;
 		m00_axi_wready	: in std_logic;
 		m00_axi_bid	: in std_logic_vector(C_M00_AXI_ID_WIDTH-1 downto 0);
 		m00_axi_bresp	: in std_logic_vector(1 downto 0);
-		m00_axi_buser	: in std_logic_vector(C_M00_AXI_BUSER_WIDTH-1 downto 0);
+-- kyi		m00_axi_buser	: in std_logic_vector(C_M00_AXI_BUSER_WIDTH-1 downto 0);
 		m00_axi_bvalid	: in std_logic;
 		m00_axi_bready	: out std_logic;
 		m00_axi_arid	: out std_logic_vector(C_M00_AXI_ID_WIDTH-1 downto 0);
@@ -93,14 +93,14 @@ entity genDMA_v1_0 is
 		m00_axi_arcache	: out std_logic_vector(3 downto 0);
 		m00_axi_arprot	: out std_logic_vector(2 downto 0);
 		m00_axi_arqos	: out std_logic_vector(3 downto 0);
-		m00_axi_aruser	: out std_logic_vector(C_M00_AXI_ARUSER_WIDTH-1 downto 0);
+-- kyi		m00_axi_aruser	: out std_logic_vector(C_M00_AXI_ARUSER_WIDTH-1 downto 0);
 		m00_axi_arvalid	: out std_logic;
 		m00_axi_arready	: in std_logic;
 		m00_axi_rid	: in std_logic_vector(C_M00_AXI_ID_WIDTH-1 downto 0);
 		m00_axi_rdata	: in std_logic_vector(C_M00_AXI_DATA_WIDTH-1 downto 0);
 		m00_axi_rresp	: in std_logic_vector(1 downto 0);
 		m00_axi_rlast	: in std_logic;
-		m00_axi_ruser	: in std_logic_vector(C_M00_AXI_RUSER_WIDTH-1 downto 0);
+-- kyi		m00_axi_ruser	: in std_logic_vector(C_M00_AXI_RUSER_WIDTH-1 downto 0);
 		m00_axi_rvalid	: in std_logic;
 		m00_axi_rready	: out std_logic
 	);
@@ -108,15 +108,26 @@ end genDMA_v1_0;
 
 architecture arch_imp of genDMA_v1_0 is
 
-	signal sig_trig_mem_cpy : std_logic;
+	signal sig_g_start : std_logic;
 	signal sig_src_addr : std_logic_vector(C_M00_AXI_ADDR_WIDTH-1 downto 0);
 	signal sig_src_len : std_logic_vector(C_M00_AXI_ADDR_WIDTH-1 downto 0);
-	signal sig_tgt_addr : std_logic_vector(C_M00_AXI_ADDR_WIDTH-1 downto 0);
-	signal sig_intr_done : std_logic;
-	signal sig_dma_irq_done : std_logic;
+	signal sig_trig_in_trans: std_logic;
+	signal sig_trig_out_trans: std_logic;
+	signal Itab_SRC_ADDR_top: std_logic_vector (31 downto 0);
+	signal Itab_SRC_LEN_top: std_logic_vector (15 downto 0);
+	signal sig_Itab_full: std_logic;
+	signal sig_Itab_empty: std_logic;
+	signal sig_intr_trig: std_logic;
+	signal sig_rdata: std_logic_vector(31 downto 0);
+	signal sig_rdbuff_almost_full: std_logic;
+	signal sig_rdbuff_almost_empty: std_logic;
+	signal sig_rdata_valid: std_logic;
+    signal sig_outdata: std_logic_vector (31 downto 0);
+    signal sig_outvalid: std_logic;
+    signal sig_outreq: std_logic;
+    signal sig_g_pulse: std_logic; -- global start / stop pulse
 	
 	attribute MARK_DEBUG : string;
-    attribute MARK_DEBUG of sig_dma_irq_done : signal is "TRUE";
 	
 	-- component declaration
 	component genDMA_v1_0_S00_AXI is
@@ -125,12 +136,12 @@ architecture arch_imp of genDMA_v1_0 is
 		C_S_AXI_ADDR_WIDTH	: integer	:= 5
 		);
 		port (
-		S_DMA_IRQ_DONE : in std_logic;
-		TRIG_MEM_CPY : out std_logic;
+		TRIG_G_START : out std_logic;
+		S_G_PULSE : out std_logic;
 		S_SRC_ADDR : out std_logic_vector(C_S_AXI_DATA_WIDTH-1 downto 0);
 		S_SRC_LEN : out std_logic_vector(C_S_AXI_DATA_WIDTH-1 downto 0);
-		S_TGT_ADDR : out std_logic_vector(C_S_AXI_DATA_WIDTH-1 downto 0);
-		S_INTR_DONE : out std_logic;
+		S_ITAB_FULL : in std_logic;
+		S_IN_TRANS_VALID: out std_logic;
 		-------------------------------------------
 		S_AXI_ACLK	: in std_logic;
 		S_AXI_ARESETN	: in std_logic;
@@ -162,21 +173,25 @@ architecture arch_imp of genDMA_v1_0 is
 		C_M_AXI_BURST_LEN	: integer	:= 16;
 		C_M_AXI_ID_WIDTH	: integer	:= 1;
 		C_M_AXI_ADDR_WIDTH	: integer	:= 32;
-		C_M_AXI_DATA_WIDTH	: integer	:= 32;
-		C_M_AXI_AWUSER_WIDTH	: integer	:= 0;
-		C_M_AXI_ARUSER_WIDTH	: integer	:= 0;
-		C_M_AXI_WUSER_WIDTH	: integer	:= 0;
-		C_M_AXI_RUSER_WIDTH	: integer	:= 0;
-		C_M_AXI_BUSER_WIDTH	: integer	:= 0
+		C_M_AXI_DATA_WIDTH	: integer	:= 32
+-- kyi		C_M_AXI_AWUSER_WIDTH	: integer	:= 0;
+-- kyi		C_M_AXI_ARUSER_WIDTH	: integer	:= 0;
+-- kyi		C_M_AXI_WUSER_WIDTH	: integer	:= 0;
+-- kyi		C_M_AXI_RUSER_WIDTH	: integer	:= 0;
+-- kyi		C_M_AXI_BUSER_WIDTH	: integer	:= 0
 		);
 		port (
-		M_DMA_IRQ_DONE : out std_logic;
-		INIT_AXI_TXN	: in std_logic;
+		M_G_START	: in std_logic;
+		M_G_PULSE : in std_logic;
 		M_SRC_ADDR : in std_logic_vector(C_M_AXI_DATA_WIDTH-1 downto 0);
 		M_SRC_LEN : in std_logic_vector(C_M_AXI_DATA_WIDTH-1 downto 0);
-		M_TGT_ADDR : in std_logic_vector(C_M_AXI_DATA_WIDTH-1 downto 0);
-		M_DMA_IRQ : out std_logic;
-		M_INTR_DONE : in std_logic;
+		M_OUT_TRANS_REQ : out std_logic;
+		M_ITAB_EMPTY : in std_logic;
+		M_INTR_TRIG : out std_logic;
+		M_RDATA: out std_logic_vector(31 downto 0);
+        M_RDATA_VALID: out std_logic;
+        M_RDBUFF_AL_FULL: in std_logic;
+        M_RDBUFF_AL_EMPTY: in std_logic;
 		-- kyi TXN_DONE	: out std_logic;
 		M_AXI_ACLK	: in std_logic;
 		M_AXI_ARESETN	: in std_logic;
@@ -189,18 +204,18 @@ architecture arch_imp of genDMA_v1_0 is
 		M_AXI_AWCACHE	: out std_logic_vector(3 downto 0);
 		M_AXI_AWPROT	: out std_logic_vector(2 downto 0);
 		M_AXI_AWQOS	: out std_logic_vector(3 downto 0);
-		M_AXI_AWUSER	: out std_logic_vector(C_M_AXI_AWUSER_WIDTH-1 downto 0);
+-- kyi		M_AXI_AWUSER	: out std_logic_vector(C_M_AXI_AWUSER_WIDTH-1 downto 0);
 		M_AXI_AWVALID	: out std_logic;
 		M_AXI_AWREADY	: in std_logic;
 		M_AXI_WDATA	: out std_logic_vector(C_M_AXI_DATA_WIDTH-1 downto 0);
 		M_AXI_WSTRB	: out std_logic_vector(C_M_AXI_DATA_WIDTH/8-1 downto 0);
 		M_AXI_WLAST	: out std_logic;
-		M_AXI_WUSER	: out std_logic_vector(C_M_AXI_WUSER_WIDTH-1 downto 0);
+-- kyi		M_AXI_WUSER	: out std_logic_vector(C_M_AXI_WUSER_WIDTH-1 downto 0);
 		M_AXI_WVALID	: out std_logic;
 		M_AXI_WREADY	: in std_logic;
 		M_AXI_BID	: in std_logic_vector(C_M_AXI_ID_WIDTH-1 downto 0);
 		M_AXI_BRESP	: in std_logic_vector(1 downto 0);
-		M_AXI_BUSER	: in std_logic_vector(C_M_AXI_BUSER_WIDTH-1 downto 0);
+-- kyi		M_AXI_BUSER	: in std_logic_vector(C_M_AXI_BUSER_WIDTH-1 downto 0);
 		M_AXI_BVALID	: in std_logic;
 		M_AXI_BREADY	: out std_logic;
 		M_AXI_ARID	: out std_logic_vector(C_M_AXI_ID_WIDTH-1 downto 0);
@@ -212,19 +227,60 @@ architecture arch_imp of genDMA_v1_0 is
 		M_AXI_ARCACHE	: out std_logic_vector(3 downto 0);
 		M_AXI_ARPROT	: out std_logic_vector(2 downto 0);
 		M_AXI_ARQOS	: out std_logic_vector(3 downto 0);
-		M_AXI_ARUSER	: out std_logic_vector(C_M_AXI_ARUSER_WIDTH-1 downto 0);
+-- kyi	M_AXI_ARUSER	: out std_logic_vector(C_M_AXI_ARUSER_WIDTH-1 downto 0);
 		M_AXI_ARVALID	: out std_logic;
 		M_AXI_ARREADY	: in std_logic;
 		M_AXI_RID	: in std_logic_vector(C_M_AXI_ID_WIDTH-1 downto 0);
 		M_AXI_RDATA	: in std_logic_vector(C_M_AXI_DATA_WIDTH-1 downto 0);
 		M_AXI_RRESP	: in std_logic_vector(1 downto 0);
 		M_AXI_RLAST	: in std_logic;
-		M_AXI_RUSER	: in std_logic_vector(C_M_AXI_RUSER_WIDTH-1 downto 0);
+-- kyi		M_AXI_RUSER	: in std_logic_vector(C_M_AXI_RUSER_WIDTH-1 downto 0);
 		M_AXI_RVALID	: in std_logic;
 		M_AXI_RREADY	: out std_logic
 		);
 	end component genDMA_v1_0_M00_AXI;
-
+	
+	component Itab is
+        generic (
+            Itab_entries: integer := 512
+        );
+        port (
+            clk: in std_logic;
+            ITAB_G_START: in std_logic;
+            SRC_ADDR_IN: in std_logic_vector (31 downto 0);
+            SRC_LEN_IN: in std_logic_vector (15 downto 0);
+            ITAB_IN_TRANS_VALID: in std_logic;
+            SRC_ADDR_OUT: out std_logic_vector (31 downto 0);
+            SRC_LEN_OUT: out std_logic_vector(15 downto 0);
+            OUT_TRANS_REQ: in std_logic;
+            ITAB_FULL: out std_logic;
+            ITAB_EMPTY: out std_logic    
+        );
+    end component Itab;
+    
+    component RdBuff is
+    port (
+         CLK: in std_logic;
+         RDBUFF_G_START: in std_logic;
+         RDATA: in std_logic_vector(31 downto 0);
+         RDATA_VALID: in std_logic;
+         RDBUFF_ALMOST_FULL: out std_logic;
+         RDBUFF_ALMOST_EMPTY: out std_logic;
+         OUTDATA: out std_logic_vector (31 downto 0);
+         OUTVALID: out std_logic;
+         OUTREQ: in std_logic         
+    ); 
+    end component RdBuff;
+    
+    component DataConsumer is
+    Port (
+        CLK: in std_logic;
+        RST: in std_logic;
+        DATA_IN: in std_logic_vector(31 downto 0);
+        DATA_VALID: in std_logic;
+        DATA_REQ: out std_logic
+    );
+    end component DataConsumer;
 begin
 
 -- Instantiation of Axi Bus Interface S00_AXI
@@ -234,12 +290,12 @@ genDMA_v1_0_S00_AXI_inst : genDMA_v1_0_S00_AXI
 		C_S_AXI_ADDR_WIDTH	=> C_S00_AXI_ADDR_WIDTH
 	)
 	port map (
-	    S_DMA_IRQ_DONE => sig_dma_irq_done,
-	    TRIG_MEM_CPY => sig_trig_mem_cpy,
+	    TRIG_G_START => sig_g_start,
 	    S_SRC_ADDR => sig_src_addr,
 	    S_SRC_LEN => sig_src_len,
-	    s_TGT_ADDR => sig_tgt_addr,
-	    S_INTR_DONE => sig_intr_done,
+	    S_ITAB_FULL => sig_itab_full,
+	    S_IN_TRANS_VALID => sig_trig_in_trans,
+	    -----------------------------
 		S_AXI_ACLK	=> s00_axi_aclk,
 		S_AXI_ARESETN	=> s00_axi_aresetn,
 		S_AXI_AWADDR	=> s00_axi_awaddr,
@@ -270,21 +326,25 @@ genDMA_v1_0_M00_AXI_inst : genDMA_v1_0_M00_AXI
 		C_M_AXI_BURST_LEN	=> C_M00_AXI_BURST_LEN,
 		C_M_AXI_ID_WIDTH	=> C_M00_AXI_ID_WIDTH,
 		C_M_AXI_ADDR_WIDTH	=> C_M00_AXI_ADDR_WIDTH,
-		C_M_AXI_DATA_WIDTH	=> C_M00_AXI_DATA_WIDTH,
-		C_M_AXI_AWUSER_WIDTH	=> C_M00_AXI_AWUSER_WIDTH,
-		C_M_AXI_ARUSER_WIDTH	=> C_M00_AXI_ARUSER_WIDTH,
-		C_M_AXI_WUSER_WIDTH	=> C_M00_AXI_WUSER_WIDTH,
-		C_M_AXI_RUSER_WIDTH	=> C_M00_AXI_RUSER_WIDTH,
-		C_M_AXI_BUSER_WIDTH	=> C_M00_AXI_BUSER_WIDTH
+		C_M_AXI_DATA_WIDTH	=> C_M00_AXI_DATA_WIDTH
+-- kyi		C_M_AXI_AWUSER_WIDTH	=> C_M00_AXI_AWUSER_WIDTH,
+-- kyi		C_M_AXI_ARUSER_WIDTH	=> C_M00_AXI_ARUSER_WIDTH,
+-- kyi		C_M_AXI_WUSER_WIDTH	=> C_M00_AXI_WUSER_WIDTH,
+-- kyi		C_M_AXI_RUSER_WIDTH	=> C_M00_AXI_RUSER_WIDTH,
+-- kyi		C_M_AXI_BUSER_WIDTH	=> C_M00_AXI_BUSER_WIDTH
 	)
 	port map (
-	    M_DMA_IRQ_DONE => sig_dma_irq_done,
-		INIT_AXI_TXN => sig_trig_mem_cpy,
+		M_G_START => sig_g_start,
+		M_G_PULSE => sig_g_pulse,
 		M_SRC_ADDR => sig_src_addr,
 		M_SRC_LEN => sig_src_len,
-		M_TGT_ADDR => sig_tgt_addr,
-		M_DMA_IRQ => SW_DMA_IRQ,
-		M_INTR_DONE =>sig_intr_done,
+		M_OUT_TRANS_REQ => sig_trig_out_trans,
+		M_ITAB_EMPTY => sig_Itab_empty,
+		M_INTR_TRIG => sig_intr_trig,
+		M_RDATA => sig_rdata,
+        M_RDATA_VALID => sig_rdata_valid,
+        M_RDBUFF_AL_FULL => sig_rdbuff_almost_full,
+        M_RDBUFF_AL_EMPTY => sig_rdbuff_almost_empty,
 		-- kyi TXN_DONE	=> m00_axi_txn_done,
 		M_AXI_ACLK	=> m00_axi_aclk,
 		M_AXI_ARESETN	=> m00_axi_aresetn,
@@ -297,18 +357,18 @@ genDMA_v1_0_M00_AXI_inst : genDMA_v1_0_M00_AXI
 		M_AXI_AWCACHE	=> m00_axi_awcache,
 		M_AXI_AWPROT	=> m00_axi_awprot,
 		M_AXI_AWQOS	=> m00_axi_awqos,
-		M_AXI_AWUSER	=> m00_axi_awuser,
+-- kyi		M_AXI_AWUSER	=> m00_axi_awuser,
 		M_AXI_AWVALID	=> m00_axi_awvalid,
 		M_AXI_AWREADY	=> m00_axi_awready,
 		M_AXI_WDATA	=> m00_axi_wdata,
 		M_AXI_WSTRB	=> m00_axi_wstrb,
 		M_AXI_WLAST	=> m00_axi_wlast,
-		M_AXI_WUSER	=> m00_axi_wuser,
+-- kyi		M_AXI_WUSER	=> m00_axi_wuser,
 		M_AXI_WVALID	=> m00_axi_wvalid,
 		M_AXI_WREADY	=> m00_axi_wready,
 		M_AXI_BID	=> m00_axi_bid,
 		M_AXI_BRESP	=> m00_axi_bresp,
-		M_AXI_BUSER	=> m00_axi_buser,
+-- kyi		M_AXI_BUSER	=> m00_axi_buser,
 		M_AXI_BVALID	=> m00_axi_bvalid,
 		M_AXI_BREADY	=> m00_axi_bready,
 		M_AXI_ARID	=> m00_axi_arid,
@@ -320,20 +380,59 @@ genDMA_v1_0_M00_AXI_inst : genDMA_v1_0_M00_AXI
 		M_AXI_ARCACHE	=> m00_axi_arcache,
 		M_AXI_ARPROT	=> m00_axi_arprot,
 		M_AXI_ARQOS	=> m00_axi_arqos,
-		M_AXI_ARUSER	=> m00_axi_aruser,
+-- kyi		M_AXI_ARUSER	=> m00_axi_aruser,
 		M_AXI_ARVALID	=> m00_axi_arvalid,
 		M_AXI_ARREADY	=> m00_axi_arready,
 		M_AXI_RID	=> m00_axi_rid,
 		M_AXI_RDATA	=> m00_axi_rdata,
 		M_AXI_RRESP	=> m00_axi_rresp,
 		M_AXI_RLAST	=> m00_axi_rlast,
-		M_AXI_RUSER	=> m00_axi_ruser,
+-- kyi		M_AXI_RUSER	=> m00_axi_ruser,
 		M_AXI_RVALID	=> m00_axi_rvalid,
 		M_AXI_RREADY	=> m00_axi_rready
 	);
 
 	-- Add user logic here
-
+	SW_DMA_IRQ <= sig_intr_trig;
+	
+    Itab_inst: Itab
+    generic map(
+        Itab_entries => 512    
+    )
+    port map(
+        clk => s00_axi_aclk,
+        ITAB_G_START => sig_g_start,
+        SRC_ADDR_IN => sig_src_addr,
+        SRC_LEN_IN => sig_src_len (15 downto 0),
+        ITAB_IN_TRANS_VALID => sig_trig_in_trans,
+        SRC_ADDR_OUT => Itab_SRC_ADDR_top,
+        SRC_LEN_OUT => Itab_SRC_LEN_top,
+        OUT_TRANS_REQ => sig_trig_out_trans,
+        ITAB_FULL => sig_Itab_full,
+        ITAB_EMPTY => sig_Itab_empty
+    );
+    
+    RdBuff_inst: RdBuff 
+    port map (
+         CLK => s00_axi_aclk,
+         RDBUFF_G_START => sig_g_start,
+         RDATA => sig_rdata,
+         RDATA_VALID => sig_rdata_valid,
+         RDBUFF_ALMOST_FULL => sig_rdbuff_almost_full,
+         RDBUFF_ALMOST_EMPTY => sig_rdbuff_almost_empty,
+         OUTDATA => sig_outdata,
+         OUTVALID => sig_outvalid,
+         OUTREQ => sig_outreq
+    );
+    
+    DataConsumer_inst: DataConsumer
+    Port map (
+        CLK => s00_axi_aclk,
+        RST => sig_g_start,
+        DATA_IN => sig_outdata,
+        DATA_VALID => sig_outvalid,
+        DATA_REQ => sig_outreq
+    );
 	-- User logic ends
 
 end arch_imp;

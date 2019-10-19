@@ -16,12 +16,12 @@ entity genDMA_v1_0_S00_AXI is
 	);
 	port (
 		-- Users to add ports here
-		S_DMA_IRQ_DONE : in std_logic;
-		TRIG_MEM_CPY : out std_logic;
+		TRIG_G_START : out std_logic;
+		S_G_PULSE : out std_logic;
 		S_SRC_ADDR : out std_logic_vector(C_S_AXI_DATA_WIDTH-1 downto 0);
 		S_SRC_LEN : out std_logic_vector(C_S_AXI_DATA_WIDTH-1 downto 0);
-		S_TGT_ADDR : out std_logic_vector(C_S_AXI_DATA_WIDTH-1 downto 0);
-        S_INTR_DONE : out std_logic;
+        S_ITAB_FULL : in std_logic;
+        S_IN_TRANS_VALID: out std_logic;
 		-- User ports ends
 		-- Do not modify the ports beyond this line
 
@@ -113,10 +113,10 @@ architecture arch_imp of genDMA_v1_0_S00_AXI is
 	---- Signals for user logic register space example
 	--------------------------------------------------
 	---- Number of Slave Registers 8
-	signal slv_reg0	:std_logic_vector(C_S_AXI_DATA_WIDTH-1 downto 0);
-	signal slv_reg1	:std_logic_vector(C_S_AXI_DATA_WIDTH-1 downto 0);
-	signal slv_reg2	:std_logic_vector(C_S_AXI_DATA_WIDTH-1 downto 0);
-	signal slv_reg3	:std_logic_vector(C_S_AXI_DATA_WIDTH-1 downto 0);
+	signal reg_ctrl	:std_logic_vector(C_S_AXI_DATA_WIDTH-1 downto 0);
+	signal reg_stat	:std_logic_vector(C_S_AXI_DATA_WIDTH-1 downto 0);
+	signal reg_addr	:std_logic_vector(C_S_AXI_DATA_WIDTH-1 downto 0);
+	signal reg_len	:std_logic_vector(C_S_AXI_DATA_WIDTH-1 downto 0);
 	signal slv_reg4	:std_logic_vector(C_S_AXI_DATA_WIDTH-1 downto 0);
 	signal slv_reg5	:std_logic_vector(C_S_AXI_DATA_WIDTH-1 downto 0);
 	signal slv_reg6	:std_logic_vector(C_S_AXI_DATA_WIDTH-1 downto 0);
@@ -127,16 +127,29 @@ architecture arch_imp of genDMA_v1_0_S00_AXI is
 	signal byte_index	: integer;
 	signal aw_en	: std_logic;
 --	
-	signal sig_trig_mem_cpy : std_logic;
-	signal sig_s_src_addr : std_logic_vector(C_S_AXI_DATA_WIDTH-1 downto 0);
-	signal sig_s_src_len : std_logic_vector(C_S_AXI_DATA_WIDTH-1 downto 0);
-	signal sig_s_tgt_addr : std_logic_vector(C_S_AXI_DATA_WIDTH-1 downto 0);
 	signal sig_intr_done : std_logic;
-	  
+	signal sig_trig_g_start: std_logic;
+	signal sig_src_addr: std_logic_vector(C_S_AXI_DATA_WIDTH-1 downto 0);
+	signal sig_src_len: std_logic_vector(C_S_AXI_DATA_WIDTH-1 downto 0);
+    signal sig_itab_full: std_logic;
+    signal sig_in_trans_valid: std_logic;
+    signal sig_before: std_logic;
+    signal sig_after: std_logic;
+	type AXIS_STATE is (IDLE, WARMINGUP, RECEIVING, WRITING, CLOSING, FULL, EMPTY);
+	signal slave_state : AXIS_STATE;
+	-- Control register bit mask  
+	constant CTRL_GBL_START_BIT: integer := 0; 
+	constant CTRL_INTR_DONE_BIT: integer := 1; 
+	constant CTRL_IN_TRANS_BIT: integer := 2; 
+	-- Status register bit mask
+	constant STAT_ITAB_UNDERFLOW_BIT: integer := 0; 
+	constant STAT_DBUF_UNDERFLOW_BIT: integer := 1; 
+	constant STAT_ITAB_FULL_BIT: integer := 2; 
+	constant STAT_TRANS_DONE_BIT: integer := 3; 
 --	attribute MARK_DEBUG : string;
---	attribute MARK_DEBUG of sig_trig_mem_cpy : signal is "TRUE";
+--	attribute MARK_DEBUG of sig_g_start : signal is "TRUE";
 --	attribute MARK_DEBUG of sig_intr_done : signal is "TRUE";
---    attribute MARK_DEBUG of slv_reg0 : signal is "TRUE";
+--    attribute MARK_DEBUG of ctrl_reg : signal is "TRUE";
 --    attribute MARK_DEBUG of slv_reg_wren : signal is "TRUE";
 
 begin
@@ -235,10 +248,10 @@ begin
 	begin
 	  if rising_edge(S_AXI_ACLK) then 
 	    if S_AXI_ARESETN = '0' then
-	      slv_reg0 <= (others => '0');
-	      slv_reg1 <= (others => '0');
-	      slv_reg2 <= (others => '0');
-	      slv_reg3 <= (others => '0');
+	      reg_ctrl <= (others => '0');
+--	      reg_stat <= (others => '0');
+	      reg_addr <= (others => '0');
+	      reg_len <= (others => '0');
 	      slv_reg4 <= (others => '0');
 	      slv_reg5 <= (others => '0');
 	      slv_reg6 <= (others => '0');
@@ -253,17 +266,17 @@ begin
 	              if ( S_AXI_WSTRB(byte_index) = '1' ) then
 	                -- Respective byte enables are asserted as per write strobes                   
 	                -- slave registor 0
-	                slv_reg0(byte_index*8+7 downto byte_index*8) <= S_AXI_WDATA(byte_index*8+7 downto byte_index*8);
+	                reg_ctrl(byte_index*8+7 downto byte_index*8) <= S_AXI_WDATA(byte_index*8+7 downto byte_index*8);
 	              end if;
 	            end loop;
-	            -- status register
+	            -- status register : read-only
 	          when b"001" =>
 	            for byte_index in 0 to (C_S_AXI_DATA_WIDTH/8-1) loop
 	              if ( S_AXI_WSTRB(byte_index) = '1' ) then
 	                -- Respective byte enables are asserted as per write strobes                   
 	                -- slave registor 1
 	                -- status register is read-only
-	                --slv_reg1(byte_index*8+7 downto byte_index*8) <= S_AXI_WDATA(byte_index*8+7 downto byte_index*8);
+	                --reg_stat(byte_index*8+7 downto byte_index*8) <= S_AXI_WDATA(byte_index*8+7 downto byte_index*8);
 	              end if;
 	            end loop;
 	            -- source address
@@ -272,7 +285,7 @@ begin
 	              if ( S_AXI_WSTRB(byte_index) = '1' ) then
 	                -- Respective byte enables are asserted as per write strobes                   
 	                -- slave registor 2
-	                slv_reg2(byte_index*8+7 downto byte_index*8) <= S_AXI_WDATA(byte_index*8+7 downto byte_index*8);
+	                reg_addr(byte_index*8+7 downto byte_index*8) <= S_AXI_WDATA(byte_index*8+7 downto byte_index*8);
 	              end if;
 	            end loop;
 	            -- source len
@@ -281,10 +294,10 @@ begin
 	              if ( S_AXI_WSTRB(byte_index) = '1' ) then
 	                -- Respective byte enables are asserted as per write strobes                   
 	                -- slave registor 3
-	                slv_reg3(byte_index*8+7 downto byte_index*8) <= S_AXI_WDATA(byte_index*8+7 downto byte_index*8);
+	                reg_len(byte_index*8+7 downto byte_index*8) <= S_AXI_WDATA(byte_index*8+7 downto byte_index*8);
 	              end if;
 	            end loop;
-	            -- target address
+	            -- total transfer count
 	           when b"100" =>
                   for byte_index in 0 to (C_S_AXI_DATA_WIDTH/8-1) loop
                     if ( S_AXI_WSTRB(byte_index) = '1' ) then
@@ -293,7 +306,7 @@ begin
                       slv_reg4(byte_index*8+7 downto byte_index*8) <= S_AXI_WDATA(byte_index*8+7 downto byte_index*8);
                     end if;
                   end loop;
-                  -- target len, not necessary
+                  --  not necessary
                when b"101" =>
                     for byte_index in 0 to (C_S_AXI_DATA_WIDTH/8-1) loop
                       if ( S_AXI_WSTRB(byte_index) = '1' ) then
@@ -321,22 +334,15 @@ begin
                           end if;
                         end loop;
 	          when others =>
-	            slv_reg0 <= slv_reg0;
-	            slv_reg1 <= slv_reg1;
-	            slv_reg2 <= slv_reg2;
-	            slv_reg3 <= slv_reg3;
+	            reg_ctrl <= reg_ctrl;
+	            --reg_stat <= reg_stat;
+	            reg_addr <= reg_addr;
+	            reg_len <= reg_len;
 	            slv_reg4 <= slv_reg4;
 	            slv_reg5 <= slv_reg5;
 	            slv_reg6 <= slv_reg6;
 	            slv_reg7 <= slv_reg7;
 	        end case;
-	      else 
-	        -- clear trig_mem_cpy bit and intr_done bit.
-              if (S_DMA_IRQ_DONE = '1' and slv_reg0(1) = '1') then
-                 slv_reg0 <= slv_reg0 and x"FFFFFFFC";
-              else 
-                slv_reg0 <= slv_reg0;
-              end if;
 	      end if;
 	    end if;
 	  end if;                   
@@ -423,20 +429,20 @@ begin
 	-- and the slave is ready to accept the read address.
 	slv_reg_rden <= axi_arready and S_AXI_ARVALID and (not axi_rvalid) ;
 
-	process (slv_reg0, slv_reg1, slv_reg2, slv_reg3, slv_reg4, slv_reg5, slv_reg6, slv_reg7, axi_araddr, S_AXI_ARESETN, slv_reg_rden)
+	process (reg_ctrl, reg_stat, reg_addr, reg_len, slv_reg4, slv_reg5, slv_reg6, slv_reg7, axi_araddr, S_AXI_ARESETN, slv_reg_rden)
 	variable loc_addr :std_logic_vector(OPT_MEM_ADDR_BITS downto 0);
 	begin
 	    -- Address decoding for reading registers
 	    loc_addr := axi_araddr(ADDR_LSB + OPT_MEM_ADDR_BITS downto ADDR_LSB);
 	    case loc_addr is
 	      when b"000" =>
-	        reg_data_out <= slv_reg0;
+	        reg_data_out <= reg_ctrl;
 	      when b"001" =>
-	        reg_data_out <= slv_reg1;
+	        reg_data_out <= reg_stat;
 	      when b"010" =>
-	        reg_data_out <= slv_reg2;
+	        reg_data_out <= reg_addr;
 	      when b"011" =>
-	        reg_data_out <= slv_reg3;
+	        reg_data_out <= reg_len;
 	      when b"100" =>
 	        reg_data_out <= slv_reg4;
 	      when b"101" =>
@@ -470,41 +476,119 @@ begin
 
 
 	-- Add user logic here
-	TRIG_MEM_CPY <= sig_trig_mem_cpy;
-	S_SRC_ADDR <= sig_s_src_addr;
-	S_SRC_LEN <= sig_s_src_len;
-	S_TGT_ADDR <= sig_s_tgt_addr;
-	S_INTR_DONE <= sig_intr_done;
+	TRIG_G_START <= sig_trig_g_start;
+	S_SRC_ADDR <= sig_src_addr;
+	S_SRC_LEN <= sig_src_len;
+	S_IN_TRANS_VALID <= sig_in_trans_valid;
+	-- generate pulse for global start and stop
+	S_G_PULSE <= sig_before AND (NOT sig_after) when sig_before = '1' else
+	             (NOT sig_before) AND sig_after;
 	
+	-- slave state machine S
 	process(S_AXI_ACLK) is
 	begin
-	if (rising_edge(S_AXI_ACLK)) then
-	  if (S_AXI_ARESETN = '0') then
-	    sig_trig_mem_cpy <= '0';
-	    sig_s_src_addr <= x"0000_0000";
-        sig_s_src_len <= x"0000_0000";
-        sig_s_tgt_addr <= x"0000_0000";
-        sig_intr_done <= '0';
-	  else
-	    if ((unsigned(slv_reg0) and x"0000_0001") = x"0000_0001")  then
-	       sig_trig_mem_cpy <= '1';
-	       sig_s_src_addr <= slv_reg2;
-	       sig_s_src_len <= slv_reg3;
-	       sig_s_tgt_addr <= slv_reg4;
-	    else
-	       sig_trig_mem_cpy <= '0';
-	       sig_s_src_addr <= x"0000_0000";
-           sig_s_src_len <= x"0000_0000";
-           sig_s_tgt_addr <= x"0000_0000";
-	    end if;
-	    
-	    if ((unsigned(slv_reg0) and x"0000_0002")= x"0000_0002") then
+	   if (rising_edge(S_AXI_ACLK)) then
+	       if ( S_AXI_ARESETN = '0' ) then
+               sig_trig_g_start <= '0';
+               sig_src_addr <= (others => '0');
+               sig_src_len <= (others => '0');
+               sig_in_trans_valid <= '0';
+               slave_state <= IDLE;
+               sig_before <= '0';
+               sig_after <= '0';
+	       else
+	           case (slave_state) is
+	               when IDLE =>
+	                   if (reg_ctrl(CTRL_GBL_START_BIT) = '1') then
+                           sig_trig_g_start <= '1';
+                           sig_before <= '1';
+                           sig_after <= sig_before;
+                           -- S_G_PULSE generation
+                           slave_state <= WARMINGUP;
+                       else
+                           sig_trig_g_start <= '0';
+                           sig_before <= '0';
+                           sig_after <= sig_before;
+                           sig_src_addr <= (others => '0');
+                           sig_src_len <= (others => '0');
+                           sig_in_trans_valid <= '0';
+                           slave_state <= IDLE;
+                       end if;
+                   -- generate a S_G_PULSE
+                   when WARMINGUP =>
+                        sig_before <= '1';
+                        sig_after <= sig_before;
+                        slave_state <= RECEIVING;
+                        
+	               when RECEIVING =>
+	                   if (reg_ctrl(CTRL_GBL_START_BIT) = '1') then
+	                       if (S_ITAB_FULL = '1') then
+                               sig_in_trans_valid <= '0';
+	                           slave_state <= FULL;
+	                       elsif (reg_ctrl(CTRL_IN_TRANS_BIT) = '1') then
+                               sig_src_addr <= reg_addr;
+                               sig_src_len <= reg_len;
+                               sig_in_trans_valid <= '1';
+                               slave_state <= WRITING;
+                           else 
+                               sig_in_trans_valid <= '0';     
+                               slave_state <= RECEIVING; 
+                           end if;
+                       else 
+                           sig_in_trans_valid <= '0';
+                           sig_before <= '0';
+                           sig_after <= sig_before;
+                           -- generate closing pulse
+                           slave_state <= CLOSING;
+                       end if;
+                        
+                   when WRITING =>
+                       if (reg_ctrl(CTRL_IN_TRANS_BIT) = '1') then
+                           sig_in_trans_valid <= '0';
+                           slave_state <= WRITING;
+                       else 
+                           sig_in_trans_valid <= '0';
+                           slave_state <= RECEIVING;                                         
+                       end if;
+                   -- generate a S_G_PULSE     
+                   when CLOSING =>
+                       sig_before <= '0';
+                       sig_after <= sig_before;
+                       slave_state <= IDLE;
+                       
+	               when FULL =>
+	                   if (reg_ctrl(CTRL_GBL_START_BIT) = '1')  then
+	                       if (S_ITAB_FULL = '1') then
+	                           reg_stat(STAT_ITAB_FULL_BIT) <= '1';
+	                           slave_state <= FULL;
+	                       else
+	                           reg_stat(STAT_ITAB_FULL_BIT) <= '0'; 
+	                           slave_state <= RECEIVING;
+	                       end if;
+	                   else 
+                           sig_in_trans_valid <= '0';
+                           slave_state <= IDLE;
+                       end if;
+	               -- Not necessary
+	               -- when EMPTY =>
+	               when others =>
+                        sig_in_trans_valid <= '0';
+                        sig_before <= '0';
+                        sig_after <= sig_before;
+                        slave_state <= CLOSING;
+	           end case;
+	       end if;
+	   end if;
+	end process;
+	-- slave state machine E
+	
+	process (S_AXI_ACLK) is
+	begin
+        if (reg_ctrl(CTRL_INTR_DONE_BIT) = '1') then
             sig_intr_done <= '1';
         else 
             sig_intr_done <= '0';
-        end if;
-	  end if;
-	end if;
+        end if;	
 	end process;
 	-- User logic ends
 
