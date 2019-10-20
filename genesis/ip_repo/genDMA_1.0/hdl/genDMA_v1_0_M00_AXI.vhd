@@ -21,16 +21,6 @@ entity genDMA_v1_0_M00_AXI is
 		C_M_AXI_ADDR_WIDTH	: integer	:= 32;
 		-- Width of Data Bus
 		C_M_AXI_DATA_WIDTH	: integer	:= 32
-		-- Width of User Write Address Bus
--- kyi		C_M_AXI_AWUSER_WIDTH	: integer	:= 0;
-		-- Width of User Read Address Bus
--- kyi		C_M_AXI_ARUSER_WIDTH	: integer	:= 0;
-		-- Width of User Write Data Bus
--- kyi		C_M_AXI_WUSER_WIDTH	: integer	:= 0;
-		-- Width of User Read Data Bus
--- kyi		C_M_AXI_RUSER_WIDTH	: integer	:= 0;
-		-- Width of User Response Bus
--- kyi		C_M_AXI_BUSER_WIDTH	: integer	:= 0
 	);
 	port (
 		-- Users to add ports here
@@ -78,8 +68,6 @@ entity genDMA_v1_0_M00_AXI is
 		M_AXI_AWPROT	: out std_logic_vector(2 downto 0);
 		-- Quality of Service, QoS identifier sent for each write transaction.
 		M_AXI_AWQOS	: out std_logic_vector(3 downto 0);
-		-- Optional User-defined signal in the write address channel.
--- kyi		M_AXI_AWUSER	: out std_logic_vector(C_M_AXI_AWUSER_WIDTH-1 downto 0);
 		-- Write address valid. This signal indicates that
     -- the channel is signaling valid write address and control information.
 		M_AXI_AWVALID	: out std_logic;
@@ -94,8 +82,6 @@ entity genDMA_v1_0_M00_AXI is
 		M_AXI_WSTRB	: out std_logic_vector(C_M_AXI_DATA_WIDTH/8-1 downto 0);
 		-- Write last. This signal indicates the last transfer in a write burst.
 		M_AXI_WLAST	: out std_logic;
-		-- Optional User-defined signal in the write data channel.
--- kyi		M_AXI_WUSER	: out std_logic_vector(C_M_AXI_WUSER_WIDTH-1 downto 0);
 		-- Write valid. This signal indicates that valid write
     -- data and strobes are available
 		M_AXI_WVALID	: out std_logic;
@@ -106,8 +92,6 @@ entity genDMA_v1_0_M00_AXI is
 		M_AXI_BID	: in std_logic_vector(C_M_AXI_ID_WIDTH-1 downto 0);
 		-- Write response. This signal indicates the status of the write transaction.
 		M_AXI_BRESP	: in std_logic_vector(1 downto 0);
-		-- Optional User-defined signal in the write response channel
--- kyi		M_AXI_BUSER	: in std_logic_vector(C_M_AXI_BUSER_WIDTH-1 downto 0);
 		-- Write response valid. This signal indicates that the
     -- channel is signaling a valid write response.
 		M_AXI_BVALID	: in std_logic;
@@ -138,8 +122,6 @@ entity genDMA_v1_0_M00_AXI is
 		M_AXI_ARPROT	: out std_logic_vector(2 downto 0);
 		-- Quality of Service, QoS identifier sent for each read transaction
 		M_AXI_ARQOS	: out std_logic_vector(3 downto 0);
-		-- Optional User-defined signal in the read address channel.
--- kyi		M_AXI_ARUSER	: out std_logic_vector(C_M_AXI_ARUSER_WIDTH-1 downto 0);
 		-- Write address valid. This signal indicates that
     -- the channel is signaling valid read address and control information
 		M_AXI_ARVALID	: out std_logic;
@@ -155,8 +137,6 @@ entity genDMA_v1_0_M00_AXI is
 		M_AXI_RRESP	: in std_logic_vector(1 downto 0);
 		-- Read last. This signal indicates the last transfer in a read burst
 		M_AXI_RLAST	: in std_logic;
-		-- Optional User-defined signal in the read address channel.
--- kyi		M_AXI_RUSER	: in std_logic_vector(C_M_AXI_RUSER_WIDTH-1 downto 0);
 		-- Read valid. This signal indicates that the channel
     -- is signaling the required read data.
 		M_AXI_RVALID	: in std_logic;
@@ -234,14 +214,12 @@ begin
 	M_AXI_AWCACHE	<= "0010";
 	M_AXI_AWPROT	<= "000";
 	M_AXI_AWQOS	<= x"0";
--- kyi	M_AXI_AWUSER	<= (others => '1');
 	M_AXI_AWVALID	<= '0';
 	--Write Data(W)
 	M_AXI_WDATA	<= (others => '0');
 	--All bursts are complete and aligned in this example
 	M_AXI_WSTRB	<= (others => '1');
 	M_AXI_WLAST	<= '0';
--- kyi	M_AXI_WUSER	<= (others => '0');
 	M_AXI_WVALID	<= '0';
 	--Write Response (B)
 	M_AXI_BREADY	<= '0';
@@ -258,7 +236,6 @@ begin
 	M_AXI_ARCACHE	<= "0010";
 	M_AXI_ARPROT	<= "000";
 	M_AXI_ARQOS	<= x"0";
--- kyi	M_AXI_ARUSER	<= (others => '1');
 	M_AXI_ARVALID	<= axi_arvalid;
 	--Read and Read Response (R)
 	M_AXI_RREADY	<= axi_rready;
