@@ -21,11 +21,9 @@ wait_on_run impl_1
 ##
 ## export hardware
 ##
-#file copy -force C:/work/zBundle/Zynq/viv/zSDP/zSDP.runs/impl_1/system_wrapper.sysdef C:/work/zBundle/Zynq/viv/zSDP/zSDP.sdk/system_wrapper.hdf
 ##
 ##
 ## now launch SDK
 ##
-#launch_sdk -workspace C:/work/zBundle/Zynq/viv/zSDP/zSDP.sdk -hwspec C:/work/zBundle/Zynq/viv/zSDP/zSDP.sdk/system_wrapper.hdf
 ##
 ## you should now be in SDK ready to download
