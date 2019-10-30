@@ -4,7 +4,7 @@ use unisim.vcomponents.all;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-entity genDMA_v1_0_M00_AXI is
+entity odev_v1_0_M00_AXI is
 	generic (
 		-- Users to add parameters here
 
@@ -30,17 +30,17 @@ entity genDMA_v1_0_M00_AXI is
 		M_G_PULSE : in std_logic;
         M_SRC_ADDR : in std_logic_vector(C_M_AXI_ADDR_WIDTH-1 downto 0);
         M_SRC_LEN : in std_logic_vector(C_M_AXI_ADDR_WIDTH-1 downto 0);
-        M_OUT_TRANS_REQ : out std_logic;
+		M_ITAB_OUT_VALID: in std_logic;
+        M_ITAB_OUT_TRANS_REQ : out std_logic;
         M_ITAB_EMPTY : in std_logic;
         M_INTR_TRIG : out std_logic;
         M_RDATA: out std_logic_vector(31 downto 0);
         M_RDATA_VALID: out std_logic;
         M_RDBUFF_AL_FULL: in std_logic;
-        M_RDBUFF_AL_EMPTY: in std_logic;
+        M_RDBUFF_EMPTY: in std_logic;
 		-- User ports ends
 		-- Do not modify the ports beyond this line
 		-- Asserts when transaction is complete
-		-- kyi TXN_DONE	: out std_logic;
 		-- Global Clock Signal.
 		M_AXI_ACLK	: in std_logic;
 		-- Global Reset Singal. This Signal is Active Low
@@ -144,12 +144,11 @@ entity genDMA_v1_0_M00_AXI is
     -- accept the read data and response information.
 		M_AXI_RREADY	: out std_logic
 	);
-end genDMA_v1_0_M00_AXI;
+end odev_v1_0_M00_AXI;
 
-architecture implementation of genDMA_v1_0_M00_AXI is
+architecture implementation of odev_v1_0_M00_AXI is
 	-- C_TRANSACTIONS_NUM is the width of the index counter for
 	-- number of beats in a burst write or burst read transaction.
-	-- C_TRANSACTIONS_NUM == 4
 	 constant  C_TRANSACTIONS_NUM : integer := 4;
 	-- Example State machine to initialize counter, initialize write transactions, 
 	 -- initialize read transactions and comparison of read data with the 
@@ -185,7 +184,7 @@ architecture implementation of genDMA_v1_0_M00_AXI is
 	signal sig_dma_irq : std_logic;
 	signal reg_src_addr : std_logic_vector(C_M_AXI_ADDR_WIDTH-1 downto 0);
 	-- inferred BRAM memory
-	signal sig_out_trans_req: std_logic; 
+	signal sig_itab_out_trans_req: std_logic; 
 	signal sig_src_addr: std_logic_vector(31 downto 0);
 	signal sig_src_len: std_logic_vector(31 downto 0); 
     signal sig_itab_empty: std_logic;
@@ -205,12 +204,11 @@ begin
 	M_AXI_AWADDR	<= (others => '0');
 	--Burst LENgth is number of transaction beats, minus 1
 	M_AXI_AWLEN	<= x"0f"; -- burst len = AWLEN + 1, 16 beats len of a burst
-	-- kyi The maximum number of bytes to transfer in each data transfer, or beat, in a burst,
 	M_AXI_AWSIZE	<= "010"; -- 4 bytes beat size
 	--INCR burst type is usually used, except for keyhole bursts
 	M_AXI_AWBURST	<= "01";
 	M_AXI_AWLOCK	<= '0';
-	--Not Allocated, Modifiable, not Bufferable, not intermediate cache. 
+	--Update value to 4'b0011 if coherent accesses to be used via the Zynq ACP port. Not Allocated, Modifiable, not Bufferable. Not Bufferable since this example is meant to test memory, not intermediate cache. 
 	M_AXI_AWCACHE	<= "0010";
 	M_AXI_AWPROT	<= "000";
 	M_AXI_AWQOS	<= x"0";
@@ -227,7 +225,7 @@ begin
 	M_AXI_ARID	<= (others => '0');
 	M_AXI_ARADDR	<= std_logic_vector( unsigned(reg_src_addr) + unsigned( axi_araddr ) );
 	M_AXI_ARLEN	<= x"0f"; -- burst len = ARLEN + 1, 16 beats len of a burst
-	-- kyi The maximum number of bytes to transfer in each data transfer, or beat, in a burst,
+	--The maximum number of bytes to transfer in each data transfer, or beat, in a burst,
 	M_AXI_ARSIZE	<= "010"; -- 4 bytes beat size
 	--INCR burst type is usually used, except for keyhole bursts
 	M_AXI_ARBURST	<= "01";
@@ -247,14 +245,17 @@ begin
 	--The Read Address Channel (AW) provides a similar function to the
 	--Write Address channel- to provide the tranfer qualifiers for the burst.
 
+	--In this example, the read address increments in the same
+	--manner as the write address channel.
+
 	  process(M_AXI_ACLK)										  
 	  begin                                                              
 	    if (rising_edge (M_AXI_ACLK)) then                               
-	      if (M_G_START = '0' OR M_G_PULSE = '1') then                                 
+			if (M_G_START = '0' OR M_G_PULSE = '1') then                                 
 	        axi_arvalid <= '0';                                          
 	     -- If previously not valid , start next transaction             
 	      else                                                           
-	        if (axi_arvalid = '0' and burst_read_active = '1') then
+	        if (axi_arvalid = '0' and start_single_burst_read = '1') then
 	          axi_arvalid <= '1';                                        
 	        elsif (M_AXI_ARREADY = '1' and axi_arvalid = '1') then       
 	          axi_arvalid <= '0';                                        
@@ -267,11 +268,11 @@ begin
 	  process(M_AXI_ACLK)                                                
 	  begin                                                              
 	    if (rising_edge (M_AXI_ACLK)) then                               
-	      if (M_G_START = '0' OR M_G_PULSE = '1' ) then                                 
+			if (M_G_START = '0' OR M_G_PULSE = '1' ) then                                 
 	        axi_araddr <= (others => '0');                               
 	      else                                                           
 	        if (M_AXI_ARREADY = '1' and axi_arvalid = '1') then          
-	          axi_araddr <= std_logic_vector(unsigned(axi_araddr) + burst_size_bytes);               
+	          axi_araddr <= std_logic_vector(unsigned(axi_araddr) + to_unsigned(burst_size_bytes, 32));               
 	        end if;                                                      
 	      end if;                                                        
 	    end if;                                                          
@@ -285,25 +286,26 @@ begin
 	 -- Forward movement occurs when the channel is valid and ready   
 	  rnext <= M_AXI_RVALID and axi_rready;                                 
 	                                                                        
+	                                                                        
 	-- Burst length counter. Uses extra counter register bit to indicate    
 	-- terminal count to reduce decode logic                                
-	  process(M_AXI_ACLK)                                                   
-	  begin                                                                 
-	    if (rising_edge (M_AXI_ACLK)) then                                  
-	      if (M_G_START = '0' OR M_G_PULSE = '1' OR start_single_burst_read = '1') then    
-	        sig_rdata <= (others => '0');
-		    sig_rdata_valid <= '0';
-	      else
-	        if (rnext = '1') then
-	            sig_rdata <= M_AXI_RDATA;
-	            sig_rdata_valid <= '1';  
-	        else 
-	           sig_rdata <= (others => '0');
-	           sig_rdata_valid <= '0';
-	        end if;                                                         
-	      end if;                                                           
-	    end if;                                                             
-	  end process;   
+	process(M_AXI_ACLK)                                                   
+	begin                                                                 
+		if (rising_edge (M_AXI_ACLK)) then                                  
+			if (M_G_START = '0' OR M_G_PULSE = '1' OR start_single_burst_read = '1') then    
+				sig_rdata <= (others => '0');
+				sig_rdata_valid <= '0';
+			else
+				if (rnext = '1') then
+					sig_rdata <= M_AXI_RDATA;
+					sig_rdata_valid <= '1';  
+				else 
+					sig_rdata <= (others => '0');
+					sig_rdata_valid <= '0';
+				end if;                                                         
+			end if;                                                           
+		end if;                                                             
+	end process;   
 	  
 	--/*                                                                    
 	-- The Read Data channel returns the results of the read request        
@@ -311,138 +313,137 @@ begin
 	-- In this example the data checker is always able to accept            
 	-- more data, so no need to throttle the RREADY signal                  
 	-- */                                                                   
-	  process(M_AXI_ACLK)                                                   
-	  begin                                                                 
-	    if (rising_edge (M_AXI_ACLK)) then                                  
-	      if (M_G_START = '0' OR M_G_PULSE = '1') then             
-	        axi_rready <= '0';                                              
-	     -- accept/acknowledge rdata/rresp with axi_rready by the master    
-	     -- when M_AXI_RVALID is asserted by slave                         
-	      else                                                   
-	        if (M_AXI_RVALID = '1') then                         
-	          if (M_AXI_RLAST = '1' and axi_rready = '1') then   
-	            axi_rready <= '0';                               
-	           elsif (M_RDBUFF_AL_FULL = '1') then
-	             axi_rready <= '0';
-	           else                                            
-	             axi_rready <= '1';                              
-	          end if;                                            
-	        end if;                                              
-	      end if;                                                
-	    end if;                                                  
-	  end process;  
+	process(M_AXI_ACLK)                                                   
+	begin                                                                 
+		if (rising_edge (M_AXI_ACLK)) then                                  
+			if (M_G_START = '0' OR M_G_PULSE = '1') then             
+				axi_rready <= '0';                                              
+			-- accept/acknowledge rdata/rresp with axi_rready by the master    
+			-- when M_AXI_RVALID is asserted by slave                         
+			else                                                   
+				if (M_AXI_RVALID = '1') then                         
+					if (M_AXI_RLAST = '1' and axi_rready = '1') then   
+						axi_rready <= '0';                               
+					elsif (M_RDBUFF_AL_FULL = '1') then
+						axi_rready <= '0';
+					else                                            
+						axi_rready <= '1';                              
+					end if;                                            
+				end if;                                              
+			end if;                                                
+		end if;                                                  
+	end process;  
 
-	  M_INTR_TRIG <= sig_dma_irq;
-	  M_OUT_TRANS_REQ <= sig_out_trans_req;
-	  M_RDATA <= sig_rdata;
-	  M_RDATA_VALID <= sig_rdata_valid;
+	M_INTR_TRIG <= sig_dma_irq;
+	M_ITAB_OUT_TRANS_REQ <= sig_itab_out_trans_req;
+	M_RDATA <= sig_rdata;
+	M_RDATA_VALID <= sig_rdata_valid;
 	                                                                               
-	  process(M_AXI_ACLK)        
+	process(M_AXI_ACLK)        
 	                                                                 
-	  begin                                                                                                      
-	    if (rising_edge (M_AXI_ACLK)) then                                                                       
-	      if (M_G_START = '0' AND M_G_PULSE = '0') then                                                                         
-	        -- reset condition                                                                                   
-	        -- All the signals are ed default values under reset condition                                       
-	        dma_state     <= IDLE;                                                                   
-	        start_single_burst_read  <= '0';
-	        sig_dma_irq <= '0';                                                                     
-	      else                                                                                                   
+	begin                                                                                                      
+		if (rising_edge (M_AXI_ACLK)) then                                                                       
+			if (M_G_START = '0' AND M_G_PULSE = '0') then                                                                         
+			-- reset condition                                                                                   
+			-- All the signals are ed default values under reset condition                                       
+				dma_state     <= IDLE;                                                                   
+				start_single_burst_read  <= '0';
+				sig_dma_irq <= '0';           
+				sig_itab_out_trans_req <= '0';
+				sig_rdata <= (others => '0');
+			else                                                                                                   
 	        -- state transition                                                                                  
-	        case (dma_state) is
-	           when IDLE =>                                                                              
-	             -- This state is responsible to initiate                               
-	             -- AXI transaction when init_txn_pulse is asserted 
-	               if ( M_G_START = '1' AND M_G_PULSE = '1') then       
-                     dma_state  <= ITAB_READ;                                                        
-	               else                                                                                          
-	                 dma_state  <= IDLE;                                                                     
-	                 start_single_burst_read  <= '0';
-	                 sig_dma_irq <= '0';
-	               end if;     
+			case (dma_state) is
+				when IDLE =>                                                                              
+				-- This state is responsible to initiate                               
+				-- AXI transaction when init_txn_pulse is asserted 
+					if ( M_G_START = '1' AND M_G_PULSE = '1') then       
+						dma_state  <= ITAB_READ;                                                        
+					else                                                                                                                                                               
+						start_single_burst_read  <= '0';
+						sig_dma_irq <= '0';
+						sig_itab_out_trans_req <= '0';
+						sig_rdata <= (others => '0');
+						dma_state  <= IDLE;
+					end if;     
 	           
-	           when ITAB_READ =>  
-	               if (M_G_START = '0' AND M_G_PULSE = '1') then
-	                   dma_state <= IDLE;
-	               elsif (M_ITAB_EMPTY = '1') then
-	                  -- ITAB underflow. Fire interrupt and fall back to IDLE.
-	                  sig_dma_irq <= '1';
-	                  dma_state <= IDLE;
-	               -- second M_G_PULSE means "STOP"
-	               else 
-	                   sig_out_trans_req <= '1';
-	                   dma_state <= ITAB_READ_CHK;
-	               end if;
+				when ITAB_READ =>  
+					if (M_G_START = '0' OR M_G_PULSE = '1') then
+						dma_state <= IDLE;
+					elsif (M_ITAB_EMPTY = '1') then
+						-- ITAB underflow. Fire interrupt and fall back to IDLE.
+						sig_dma_irq <= '1';
+						dma_state <= IDLE;
+					-- second M_G_PULSE means "STOP"
+					else 
+						sig_itab_out_trans_req <= '1';
+						dma_state <= ITAB_READ_CHK;
+					end if;
 	               
-	           when ITAB_READ_CHK =>
-   	               -- second M_G_PULSE means "STOP"
-	               if (M_G_START = '0' AND M_G_PULSE = '1') then
-	                   dma_state <= IDLE;
-	               elsif (to_integer(unsigned(M_SRC_LEN)) > 0) then
-	                   sig_src_addr <= M_SRC_ADDR;
-	                   sig_src_len <= M_SRC_LEN;
-	                   dma_state <= MEM_READ;
-	                   sig_out_trans_req <= '0';
-	               else 
-	                   dma_state <= ITAB_READ_CHK;
-	               end if;  
+				when ITAB_READ_CHK =>
+					-- second M_G_PULSE means "STOP"
+					if (M_G_START = '0' OR M_G_PULSE = '1') then
+						dma_state <= IDLE;
+					elsif (M_ITAB_OUT_VALID = '1') then
+						sig_src_addr <= M_SRC_ADDR;
+						sig_src_len <= M_SRC_LEN;
+						sig_itab_out_trans_req <= '0';
+						rdata_done_len <= 0;
+						dma_state <= MEM_READ;
+					else 
+						dma_state <= ITAB_READ_CHK;
+					end if;  
 	               
-	           when MEM_READ =>                                                                                
-                     -- second M_G_PULSE means "STOP"
-	                 if (M_G_START = '0' AND M_G_PULSE = '1') then
-	                     dma_state <= IDLE;                                                             
-  	              -- This state is responsible to issue start_single_read pulse to                               
-	              -- initiate a read transaction. Read transactions will be                                      
-	              -- issued until burst_read_active signal is asserted.                                          
-	              -- read controller                                                                             
-	                 elsif (M_AXI_RVALID = '1' and axi_rready = '1' and M_AXI_RLAST = '1') then                           
-	                     rdata_done_len <= rdata_done_len + 64;
-	                     if (rdata_done_len = to_integer(unsigned(sig_src_len))) then
-	                          dma_state <= ITAB_READ; 
-	                     end if;
-			         else 
-			             dma_state <= MEM_READ;                                                                        
-	                     if (axi_arvalid = '0' and burst_read_active = '0' and start_single_burst_read = '0') then    
-	                       start_single_burst_read <= '1';   
-	                       rdata_done_len <= 0;
-	                     else                                                                                            
-	                       start_single_burst_read <= '0'; -- Negate to generate a pulse                               
-	                     end if; 
-                     end if;                                                                               
+				when MEM_READ =>                                                                                
+					-- second M_G_PULSE means "STOP"
+					if (M_G_START = '0' OR M_G_PULSE = '1') then
+						dma_state <= IDLE;                                                             
+					-- This state is responsible to issue start_single_read pulse to                               
+					-- initiate a memory read transaction. Read transactions will be                                      
+					-- issued until burst_read_active signal is asserted.                                          
+					-- read controller                                                                             
+					elsif (M_AXI_RVALID = '1' and axi_rready = '1' and M_AXI_RLAST = '1') then
+						if (rdata_done_len >= to_integer(unsigned(sig_src_len))) then 
+							burst_read_active <= '0';
+							dma_state <= ITAB_READ;
+						else 
+							rdata_done_len <= rdata_done_len + 64;
+							dma_state <= ITAB_READ;
+						end if;
+					else  
+						-- start next burst read						
+						if (axi_arvalid = '0' and burst_read_active = '0' and start_single_burst_read = '0') then    
+							start_single_burst_read <= '1';
+						else                                                                                            
+							start_single_burst_read <= '0'; -- Negate to generate a pulse                               
+						end if;
+						dma_state <= MEM_READ;						
+					end if;                                                                               
 	                                                                                                             
-	            when BUFF_WRITE =>                                                                               
+--				when BUFF_WRITE =>                                                                               
 	                                                                                                             
---	            when INIT_INTR =>
---	               if (M_INTR_DONE = '0') then
---	                   dma_irq <= '1';
---	                   dma_state <= INIT_INTR;
---	               else
---	                   dma_irq <= '0';
---	                   dma_state <= IDLE;
---	               end if;
-	               
-	            when others  =>                                                                                  
-	              dma_state  <= IDLE;                                                               
-	          end case  ;                                                                                        
-	       end if;                                                                                               
-	    end if;                                                                                                  
-	  end process;                                                                                               
+				when others  =>                                                                                  
+					dma_state  <= IDLE;                                                               
+				end case  ;                                                                                        
+			end if;                                                                                               
+		end if;                                                                                                  
+	end process;                                                                                               
 	                                                                                                                                              
-	  process(M_AXI_ACLK)                                                                                        
-	  begin                                                                                                      
-	    if (rising_edge (M_AXI_ACLK)) then                                                                       
-	      if (M_G_START = '0' OR M_G_PULSE = '1') then                                                                         
-	        burst_read_active <= '0';                                                                            
-	       --The burst_write_active is asserted when a write burst transaction is initiated                      
-	      else                                                                                                   
-	        if (start_single_burst_read = '1')then                                                               
-	          burst_read_active <= '1';
-	        elsif (M_AXI_RVALID = '1' and axi_rready = '1' and M_AXI_RLAST = '1') then                           
-	          burst_read_active <= '0';   
-	        end if;                                                                                              
-	      end if;                                                                                                
-	    end if;                                                                                                  
-	  end process;    
+	process(M_AXI_ACLK)                                                                                        
+	begin                                                                                                      
+		if (rising_edge (M_AXI_ACLK)) then                                                                       
+			if (M_G_START = '0' OR M_G_PULSE = '1') then                                                                         
+				burst_read_active <= '0';                                                                            
+			--The burst_write_active is asserted when a write burst transaction is initiated                      
+			else                                                                                                   
+				if (start_single_burst_read = '1')then                                                               
+					burst_read_active <= '1';
+				elsif (M_AXI_RVALID = '1' and axi_rready = '1' and M_AXI_RLAST = '1') then                           
+					burst_read_active <= '0';   
+				end if;                                                                                              
+			end if;                                                                                                
+		end if;                                                                                                  
+	end process;    
 	-- User logic ends
 
 end implementation;

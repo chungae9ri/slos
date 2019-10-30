@@ -2,7 +2,7 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-entity genDMA_v1_0 is
+entity odev_v1_0 is
 	generic (
 		-- Users to add parameters here
 
@@ -52,8 +52,6 @@ entity genDMA_v1_0 is
 		s00_axi_rready	: in std_logic;
 
 		-- Ports of Axi Master Bus Interface M00_AXI
-		-- kyi m00_axi_init_axi_txn	: in std_logic;
-		-- kyi m00_axi_txn_done	: out std_logic;
 		m00_axi_aclk	: in std_logic;
 		m00_axi_aresetn	: in std_logic;
 		m00_axi_awid	: out std_logic_vector(C_M00_AXI_ID_WIDTH-1 downto 0);
@@ -94,15 +92,15 @@ entity genDMA_v1_0 is
 		m00_axi_rvalid	: in std_logic;
 		m00_axi_rready	: out std_logic
 	);
-end genDMA_v1_0;
+end odev_v1_0;
 
-architecture arch_imp of genDMA_v1_0 is
+architecture arch_imp of odev_v1_0 is
 
 	signal sig_g_start : std_logic;
 	signal sig_src_addr : std_logic_vector(C_M00_AXI_ADDR_WIDTH-1 downto 0);
 	signal sig_src_len : std_logic_vector(C_M00_AXI_ADDR_WIDTH-1 downto 0);
 	signal sig_trig_in_trans: std_logic;
-	signal sig_trig_out_trans: std_logic;
+	signal sig_itab_out_trans_req: std_logic;
 	signal Itab_SRC_ADDR_top: std_logic_vector (31 downto 0);
 	signal Itab_SRC_LEN_top: std_logic_vector (15 downto 0);
 	signal sig_Itab_full: std_logic;
@@ -110,17 +108,18 @@ architecture arch_imp of genDMA_v1_0 is
 	signal sig_intr_trig: std_logic;
 	signal sig_rdata: std_logic_vector(31 downto 0);
 	signal sig_rdbuff_almost_full: std_logic;
-	signal sig_rdbuff_almost_empty: std_logic;
+	signal sig_rdbuff_empty: std_logic;
 	signal sig_rdata_valid: std_logic;
     signal sig_outdata: std_logic_vector (31 downto 0);
     signal sig_outvalid: std_logic;
     signal sig_outreq: std_logic;
     signal sig_g_pulse: std_logic; -- global start / stop pulse
+	signal sig_itab_out_valid: std_logic;
 	
 	attribute MARK_DEBUG : string;
 	
 	-- component declaration
-	component genDMA_v1_0_S00_AXI is
+	component odev_v1_0_S00_AXI is
 		generic (
 		C_S_AXI_DATA_WIDTH	: integer	:= 32;
 		C_S_AXI_ADDR_WIDTH	: integer	:= 5
@@ -155,9 +154,9 @@ architecture arch_imp of genDMA_v1_0 is
 		S_AXI_RVALID	: out std_logic;
 		S_AXI_RREADY	: in std_logic
 		);
-	end component genDMA_v1_0_S00_AXI;
+	end component odev_v1_0_S00_AXI;
 
-	component genDMA_v1_0_M00_AXI is
+	component odev_v1_0_M00_AXI is
 		generic (
 		C_M_TARGET_SLAVE_BASE_ADDR	: std_logic_vector	:= x"40000000";
 		C_M_AXI_BURST_LEN	: integer	:= 16;
@@ -170,14 +169,14 @@ architecture arch_imp of genDMA_v1_0 is
 		M_G_PULSE : in std_logic;
 		M_SRC_ADDR : in std_logic_vector(C_M_AXI_DATA_WIDTH-1 downto 0);
 		M_SRC_LEN : in std_logic_vector(C_M_AXI_DATA_WIDTH-1 downto 0);
-		M_OUT_TRANS_REQ : out std_logic;
+		M_ITAB_OUT_VALID: in std_logic;
+		M_ITAB_OUT_TRANS_REQ : out std_logic;
 		M_ITAB_EMPTY : in std_logic;
 		M_INTR_TRIG : out std_logic;
 		M_RDATA: out std_logic_vector(31 downto 0);
         M_RDATA_VALID: out std_logic;
         M_RDBUFF_AL_FULL: in std_logic;
-        M_RDBUFF_AL_EMPTY: in std_logic;
-		-- kyi TXN_DONE	: out std_logic;
+        M_RDBUFF_EMPTY: in std_logic;
 		M_AXI_ACLK	: in std_logic;
 		M_AXI_ARESETN	: in std_logic;
 		M_AXI_AWID	: out std_logic_vector(C_M_AXI_ID_WIDTH-1 downto 0);
@@ -218,8 +217,8 @@ architecture arch_imp of genDMA_v1_0 is
 		M_AXI_RVALID	: in std_logic;
 		M_AXI_RREADY	: out std_logic
 		);
-	end component genDMA_v1_0_M00_AXI;
-	
+	end component odev_v1_0_M00_AXI;
+
 	component Itab is
         generic (
             Itab_entries: integer := 512
@@ -232,9 +231,10 @@ architecture arch_imp of genDMA_v1_0 is
             ITAB_IN_TRANS_VALID: in std_logic;
             SRC_ADDR_OUT: out std_logic_vector (31 downto 0);
             SRC_LEN_OUT: out std_logic_vector(15 downto 0);
-            OUT_TRANS_REQ: in std_logic;
+            ITAB_OUT_TRANS_REQ: in std_logic;
             ITAB_FULL: out std_logic;
-            ITAB_EMPTY: out std_logic    
+            ITAB_EMPTY: out std_logic;
+			ITAB_OUT_VALID: out std_logic			
         );
     end component Itab;
     
@@ -245,7 +245,7 @@ architecture arch_imp of genDMA_v1_0 is
          RDATA: in std_logic_vector(31 downto 0);
          RDATA_VALID: in std_logic;
          RDBUFF_ALMOST_FULL: out std_logic;
-         RDBUFF_ALMOST_EMPTY: out std_logic;
+         RDBUFF_EMPTY: out std_logic;
          OUTDATA: out std_logic_vector (31 downto 0);
          OUTVALID: out std_logic;
          OUTREQ: in std_logic         
@@ -264,7 +264,7 @@ architecture arch_imp of genDMA_v1_0 is
 begin
 
 -- Instantiation of Axi Bus Interface S00_AXI
-genDMA_v1_0_S00_AXI_inst : genDMA_v1_0_S00_AXI
+odev_v1_0_S00_AXI_inst : odev_v1_0_S00_AXI
 	generic map (
 		C_S_AXI_DATA_WIDTH	=> C_S00_AXI_DATA_WIDTH,
 		C_S_AXI_ADDR_WIDTH	=> C_S00_AXI_ADDR_WIDTH
@@ -300,7 +300,7 @@ genDMA_v1_0_S00_AXI_inst : genDMA_v1_0_S00_AXI
 	);
 
 -- Instantiation of Axi Bus Interface M00_AXI
-genDMA_v1_0_M00_AXI_inst : genDMA_v1_0_M00_AXI
+odev_v1_0_M00_AXI_inst : odev_v1_0_M00_AXI
 	generic map (
 		C_M_TARGET_SLAVE_BASE_ADDR	=> C_M00_AXI_TARGET_SLAVE_BASE_ADDR,
 		C_M_AXI_BURST_LEN	=> C_M00_AXI_BURST_LEN,
@@ -313,14 +313,14 @@ genDMA_v1_0_M00_AXI_inst : genDMA_v1_0_M00_AXI
 		M_G_PULSE => sig_g_pulse,
 		M_SRC_ADDR => sig_src_addr,
 		M_SRC_LEN => sig_src_len,
-		M_OUT_TRANS_REQ => sig_trig_out_trans,
+		M_ITAB_OUT_VALID => sig_itab_out_valid,
+		M_ITAB_OUT_TRANS_REQ => sig_itab_out_trans_req,
 		M_ITAB_EMPTY => sig_Itab_empty,
 		M_INTR_TRIG => sig_intr_trig,
 		M_RDATA => sig_rdata,
         M_RDATA_VALID => sig_rdata_valid,
         M_RDBUFF_AL_FULL => sig_rdbuff_almost_full,
-        M_RDBUFF_AL_EMPTY => sig_rdbuff_almost_empty,
-		-- kyi TXN_DONE	=> m00_axi_txn_done,
+        M_RDBUFF_EMPTY => sig_rdbuff_empty,
 		M_AXI_ACLK	=> m00_axi_aclk,
 		M_AXI_ARESETN	=> m00_axi_aresetn,
 		M_AXI_AWID	=> m00_axi_awid,
@@ -377,9 +377,10 @@ genDMA_v1_0_M00_AXI_inst : genDMA_v1_0_M00_AXI
         ITAB_IN_TRANS_VALID => sig_trig_in_trans,
         SRC_ADDR_OUT => Itab_SRC_ADDR_top,
         SRC_LEN_OUT => Itab_SRC_LEN_top,
-        OUT_TRANS_REQ => sig_trig_out_trans,
+        ITAB_OUT_TRANS_REQ => sig_itab_out_trans_req,
         ITAB_FULL => sig_Itab_full,
-        ITAB_EMPTY => sig_Itab_empty
+        ITAB_EMPTY => sig_Itab_empty,
+		ITAB_OUT_VALID => sig_itab_out_valid
     );
     
     RdBuff_inst: RdBuff 
@@ -389,7 +390,7 @@ genDMA_v1_0_M00_AXI_inst : genDMA_v1_0_M00_AXI
          RDATA => sig_rdata,
          RDATA_VALID => sig_rdata_valid,
          RDBUFF_ALMOST_FULL => sig_rdbuff_almost_full,
-         RDBUFF_ALMOST_EMPTY => sig_rdbuff_almost_empty,
+         RDBUFF_EMPTY => sig_rdbuff_empty,
          OUTDATA => sig_outdata,
          OUTVALID => sig_outvalid,
          OUTREQ => sig_outreq

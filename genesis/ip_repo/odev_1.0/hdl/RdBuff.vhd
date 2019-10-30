@@ -38,7 +38,7 @@ entity RdBuff is
          RDATA: in std_logic_vector(31 downto 0);
          RDATA_VALID: in std_logic;
          RDBUFF_ALMOST_FULL: out std_logic;
-         RDBUFF_ALMOST_EMPTY: out std_logic;
+         RDBUFF_EMPTY: out std_logic;
          OUTDATA: out std_logic_vector (31 downto 0);
          OUTVALID: out std_logic;
          OUTREQ: in std_logic
@@ -46,7 +46,7 @@ entity RdBuff is
 end RdBuff;
 
 architecture Behavioral of RdBuff is
-    type t_RDBUFF_ENTRY is array (255 downto 0) of std_logic_vector(511 downto 0); -- 128Kb buff
+    type t_RDBUFF_ENTRY is array (255 downto 0) of std_logic_vector(511 downto 0); -- 128Kb (64Byte) buff
     signal sig_RDBuff: t_RDBUFF_ENTRY;
     signal sig_inCnt: integer;
     signal sig_outCnt: integer;
@@ -59,13 +59,13 @@ architecture Behavioral of RdBuff is
     signal sig_outIdx: integer;
     
     signal sig_rdbuff_almost_full: std_logic;
-    signal sig_rdbuff_almost_empty: std_logic;   
+    signal sig_rdbuff_empty: std_logic;   
 begin
 
     OUTDATA <= sig_outdata;
     OUTVALID <= sig_outvalid;
     RDBUFF_ALMOST_FULL <= sig_rdbuff_almost_full;
-    RDBUFF_ALMOST_EMPTY <= sig_rdbuff_almost_empty;
+    RDBUFF_EMPTY <= sig_rdbuff_empty;
     
     process (CLK) is
     begin
@@ -75,7 +75,7 @@ begin
                 sig_inIdx <= 0;
                 sig_in_beat_idx <= 0;
             else 
-                if (RDATA_VALID = '1') then
+                if (RDATA_VALID = '1' AND sig_rdbuff_almost_full = '0') then
                     sig_RDBuff(sig_inIdx)(sig_in_beat_idx * 32 + 31 downto sig_in_beat_idx * 32) <= RDATA;
                     sig_in_beat_idx <= sig_in_beat_idx + 1;
                     if (sig_in_beat_idx = 16) then
@@ -89,7 +89,6 @@ begin
     end process;
     
     process (CLK) is
-
     begin
         if (rising_edge(CLK)) then
             if (RDBUFF_G_START = '0') then
@@ -97,7 +96,7 @@ begin
                 sig_outIdx <= 0;
                 sig_out_beat_idx <= 0;
             else
-                if (OUTREQ = '1') then
+                if (OUTREQ = '1' AND sig_rdbuff_empty = '0') then
                     sig_outdata <= sig_RDBuff(sig_outIdx)(sig_out_beat_idx * 32 + 31 downto sig_out_beat_idx * 32);
                     sig_outvalid <= '1';
                     sig_out_beat_idx <= sig_out_beat_idx + 1;
@@ -118,14 +117,16 @@ begin
         if (rising_edge(CLK)) then
             if (RDBUFF_G_START = '0') then
                 sig_rdbuff_almost_full <= '0';
-                sig_rdbuff_almost_empty <= '0';
+                sig_rdbuff_empty <= '0';
             else
                 if (sig_inCnt = sig_outCnt + 150) then
-                    sig_rdbuff_almost_empty <= '1';
+                    sig_rdbuff_almost_full <= '0';
                 elsif (sig_inCnt = sig_outCnt + 200) then
                     sig_rdbuff_almost_full <= '1';
+				elsif (sig_inCnt = sig_outCnt) then
+					sig_rdbuff_empty <= '1';
                 else
-                    sig_rdbuff_almost_empty <= '0';
+                    sig_rdbuff_empty <= '0';
                     sig_rdbuff_almost_full <= '0';
                 end if;
             end if;

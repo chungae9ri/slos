@@ -52,7 +52,7 @@ begin
         if (rising_edge(CLK)) then
             if (RST = '1') then
                 sig_data <= (others => '0');
-            elsif (DATA_VALID = '1') then
+            elsif (sig_data_req = '1' AND DATA_VALID = '1') then
                 sig_data <= DATA_IN;
             else
                 sig_data <= (others => '0');
@@ -68,12 +68,14 @@ begin
                 sig_data_req <= '0';
                 interval := 0;
             else
-                interval := interval + 1;
                 if (interval = 1000) then
                     sig_data_req <= '1';
-                    interval := 0;
-                else 
-                    sig_data_req <= '0';
+					if (DATA_VALID = '1') then
+						sig_data_req <= '0';
+						interval := 0;
+					end if;
+				else
+					interval := interval + 1;
                 end if;
             end if;
         end if;
