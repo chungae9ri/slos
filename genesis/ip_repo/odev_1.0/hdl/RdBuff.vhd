@@ -59,7 +59,11 @@ architecture Behavioral of RdBuff is
     signal sig_outIdx: integer;
     
     signal sig_rdbuff_almost_full: std_logic;
-    signal sig_rdbuff_empty: std_logic;   
+    signal sig_rdbuff_empty: std_logic;  
+    
+   	attribute MARK_DEBUG: string;
+	attribute MARK_DEBUG of sig_inCnt: signal is "TRUE";
+	attribute MARK_DEBUG of sig_outCnt: signal is "TRUE"; 
 begin
 
     OUTDATA <= sig_outdata;

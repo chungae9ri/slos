@@ -99,7 +99,7 @@ architecture arch_imp of odev_v1_0 is
 	signal sig_g_start : std_logic;
 	signal sig_src_addr : std_logic_vector(C_M00_AXI_ADDR_WIDTH-1 downto 0);
 	signal sig_src_len : std_logic_vector(C_M00_AXI_ADDR_WIDTH-1 downto 0);
-	signal sig_trig_in_trans: std_logic;
+	signal sig_in_trans_valid: std_logic;
 	signal sig_itab_out_trans_req: std_logic;
 	signal Itab_SRC_ADDR_top: std_logic_vector (31 downto 0);
 	signal Itab_SRC_LEN_top: std_logic_vector (15 downto 0);
@@ -117,6 +117,7 @@ architecture arch_imp of odev_v1_0 is
 	signal sig_itab_out_valid: std_logic;
 	
 	attribute MARK_DEBUG : string;
+	attribute MARK_DEBUG of sig_in_trans_valid : signal is "TRUE";
 	
 	-- component declaration
 	component odev_v1_0_S00_AXI is
@@ -271,10 +272,11 @@ odev_v1_0_S00_AXI_inst : odev_v1_0_S00_AXI
 	)
 	port map (
 	    TRIG_G_START => sig_g_start,
+	    S_G_PULSE => sig_g_pulse,
 	    S_SRC_ADDR => sig_src_addr,
 	    S_SRC_LEN => sig_src_len,
 	    S_ITAB_FULL => sig_itab_full,
-	    S_IN_TRANS_VALID => sig_trig_in_trans,
+	    S_IN_TRANS_VALID => sig_in_trans_valid,
 	    -----------------------------
 		S_AXI_ACLK	=> s00_axi_aclk,
 		S_AXI_ARESETN	=> s00_axi_aresetn,
@@ -374,7 +376,7 @@ odev_v1_0_M00_AXI_inst : odev_v1_0_M00_AXI
         ITAB_G_START => sig_g_start,
         SRC_ADDR_IN => sig_src_addr,
         SRC_LEN_IN => sig_src_len (15 downto 0),
-        ITAB_IN_TRANS_VALID => sig_trig_in_trans,
+        ITAB_IN_TRANS_VALID => sig_in_trans_valid,
         SRC_ADDR_OUT => Itab_SRC_ADDR_top,
         SRC_LEN_OUT => Itab_SRC_LEN_top,
         ITAB_OUT_TRANS_REQ => sig_itab_out_trans_req,

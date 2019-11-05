@@ -193,8 +193,16 @@ architecture implementation of odev_v1_0_M00_AXI is
     signal sig_rdata_valid: std_logic;
     signal rdata_done_len: integer;
     
---	attribute MARK_DEBUG : string;
---	attribute MARK_DEBUG of dma_irq : signal is "TRUE";
+	attribute MARK_DEBUG : string;
+	attribute MARK_DEBUG of dma_state: signal is "TRUE";
+	attribute MARK_DEBUG of axi_araddr: signal is "TRUE";
+	attribute MARK_DEBUG of burst_read_active: signal is "TRUE";
+	attribute MARK_DEBUG of sig_rdata: signal is "TRUE";
+	attribute MARK_DEBUG of axi_arvalid: signal is "TRUE";
+	attribute MARK_DEBUG of M_AXI_ARREADY: signal is "TRUE";
+	attribute MARK_DEBUG of M_AXI_RVALID: signal is "TRUE";
+	attribute MARK_DEBUG of axi_rready: signal is "TRUE";
+	attribute MARK_DEBUG of sig_rdata_valid: signal is "TRUE";
 
 begin
 	-- I/O Connections assignments
@@ -265,14 +273,17 @@ begin
 	  end process;                                                       
 	                                                                     
 	-- Next address after ARREADY indicates previous address acceptance  
-	  process(M_AXI_ACLK)                                                
+	  process(M_AXI_ACLK) 
+		variable rep: integer;
 	  begin                                                              
 	    if (rising_edge (M_AXI_ACLK)) then                               
 			if (M_G_START = '0' OR M_G_PULSE = '1' ) then                                 
-	        axi_araddr <= (others => '0');                               
+	        axi_araddr <= (others => '0');
+			rep := 0;
 	      else                                                           
-	        if (M_AXI_ARREADY = '1' and axi_arvalid = '1') then          
-	          axi_araddr <= std_logic_vector(unsigned(axi_araddr) + to_unsigned(burst_size_bytes, 32));               
+	        if (M_AXI_ARREADY = '1' and axi_arvalid = '0' and start_single_burst_read = '1') then          
+				axi_araddr <= std_logic_vector(unsigned(sig_src_addr) + to_unsigned(burst_size_bytes * rep, 32));  
+				rep := rep + 1;
 	        end if;                                                      
 	      end if;                                                        
 	    end if;                                                          
@@ -372,8 +383,10 @@ begin
 						dma_state <= IDLE;
 					elsif (M_ITAB_EMPTY = '1') then
 						-- ITAB underflow. Fire interrupt and fall back to IDLE.
-						sig_dma_irq <= '1';
-						dma_state <= IDLE;
+						if (sig_dma_irq = '0') then
+						  --sig_dma_irq <= '1';
+						end if;
+						dma_state <= ITAB_READ;
 					-- second M_G_PULSE means "STOP"
 					else 
 						sig_itab_out_trans_req <= '1';
@@ -392,6 +405,7 @@ begin
 						dma_state <= MEM_READ;
 					else 
 						dma_state <= ITAB_READ_CHK;
+						sig_itab_out_trans_req <= '0';
 					end if;  
 	               
 				when MEM_READ =>                                                                                
@@ -404,7 +418,6 @@ begin
 					-- read controller                                                                             
 					elsif (M_AXI_RVALID = '1' and axi_rready = '1' and M_AXI_RLAST = '1') then
 						if (rdata_done_len >= to_integer(unsigned(sig_src_len))) then 
-							burst_read_active <= '0';
 							dma_state <= ITAB_READ;
 						else 
 							rdata_done_len <= rdata_done_len + 64;

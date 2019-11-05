@@ -146,12 +146,12 @@ architecture arch_imp of odev_v1_0_S00_AXI is
 	constant STAT_DBUF_UNDERFLOW_BIT: integer := 1; 
 	constant STAT_ITAB_FULL_BIT: integer := 2; 
 	constant STAT_TRANS_DONE_BIT: integer := 3; 
---	attribute MARK_DEBUG : string;
---	attribute MARK_DEBUG of sig_g_start : signal is "TRUE";
---	attribute MARK_DEBUG of sig_intr_done : signal is "TRUE";
---    attribute MARK_DEBUG of ctrl_reg : signal is "TRUE";
---    attribute MARK_DEBUG of slv_reg_wren : signal is "TRUE";
-
+	attribute MARK_DEBUG : string;
+	attribute MARK_DEBUG of reg_ctrl : signal is "TRUE";
+	attribute MARK_DEBUG of reg_status : signal is "TRUE";
+    attribute MARK_DEBUG of slave_state : signal is "TRUE";
+    --attribute MARK_DEBUG of TRIG_G_START : signal is "TRUE";
+    --attribute MARK_DEBUG of sig_in_trans_valid : signal is "TRUE";
 begin
 	-- I/O Connections assignments
 

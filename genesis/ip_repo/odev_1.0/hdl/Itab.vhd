@@ -63,6 +63,14 @@ architecture Behavioral of Itab is
     signal sig_itab_full: std_logic;
     signal sig_itab_empty: std_logic;
 	signal sig_itab_out_valid: std_logic;
+	attribute MARK_DEBUG: string;
+	--attribute MARK_DEBUG of ITAB_G_START : signal is "TRUE";
+	--attribute MARK_DEBUG of ITAB_IN_TRANS_VALID : signal is "TRUE";
+	attribute MARK_DEBUG of SRC_ADDR_IN : signal is "TRUE";
+	attribute MARK_DEBUG of in_count : signal is "TRUE";
+	attribute MARK_DEBUG of out_count : signal is "TRUE";
+	attribute MARK_DEBUG of sig_itab_out_valid : signal is "TRUE";
+	attribute MARK_DEBUG of ITAB_OUT_TRANS_REQ : signal is "TRUE";
 begin
     
     SRC_ADDR_OUT <= sig_src_addr_out;
@@ -81,11 +89,13 @@ begin
                 out_pos <= 0;
 				sig_itab_out_valid <= '0';
             elsif (ITAB_OUT_TRANS_REQ = '1' AND sig_itab_empty = '0') then
-                out_pos <= to_integer(unsigned(std_logic_vector(to_unsigned(out_count, 32)) AND x"0000_01FF"));
-                sig_src_addr_out <= ItabMem(out_pos)(47 downto 16);
-                sig_src_len_out <= ItabMem(out_pos)(15 downto 0);
-				sig_itab_out_valid <= '1';
-                out_count <= out_count + 1;
+				if (out_count < in_count) then
+					out_pos <= to_integer(unsigned(std_logic_vector(to_unsigned(out_count, 32)) AND x"0000_01FF"));
+					sig_src_addr_out <= ItabMem(out_pos)(47 downto 16);
+					sig_src_len_out <= ItabMem(out_pos)(15 downto 0);
+					sig_itab_out_valid <= '1';
+					out_count <= out_count + 1;
+				end if;
             else
                 sig_src_addr_out <= (others => '0');
                 sig_src_len_out <= (others => '0');
