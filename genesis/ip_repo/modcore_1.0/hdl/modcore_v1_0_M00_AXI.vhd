@@ -309,8 +309,7 @@ begin
 	M_AXI_ARID	<= (others => '0');
 	M_AXI_ARADDR	<= std_logic_vector( unsigned(reg_src_addr) + unsigned( axi_araddr ) );
 	--Burst LENgth is number of transaction beats, minus 1
-	-- kyi M_AXI_ARLEN	<= std_logic_vector( to_unsigned(C_M_AXI_BURST_LEN - 1, 8) );
-	M_AXI_ARLEN	<= x"10"; -- 16 bytes len of a burst
+	M_AXI_ARLEN	<= x"0f"; -- 16 bytes len of a burst
 	--Size should be C_M_AXI_DATA_WIDTH, in 2^n bytes, otherwise narrow bursts are used
 	-- kyi M_AXI_ARSIZE	<= std_logic_vector( to_unsigned( clogb2((C_M_AXI_DATA_WIDTH/8)-1),3 ));
 	M_AXI_ARSIZE	<= "010"; -- 4 bytes beat size

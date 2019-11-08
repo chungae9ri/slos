@@ -145,7 +145,7 @@ entity odev_v1_0_M00_AXI is
 		M_AXI_RREADY	: out std_logic
 	);
 end odev_v1_0_M00_AXI;
-
+ 
 architecture implementation of odev_v1_0_M00_AXI is
 	-- C_TRANSACTIONS_NUM is the width of the index counter for
 	-- number of beats in a burst write or burst read transaction.
@@ -179,7 +179,6 @@ architecture implementation of odev_v1_0_M00_AXI is
 	signal error_reg	: std_logic;
 	signal burst_read_active	: std_logic;
 	--Interface response error flags
-	signal read_resp_error	: std_logic;
 	signal rnext	: std_logic;
 	signal sig_dma_irq : std_logic;
 	signal reg_src_addr : std_logic_vector(C_M_AXI_ADDR_WIDTH-1 downto 0);
@@ -195,15 +194,17 @@ architecture implementation of odev_v1_0_M00_AXI is
     
 	attribute MARK_DEBUG : string;
 	attribute MARK_DEBUG of dma_state: signal is "TRUE";
-	attribute MARK_DEBUG of axi_araddr: signal is "TRUE";
-	attribute MARK_DEBUG of burst_read_active: signal is "TRUE";
+--	attribute MARK_DEBUG of axi_araddr: signal is "TRUE";
+--	attribute MARK_DEBUG of burst_read_active: signal is "TRUE";
 	attribute MARK_DEBUG of sig_rdata: signal is "TRUE";
-	attribute MARK_DEBUG of axi_arvalid: signal is "TRUE";
-	attribute MARK_DEBUG of M_AXI_ARREADY: signal is "TRUE";
-	attribute MARK_DEBUG of M_AXI_RVALID: signal is "TRUE";
-	attribute MARK_DEBUG of axi_rready: signal is "TRUE";
+--	attribute MARK_DEBUG of axi_arvalid: signal is "TRUE";
+--	attribute MARK_DEBUG of M_AXI_ARREADY: signal is "TRUE";
+--	attribute MARK_DEBUG of M_AXI_RVALID: signal is "TRUE";
+--	attribute MARK_DEBUG of axi_rready: signal is "TRUE";
 	attribute MARK_DEBUG of sig_rdata_valid: signal is "TRUE";
-
+	attribute MARK_DEBUG of M_AXI_RDATA: signal is "TRUE";
+    attribute MARK_DEBUG of rnext: signal is "TRUE";
+--    attribute MARK_DEBUG of M_AXI_RLAST: signal is "TRUE";
 begin
 	-- I/O Connections assignments
 	--I/O Connections. Write Address (AW)
@@ -234,7 +235,7 @@ begin
 	M_AXI_ARADDR	<= std_logic_vector( unsigned(reg_src_addr) + unsigned( axi_araddr ) );
 	M_AXI_ARLEN	<= x"0f"; -- burst len = ARLEN + 1, 16 beats len of a burst
 	--The maximum number of bytes to transfer in each data transfer, or beat, in a burst,
-	M_AXI_ARSIZE	<= "010"; -- 4 bytes beat size
+	M_AXI_ARSIZE	<= "010"; -- 4 bytes beat size 
 	--INCR burst type is usually used, except for keyhole bursts
 	M_AXI_ARBURST	<= "01";
 	M_AXI_ARLOCK	<= '0';
@@ -256,39 +257,27 @@ begin
 	--In this example, the read address increments in the same
 	--manner as the write address channel.
 
-	  process(M_AXI_ACLK)										  
+	  process(M_AXI_ACLK)
+	   variable rep: integer;										  
 	  begin                                                              
 	    if (rising_edge (M_AXI_ACLK)) then                               
 			if (M_G_START = '0' OR M_G_PULSE = '1') then                                 
-	        axi_arvalid <= '0';                                          
+	        axi_arvalid <= '0'; 
+	        axi_araddr <= (others => '0');
+	        rep := 0;                                         
 	     -- If previously not valid , start next transaction             
 	      else                                                           
 	        if (axi_arvalid = '0' and start_single_burst_read = '1') then
-	          axi_arvalid <= '1';                                        
+	          axi_arvalid <= '1';  
+	          axi_araddr <= std_logic_vector(unsigned(sig_src_addr) + to_unsigned(burst_size_bytes * rep, 32));  
+			  rep := rep + 1;                                      
 	        elsif (M_AXI_ARREADY = '1' and axi_arvalid = '1') then       
-	          axi_arvalid <= '0';                                        
+	          axi_arvalid <= '0'; 
+	          axi_araddr <= axi_araddr;                                       
 	        end if;                                                      
 	      end if;                                                        
 	    end if;                                                          
 	  end process;                                                       
-	                                                                     
-	-- Next address after ARREADY indicates previous address acceptance  
-	  process(M_AXI_ACLK) 
-		variable rep: integer;
-	  begin                                                              
-	    if (rising_edge (M_AXI_ACLK)) then                               
-			if (M_G_START = '0' OR M_G_PULSE = '1' ) then                                 
-	        axi_araddr <= (others => '0');
-			rep := 0;
-	      else                                                           
-	        if (M_AXI_ARREADY = '1' and axi_arvalid = '0' and start_single_burst_read = '1') then          
-				axi_araddr <= std_logic_vector(unsigned(sig_src_addr) + to_unsigned(burst_size_bytes * rep, 32));  
-				rep := rep + 1;
-	        end if;                                                      
-	      end if;                                                        
-	    end if;                                                          
-	  end process;                                                       
-
 
 	----------------------------------
 	--Read Data (and Response) Channel
@@ -296,9 +285,8 @@ begin
 
 	 -- Forward movement occurs when the channel is valid and ready   
 	  rnext <= M_AXI_RVALID and axi_rready;                                 
-	                                                                        
-	                                                                        
-	-- Burst length counter. Uses extra counter register bit to indicate    
+ 
+ 	-- Burst length counter. Uses extra counter register bit to indicate    
 	-- terminal count to reduce decode logic                                
 	process(M_AXI_ACLK)                                                   
 	begin                                                                 
@@ -361,7 +349,6 @@ begin
 				start_single_burst_read  <= '0';
 				sig_dma_irq <= '0';           
 				sig_itab_out_trans_req <= '0';
-				sig_rdata <= (others => '0');
 			else                                                                                                   
 	        -- state transition                                                                                  
 			case (dma_state) is
@@ -374,7 +361,6 @@ begin
 						start_single_burst_read  <= '0';
 						sig_dma_irq <= '0';
 						sig_itab_out_trans_req <= '0';
-						sig_rdata <= (others => '0');
 						dma_state  <= IDLE;
 					end if;     
 	           

@@ -44,7 +44,7 @@ entity RdBuff is
          OUTREQ: in std_logic
     );
 end RdBuff;
-
+ 
 architecture Behavioral of RdBuff is
     type t_RDBUFF_ENTRY is array (255 downto 0) of std_logic_vector(511 downto 0); -- 128Kb (64Byte) buff
     signal sig_RDBuff: t_RDBUFF_ENTRY;
@@ -64,6 +64,9 @@ architecture Behavioral of RdBuff is
    	attribute MARK_DEBUG: string;
 	attribute MARK_DEBUG of sig_inCnt: signal is "TRUE";
 	attribute MARK_DEBUG of sig_outCnt: signal is "TRUE"; 
+	attribute MARK_DEBUG of RDATA_VALID: signal is "TRUE"; 
+	attribute MARK_DEBUG of sig_in_beat_idx: signal is "TRUE";
+	attribute MARK_DEBUG of sig_RDBuff: signal is "TRUE";
 begin
 
     OUTDATA <= sig_outdata;
