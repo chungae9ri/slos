@@ -45,6 +45,16 @@
 .set F_BIT, 					0x40
 .set IF_BIT, 					0xC0
 #else
+#define OSTREAM_REG_CTRL			0x43c00000
+#define OSTREAM_REG_STATUS			0x43c00004
+#define OSTREAM_REG_ADDR			0x43c00008
+#define OSTREAM_REG_LEN				0x43c0000c
+#define MODCORE_DMA_REG_CNTL			0x43c10000
+#define MODCORE_DMA_REG_STATUS			0x43c10004
+#define MODCORE_DMA_REG_SRC_ADDR		0x43c10008
+#define MODCORE_DMA_REG_LEN			0x43c1000c
+#define MODCORE_DMA_REG_DST_ADDR		0x43c10010
+//
 #define KERNEL_CODE_BASE			0x100000
 #define USER_APP_BASE 				0x1000000 /* user app base */
 #define USER_APP_GAP 				0x100000  /* 1MB user app gap */

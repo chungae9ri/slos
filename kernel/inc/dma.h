@@ -17,17 +17,11 @@
 */
 
 #include <stdint-gcc.h>
+#include <mem_layout.h>
 
-#define DMA_REG_CNTL		0x43c00000
-#define DMA_REG_STATUS		0x43c00004
-#define DMA_REG_SRC_ADDR	0x43c00008
-#define DMA_REG_LEN		0x43c0000c
-#define DMA_REG_DST_ADDR	0x43c00010
-
-#define DMA_IRQ_ID		61U
-
-#define DMA_START		0x1
-#define DMA_IRQ_DONE		0x2
+#define MODCORE_DMA_IRQ_ID		61U
+#define MODCORE_DMA_START		0x1
+#define MODCORE_DMA_IRQ_DONE		0x2
 
 extern void flush_ent_dcache(void);
 

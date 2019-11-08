@@ -30,6 +30,8 @@
 #include <xil_printf.h>
 #include <file.h>
 #include <loader.h>
+#include <slos_error.h>
+#include <iostream.h>
 
 #define SVCSPSR 0x13 
 
@@ -114,7 +116,7 @@ uint32_t rt_worker2(void)
 		/* should yield after finish current work */
 		yield();
 	}
-	return 0;
+	return ERR_NO;
 }
 
 uint32_t rt_worker1(void)
@@ -133,7 +135,7 @@ uint32_t rt_worker1(void)
 		/* should yield after finish current work */
 		yield();
 	}
-	return 0;
+	return ERR_NO;
 }
 
 #include <dma.h>
@@ -161,7 +163,7 @@ uint32_t oneshot_worker(void)
 		yield();
 	}
 
-	return 0;
+	return ERR_NO;
 }
 
 extern void enable_interrupt(void);
@@ -214,7 +216,7 @@ uint32_t cfs_worker1(void )
 		pc = NULL;
 	}
 
-	return 0;
+	return ERR_NO;
 }
 
 #define FILE_TEST_LEN 1024	
@@ -260,7 +262,7 @@ uint32_t cfs_worker2(void)
 			xil_printf("cfs_worker2 running....\n");
 		}
 	}
-	return 0;
+	return ERR_NO;
 }
 
 #define COPROC_SRC_ADDR		0x20000000
@@ -292,8 +294,42 @@ uint32_t cfs_worker3(void )
 		}
 	}
 
-	return 0;
+	return ERR_NO;
 }
+
+#define O_STREAM_START		0x38000000
+#define O_STREAM_END		0x3C000000
+#define O_STREAM_STEP		0x00001000 /* 4KB */
+
+uint32_t cfs_worker4(void)
+{
+	uint8_t *psrc;
+	uint32_t i;
+
+	psrc = (uint8_t *)O_STREAM_START;
+
+	for (i = 0; i < O_STREAM_STEP; i++) {
+		psrc[i] = (uint8_t)((i + 1) % 256);
+	}
+
+
+	i = 0;
+	start_ostream();
+	while (1) {
+		put_to_itab(O_STREAM_START + O_STREAM_STEP * i++, O_STREAM_STEP);
+		break;
+	}
+
+	while (i < 1000000)
+		i++;
+
+	stop_ostream();
+
+	/* spin forever */
+	while (1) ;
+	return ERR_NO;
+}
+
 void init_jiffies(void)
 {
 	jiffies = 0;
@@ -444,7 +480,8 @@ void create_cfs_workers(void)
 {
 	create_cfs_task("cfs_worker1", cfs_worker1, 8);
 	create_cfs_task("cfs_worker2", cfs_worker2, 4);
-	create_cfs_task("cfs_worker3", cfs_worker3, 8);
+	/*create_cfs_task("cfs_worker3", cfs_worker3, 8);*/
+	create_cfs_task("cfs_worker4", cfs_worker4, 4);
 }
 
 void create_rt_workers(void)

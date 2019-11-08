@@ -22,7 +22,7 @@
 #include <mm.h>
 #include <xil_printf.h>
 
-#define DMA_BURST_LEN	0x1000
+#define MODCORE_DMA_BURST_LEN	0x1000
 
 struct dma_work_order *p_dma_work_order;
 int bFirst;
@@ -30,8 +30,8 @@ int bFirst;
 
 void init_dma(void)
 {
-	gic_register_int_handler(DMA_IRQ_ID, dma_irq, NULL);
-	gic_mask_interrupt(DMA_IRQ_ID);
+	gic_register_int_handler(MODCORE_DMA_IRQ_ID, dma_irq, NULL);
+	gic_mask_interrupt(MODCORE_DMA_IRQ_ID);
 	p_dma_work_order = NULL;
 }
 
@@ -42,16 +42,16 @@ void set_dma_work(uint32_t src, uint32_t dst, uint32_t len)
 
 	bFirst = 1;
 
-	if (len > DMA_BURST_LEN) {
-		q = (int)(len / DMA_BURST_LEN);
-		r = len % DMA_BURST_LEN;
+	if (len > MODCORE_DMA_BURST_LEN) {
+		q = (int)(len / MODCORE_DMA_BURST_LEN);
+		r = len % MODCORE_DMA_BURST_LEN;
 
 		for (i = 0; i < q; i++) {
 			ptemp = (struct dma_work_order *)kmalloc(sizeof(struct dma_work_order));
 			ptemp->order_num = i;
-			ptemp->src = src + DMA_BURST_LEN * i;
-			ptemp->dst = dst + DMA_BURST_LEN * i;
-			ptemp->len = DMA_BURST_LEN;
+			ptemp->src = src + MODCORE_DMA_BURST_LEN * i;
+			ptemp->dst = dst + MODCORE_DMA_BURST_LEN * i;
+			ptemp->len = MODCORE_DMA_BURST_LEN;
 			ptemp->next = NULL;
 			
 			if (i == 0) {
@@ -65,8 +65,8 @@ void set_dma_work(uint32_t src, uint32_t dst, uint32_t len)
 		if (r) {
 			ptemp = (struct dma_work_order *)kmalloc(sizeof(struct dma_work_order));
 			ptemp->order_num = i;
-			ptemp->src = src + DMA_BURST_LEN * i;
-			ptemp->dst = dst + DMA_BURST_LEN * i;
+			ptemp->src = src + MODCORE_DMA_BURST_LEN * i;
+			ptemp->dst = dst + MODCORE_DMA_BURST_LEN * i;
 			ptemp->len = r;
 			ptemp->next = NULL;
 
@@ -79,7 +79,7 @@ void set_dma_work(uint32_t src, uint32_t dst, uint32_t len)
 		ptemp->order_num = 0;
 		ptemp->src = src;
 		ptemp->dst = dst;
-		ptemp->len = DMA_BURST_LEN;
+		ptemp->len = MODCORE_DMA_BURST_LEN;
 		ptemp->next = NULL;
 
 		p_dma_work_order = ptemp;
@@ -101,17 +101,17 @@ int start_dma(void)
 		dst = p_dma_work_order->dst;
 		len = p_dma_work_order->len;
 
-		writel(src, DMA_REG_SRC_ADDR);
-		writel(dst, DMA_REG_DST_ADDR);
-		writel(len, DMA_REG_LEN);
+		writel(src, MODCORE_DMA_REG_SRC_ADDR);
+		writel(dst, MODCORE_DMA_REG_DST_ADDR);
+		writel(len, MODCORE_DMA_REG_LEN);
 
 		ptemp = p_dma_work_order;
 		p_dma_work_order = p_dma_work_order->next;
 		kfree((uint32_t)ptemp);
 
-		cntl = readl(DMA_REG_CNTL);
-		cntl |= DMA_START;
-		writel(cntl, DMA_REG_CNTL);
+		cntl = readl(MODCORE_DMA_REG_CNTL);
+		cntl |= MODCORE_DMA_START;
+		writel(cntl, MODCORE_DMA_REG_CNTL);
 
 		return 0;
 	} else {
@@ -123,15 +123,15 @@ int dma_irq (void *arg)
 {
 	uint32_t cntl;
 
-	cntl = readl(DMA_REG_CNTL);
-	cntl |= DMA_IRQ_DONE;
-	writel(cntl, DMA_REG_CNTL);
+	cntl = readl(MODCORE_DMA_REG_CNTL);
+	cntl |= MODCORE_DMA_IRQ_DONE;
+	writel(cntl, MODCORE_DMA_REG_CNTL);
 
 	/* start next dma order */
 	if (start_dma()) {
-		cntl = readl(DMA_REG_CNTL);
-		cntl &= ~DMA_START;
-		writel(cntl, DMA_REG_CNTL);
+		cntl = readl(MODCORE_DMA_REG_CNTL);
+		cntl &= ~MODCORE_DMA_START;
+		writel(cntl, MODCORE_DMA_REG_CNTL);
 
 		xil_printf("dma done!\n");
 	} 
