@@ -403,11 +403,11 @@ begin
 					-- issued until burst_read_active signal is asserted.                                          
 					-- read controller                                                                             
 					elsif (M_AXI_RVALID = '1' and axi_rready = '1' and M_AXI_RLAST = '1') then
-						if (rdata_done_len >= to_integer(unsigned(sig_src_len))) then 
+						if (rdata_done_len + 64 >= to_integer(unsigned(sig_src_len))) then 
 							dma_state <= ITAB_READ;
 						else 
 							rdata_done_len <= rdata_done_len + 64;
-							dma_state <= ITAB_READ;
+							dma_state <= MEM_READ;
 						end if;
 					else  
 						-- start next burst read						
