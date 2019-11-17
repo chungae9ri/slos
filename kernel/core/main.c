@@ -26,7 +26,7 @@
 #include <file_system.h>
 #include <loader.h>
 #include <dma.h>
-#include <iostream.h>
+#include <odev.h>
 
 extern uint32_t show_stat;
 
@@ -74,7 +74,7 @@ int start_kernel(void)
 	create_ramdisk_fs();
 	xil_printf("### load user app to slfs.\n");
 	init_dma();
-	init_io_device();
+	init_odev();
 	cpuidle();
 
 	return 0;

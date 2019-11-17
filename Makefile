@@ -27,7 +27,7 @@ LIBXIL := libxil.a
 TOP_DIR :=$(shell pwd)
 OUT_TOP := $(TOP_DIR)/out
 
-KERNMODULES := core exception drivers/xil_standalone drivers/dma
+KERNMODULES := core exception drivers/xil_standalone drivers/dma drivers/odev
 KERNSRCDIR := $(addprefix kernel/,$(KERNMODULES))
 KERNOUTDIR := $(addprefix out/kernel/,$(KERNMODULES)) 
 

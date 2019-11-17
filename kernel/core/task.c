@@ -31,7 +31,7 @@
 #include <file.h>
 #include <loader.h>
 #include <slos_error.h>
-#include <iostream.h>
+#include <odev.h>
 
 #define SVCSPSR 0x13 
 
@@ -299,31 +299,42 @@ uint32_t cfs_worker3(void )
 
 #define O_STREAM_START		0x38000000
 #define O_STREAM_END		0x3C000000
-#define O_STREAM_STEP		0x00001000 /* 4KB */
+#define O_STREAM_STEP		0x0000100 /* 256B */
 
 uint32_t cfs_worker4(void)
 {
 	uint8_t *psrc;
-	uint32_t i;
+	uint32_t i, j;
 
 	psrc = (uint8_t *)O_STREAM_START;
 
-	for (i = 0; i < O_STREAM_STEP; i++) {
+	for (i = 0; i < O_STREAM_STEP * 100; i++) {
 		psrc[i] = (uint8_t)((i + 1) % 256);
 	}
 
 
-	i = 0;
-	start_ostream();
-	while (1) {
-		put_to_itab(O_STREAM_START + O_STREAM_STEP * i++, O_STREAM_STEP);
-		break;
+	start_odev();
+	for (i = 0; i < 100; i++) {
+		put_to_itab(O_STREAM_START + O_STREAM_STEP * i, O_STREAM_STEP);
 	}
 
-	while (i < 1000000)
-		i++;
+	start_odev_stream();
 
-	stop_ostream();
+	i = j = 0;
+	for (;;) {
+		put_to_itab(O_STREAM_START + O_STREAM_STEP * i, O_STREAM_STEP);
+
+		i++;
+		if (i == 100) 
+			i = 0;
+		/* spin a while */
+		while (j < 100) 
+			j++;
+		j = 0;
+	}
+
+	stop_odev_stream();
+	stop_odev();
 
 	/* spin forever */
 	while (1) ;
@@ -480,7 +491,7 @@ void create_cfs_workers(void)
 {
 	create_cfs_task("cfs_worker1", cfs_worker1, 8);
 	create_cfs_task("cfs_worker2", cfs_worker2, 4);
-	/*create_cfs_task("cfs_worker3", cfs_worker3, 8);*/
+	create_cfs_task("cfs_worker3", cfs_worker3, 8);
 	create_cfs_task("cfs_worker4", cfs_worker4, 4);
 }
 
