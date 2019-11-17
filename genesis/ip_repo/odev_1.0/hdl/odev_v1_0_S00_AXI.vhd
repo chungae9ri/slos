@@ -18,6 +18,7 @@ entity odev_v1_0_S00_AXI is
 		-- Users to add ports here
 		TRIG_G_START : out std_logic;
 		S_G_PULSE : out std_logic;
+		S_STREAM_START: out std_logic;
 		S_SRC_ADDR : out std_logic_vector(C_S_AXI_DATA_WIDTH-1 downto 0);
 		S_SRC_LEN : out std_logic_vector(C_S_AXI_DATA_WIDTH-1 downto 0);
         S_ITAB_FULL : in std_logic;
@@ -137,21 +138,24 @@ architecture arch_imp of odev_v1_0_S00_AXI is
     signal sig_after: std_logic;
 	type AXIS_STATE is (IDLE, WARMINGUP, RECEIVING, WRITING, CLOSING, FULL, EMPTY);
 	signal slave_state : AXIS_STATE;
+	signal sig_stream_start: std_logic;
 	-- Control register bit mask  
 	constant CTRL_GBL_START_BIT: integer := 0; 
 	constant CTRL_INTR_DONE_BIT: integer := 1; 
 	constant CTRL_IN_TRANS_BIT: integer := 2; 
+	constant CTRL_STREAM_START_BIT: integer := 3;
 	-- Status register bit mask
 	constant STAT_ITAB_UNDERFLOW_BIT: integer := 0; 
 	constant STAT_DBUF_UNDERFLOW_BIT: integer := 1; 
 	constant STAT_ITAB_FULL_BIT: integer := 2; 
 	constant STAT_TRANS_DONE_BIT: integer := 3; 
+	
 --	attribute MARK_DEBUG : string;
 --	attribute MARK_DEBUG of reg_ctrl : signal is "TRUE";
 --	attribute MARK_DEBUG of reg_status : signal is "TRUE";
 --    attribute MARK_DEBUG of slave_state : signal is "TRUE";
-    --attribute MARK_DEBUG of TRIG_G_START : signal is "TRUE";
-    --attribute MARK_DEBUG of sig_in_trans_valid : signal is "TRUE";
+--    attribute MARK_DEBUG of reg_addr : signal is "TRUE";
+--    attribute MARK_DEBUG of sig_in_trans_valid : signal is "TRUE";
 begin
 	-- I/O Connections assignments
 
@@ -483,6 +487,8 @@ begin
 	-- generate pulse for global start and stop
 	S_G_PULSE <= sig_before AND (NOT sig_after) when sig_before = '1' else
 	             (NOT sig_before) AND sig_after;
+	             
+	S_STREAM_START <= sig_stream_start;
 	
 	-- slave state machine S
 	process(S_AXI_ACLK) is
@@ -603,6 +609,15 @@ begin
 		end if;
 	end process;
 	-- slave state machine E
+	
+	process (S_AXI_ACLK) is
+	begin
+	   if (reg_ctrl(CTRL_STREAM_START_BIT) = '1') then
+	       sig_stream_start <= '1';
+	   else 
+	       sig_stream_start <= '0';
+	   end if;
+	end process;
 	
 	process (S_AXI_ACLK) is
 	begin

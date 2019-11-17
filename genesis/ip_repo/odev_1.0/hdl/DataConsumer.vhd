@@ -34,7 +34,8 @@ use IEEE.STD_LOGIC_1164.ALL;
 entity DataConsumer is
     Port (
         CLK: in std_logic;
-        RST: in std_logic;
+--        RST: in std_logic;
+        DATA_STREAM_START: in std_logic;
         DATA_IN: in std_logic_vector(31 downto 0);
         DATA_VALID: in std_logic;
         DATA_REQ: out std_logic
@@ -50,7 +51,7 @@ begin
     process (CLK) is
     begin
         if (rising_edge(CLK)) then
-            if (RST = '1') then
+            if (DATA_STREAM_START = '0') then
                 sig_data <= (others => '0');
             elsif (sig_data_req = '1' AND DATA_VALID = '1') then
                 sig_data <= DATA_IN;
@@ -64,7 +65,7 @@ begin
         variable interval: integer := 0;
     begin
         if (rising_edge(CLK)) then
-            if (RST = '1') then
+            if (DATA_STREAM_START = '0') then
                 sig_data_req <= '0';
                 interval := 0;
             else
@@ -80,5 +81,4 @@ begin
             end if;
         end if;
     end process;
-
 end Behavioral;

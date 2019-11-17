@@ -101,8 +101,8 @@ architecture arch_imp of odev_v1_0 is
 	signal sig_src_len : std_logic_vector(C_M00_AXI_ADDR_WIDTH-1 downto 0);
 	signal sig_in_trans_valid: std_logic;
 	signal sig_itab_out_trans_req: std_logic;
-	signal Itab_SRC_ADDR_top: std_logic_vector (31 downto 0);
-	signal Itab_SRC_LEN_top: std_logic_vector (15 downto 0);
+	signal sig_itab_src_addr: std_logic_vector (31 downto 0);
+	signal sig_itab_src_len: std_logic_vector (15 downto 0);
 	signal sig_Itab_full: std_logic;
 	signal sig_Itab_empty: std_logic;
 	signal sig_intr_trig: std_logic;
@@ -115,6 +115,7 @@ architecture arch_imp of odev_v1_0 is
     signal sig_outreq: std_logic;
     signal sig_g_pulse: std_logic; -- global start / stop pulse
 	signal sig_itab_out_valid: std_logic;
+	signal sig_stream_start: std_logic;
 	
 	attribute MARK_DEBUG : string;
 	attribute MARK_DEBUG of sig_in_trans_valid : signal is "TRUE";
@@ -128,6 +129,7 @@ architecture arch_imp of odev_v1_0 is
 		port (
 		TRIG_G_START : out std_logic;
 		S_G_PULSE : out std_logic;
+		S_STREAM_START: out std_logic;
 		S_SRC_ADDR : out std_logic_vector(C_S_AXI_DATA_WIDTH-1 downto 0);
 		S_SRC_LEN : out std_logic_vector(C_S_AXI_DATA_WIDTH-1 downto 0);
 		S_ITAB_FULL : in std_logic;
@@ -166,10 +168,11 @@ architecture arch_imp of odev_v1_0 is
 		C_M_AXI_DATA_WIDTH	: integer	:= 32
 		);
 		port (
-		M_G_START	: in std_logic;
-		M_G_PULSE : in std_logic;
+--		M_G_START	: in std_logic;
+--		M_G_PULSE : in std_logic;
+		M_STREAM_START: in std_logic;
 		M_SRC_ADDR : in std_logic_vector(C_M_AXI_DATA_WIDTH-1 downto 0);
-		M_SRC_LEN : in std_logic_vector(C_M_AXI_DATA_WIDTH-1 downto 0);
+		M_SRC_LEN : in std_logic_vector(15 downto 0);
 		M_ITAB_OUT_VALID: in std_logic;
 		M_ITAB_OUT_TRANS_REQ : out std_logic;
 		M_ITAB_EMPTY : in std_logic;
@@ -242,7 +245,8 @@ architecture arch_imp of odev_v1_0 is
     component RdBuff is
     port (
          CLK: in std_logic;
-         RDBUFF_G_START: in std_logic;
+--         RDBUFF_G_START: in std_logic;
+         RDBUFF_STREAM_START: in std_logic;
          RDATA: in std_logic_vector(31 downto 0);
          RDATA_VALID: in std_logic;
          RDBUFF_ALMOST_FULL: out std_logic;
@@ -256,7 +260,8 @@ architecture arch_imp of odev_v1_0 is
     component DataConsumer is
     Port (
         CLK: in std_logic;
-        RST: in std_logic;
+--        RST: in std_logic;
+        DATA_STREAM_START: in std_logic;
         DATA_IN: in std_logic_vector(31 downto 0);
         DATA_VALID: in std_logic;
         DATA_REQ: out std_logic
@@ -273,6 +278,7 @@ odev_v1_0_S00_AXI_inst : odev_v1_0_S00_AXI
 	port map (
 	    TRIG_G_START => sig_g_start,
 	    S_G_PULSE => sig_g_pulse,
+	    S_STREAM_START => sig_stream_start,
 	    S_SRC_ADDR => sig_src_addr,
 	    S_SRC_LEN => sig_src_len,
 	    S_ITAB_FULL => sig_itab_full,
@@ -311,10 +317,11 @@ odev_v1_0_M00_AXI_inst : odev_v1_0_M00_AXI
 		C_M_AXI_DATA_WIDTH	=> C_M00_AXI_DATA_WIDTH
 	)
 	port map (
-		M_G_START => sig_g_start,
-		M_G_PULSE => sig_g_pulse,
-		M_SRC_ADDR => sig_src_addr,
-		M_SRC_LEN => sig_src_len,
+--		M_G_START => sig_g_start,
+--		M_G_PULSE => sig_g_pulse,
+		M_STREAM_START => sig_stream_start,
+		M_SRC_ADDR => sig_itab_src_addr,
+		M_SRC_LEN => sig_itab_src_len,
 		M_ITAB_OUT_VALID => sig_itab_out_valid,
 		M_ITAB_OUT_TRANS_REQ => sig_itab_out_trans_req,
 		M_ITAB_EMPTY => sig_Itab_empty,
@@ -377,8 +384,8 @@ odev_v1_0_M00_AXI_inst : odev_v1_0_M00_AXI
         SRC_ADDR_IN => sig_src_addr,
         SRC_LEN_IN => sig_src_len (15 downto 0),
         ITAB_IN_TRANS_VALID => sig_in_trans_valid,
-        SRC_ADDR_OUT => Itab_SRC_ADDR_top,
-        SRC_LEN_OUT => Itab_SRC_LEN_top,
+        SRC_ADDR_OUT => sig_itab_src_addr,
+        SRC_LEN_OUT => sig_itab_src_len,
         ITAB_OUT_TRANS_REQ => sig_itab_out_trans_req,
         ITAB_FULL => sig_Itab_full,
         ITAB_EMPTY => sig_Itab_empty,
@@ -388,7 +395,8 @@ odev_v1_0_M00_AXI_inst : odev_v1_0_M00_AXI
     RdBuff_inst: RdBuff 
     port map (
          CLK => s00_axi_aclk,
-         RDBUFF_G_START => sig_g_start,
+--         RDBUFF_G_START => sig_g_start,
+         RDBUFF_STREAM_START => sig_stream_start,
          RDATA => sig_rdata,
          RDATA_VALID => sig_rdata_valid,
          RDBUFF_ALMOST_FULL => sig_rdbuff_almost_full,
@@ -401,7 +409,8 @@ odev_v1_0_M00_AXI_inst : odev_v1_0_M00_AXI
     DataConsumer_inst: DataConsumer
     Port map (
         CLK => s00_axi_aclk,
-        RST => sig_g_start,
+--        RST => sig_g_start,
+        DATA_STREAM_START => sig_stream_start,
         DATA_IN => sig_outdata,
         DATA_VALID => sig_outvalid,
         DATA_REQ => sig_outreq

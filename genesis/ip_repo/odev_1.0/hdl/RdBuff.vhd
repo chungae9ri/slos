@@ -34,7 +34,8 @@ use IEEE.NUMERIC_STD.ALL;
 entity RdBuff is
     Port (
          CLK: in std_logic;
-         RDBUFF_G_START: in std_logic;
+--         RDBUFF_G_START: in std_logic;
+         RDBUFF_STREAM_START: in std_logic;
          RDATA: in std_logic_vector(31 downto 0);
          RDATA_VALID: in std_logic;
          RDBUFF_ALMOST_FULL: out std_logic;
@@ -66,7 +67,7 @@ architecture Behavioral of RdBuff is
 	attribute MARK_DEBUG of sig_outCnt: signal is "TRUE"; 
 	attribute MARK_DEBUG of RDATA_VALID: signal is "TRUE"; 
 	attribute MARK_DEBUG of sig_in_beat_idx: signal is "TRUE";
-	attribute MARK_DEBUG of sig_RDBuff: signal is "TRUE";
+
 begin
 
     OUTDATA <= sig_outdata;
@@ -77,7 +78,7 @@ begin
     process (CLK) is
     begin
         if (rising_edge(CLK)) then
-            if (RDBUFF_G_START = '0') then
+            if (RDBUFF_STREAM_START = '0') then
                 sig_inCnt <= 0;
                 sig_inIdx <= 0;
                 sig_in_beat_idx <= 0;
@@ -85,7 +86,7 @@ begin
                 if (RDATA_VALID = '1' AND sig_rdbuff_almost_full = '0') then
                     sig_RDBuff(sig_inIdx)(sig_in_beat_idx * 32 + 31 downto sig_in_beat_idx * 32) <= RDATA;
                     sig_in_beat_idx <= sig_in_beat_idx + 1;
-                    if (sig_in_beat_idx = 16) then
+                    if (sig_in_beat_idx = 15) then
                         sig_in_beat_idx <= 0;
                         sig_inCnt <= sig_inCnt + 1;
                         sig_inIdx <= to_integer(unsigned(std_logic_vector(to_unsigned(sig_inCnt,32)) AND x"0000_00FF"));
@@ -98,7 +99,7 @@ begin
     process (CLK) is
     begin
         if (rising_edge(CLK)) then
-            if (RDBUFF_G_START = '0') then
+            if (RDBUFF_STREAM_START = '0') then
                 sig_outCnt <= 0;
                 sig_outIdx <= 0;
                 sig_out_beat_idx <= 0;
@@ -107,7 +108,7 @@ begin
                     sig_outdata <= sig_RDBuff(sig_outIdx)(sig_out_beat_idx * 32 + 31 downto sig_out_beat_idx * 32);
                     sig_outvalid <= '1';
                     sig_out_beat_idx <= sig_out_beat_idx + 1;
-                    if (sig_out_beat_idx = 16) then
+                    if (sig_out_beat_idx = 15) then
                         sig_out_beat_idx <= 0;
                         sig_outCnt <= sig_outCnt + 1;
                         sig_outIdx <= to_integer(unsigned(std_logic_vector(to_unsigned(sig_outCnt, 32)) AND x"0000_00FF"));
@@ -122,7 +123,7 @@ begin
     process (CLK) is
     begin
         if (rising_edge(CLK)) then
-            if (RDBUFF_G_START = '0') then
+            if (RDBUFF_STREAM_START = '0') then
                 sig_rdbuff_almost_full <= '0';
                 sig_rdbuff_empty <= '0';
             else

@@ -26,10 +26,11 @@ entity odev_v1_0_M00_AXI is
 		-- Users to add ports here
 		-- M_TRIG_MEM_CPY : in std_logic;
 		-- Initiate AXI transactions
-		M_G_START	: in std_logic;
-		M_G_PULSE : in std_logic;
+--		M_G_START	: in std_logic;
+--		M_G_PULSE : in std_logic;
+		M_STREAM_START: in std_logic;
         M_SRC_ADDR : in std_logic_vector(C_M_AXI_ADDR_WIDTH-1 downto 0);
-        M_SRC_LEN : in std_logic_vector(C_M_AXI_ADDR_WIDTH-1 downto 0);
+        M_SRC_LEN : in std_logic_vector(15 downto 0);
 		M_ITAB_OUT_VALID: in std_logic;
         M_ITAB_OUT_TRANS_REQ : out std_logic;
         M_ITAB_EMPTY : in std_logic;
@@ -185,7 +186,7 @@ architecture implementation of odev_v1_0_M00_AXI is
 	-- inferred BRAM memory
 	signal sig_itab_out_trans_req: std_logic; 
 	signal sig_src_addr: std_logic_vector(31 downto 0);
-	signal sig_src_len: std_logic_vector(31 downto 0); 
+	signal sig_src_len: std_logic_vector(15 downto 0); 
     signal sig_itab_empty: std_logic;
     signal sig_intr_trig: std_logic;
     signal sig_rdata: std_logic_vector(31 downto 0);
@@ -193,18 +194,21 @@ architecture implementation of odev_v1_0_M00_AXI is
     signal rdata_done_len: integer;
     
 	attribute MARK_DEBUG : string;
-	attribute MARK_DEBUG of dma_state: signal is "TRUE";
---	attribute MARK_DEBUG of axi_araddr: signal is "TRUE";
+--	attribute MARK_DEBUG of dma_state: signal is "TRUE";
+	attribute MARK_DEBUG of axi_araddr: signal is "TRUE";
 --	attribute MARK_DEBUG of burst_read_active: signal is "TRUE";
 	attribute MARK_DEBUG of sig_rdata: signal is "TRUE";
 --	attribute MARK_DEBUG of axi_arvalid: signal is "TRUE";
 --	attribute MARK_DEBUG of M_AXI_ARREADY: signal is "TRUE";
 --	attribute MARK_DEBUG of M_AXI_RVALID: signal is "TRUE";
 --	attribute MARK_DEBUG of axi_rready: signal is "TRUE";
-	attribute MARK_DEBUG of sig_rdata_valid: signal is "TRUE";
-	attribute MARK_DEBUG of M_AXI_RDATA: signal is "TRUE";
+--	attribute MARK_DEBUG of sig_rdata_valid: signal is "TRUE";
+--	attribute MARK_DEBUG of M_AXI_RDATA: signal is "TRUE";
     attribute MARK_DEBUG of rnext: signal is "TRUE";
 --    attribute MARK_DEBUG of M_AXI_RLAST: signal is "TRUE";
+--    attribute MARK_DEBUG of sig_src_len: signal is "TRUE";
+--    attribute MARK_DEBUG of rdata_done_len: signal is "TRUE";
+    
 begin
 	-- I/O Connections assignments
 	--I/O Connections. Write Address (AW)
@@ -261,7 +265,7 @@ begin
 	   variable rep: integer;										  
 	  begin                                                              
 	    if (rising_edge (M_AXI_ACLK)) then                               
-			if (M_G_START = '0' OR M_G_PULSE = '1') then                                 
+			if (M_STREAM_START = '0') then                                 
 	        axi_arvalid <= '0'; 
 	        axi_araddr <= (others => '0');
 	        rep := 0;                                         
@@ -273,7 +277,8 @@ begin
 			  rep := rep + 1;                                      
 	        elsif (M_AXI_ARREADY = '1' and axi_arvalid = '1') then       
 	          axi_arvalid <= '0'; 
-	          axi_araddr <= axi_araddr;                                       
+	          axi_araddr <= axi_araddr; 
+	          rep := 0;                                      
 	        end if;                                                      
 	      end if;                                                        
 	    end if;                                                          
@@ -291,7 +296,7 @@ begin
 	process(M_AXI_ACLK)                                                   
 	begin                                                                 
 		if (rising_edge (M_AXI_ACLK)) then                                  
-			if (M_G_START = '0' OR M_G_PULSE = '1' OR start_single_burst_read = '1') then    
+			if (M_STREAM_START = '0' OR start_single_burst_read = '1') then    
 				sig_rdata <= (others => '0');
 				sig_rdata_valid <= '0';
 			else
@@ -315,7 +320,7 @@ begin
 	process(M_AXI_ACLK)                                                   
 	begin                                                                 
 		if (rising_edge (M_AXI_ACLK)) then                                  
-			if (M_G_START = '0' OR M_G_PULSE = '1') then             
+			if (M_STREAM_START = '0') then             
 				axi_rready <= '0';                                              
 			-- accept/acknowledge rdata/rresp with axi_rready by the master    
 			-- when M_AXI_RVALID is asserted by slave                         
@@ -342,7 +347,7 @@ begin
 	                                                                 
 	begin                                                                                                      
 		if (rising_edge (M_AXI_ACLK)) then                                                                       
-			if (M_G_START = '0' AND M_G_PULSE = '0') then                                                                         
+			if (M_STREAM_START = '0') then                                                                         
 			-- reset condition                                                                                   
 			-- All the signals are ed default values under reset condition                                       
 				dma_state     <= IDLE;                                                                   
@@ -355,7 +360,7 @@ begin
 				when IDLE =>                                                                              
 				-- This state is responsible to initiate                               
 				-- AXI transaction when init_txn_pulse is asserted 
-					if ( M_G_START = '1' AND M_G_PULSE = '1') then       
+					if (M_STREAM_START = '1') then       
 						dma_state  <= ITAB_READ;                                                        
 					else                                                                                                                                                               
 						start_single_burst_read  <= '0';
@@ -365,13 +370,14 @@ begin
 					end if;     
 	           
 				when ITAB_READ =>  
-					if (M_G_START = '0' OR M_G_PULSE = '1') then
+					if (M_STREAM_START = '0') then
 						dma_state <= IDLE;
 					elsif (M_ITAB_EMPTY = '1') then
 						-- ITAB underflow. Fire interrupt and fall back to IDLE.
 						if (sig_dma_irq = '0') then
 						  --sig_dma_irq <= '1';
 						end if;
+						sig_itab_out_trans_req <= '1';
 						dma_state <= ITAB_READ;
 					-- second M_G_PULSE means "STOP"
 					else 
@@ -381,7 +387,7 @@ begin
 	               
 				when ITAB_READ_CHK =>
 					-- second M_G_PULSE means "STOP"
-					if (M_G_START = '0' OR M_G_PULSE = '1') then
+					if (M_STREAM_START = '0') then
 						dma_state <= IDLE;
 					elsif (M_ITAB_OUT_VALID = '1') then
 						sig_src_addr <= M_SRC_ADDR;
@@ -396,7 +402,7 @@ begin
 	               
 				when MEM_READ =>                                                                                
 					-- second M_G_PULSE means "STOP"
-					if (M_G_START = '0' OR M_G_PULSE = '1') then
+					if (M_STREAM_START = '0') then
 						dma_state <= IDLE;                                                             
 					-- This state is responsible to issue start_single_read pulse to                               
 					-- initiate a memory read transaction. Read transactions will be                                      
@@ -431,7 +437,7 @@ begin
 	process(M_AXI_ACLK)                                                                                        
 	begin                                                                                                      
 		if (rising_edge (M_AXI_ACLK)) then                                                                       
-			if (M_G_START = '0' OR M_G_PULSE = '1') then                                                                         
+			if (M_STREAM_START = '0') then                                                                         
 				burst_read_active <= '0';                                                                            
 			--The burst_write_active is asserted when a write burst transaction is initiated                      
 			else                                                                                                   
