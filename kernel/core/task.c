@@ -308,26 +308,25 @@ uint32_t cfs_worker4(void)
 
 	psrc = (uint8_t *)O_STREAM_START;
 
-	for (i = 0; i < O_STREAM_STEP * 100; i++) {
+	for (i = 0; i < O_STREAM_STEP; i++) {
 		psrc[i] = (uint8_t)((i + 1) % 256);
 	}
 
-
+	// To avoid underflow, prepare initial data first
 	start_odev();
 	for (i = 0; i < 100; i++) {
+		((uint32_t *)((uint32_t)psrc + O_STREAM_STEP * i))[0] = i;
 		put_to_itab(O_STREAM_START + O_STREAM_STEP * i, O_STREAM_STEP);
 	}
 
 	start_odev_stream();
 
 	i = j = 0;
-	for (;;) {
+	for (i = 100; i < 0x10000; i++) {
+		((uint32_t *)((uint32_t)psrc + O_STREAM_STEP * i))[0] = i;
 		put_to_itab(O_STREAM_START + O_STREAM_STEP * i, O_STREAM_STEP);
 
-		i++;
-		if (i == 100) 
-			i = 0;
-		/* spin a while */
+		/* spin for a while */
 		while (j < 100) 
 			j++;
 		j = 0;
