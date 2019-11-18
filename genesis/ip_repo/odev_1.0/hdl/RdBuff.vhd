@@ -67,6 +67,9 @@ architecture Behavioral of RdBuff is
 	attribute MARK_DEBUG of sig_outCnt: signal is "TRUE"; 
 	attribute MARK_DEBUG of RDATA_VALID: signal is "TRUE"; 
 	attribute MARK_DEBUG of sig_in_beat_idx: signal is "TRUE";
+	attribute MARK_DEBUG of OUTVALID: signal is "TRUE";
+	attribute MARK_DEBUG of OUTREQ: signal is "TRUE";
+	attribute MARK_DEBUG of OUTDATA: signal is "TRUE";
 
 begin
 
@@ -111,10 +114,11 @@ begin
                     if (sig_out_beat_idx = 15) then
                         sig_out_beat_idx <= 0;
                         sig_outCnt <= sig_outCnt + 1;
-                        sig_outIdx <= to_integer(unsigned(std_logic_vector(to_unsigned(sig_outCnt, 32)) AND x"0000_00FF"));
+                        sig_outIdx <= to_integer(unsigned(std_logic_vector(to_unsigned(sig_outCnt + 1, 32)) AND x"0000_00FF"));
                     end if;
                 else 
                     sig_outvalid <= '0';
+                    sig_outdata <= (others => '0');
                 end if;
             end if;
         end if;        

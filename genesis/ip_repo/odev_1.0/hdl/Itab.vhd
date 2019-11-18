@@ -42,6 +42,7 @@ port (
     SRC_ADDR_IN: in std_logic_vector (31 downto 0);
     SRC_LEN_IN: in std_logic_vector (15 downto 0);
     ITAB_IN_TRANS_VALID: in std_logic;
+    ITAB_IN_TRANS_DONE: out std_logic;
     SRC_ADDR_OUT: out std_logic_vector (31 downto 0);
     SRC_LEN_OUT: out std_logic_vector(15 downto 0);
     ITAB_OUT_TRANS_REQ: in std_logic;
@@ -65,20 +66,21 @@ architecture Behavioral of Itab is
 	signal sig_itab_out_valid: std_logic;
 --	signal sig_mem_i: std_logic_vector (31 downto 0);
     signal sig_mem_o: std_logic_vector (31 downto 0);
+    signal sig_itab_in_trans_done: std_logic;
     
 	attribute MARK_DEBUG: string;
 	--attribute MARK_DEBUG of ITAB_G_START : signal is "TRUE";
-	attribute MARK_DEBUG of ITAB_IN_TRANS_VALID : signal is "TRUE";
-	attribute MARK_DEBUG of SRC_ADDR_IN : signal is "TRUE";
+--	attribute MARK_DEBUG of ITAB_IN_TRANS_VALID : signal is "TRUE";
+--	attribute MARK_DEBUG of SRC_ADDR_IN : signal is "TRUE";
 	attribute MARK_DEBUG of in_count : signal is "TRUE";
 	attribute MARK_DEBUG of out_count : signal is "TRUE";
-	attribute MARK_DEBUG of sig_src_addr_out: signal is "TRUE";
+--	attribute MARK_DEBUG of sig_src_addr_out: signal is "TRUE";
 --	attribute MARK_DEBUG of sig_itab_out_valid : signal is "TRUE";
 --	attribute MARK_DEBUG of ITAB_OUT_TRANS_REQ : signal is "TRUE";
-    attribute MARK_DEBUG of sig_itab_full: signal is "TRUE";
-	attribute MARK_DEBUG of out_pos : signal is "TRUE";
-	attribute MARK_DEBUG of in_pos : signal is "TRUE";
-	attribute MARK_DEBUG of sig_mem_o : signal is "TRUE";
+--    attribute MARK_DEBUG of sig_itab_full: signal is "TRUE";
+--	attribute MARK_DEBUG of out_pos : signal is "TRUE";
+--	attribute MARK_DEBUG of in_pos : signal is "TRUE";
+--	attribute MARK_DEBUG of sig_mem_o : signal is "TRUE";
 begin
     
     SRC_ADDR_OUT <= sig_src_addr_out;
@@ -86,6 +88,7 @@ begin
     ITAB_FULL <= sig_itab_full;
     ITAB_EMPTY <= sig_itab_empty;
 	ITAB_OUT_VALID <= sig_itab_out_valid;
+	ITAB_IN_TRANS_DONE <= sig_itab_in_trans_done;
     
     process (clk)
     begin
@@ -103,7 +106,7 @@ begin
 					sig_itab_out_valid <= '1';
 					out_count <= out_count + 1;
 					out_pos <= to_integer(unsigned(std_logic_vector(to_unsigned(out_count + 1, 32)) AND x"0000_01FF"));
-					sig_mem_o <= ItabMem(0)(47 downto 16);
+--					sig_mem_o <= ItabMem(0)(47 downto 16);
 				end if;
             else
                 sig_src_addr_out <= (others => '0');
@@ -119,6 +122,7 @@ begin
             if (ITAB_G_START = '0') then
                 in_count <= 0;
                 in_pos <= 0;
+                sig_itab_in_trans_done <= '0';
             elsif (ITAB_IN_TRANS_VALID = '1' AND sig_itab_full = '0') then
                 -- do not overwrite prev
                 if (in_count - out_count < Itab_entries) then 
@@ -126,31 +130,16 @@ begin
                     ItabMem(in_pos)(15 downto 0) <= SRC_LEN_IN;
                     in_count <= in_count + 1;
                     in_pos <= to_integer(unsigned(std_logic_vector(to_unsigned(in_count + 1,32)) AND x"0000_01FF"));
---                    sig_mem_i <= ItabMem(0)(47 downto 16);
+                    sig_itab_in_trans_done <= '1';
+                else 
+                    sig_itab_in_trans_done <= '0';
                 end if;
             else
---                in_pos <= to_integer(unsigned(std_logic_vector(to_unsigned(in_count,32)) AND x"0000_01FF"));
---                sig_mem_i <= ItabMem(0)(47 downto 16);
+                sig_itab_in_trans_done <= '0';
             end if;
         end if;
     end process;
-    
---    process (clk)
---    begin
---        if (rising_edge(clk)) then
---            if (rst = '1') then
---                in_pos <= 0;
---            elsif (S_IN_TRANS_VALID = '1') then
---                if (in_pos + 1 > Itab_entries) then
---                    in_pos <= 0;
---                else
---                    in_pos <= in_pos + 1;
---                end if;                
---            end if;
---        end if;    
---    end process;
-    
-    --
+
     process (clk)
         variable cur_count: integer;
     begin

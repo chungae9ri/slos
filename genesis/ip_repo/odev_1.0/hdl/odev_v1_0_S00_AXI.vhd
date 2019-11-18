@@ -23,6 +23,7 @@ entity odev_v1_0_S00_AXI is
 		S_SRC_LEN : out std_logic_vector(C_S_AXI_DATA_WIDTH-1 downto 0);
         S_ITAB_FULL : in std_logic;
         S_IN_TRANS_VALID: out std_logic;
+        S_IN_TRANS_DONE: in std_logic;
 		-- User ports ends
 		-- Do not modify the ports beyond this line
 
@@ -136,7 +137,7 @@ architecture arch_imp of odev_v1_0_S00_AXI is
     signal sig_in_trans_valid: std_logic;
     signal sig_before: std_logic;
     signal sig_after: std_logic;
-	type AXIS_STATE is (IDLE, WARMINGUP, RECEIVING, WRITING, CLOSING, FULL, EMPTY);
+	type AXIS_STATE is (IDLE, WARMINGUP, RECEIVING, WRITING, DONE_WRITING, CLOSING, FULL, EMPTY);
 	signal slave_state : AXIS_STATE;
 	signal sig_stream_start: std_logic;
 	-- Control register bit mask  
@@ -539,11 +540,11 @@ begin
 								sig_src_addr <= reg_addr;
 								sig_src_len <= reg_len;
 								sig_in_trans_valid <= '1';
-								reg_status(STAT_TRANS_DONE_BIT) <= '1';
+								reg_status(STAT_TRANS_DONE_BIT) <= '0';
 								slave_state <= WRITING;
 							else 
-								sig_in_trans_valid <= '0'; 
-								reg_status(STAT_TRANS_DONE_BIT) <= '0';    
+--								sig_in_trans_valid <= '0'; 
+--								reg_status(STAT_TRANS_DONE_BIT) <= '1';    
 								slave_state <= RECEIVING; 
 							end if;
 						else 
@@ -558,12 +559,14 @@ begin
 					when WRITING =>
 						if (reg_ctrl(CTRL_GBL_START_BIT) = '1') then
 							-- pulse sig_in_trans_valid to input one entry to Itab
-							if (reg_ctrl(CTRL_IN_TRANS_BIT) = '1') then
+--							if (reg_ctrl(CTRL_IN_TRANS_BIT) = '1') then
+                            if (S_IN_TRANS_DONE = '0') then
 								sig_in_trans_valid <= '0';
+								reg_status(STAT_TRANS_DONE_BIT) <= '0';
 								slave_state <= WRITING;
-							else 
-								sig_in_trans_valid <= '0';
-								slave_state <= RECEIVING;                                         
+							else
+							    reg_status(STAT_TRANS_DONE_BIT) <= '1';
+								slave_state <= DONE_WRITING;
 							end if;
 						else 
 							sig_trig_g_start <= '0';
@@ -573,7 +576,27 @@ begin
 							-- generate closing pulse
 							slave_state <= CLOSING;						
 						end if;
-
+					
+					when DONE_WRITING =>
+                        if (reg_ctrl(CTRL_GBL_START_BIT) = '1') then
+                            if (reg_ctrl(CTRL_IN_TRANS_BIT) = '1') then 
+                                sig_in_trans_valid <= '0';
+                                reg_status(STAT_TRANS_DONE_BIT) <= '1';
+                                slave_state <= DONE_WRITING;
+                            else
+                                sig_in_trans_valid <= '0';
+                                reg_status(STAT_TRANS_DONE_BIT) <= '1';
+                                slave_state <= RECEIVING;
+                            end if;
+                        else 
+                            sig_trig_g_start <= '0';
+                            sig_in_trans_valid <= '0';
+                            sig_before <= '0';
+                            sig_after <= sig_before;
+                            -- generate closing pulse
+                            slave_state <= CLOSING;	
+                        end if;
+						
 					when CLOSING =>
 						sig_before <= '0';
 						sig_after <= sig_before;

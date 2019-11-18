@@ -116,6 +116,7 @@ architecture arch_imp of odev_v1_0 is
     signal sig_g_pulse: std_logic; -- global start / stop pulse
 	signal sig_itab_out_valid: std_logic;
 	signal sig_stream_start: std_logic;
+	signal sig_itab_in_trans_done: std_logic;
 	
 	attribute MARK_DEBUG : string;
 	attribute MARK_DEBUG of sig_in_trans_valid : signal is "TRUE";
@@ -134,6 +135,7 @@ architecture arch_imp of odev_v1_0 is
 		S_SRC_LEN : out std_logic_vector(C_S_AXI_DATA_WIDTH-1 downto 0);
 		S_ITAB_FULL : in std_logic;
 		S_IN_TRANS_VALID: out std_logic;
+		S_IN_TRANS_DONE: in std_logic;
 		-------------------------------------------
 		S_AXI_ACLK	: in std_logic;
 		S_AXI_ARESETN	: in std_logic;
@@ -233,6 +235,7 @@ architecture arch_imp of odev_v1_0 is
             SRC_ADDR_IN: in std_logic_vector (31 downto 0);
             SRC_LEN_IN: in std_logic_vector (15 downto 0);
             ITAB_IN_TRANS_VALID: in std_logic;
+            ITAB_IN_TRANS_DONE: out std_logic;
             SRC_ADDR_OUT: out std_logic_vector (31 downto 0);
             SRC_LEN_OUT: out std_logic_vector(15 downto 0);
             ITAB_OUT_TRANS_REQ: in std_logic;
@@ -283,6 +286,7 @@ odev_v1_0_S00_AXI_inst : odev_v1_0_S00_AXI
 	    S_SRC_LEN => sig_src_len,
 	    S_ITAB_FULL => sig_itab_full,
 	    S_IN_TRANS_VALID => sig_in_trans_valid,
+	    S_IN_TRANS_DONE => sig_itab_in_trans_done,
 	    -----------------------------
 		S_AXI_ACLK	=> s00_axi_aclk,
 		S_AXI_ARESETN	=> s00_axi_aresetn,
@@ -384,6 +388,7 @@ odev_v1_0_M00_AXI_inst : odev_v1_0_M00_AXI
         SRC_ADDR_IN => sig_src_addr,
         SRC_LEN_IN => sig_src_len (15 downto 0),
         ITAB_IN_TRANS_VALID => sig_in_trans_valid,
+        ITAB_IN_TRANS_DONE => sig_itab_in_trans_done,
         SRC_ADDR_OUT => sig_itab_src_addr,
         SRC_LEN_OUT => sig_itab_src_len,
         ITAB_OUT_TRANS_REQ => sig_itab_out_trans_req,

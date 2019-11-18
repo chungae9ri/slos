@@ -45,6 +45,11 @@ end DataConsumer;
 architecture Behavioral of DataConsumer is
     signal sig_data: std_logic_vector(31 downto 0);
     signal sig_data_req: std_logic;
+    
+    attribute MARK_DEBUG: string;
+    attribute MARK_DEBUG of DATA_IN: signal is "TRUE";
+    attribute MARK_DEBUG of DATA_VALID: signal is "TRUE";
+    attribute MARK_DEBUG of DATA_REQ: signal is "TRUE";
 begin
     DATA_REQ <= sig_data_req;
     
@@ -53,7 +58,7 @@ begin
         if (rising_edge(CLK)) then
             if (DATA_STREAM_START = '0') then
                 sig_data <= (others => '0');
-            elsif (sig_data_req = '1' AND DATA_VALID = '1') then
+            elsif (DATA_VALID = '1') then
                 sig_data <= DATA_IN;
             else
                 sig_data <= (others => '0');
@@ -69,13 +74,15 @@ begin
                 sig_data_req <= '0';
                 interval := 0;
             else
-                if (interval = 1000) then
+                if (interval >= 1000 AND interval <= 1015) then
                     sig_data_req <= '1';
-					if (DATA_VALID = '1') then
-						sig_data_req <= '0';
-						interval := 0;
-					end if;
+                    if (interval = 1015) then
+                        interval := 0;
+                    else
+                        interval := interval + 1;
+                    end if;
 				else
+				    sig_data_req <= '0';
 					interval := interval + 1;
                 end if;
             end if;

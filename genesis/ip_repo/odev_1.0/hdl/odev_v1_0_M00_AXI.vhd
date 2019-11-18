@@ -343,8 +343,7 @@ begin
 	M_RDATA <= sig_rdata;
 	M_RDATA_VALID <= sig_rdata_valid;
 	                                                                               
-	process(M_AXI_ACLK)        
-	                                                                 
+	process(M_AXI_ACLK)                                                             
 	begin                                                                                                      
 		if (rising_edge (M_AXI_ACLK)) then                                                                       
 			if (M_STREAM_START = '0') then                                                                         
