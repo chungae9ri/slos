@@ -66,7 +66,7 @@ architecture Behavioral of RdBuff is
 	attribute MARK_DEBUG of sig_inCnt: signal is "TRUE";
 	attribute MARK_DEBUG of sig_outCnt: signal is "TRUE"; 
 	attribute MARK_DEBUG of RDATA_VALID: signal is "TRUE"; 
-	attribute MARK_DEBUG of sig_in_beat_idx: signal is "TRUE";
+	attribute MARK_DEBUG of sig_rdbuff_almost_full: signal is "TRUE";
 	attribute MARK_DEBUG of OUTVALID: signal is "TRUE";
 	attribute MARK_DEBUG of OUTREQ: signal is "TRUE";
 	attribute MARK_DEBUG of OUTDATA: signal is "TRUE";
@@ -86,7 +86,7 @@ begin
                 sig_inIdx <= 0;
                 sig_in_beat_idx <= 0;
             else 
-                if (RDATA_VALID = '1' AND sig_rdbuff_almost_full = '0') then
+                if (RDATA_VALID = '1') then
                     sig_RDBuff(sig_inIdx)(sig_in_beat_idx * 32 + 31 downto sig_in_beat_idx * 32) <= RDATA;
                     sig_in_beat_idx <= sig_in_beat_idx + 1;
                     if (sig_in_beat_idx = 15) then
@@ -135,9 +135,9 @@ begin
                     sig_rdbuff_almost_full <= '0';
                 elsif (sig_inCnt = sig_outCnt + 200) then
                     sig_rdbuff_almost_full <= '1';
-				elsif (sig_inCnt = sig_outCnt) then
+				elsif (OUTREQ = '1' AND sig_inCnt = sig_outCnt + 1) then
 					sig_rdbuff_empty <= '1';
-                else
+                else  
                     sig_rdbuff_empty <= '0';
                     sig_rdbuff_almost_full <= '0';
                 end if;

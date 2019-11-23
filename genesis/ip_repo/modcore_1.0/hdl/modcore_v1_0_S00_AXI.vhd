@@ -477,9 +477,9 @@ begin
 	if (rising_edge(S_AXI_ACLK)) then
 	  if (S_AXI_ARESETN = '0') then
 	    sig_trig_mem_cpy <= '0';
-	    sig_s_src_addr <= x"0000_0000";
-        sig_s_src_len <= x"0000_0000";
-        sig_s_tgt_addr <= x"0000_0000";
+	    sig_s_src_addr <= (others => '0');
+        sig_s_src_len <= (others => '0');
+        sig_s_tgt_addr <= (others => '0');
         sig_intr_done <= '0';
 	  else
 	    if ((unsigned(slv_reg0) and x"0000_0001") = x"0000_0001")  then
@@ -489,9 +489,9 @@ begin
 	       sig_s_tgt_addr <= slv_reg4;
 	    else
 	       sig_trig_mem_cpy <= '0';
-	       sig_s_src_addr <= x"0000_0000";
-           sig_s_src_len <= x"0000_0000";
-           sig_s_tgt_addr <= x"0000_0000";
+	       sig_s_src_addr <= (others => '0');
+           sig_s_src_len <= (others => '0');
+           sig_s_tgt_addr <= (others => '0');
 	    end if;
 	    
 	    if ((unsigned(slv_reg0) and x"0000_0002")= x"0000_0002") then

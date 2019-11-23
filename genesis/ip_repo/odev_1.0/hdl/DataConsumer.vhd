@@ -21,6 +21,7 @@
 
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
+use ieee.numeric_std.all;
 
 -- Uncomment the following library declaration if using
 -- arithmetic functions with Signed or Unsigned values
@@ -38,7 +39,9 @@ entity DataConsumer is
         DATA_STREAM_START: in std_logic;
         DATA_IN: in std_logic_vector(31 downto 0);
         DATA_VALID: in std_logic;
-        DATA_REQ: out std_logic
+        DATA_REQ: out std_logic;
+        DATA_CONSUME_LATENCY: in std_logic_vector(31 downto 0);
+        DATA_CONSUMER_START: in std_logic
     );
 end DataConsumer;
 
@@ -56,7 +59,7 @@ begin
     process (CLK) is
     begin
         if (rising_edge(CLK)) then
-            if (DATA_STREAM_START = '0') then
+            if (DATA_CONSUMER_START = '0') then
                 sig_data <= (others => '0');
             elsif (DATA_VALID = '1') then
                 sig_data <= DATA_IN;
@@ -70,13 +73,13 @@ begin
         variable interval: integer := 0;
     begin
         if (rising_edge(CLK)) then
-            if (DATA_STREAM_START = '0') then
+            if (DATA_CONSUMER_START = '0') then
                 sig_data_req <= '0';
                 interval := 0;
             else
-                if (interval >= 1000 AND interval <= 1015) then
+                if (interval >= to_integer(unsigned(DATA_CONSUME_LATENCY)) AND interval <= to_integer(unsigned(DATA_CONSUME_LATENCY)) + 15) then
                     sig_data_req <= '1';
-                    if (interval = 1015) then
+                    if (interval = to_integer(unsigned(DATA_CONSUME_LATENCY)) + 15) then
                         interval := 0;
                     else
                         interval := interval + 1;

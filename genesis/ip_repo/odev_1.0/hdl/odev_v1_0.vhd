@@ -101,11 +101,11 @@ architecture arch_imp of odev_v1_0 is
 	signal sig_src_len : std_logic_vector(C_M00_AXI_ADDR_WIDTH-1 downto 0);
 	signal sig_in_trans_valid: std_logic;
 	signal sig_itab_out_trans_req: std_logic;
-	signal sig_itab_src_addr: std_logic_vector (31 downto 0);
+	signal sig_itab_src_addr: std_logic_vector(C_M00_AXI_ADDR_WIDTH-1 downto 0);
 	signal sig_itab_src_len: std_logic_vector (15 downto 0);
 	signal sig_Itab_full: std_logic;
-	signal sig_Itab_empty: std_logic;
-	signal sig_intr_trig: std_logic;
+	signal sig_itab_empty: std_logic;
+--	signal sig_intr: std_logic;
 	signal sig_rdata: std_logic_vector(31 downto 0);
 	signal sig_rdbuff_almost_full: std_logic;
 	signal sig_rdbuff_empty: std_logic;
@@ -117,9 +117,16 @@ architecture arch_imp of odev_v1_0 is
 	signal sig_itab_out_valid: std_logic;
 	signal sig_stream_start: std_logic;
 	signal sig_itab_in_trans_done: std_logic;
+	signal sig_consume_latency: std_logic_vector(C_M00_AXI_ADDR_WIDTH-1 downto 0);
+	signal sig_intr_done: std_logic;
+	signal sig_dma_irq: std_logic;
+	signal sig_consumer_start: std_logic;
 	
 	attribute MARK_DEBUG : string;
 	attribute MARK_DEBUG of sig_in_trans_valid : signal is "TRUE";
+	attribute MARK_DEBUG of sig_dma_irq : signal is "TRUE";
+	attribute MARK_DEBUG of sig_itab_empty: signal is "TRUE";
+	attribute MARK_DEBUG of sig_rdbuff_empty: signal is "TRUE";
 	
 	-- component declaration
 	component odev_v1_0_S00_AXI is
@@ -136,6 +143,12 @@ architecture arch_imp of odev_v1_0 is
 		S_ITAB_FULL : in std_logic;
 		S_IN_TRANS_VALID: out std_logic;
 		S_IN_TRANS_DONE: in std_logic;
+		S_CONSUME_LATENCY: out std_logic_vector(C_S_AXI_DATA_WIDTH-1 downto 0);
+		S_INTR_DONE: out std_logic;
+		S_ITAB_EMPTY: in std_logic;
+		S_RDBUFF_ALMOST_FULL: in std_logic;
+        S_RDBUFF_EMPTY: in std_logic;
+        S_CONSUMER_START: out std_logic;
 		-------------------------------------------
 		S_AXI_ACLK	: in std_logic;
 		S_AXI_ARESETN	: in std_logic;
@@ -178,11 +191,9 @@ architecture arch_imp of odev_v1_0 is
 		M_ITAB_OUT_VALID: in std_logic;
 		M_ITAB_OUT_TRANS_REQ : out std_logic;
 		M_ITAB_EMPTY : in std_logic;
-		M_INTR_TRIG : out std_logic;
 		M_RDATA: out std_logic_vector(31 downto 0);
         M_RDATA_VALID: out std_logic;
         M_RDBUFF_AL_FULL: in std_logic;
-        M_RDBUFF_EMPTY: in std_logic;
 		M_AXI_ACLK	: in std_logic;
 		M_AXI_ARESETN	: in std_logic;
 		M_AXI_AWID	: out std_logic_vector(C_M_AXI_ID_WIDTH-1 downto 0);
@@ -267,7 +278,9 @@ architecture arch_imp of odev_v1_0 is
         DATA_STREAM_START: in std_logic;
         DATA_IN: in std_logic_vector(31 downto 0);
         DATA_VALID: in std_logic;
-        DATA_REQ: out std_logic
+        DATA_REQ: out std_logic;
+        DATA_CONSUME_LATENCY: in std_logic_vector(31 downto 0);
+        DATA_CONSUMER_START: in std_logic
     );
     end component DataConsumer;
 begin
@@ -287,6 +300,12 @@ odev_v1_0_S00_AXI_inst : odev_v1_0_S00_AXI
 	    S_ITAB_FULL => sig_itab_full,
 	    S_IN_TRANS_VALID => sig_in_trans_valid,
 	    S_IN_TRANS_DONE => sig_itab_in_trans_done,
+	    S_CONSUME_LATENCY => sig_consume_latency,
+	    S_INTR_DONE => sig_intr_done,
+	    S_ITAB_EMPTY => sig_itab_empty,
+	    S_RDBUFF_ALMOST_FULL => sig_rdbuff_almost_full,
+        S_RDBUFF_EMPTY => sig_rdbuff_empty,
+        S_CONSUMER_START => sig_consumer_start,
 	    -----------------------------
 		S_AXI_ACLK	=> s00_axi_aclk,
 		S_AXI_ARESETN	=> s00_axi_aresetn,
@@ -328,12 +347,10 @@ odev_v1_0_M00_AXI_inst : odev_v1_0_M00_AXI
 		M_SRC_LEN => sig_itab_src_len,
 		M_ITAB_OUT_VALID => sig_itab_out_valid,
 		M_ITAB_OUT_TRANS_REQ => sig_itab_out_trans_req,
-		M_ITAB_EMPTY => sig_Itab_empty,
-		M_INTR_TRIG => sig_intr_trig,
+		M_ITAB_EMPTY => sig_itab_empty,
 		M_RDATA => sig_rdata,
         M_RDATA_VALID => sig_rdata_valid,
         M_RDBUFF_AL_FULL => sig_rdbuff_almost_full,
-        M_RDBUFF_EMPTY => sig_rdbuff_empty,
 		M_AXI_ACLK	=> m00_axi_aclk,
 		M_AXI_ARESETN	=> m00_axi_aresetn,
 		M_AXI_AWID	=> m00_axi_awid,
@@ -376,8 +393,7 @@ odev_v1_0_M00_AXI_inst : odev_v1_0_M00_AXI
 	);
 
 	-- Add user logic here
-	SW_DMA_IRQ <= sig_intr_trig;
-	
+
     Itab_inst: Itab
     generic map(
         Itab_entries => 512    
@@ -393,7 +409,7 @@ odev_v1_0_M00_AXI_inst : odev_v1_0_M00_AXI
         SRC_LEN_OUT => sig_itab_src_len,
         ITAB_OUT_TRANS_REQ => sig_itab_out_trans_req,
         ITAB_FULL => sig_Itab_full,
-        ITAB_EMPTY => sig_Itab_empty,
+        ITAB_EMPTY => sig_itab_empty,
 		ITAB_OUT_VALID => sig_itab_out_valid
     );
     
@@ -418,8 +434,32 @@ odev_v1_0_M00_AXI_inst : odev_v1_0_M00_AXI
         DATA_STREAM_START => sig_stream_start,
         DATA_IN => sig_outdata,
         DATA_VALID => sig_outvalid,
-        DATA_REQ => sig_outreq
+        DATA_REQ => sig_outreq,
+        DATA_CONSUME_LATENCY => sig_consume_latency,
+        DATA_CONSUMER_START => sig_consumer_start
     );
+    
+    SW_DMA_IRQ <= sig_dma_irq;
+    process (s00_axi_aclk)
+    begin
+        if (rising_edge(s00_axi_aclk)) then
+            if (sig_stream_start = '1' AND sig_consumer_start = '1') then
+                if (sig_itab_empty = '1' OR sig_rdbuff_empty = '1') then
+                    if (sig_dma_irq = '0') then 
+                        sig_dma_irq <= '1';
+                    elsif (sig_intr_done = '1') then
+                        sig_dma_irq <= '0';
+                    else
+                        sig_dma_irq <= sig_dma_irq;
+                    end if;
+                else 
+                    sig_dma_irq <= '0';
+                end if;
+            else
+                sig_dma_irq <= '0';
+            end if;
+        end if;
+    end process;
 	-- User logic ends
 
 end arch_imp;

@@ -24,6 +24,12 @@ entity odev_v1_0_S00_AXI is
         S_ITAB_FULL : in std_logic;
         S_IN_TRANS_VALID: out std_logic;
         S_IN_TRANS_DONE: in std_logic;
+        S_CONSUME_LATENCY: out std_logic_vector(C_S_AXI_DATA_WIDTH-1 downto 0);
+        S_INTR_DONE: out std_logic;
+        S_ITAB_EMPTY: in std_logic;
+        S_RDBUFF_ALMOST_FULL: in std_logic;
+        S_RDBUFF_EMPTY: in std_logic;
+        S_CONSUMER_START: out std_logic;
 		-- User ports ends
 		-- Do not modify the ports beyond this line
 
@@ -119,7 +125,7 @@ architecture arch_imp of odev_v1_0_S00_AXI is
 	signal reg_status	:std_logic_vector(C_S_AXI_DATA_WIDTH-1 downto 0);
 	signal reg_addr	:std_logic_vector(C_S_AXI_DATA_WIDTH-1 downto 0);
 	signal reg_len	:std_logic_vector(C_S_AXI_DATA_WIDTH-1 downto 0);
-	signal slv_reg4	:std_logic_vector(C_S_AXI_DATA_WIDTH-1 downto 0);
+	signal reg_latency	:std_logic_vector(C_S_AXI_DATA_WIDTH-1 downto 0);
 	signal slv_reg5	:std_logic_vector(C_S_AXI_DATA_WIDTH-1 downto 0);
 	signal slv_reg6	:std_logic_vector(C_S_AXI_DATA_WIDTH-1 downto 0);
 	signal slv_reg7	:std_logic_vector(C_S_AXI_DATA_WIDTH-1 downto 0);
@@ -137,6 +143,7 @@ architecture arch_imp of odev_v1_0_S00_AXI is
     signal sig_in_trans_valid: std_logic;
     signal sig_before: std_logic;
     signal sig_after: std_logic;
+    signal sig_consumer_start: std_logic;
 	type AXIS_STATE is (IDLE, WARMINGUP, RECEIVING, WRITING, DONE_WRITING, CLOSING, FULL, EMPTY);
 	signal slave_state : AXIS_STATE;
 	signal sig_stream_start: std_logic;
@@ -145,11 +152,13 @@ architecture arch_imp of odev_v1_0_S00_AXI is
 	constant CTRL_INTR_DONE_BIT: integer := 1; 
 	constant CTRL_IN_TRANS_BIT: integer := 2; 
 	constant CTRL_STREAM_START_BIT: integer := 3;
+	constant CTRL_CONSUMER_START_BIT: integer := 4;
 	-- Status register bit mask
-	constant STAT_ITAB_UNDERFLOW_BIT: integer := 0; 
-	constant STAT_DBUF_UNDERFLOW_BIT: integer := 1; 
+	constant STAT_ITAB_EMPTY_BIT: integer := 0; 
+	constant STAT_RDBUF_EMPTY_BIT: integer := 1; 
 	constant STAT_ITAB_FULL_BIT: integer := 2; 
 	constant STAT_TRANS_DONE_BIT: integer := 3; 
+	constant STAT_RDBUFF_FULL_BIT: integer := 4;
 	
 --	attribute MARK_DEBUG : string;
 --	attribute MARK_DEBUG of reg_ctrl : signal is "TRUE";
@@ -168,6 +177,9 @@ begin
 	S_AXI_RDATA	<= axi_rdata;
 	S_AXI_RRESP	<= axi_rresp;
 	S_AXI_RVALID	<= axi_rvalid;
+	S_CONSUME_LATENCY <= reg_latency;
+	S_INTR_DONE <= reg_ctrl(CTRL_INTR_DONE_BIT); --sig_intr_done;
+	S_CONSUMER_START <= sig_consumer_start;
 	-- Implement axi_awready generation
 	-- axi_awready is asserted for one S_AXI_ACLK clock cycle when both
 	-- S_AXI_AWVALID and S_AXI_WVALID are asserted. axi_awready is
@@ -257,7 +269,7 @@ begin
 --	      reg_status <= (others => '0');
 	      reg_addr <= (others => '0');
 	      reg_len <= (others => '0');
-	      slv_reg4 <= (others => '0');
+	      reg_latency <= (others => '0');
 	      slv_reg5 <= (others => '0');
 	      slv_reg6 <= (others => '0');
 	      slv_reg7 <= (others => '0');
@@ -308,7 +320,7 @@ begin
                     if ( S_AXI_WSTRB(byte_index) = '1' ) then
                       -- Respective byte enables are asserted as per write strobes                   
                       -- slave registor 4
-                      slv_reg4(byte_index*8+7 downto byte_index*8) <= S_AXI_WDATA(byte_index*8+7 downto byte_index*8);
+                      reg_latency(byte_index*8+7 downto byte_index*8) <= S_AXI_WDATA(byte_index*8+7 downto byte_index*8);
                     end if;
                   end loop;
                   --  not necessary
@@ -343,12 +355,16 @@ begin
 	            --reg_status <= reg_status;
 	            reg_addr <= reg_addr;
 	            reg_len <= reg_len;
-	            slv_reg4 <= slv_reg4;
+	            reg_latency <= reg_latency;
 	            slv_reg5 <= slv_reg5;
 	            slv_reg6 <= slv_reg6;
 	            slv_reg7 <= slv_reg7;
 	        end case;
-	      end if;
+	      end if;       
+          -- clear intr done bit.
+          if (reg_ctrl(CTRL_INTR_DONE_BIT) = '1') then
+               reg_ctrl(CTRL_INTR_DONE_BIT) <= '0';
+          end if;
 	    end if;
 	  end if;                   
 	end process; 
@@ -434,7 +450,7 @@ begin
 	-- and the slave is ready to accept the read address.
 	slv_reg_rden <= axi_arready and S_AXI_ARVALID and (not axi_rvalid) ;
 
-	process (reg_ctrl, reg_status, reg_addr, reg_len, slv_reg4, slv_reg5, slv_reg6, slv_reg7, axi_araddr, S_AXI_ARESETN, slv_reg_rden)
+	process (reg_ctrl, reg_status, reg_addr, reg_len, reg_latency, slv_reg5, slv_reg6, slv_reg7, axi_araddr, S_AXI_ARESETN, slv_reg_rden)
 	variable loc_addr :std_logic_vector(OPT_MEM_ADDR_BITS downto 0);
 	begin
 	    -- Address decoding for reading registers
@@ -449,7 +465,7 @@ begin
 	      when b"011" =>
 	        reg_data_out <= reg_len;
 	      when b"100" =>
-	        reg_data_out <= slv_reg4;
+	        reg_data_out <= reg_latency;
 	      when b"101" =>
 	        reg_data_out <= slv_reg5;
 	      when b"110" =>
@@ -504,6 +520,22 @@ begin
 				sig_before <= '0';
 				sig_after <= '0';
 			else
+			    -- itab empty status update
+			    if (S_ITAB_EMPTY = '1') then
+			        reg_status(STAT_ITAB_EMPTY_BIT) <= '1';
+			    else
+			        reg_status(STAT_ITAB_EMPTY_BIT) <= '0';
+			    end if;
+			    -- RDBUFF empty/full status update
+			    if (S_RDBUFF_ALMOST_FULL = '1') then
+			        reg_status(STAT_RDBUFF_FULL_BIT) <= '1';
+			    elsif (S_RDBUFF_EMPTY = '1') then
+			        reg_status(STAT_RDBUF_EMPTY_BIT) <= '1';
+			    else 
+			        reg_status(STAT_RDBUFF_FULL_BIT) <= '0';
+			        reg_status(STAT_RDBUF_EMPTY_BIT) <= '0';
+			    end if;
+			    -- slave state machine
 				case (slave_state) is
 					when IDLE =>
 						if (reg_ctrl(CTRL_GBL_START_BIT) = '1') then
@@ -541,6 +573,7 @@ begin
 								sig_src_len <= reg_len;
 								sig_in_trans_valid <= '1';
 								reg_status(STAT_TRANS_DONE_BIT) <= '0';
+								reg_status(STAT_ITAB_FULL_BIT) <= '0';
 								slave_state <= WRITING;
 							else 
 --								sig_in_trans_valid <= '0'; 
@@ -635,20 +668,35 @@ begin
 	
 	process (S_AXI_ACLK) is
 	begin
-	   if (reg_ctrl(CTRL_STREAM_START_BIT) = '1') then
-	       sig_stream_start <= '1';
-	   else 
-	       sig_stream_start <= '0';
+	   if (rising_edge(S_AXI_ACLK)) then
+           if (reg_ctrl(CTRL_STREAM_START_BIT) = '1') then
+               sig_stream_start <= '1';
+           else 
+               sig_stream_start <= '0';
+           end if;
+	   end if;
+	end process;
+
+	process (S_AXI_ACLK) is
+	begin
+	   if (rising_edge(S_AXI_ACLK)) then
+           if (reg_ctrl(CTRL_CONSUMER_START_BIT) = '1') then
+               sig_consumer_start <= '1';
+           else 
+               sig_consumer_start <= '0';
+           end if;
 	   end if;
 	end process;
 	
-	process (S_AXI_ACLK) is
+	process (S_AXI_ACLK)
 	begin
-        if (reg_ctrl(CTRL_INTR_DONE_BIT) = '1') then
-            sig_intr_done <= '1';
-        else 
-            sig_intr_done <= '0';
-        end if;	
+	   if (rising_edge(S_AXI_ACLK)) then
+            if (reg_ctrl(CTRL_INTR_DONE_BIT) = '1') then
+                sig_intr_done <= '1';
+            else 
+                sig_intr_done <= '0';
+            end if;
+       end if;	
 	end process;
 	-- User logic ends
 

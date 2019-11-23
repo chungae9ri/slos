@@ -34,11 +34,9 @@ entity odev_v1_0_M00_AXI is
 		M_ITAB_OUT_VALID: in std_logic;
         M_ITAB_OUT_TRANS_REQ : out std_logic;
         M_ITAB_EMPTY : in std_logic;
-        M_INTR_TRIG : out std_logic;
         M_RDATA: out std_logic_vector(31 downto 0);
         M_RDATA_VALID: out std_logic;
         M_RDBUFF_AL_FULL: in std_logic;
-        M_RDBUFF_EMPTY: in std_logic;
 		-- User ports ends
 		-- Do not modify the ports beyond this line
 		-- Asserts when transaction is complete
@@ -181,7 +179,6 @@ architecture implementation of odev_v1_0_M00_AXI is
 	signal burst_read_active	: std_logic;
 	--Interface response error flags
 	signal rnext	: std_logic;
-	signal sig_dma_irq : std_logic;
 	signal reg_src_addr : std_logic_vector(C_M_AXI_ADDR_WIDTH-1 downto 0);
 	-- inferred BRAM memory
 	signal sig_itab_out_trans_req: std_logic; 
@@ -338,7 +335,6 @@ begin
 		end if;                                                  
 	end process;  
 
-	M_INTR_TRIG <= sig_dma_irq;
 	M_ITAB_OUT_TRANS_REQ <= sig_itab_out_trans_req;
 	M_RDATA <= sig_rdata;
 	M_RDATA_VALID <= sig_rdata_valid;
@@ -351,7 +347,6 @@ begin
 			-- All the signals are ed default values under reset condition                                       
 				dma_state     <= IDLE;                                                                   
 				start_single_burst_read  <= '0';
-				sig_dma_irq <= '0';           
 				sig_itab_out_trans_req <= '0';
 			else                                                                                                   
 	        -- state transition                                                                                  
@@ -363,7 +358,6 @@ begin
 						dma_state  <= ITAB_READ;                                                        
 					else                                                                                                                                                               
 						start_single_burst_read  <= '0';
-						sig_dma_irq <= '0';
 						sig_itab_out_trans_req <= '0';
 						dma_state  <= IDLE;
 					end if;     
@@ -372,10 +366,6 @@ begin
 					if (M_STREAM_START = '0') then
 						dma_state <= IDLE;
 					elsif (M_ITAB_EMPTY = '1') then
-						-- ITAB underflow. Fire interrupt and fall back to IDLE.
-						if (sig_dma_irq = '0') then
-						  --sig_dma_irq <= '1';
-						end if;
 						sig_itab_out_trans_req <= '1';
 						dma_state <= ITAB_READ;
 					-- second M_G_PULSE means "STOP"
