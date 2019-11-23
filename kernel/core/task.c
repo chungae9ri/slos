@@ -319,10 +319,14 @@ uint32_t cfs_worker4(void)
 		put_to_itab(O_STREAM_START + O_STREAM_STEP * i, O_STREAM_STEP);
 	}
 
+	set_consume_latency(0xFFFF0000);
+
 	start_odev_stream();
 
 	i = j = 0;
-	for (i = 100; i < 0x10000; i++) {
+
+	/* out stream forever */
+	for (;;) {
 		((uint32_t *)((uint32_t)psrc + O_STREAM_STEP * i))[0] = i;
 		put_to_itab(O_STREAM_START + O_STREAM_STEP * i, O_STREAM_STEP);
 
@@ -330,8 +334,22 @@ uint32_t cfs_worker4(void)
 		while (j < 100) 
 			j++;
 		j = 0;
+		/*
+		if (i == 100)
+			start_consumer();
+			*/
+
+		/* adjust rate */
+		if (i % 256 == 0)
+			set_consume_latency(1000);
+		else if (i % 128 == 0)
+			set_consume_latency(100000);
+
+		i++;
+		i = i % 1000;
 	}
 
+	stop_consumer();
 	stop_odev_stream();
 	stop_odev();
 
@@ -568,7 +586,7 @@ void shell(void)
 			xil_printf("taskstat, whoami, hide whoami\n");
 			xil_printf("cfs task, rt task, oneshot task\n");
 			xil_printf("sleep, run \n");
-			xil_printf("apprun\n");
+			xil_printf("apprun, cs\n");
 		} else if (!strcmp(cmdline, "taskstat")) {
 			print_task_stat();
 		} else if (!strcmp(cmdline, "whoami")) {
@@ -623,6 +641,8 @@ void shell(void)
 			}
 		} else if (!strcmp(cmdline, "apprun")) {
 			load_ramdisk_app(0);
+		} else if (!strcmp(cmdline,"cs")) {
+			start_consumer();
 		} else {
 			xil_printf("I don't know.... ^^;\n");
 		}

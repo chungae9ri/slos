@@ -3,10 +3,14 @@
 #include <odev.h>
 #include <regops.h>
 #include <mem_layout.h>
+#include <gic.h>
+#include <xil_printf.h>
 
 int32_t init_odev(void)
 {
-	/* out device initialization */
+	gic_register_int_handler(ODEV_IRQ_ID, odev_irq, NULL);
+	gic_mask_interrupt(ODEV_IRQ_ID);
+
 	return ERR_NO;
 }
 
@@ -83,4 +87,51 @@ int32_t put_to_itab(uint32_t sAddr, uint32_t sLen)
 	writel(ctrl, ODEV_REG_CTRL);
 
 	return ERR_NO;
+}
+
+int odev_irq(void *arg)
+{
+	uint32_t cntl;
+
+	/* stop consumer hw first */
+	stop_consumer();
+
+	cntl = readl(ODEV_REG_CTRL);
+	cntl |= CTRL_INTR_DONE_MASK;
+	writel(cntl, ODEV_REG_CTRL);
+	xil_printf("odev irq done!\n");
+
+	return ERR_NO;
+}
+
+int32_t set_consume_latency(uint32_t lat)
+{
+	writel(lat, ODEV_REG_LATENCY);
+
+	return ERR_NO;
+}
+
+int32_t start_consumer(void)
+{
+	uint32_t cntl;
+
+	cntl = readl(ODEV_REG_CTRL);
+	cntl |= CTRL_CONSUMER_START_MASK;
+	writel(cntl, ODEV_REG_CTRL);
+	xil_printf("odev consumer starts!\n");
+
+	return ERR_NO;
+}
+
+int32_t stop_consumer(void)
+{
+	uint32_t cntl;
+
+	cntl = readl(ODEV_REG_CTRL);
+	cntl &= ~CTRL_CONSUMER_START_MASK;
+	writel(cntl, ODEV_REG_CTRL);
+	xil_printf("odev consumer stops!\n");
+
+	return ERR_NO;
+
 }
