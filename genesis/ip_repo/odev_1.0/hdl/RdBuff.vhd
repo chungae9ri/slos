@@ -137,6 +137,8 @@ begin
                     sig_rdbuff_almost_full <= '1';
 				elsif (OUTREQ = '1' AND sig_inCnt = sig_outCnt + 1) then
 					sig_rdbuff_empty <= '1';
+				elsif (sig_inCnt = sig_outCnt) then
+					sig_rdbuff_empty <= '1';
                 else  
                     sig_rdbuff_empty <= '0';
                     sig_rdbuff_almost_full <= '0';

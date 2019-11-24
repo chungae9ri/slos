@@ -126,9 +126,9 @@ architecture arch_imp of odev_v1_0_S00_AXI is
 	signal reg_addr	:std_logic_vector(C_S_AXI_DATA_WIDTH-1 downto 0);
 	signal reg_len	:std_logic_vector(C_S_AXI_DATA_WIDTH-1 downto 0);
 	signal reg_latency	:std_logic_vector(C_S_AXI_DATA_WIDTH-1 downto 0);
-	signal slv_reg5	:std_logic_vector(C_S_AXI_DATA_WIDTH-1 downto 0);
-	signal slv_reg6	:std_logic_vector(C_S_AXI_DATA_WIDTH-1 downto 0);
-	signal slv_reg7	:std_logic_vector(C_S_AXI_DATA_WIDTH-1 downto 0);
+	signal reg_itab_full_cnt	:std_logic_vector(C_S_AXI_DATA_WIDTH-1 downto 0);
+	signal reg_rdbuff_full_cnt	:std_logic_vector(C_S_AXI_DATA_WIDTH-1 downto 0);
+	signal reg_itab_empty_cnt	:std_logic_vector(C_S_AXI_DATA_WIDTH-1 downto 0);
 	signal slv_reg_rden	: std_logic;
 	signal slv_reg_wren	: std_logic;
 	signal reg_data_out	:std_logic_vector(C_S_AXI_DATA_WIDTH-1 downto 0);
@@ -270,9 +270,9 @@ begin
 	      reg_addr <= (others => '0');
 	      reg_len <= (others => '0');
 	      reg_latency <= (others => '0');
-	      slv_reg5 <= (others => '0');
-	      slv_reg6 <= (others => '0');
-	      slv_reg7 <= (others => '0');
+--	      reg_itab_full_cnt <= (others => '0');
+--	      reg_rdbuff_full_cnt <= (others => '0');
+--	      reg_itab_empty_cnt <= (others => '0');
 	    else
 	      loc_addr := axi_awaddr(ADDR_LSB + OPT_MEM_ADDR_BITS downto ADDR_LSB);
 	      if (slv_reg_wren = '1') then
@@ -329,7 +329,7 @@ begin
                       if ( S_AXI_WSTRB(byte_index) = '1' ) then
                         -- Respective byte enables are asserted as per write strobes                   
                         -- slave registor 5
-                        slv_reg5(byte_index*8+7 downto byte_index*8) <= S_AXI_WDATA(byte_index*8+7 downto byte_index*8);
+--                        reg_itab_full_cnt(byte_index*8+7 downto byte_index*8) <= S_AXI_WDATA(byte_index*8+7 downto byte_index*8);
                       end if;
                     end loop;
                     
@@ -338,7 +338,7 @@ begin
                         if ( S_AXI_WSTRB(byte_index) = '1' ) then
                           -- Respective byte enables are asserted as per write strobes                   
                           -- slave registor 6
-                          slv_reg6(byte_index*8+7 downto byte_index*8) <= S_AXI_WDATA(byte_index*8+7 downto byte_index*8);
+--                          reg_rdbuff_full_cnt(byte_index*8+7 downto byte_index*8) <= S_AXI_WDATA(byte_index*8+7 downto byte_index*8);
                         end if;
                       end loop;
                       
@@ -347,7 +347,7 @@ begin
                           if ( S_AXI_WSTRB(byte_index) = '1' ) then
                             -- Respective byte enables are asserted as per write strobes                   
                             -- slave registor 7
-                            slv_reg7(byte_index*8+7 downto byte_index*8) <= S_AXI_WDATA(byte_index*8+7 downto byte_index*8);
+--                            reg_itab_empty_cnt(byte_index*8+7 downto byte_index*8) <= S_AXI_WDATA(byte_index*8+7 downto byte_index*8);
                           end if;
                         end loop;
 	          when others =>
@@ -356,9 +356,9 @@ begin
 	            reg_addr <= reg_addr;
 	            reg_len <= reg_len;
 	            reg_latency <= reg_latency;
-	            slv_reg5 <= slv_reg5;
-	            slv_reg6 <= slv_reg6;
-	            slv_reg7 <= slv_reg7;
+--	            reg_itab_full_cnt <= reg_itab_full_cnt;
+--	            reg_rdbuff_full_cnt <= reg_rdbuff_full_cnt;
+--	            reg_itab_empty_cnt <= reg_itab_empty_cnt;
 	        end case;
 	      end if;       
           -- clear intr done bit.
@@ -450,7 +450,7 @@ begin
 	-- and the slave is ready to accept the read address.
 	slv_reg_rden <= axi_arready and S_AXI_ARVALID and (not axi_rvalid) ;
 
-	process (reg_ctrl, reg_status, reg_addr, reg_len, reg_latency, slv_reg5, slv_reg6, slv_reg7, axi_araddr, S_AXI_ARESETN, slv_reg_rden)
+	process (reg_ctrl, reg_status, reg_addr, reg_len, reg_latency, reg_itab_full_cnt, reg_rdbuff_full_cnt, reg_itab_empty_cnt, axi_araddr, S_AXI_ARESETN, slv_reg_rden)
 	variable loc_addr :std_logic_vector(OPT_MEM_ADDR_BITS downto 0);
 	begin
 	    -- Address decoding for reading registers
@@ -467,11 +467,11 @@ begin
 	      when b"100" =>
 	        reg_data_out <= reg_latency;
 	      when b"101" =>
-	        reg_data_out <= slv_reg5;
+	        reg_data_out <= reg_itab_full_cnt;
 	      when b"110" =>
-	        reg_data_out <= slv_reg6;
+	        reg_data_out <= reg_rdbuff_full_cnt;
 	      when b"111" =>
-	        reg_data_out <= slv_reg7;
+	        reg_data_out <= reg_itab_empty_cnt;
 	      when others =>
 	        reg_data_out  <= (others => '0');
 	    end case;
@@ -697,6 +697,25 @@ begin
                 sig_intr_done <= '0';
             end if;
        end if;	
+	end process;
+	
+	process (S_ITAB_FULL, S_ITAB_EMPTY, S_RDBUFF_ALMOST_FULL)
+	begin
+	   if (reg_ctrl(CTRL_GBL_START_BIT) = '0') then
+	       reg_itab_empty_cnt <= (others => '0');
+	       reg_itab_full_cnt <= (others => '0');
+	       reg_rdbuff_full_cnt <= (others => '0');
+       else
+           if (S_ITAB_FULL = '1') then
+               reg_itab_full_cnt <= std_logic_vector(to_unsigned(to_integer(unsigned(reg_itab_full_cnt)) + 1, 32));
+           end if;
+           if (S_ITAB_EMPTY = '1') then
+               reg_itab_empty_cnt <= std_logic_vector(to_unsigned(to_integer(unsigned(reg_itab_empty_cnt)) + 1, 32));
+           end if;
+           if (S_RDBUFF_ALMOST_FULL = '1') then
+               reg_rdbuff_full_cnt <= std_logic_vector(to_unsigned(to_integer(unsigned(reg_rdbuff_full_cnt)) + 1, 32));    
+           end if;
+	   end if;
 	end process;
 	-- User logic ends
 

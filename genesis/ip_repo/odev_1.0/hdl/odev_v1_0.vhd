@@ -444,7 +444,8 @@ odev_v1_0_M00_AXI_inst : odev_v1_0_M00_AXI
     begin
         if (rising_edge(s00_axi_aclk)) then
             if (sig_stream_start = '1' AND sig_consumer_start = '1') then
-                if (sig_itab_empty = '1' OR sig_rdbuff_empty = '1') then
+--                if (sig_itab_empty = '1' OR sig_rdbuff_empty = '1') then
+                if (sig_rdbuff_empty = '1') then -- only rdbuff empty is a hazard
                     if (sig_dma_irq = '0') then 
                         sig_dma_irq <= '1';
                     elsif (sig_intr_done = '1') then
@@ -453,7 +454,7 @@ odev_v1_0_M00_AXI_inst : odev_v1_0_M00_AXI
                         sig_dma_irq <= sig_dma_irq;
                     end if;
                 else 
-                    sig_dma_irq <= '0';
+                    sig_dma_irq <= sig_dma_irq;
                 end if;
             else
                 sig_dma_irq <= '0';

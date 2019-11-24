@@ -53,6 +53,7 @@ architecture Behavioral of DataConsumer is
     attribute MARK_DEBUG of DATA_IN: signal is "TRUE";
     attribute MARK_DEBUG of DATA_VALID: signal is "TRUE";
     attribute MARK_DEBUG of DATA_REQ: signal is "TRUE";
+    attribute MARK_DEBUG of DATA_CONSUMER_START: signal is "TRUE";
 begin
     DATA_REQ <= sig_data_req;
     

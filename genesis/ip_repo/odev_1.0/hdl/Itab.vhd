@@ -148,8 +148,10 @@ begin
             if (ITAB_G_START = '0') then
 				sig_itab_full <= '0';
                 sig_itab_empty <= '1';
-            elsif (cur_count >= Itab_entries) then
+            elsif (cur_count >= Itab_entries - 1) then
                 sig_itab_full <= '1';
+            elsif (cur_count = 1 AND ITAB_OUT_TRANS_REQ = '1') then
+                sig_itab_empty <= '1';
             elsif (cur_count = 0) then
                 sig_itab_empty <= '1';
             else
