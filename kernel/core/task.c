@@ -304,7 +304,7 @@ uint32_t cfs_worker3(void )
 uint32_t cfs_worker4(void)
 {
 	uint8_t *psrc;
-	uint32_t i, j;
+	uint32_t i, j, k;
 
 	psrc = (uint8_t *)O_STREAM_START;
 
@@ -319,31 +319,21 @@ uint32_t cfs_worker4(void)
 		put_to_itab(O_STREAM_START + O_STREAM_STEP * i, O_STREAM_STEP);
 	}
 
-	set_consume_latency(0xFFFF0000);
+	set_consume_latency(100);
 
 	start_odev_stream();
 
-	i = j = 0;
-
+	j = 0;
+	k = 100;
 	/* out stream forever */
 	for (;;) {
-		((uint32_t *)((uint32_t)psrc + O_STREAM_STEP * i))[0] = i;
+		((uint32_t *)((uint32_t)psrc + O_STREAM_STEP * i))[0] = k++;
 		put_to_itab(O_STREAM_START + O_STREAM_STEP * i, O_STREAM_STEP);
 
 		/* spin for a while */
-		while (j < 100) 
+		while (j < 10) 
 			j++;
 		j = 0;
-		/*
-		if (i == 100)
-			start_consumer();
-			*/
-
-		/* adjust rate */
-		if (i % 256 == 0)
-			set_consume_latency(1000);
-		else if (i % 128 == 0)
-			set_consume_latency(100000);
 
 		i++;
 		i = i % 1000;
