@@ -74,17 +74,33 @@ int32_t put_to_itab(uint32_t sAddr, uint32_t sLen)
 	writel(ctrl, ODEV_REG_CTRL);
 	
 	/* spin forever until ODEV core saves the data to Itab entry */
-	while (!(readl(ODEV_REG_STATUS) & STAT_TRANSFER_DONE_MASK)) {
+#if 0	
+	while (1) {
+		status = readl(ODEV_REG_STATUS);
+		if((status & STAT_TRANSFER_DONE_MASK) == STAT_TRANSFER_DONE_MASK) {
+			xil_printf("status after: 0x%x\n", status);
+			break;
+		}
 		ctrl = readl(ODEV_REG_CTRL);
 		/* if stop ODEV, then exit */
 		if (!(ctrl & CTRL_GBL_START_MASK))
 			return ERR_NO;
 	}
 
+#else
+	while (!(readl(ODEV_REG_STATUS) & STAT_TRANSFER_DONE_MASK)) {
+		ctrl = readl(ODEV_REG_CTRL);
+		/* if stop ODEV, then exit */
+		if (!(ctrl & CTRL_GBL_START_MASK))
+			return ERR_NO;
+	}
+#endif
+
 	/* clear the CTRL_IN_TRANS_MASK bit */
 	ctrl = readl(ODEV_REG_CTRL);
 	ctrl &= ~CTRL_IN_TRANS_MASK;
 	writel(ctrl, ODEV_REG_CTRL);
+	/*xil_printf("ctrl after: 0x%x\n", ctrl);*/
 
 	return ERR_NO;
 }
@@ -115,10 +131,10 @@ int32_t start_consumer(void)
 {
 	uint32_t cntl;
 
+	xil_printf("odev consumer starts!\n");
 	cntl = readl(ODEV_REG_CTRL);
 	cntl |= CTRL_CONSUMER_START_MASK;
 	writel(cntl, ODEV_REG_CTRL);
-	xil_printf("odev consumer starts!\n");
 
 	return ERR_NO;
 }

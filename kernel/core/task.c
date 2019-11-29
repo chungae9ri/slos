@@ -319,24 +319,27 @@ uint32_t cfs_worker4(void)
 		put_to_itab(O_STREAM_START + O_STREAM_STEP * i, O_STREAM_STEP);
 	}
 
-	set_consume_latency(100);
+	set_consume_latency(10000);
 
 	start_odev_stream();
 
 	j = 0;
-	k = 100;
+	k = i;
 	/* out stream forever */
 	for (;;) {
 		((uint32_t *)((uint32_t)psrc + O_STREAM_STEP * i))[0] = k++;
-		put_to_itab(O_STREAM_START + O_STREAM_STEP * i, O_STREAM_STEP);
+		if (!put_to_itab(O_STREAM_START + O_STREAM_STEP * i, O_STREAM_STEP)) {
+			i++;
+			/*xil_printf("put_to_itab: %d\n", i);*/
+		} else {
+			/*xil_printf("odev buff full \n");*/
+		}
 
 		/* spin for a while */
-		while (j < 10) 
-			j++;
 		j = 0;
-
-		i++;
-		i = i % 1000;
+		while (j < 100) 
+			j++;
+		i = i % 10000;
 	}
 
 	stop_consumer();
@@ -496,9 +499,11 @@ void set_priority(struct task_struct *pt, uint32_t pri)
 
 void create_cfs_workers(void)
 {
+	/*
 	create_cfs_task("cfs_worker1", cfs_worker1, 8);
 	create_cfs_task("cfs_worker2", cfs_worker2, 4);
 	create_cfs_task("cfs_worker3", cfs_worker3, 8);
+	*/
 	create_cfs_task("cfs_worker4", cfs_worker4, 4);
 }
 
