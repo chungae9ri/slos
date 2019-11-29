@@ -123,10 +123,10 @@ architecture arch_imp of odev_v1_0 is
 	signal sig_consumer_start: std_logic;
 	
 	attribute MARK_DEBUG : string;
-	attribute MARK_DEBUG of sig_in_trans_valid : signal is "TRUE";
+--	attribute MARK_DEBUG of sig_in_trans_valid : signal is "TRUE";
 	attribute MARK_DEBUG of sig_dma_irq : signal is "TRUE";
-	attribute MARK_DEBUG of sig_itab_empty: signal is "TRUE";
-	attribute MARK_DEBUG of sig_rdbuff_empty: signal is "TRUE";
+--	attribute MARK_DEBUG of sig_itab_empty: signal is "TRUE";
+--	attribute MARK_DEBUG of sig_rdbuff_empty: signal is "TRUE";
 	
 	-- component declaration
 	component odev_v1_0_S00_AXI is

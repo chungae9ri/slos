@@ -160,11 +160,11 @@ architecture arch_imp of odev_v1_0_S00_AXI is
 	constant STAT_TRANS_DONE_BIT: integer := 3; 
 	constant STAT_RDBUFF_FULL_BIT: integer := 4;
 	
---	attribute MARK_DEBUG : string;
---	attribute MARK_DEBUG of reg_ctrl : signal is "TRUE";
---	attribute MARK_DEBUG of reg_status : signal is "TRUE";
---    attribute MARK_DEBUG of slave_state : signal is "TRUE";
---    attribute MARK_DEBUG of reg_addr : signal is "TRUE";
+	attribute MARK_DEBUG : string;
+	attribute MARK_DEBUG of reg_ctrl : signal is "TRUE";
+	attribute MARK_DEBUG of reg_status : signal is "TRUE";
+    attribute MARK_DEBUG of slave_state : signal is "TRUE";
+    attribute MARK_DEBUG of reg_addr : signal is "TRUE";
 --    attribute MARK_DEBUG of sig_in_trans_valid : signal is "TRUE";
 begin
 	-- I/O Connections assignments
@@ -563,12 +563,7 @@ begin
                         
 					when RECEIVING =>
 						if (reg_ctrl(CTRL_GBL_START_BIT) = '1') then
-							if (S_ITAB_FULL = '1') then
-								sig_in_trans_valid <= '0';
-								reg_status(STAT_TRANS_DONE_BIT) <= '0'; 
-								reg_status(STAT_ITAB_FULL_BIT) <= '1';							   
-								slave_state <= FULL;
-							elsif (reg_ctrl(CTRL_IN_TRANS_BIT) = '1') then
+							if (reg_ctrl(CTRL_IN_TRANS_BIT) = '1') then
 								sig_src_addr <= reg_addr;
 								sig_src_len <= reg_len;
 								sig_in_trans_valid <= '1';
@@ -617,9 +612,16 @@ begin
                                 reg_status(STAT_TRANS_DONE_BIT) <= '1';
                                 slave_state <= DONE_WRITING;
                             else
-                                sig_in_trans_valid <= '0';
-                                reg_status(STAT_TRANS_DONE_BIT) <= '1';
-                                slave_state <= RECEIVING;
+                                if (S_ITAB_FULL = '1') then
+                               	    sig_in_trans_valid <= '0';
+                                    reg_status(STAT_TRANS_DONE_BIT) <= '0'; 
+                                    reg_status(STAT_ITAB_FULL_BIT) <= '1';							   
+                                    slave_state <= FULL;                                 
+                                else
+                                    sig_in_trans_valid <= '0';
+                                    reg_status(STAT_TRANS_DONE_BIT) <= '0';
+                                    slave_state <= RECEIVING;
+                                end if;
                             end if;
                         else 
                             sig_trig_g_start <= '0';

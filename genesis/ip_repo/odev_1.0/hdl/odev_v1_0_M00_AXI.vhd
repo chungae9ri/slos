@@ -160,11 +160,8 @@ architecture implementation of odev_v1_0_M00_AXI is
 	 				MEM_READ,    -- This state initializes read transaction
 	 							-- once reads are done, the state machine 
 	 							-- changes state to INIT_COMPARE 
-	 				BUFF_WRITE,   -- This state initializes write transaction,
-	 							-- once writes are done, the state machine 
-	 							-- changes state to INIT_READ 
 	 				ITAB_EMPTY,
-	 				BUFF_FULL);
+	 				RDBUFF_FULL);
 
 	 signal dma_state  : DMAStateType; 
 
@@ -191,7 +188,7 @@ architecture implementation of odev_v1_0_M00_AXI is
     signal rdata_done_len: integer;
     
 	attribute MARK_DEBUG : string;
---	attribute MARK_DEBUG of dma_state: signal is "TRUE";
+	attribute MARK_DEBUG of dma_state: signal is "TRUE";
 	attribute MARK_DEBUG of axi_araddr: signal is "TRUE";
 --	attribute MARK_DEBUG of burst_read_active: signal is "TRUE";
 	attribute MARK_DEBUG of sig_rdata: signal is "TRUE";
@@ -325,8 +322,8 @@ begin
 				if (M_AXI_RVALID = '1') then                         
 					if (M_AXI_RLAST = '1' and axi_rready = '1') then   
 						axi_rready <= '0';                               
-					elsif (M_RDBUFF_AL_FULL = '1') then
-						axi_rready <= '0';
+--					elsif (M_RDBUFF_AL_FULL = '1') then
+--						axi_rready <= '0';
 					else                                            
 						axi_rready <= '1';                              
 					end if;                                            
@@ -365,17 +362,15 @@ begin
 				when ITAB_READ =>  
 					if (M_STREAM_START = '0') then
 						dma_state <= IDLE;
-					elsif (M_ITAB_EMPTY = '1') then
-						sig_itab_out_trans_req <= '1';
-						dma_state <= ITAB_READ;
-					-- second M_G_PULSE means "STOP"
+--					elsif (M_ITAB_EMPTY = '1') then
+--						sig_itab_out_trans_req <= '1';
+--						dma_state <= ITAB_READ_CHK;
 					else 
 						sig_itab_out_trans_req <= '1';
 						dma_state <= ITAB_READ_CHK;
 					end if;
 	               
 				when ITAB_READ_CHK =>
-					-- second M_G_PULSE means "STOP"
 					if (M_STREAM_START = '0') then
 						dma_state <= IDLE;
 					elsif (M_ITAB_OUT_VALID = '1') then
@@ -386,19 +381,24 @@ begin
 						dma_state <= MEM_READ;
 					else 
 						dma_state <= ITAB_READ_CHK;
-						sig_itab_out_trans_req <= '0';
+						if (M_ITAB_EMPTY = '1') then
+							sig_itab_out_trans_req <= '1';
+					    else 
+					       sig_itab_out_trans_req <= '0';
+					    end if;
 					end if;  
 	               
 				when MEM_READ =>                                                                                
-					-- second M_G_PULSE means "STOP"
 					if (M_STREAM_START = '0') then
-						dma_state <= IDLE;                                                             
+						dma_state <= IDLE;
 					-- This state is responsible to issue start_single_read pulse to                               
 					-- initiate a memory read transaction. Read transactions will be                                      
 					-- issued until burst_read_active signal is asserted.                                          
 					-- read controller                                                                             
 					elsif (M_AXI_RVALID = '1' and axi_rready = '1' and M_AXI_RLAST = '1') then
-						if (rdata_done_len + 64 >= to_integer(unsigned(sig_src_len))) then 
+						if (M_RDBUFF_AL_FULL = '1') then
+				            dma_state <= RDBUFF_FULL;
+				        elsif (rdata_done_len + 64 >= to_integer(unsigned(sig_src_len))) then 
 							dma_state <= ITAB_READ;
 						else 
 							rdata_done_len <= rdata_done_len + 64;
@@ -414,8 +414,18 @@ begin
 						dma_state <= MEM_READ;						
 					end if;                                                                               
 	                                                                                                             
---				when BUFF_WRITE =>                                                                               
-	                                                                                                             
+				when RDBUFF_FULL =>                                                                               
+	            	if (M_STREAM_START = '0') then
+					   dma_state <= IDLE;
+					elsif(M_RDBUFF_AL_FULL = '1')then
+					   dma_state <= RDBUFF_FULL;
+					elsif (rdata_done_len + 64 >= to_integer(unsigned(sig_src_len))) then 
+							dma_state <= ITAB_READ;
+					else 
+						rdata_done_len <= rdata_done_len + 64;
+						dma_state <= MEM_READ;
+					end if;
+					                                                                                                
 				when others  =>                                                                                  
 					dma_state  <= IDLE;                                                               
 				end case  ;                                                                                        

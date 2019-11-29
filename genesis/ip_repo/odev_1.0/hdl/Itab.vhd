@@ -65,22 +65,23 @@ architecture Behavioral of Itab is
     signal sig_itab_empty: std_logic;
 	signal sig_itab_out_valid: std_logic;
 --	signal sig_mem_i: std_logic_vector (31 downto 0);
-    signal sig_mem_o: std_logic_vector (31 downto 0);
+--    signal sig_mem_o: std_logic_vector (31 downto 0);
     signal sig_itab_in_trans_done: std_logic;
+    signal sig_valid_src_addr: std_logic_vector(31 downto 0);
     
 	attribute MARK_DEBUG: string;
 	--attribute MARK_DEBUG of ITAB_G_START : signal is "TRUE";
---	attribute MARK_DEBUG of ITAB_IN_TRANS_VALID : signal is "TRUE";
+	attribute MARK_DEBUG of ITAB_IN_TRANS_VALID : signal is "TRUE";
 --	attribute MARK_DEBUG of SRC_ADDR_IN : signal is "TRUE";
 	attribute MARK_DEBUG of in_count : signal is "TRUE";
 	attribute MARK_DEBUG of out_count : signal is "TRUE";
---	attribute MARK_DEBUG of sig_src_addr_out: signal is "TRUE";
+	attribute MARK_DEBUG of sig_src_addr_out: signal is "TRUE";
 --	attribute MARK_DEBUG of sig_itab_out_valid : signal is "TRUE";
 --	attribute MARK_DEBUG of ITAB_OUT_TRANS_REQ : signal is "TRUE";
     attribute MARK_DEBUG of sig_itab_full: signal is "TRUE";
---	attribute MARK_DEBUG of out_pos : signal is "TRUE";
---	attribute MARK_DEBUG of in_pos : signal is "TRUE";
---	attribute MARK_DEBUG of sig_mem_o : signal is "TRUE";
+	attribute MARK_DEBUG of out_pos : signal is "TRUE";
+	attribute MARK_DEBUG of in_pos : signal is "TRUE";
+	attribute MARK_DEBUG of sig_valid_src_addr : signal is "TRUE";
 begin
     
     SRC_ADDR_OUT <= sig_src_addr_out;
@@ -99,7 +100,7 @@ begin
                 out_count <= 0;
                 out_pos <= 0;
 				sig_itab_out_valid <= '0';
-            elsif (ITAB_OUT_TRANS_REQ = '1' AND sig_itab_empty = '0') then
+            elsif (ITAB_OUT_TRANS_REQ = '1') then
 				if (out_count < in_count) then
 					sig_src_addr_out <= ItabMem(out_pos)(47 downto 16);
 					sig_src_len_out <= ItabMem(out_pos)(15 downto 0);
@@ -123,7 +124,7 @@ begin
                 in_count <= 0;
                 in_pos <= 0;
                 sig_itab_in_trans_done <= '0';
-            elsif (ITAB_IN_TRANS_VALID = '1' AND sig_itab_full = '0') then
+            elsif (ITAB_IN_TRANS_VALID = '1') then
                 -- do not overwrite prev
                 if (in_count - out_count < Itab_entries) then 
                     ItabMem(in_pos)(47 downto 16) <= SRC_ADDR_IN;
@@ -131,6 +132,7 @@ begin
                     in_count <= in_count + 1;
                     in_pos <= to_integer(unsigned(std_logic_vector(to_unsigned(in_count + 1,32)) AND x"0000_01FF"));
                     sig_itab_in_trans_done <= '1';
+                    sig_valid_src_addr <= SRC_ADDR_IN;
                 else 
                     sig_itab_in_trans_done <= '0';
                 end if;
@@ -148,9 +150,11 @@ begin
             if (ITAB_G_START = '0') then
 				sig_itab_full <= '0';
                 sig_itab_empty <= '1';
-            elsif (cur_count >= Itab_entries - 1) then
+            elsif (cur_count = Itab_entries - 1 AND ITAB_IN_TRANS_VALID = '1' AND ITAB_OUT_TRANS_REQ = '0') then
                 sig_itab_full <= '1';
-            elsif (cur_count = 1 AND ITAB_OUT_TRANS_REQ = '1') then
+            elsif (cur_count = Itab_entries) then
+                sig_itab_full <= '1';
+            elsif (cur_count = 1 AND ITAB_OUT_TRANS_REQ = '1' AND ITAB_IN_TRANS_VALID = '0') then
                 sig_itab_empty <= '1';
             elsif (cur_count = 0) then
                 sig_itab_empty <= '1';
