@@ -43,6 +43,7 @@ entity RdBuff is
          OUTDATA: out std_logic_vector (31 downto 0);
          OUTVALID: out std_logic;
          OUTREQ: in std_logic
+--         RDBUFF_SEQ_ERR: out std_logic
     );
 end RdBuff;
  
@@ -60,24 +61,26 @@ architecture Behavioral of RdBuff is
     signal sig_outIdx: integer;
     
     signal sig_rdbuff_almost_full: std_logic;
-    signal sig_rdbuff_empty: std_logic;  
+    signal sig_rdbuff_empty: std_logic; 
+--    signal sig_seq_err: std_logic; 
     
    	attribute MARK_DEBUG: string;
 	attribute MARK_DEBUG of sig_inCnt: signal is "TRUE";
 	attribute MARK_DEBUG of sig_outCnt: signal is "TRUE"; 
---	attribute MARK_DEBUG of RDATA_VALID: signal is "TRUE"; 
-	attribute MARK_DEBUG of sig_rdbuff_almost_full: signal is "TRUE";
---	attribute MARK_DEBUG of OUTVALID: signal is "TRUE";
---	attribute MARK_DEBUG of OUTREQ: signal is "TRUE";
---	attribute MARK_DEBUG of OUTDATA: signal is "TRUE";
+	attribute MARK_DEBUG of sig_outIdx: signal is "TRUE"; 
+--	attribute MARK_DEBUG of sig_outvalid: signal is "TRUE";
+	attribute MARK_DEBUG of RDATA_VALID: signal is "TRUE";
+--	attribute MARK_DEBUG of sig_seq_err: signal is "TRUE";
+	attribute MARK_DEBUG of RDATA: signal is "TRUE";
 
 begin
 
     OUTDATA <= sig_outdata;
     OUTVALID <= sig_outvalid;
     RDBUFF_ALMOST_FULL <= sig_rdbuff_almost_full;
-    RDBUFF_EMPTY <= sig_rdbuff_empty;
-    
+    RDBUFF_EMPTY <=  '0'; -- sig_rdbuff_empty;
+--    RDBUFF_SEQ_ERR <= sig_seq_err;
+        
     process (CLK) is
     begin
         if (rising_edge(CLK)) then
@@ -85,14 +88,19 @@ begin
                 sig_inCnt <= 0;
                 sig_inIdx <= 0;
                 sig_in_beat_idx <= 0;
+--                sig_seq_err <= '0';
             else 
                 if (RDATA_VALID = '1') then
                     sig_RDBuff(sig_inIdx)(sig_in_beat_idx * 32 + 31 downto sig_in_beat_idx * 32) <= RDATA;
                     sig_in_beat_idx <= sig_in_beat_idx + 1;
+--                    if (sig_in_beat_idx = 0 AND to_integer(unsigned(RDATA)) /= sig_inCnt) then
+--                        sig_seq_err <= '1';
+--                    end if;
+                    
                     if (sig_in_beat_idx = 15) then
                         sig_in_beat_idx <= 0;
                         sig_inCnt <= sig_inCnt + 1;
-                        sig_inIdx <= to_integer(unsigned(std_logic_vector(to_unsigned(sig_inCnt,32)) AND x"0000_00FF"));
+                        sig_inIdx <= to_integer(unsigned(std_logic_vector(to_unsigned(sig_inCnt + 1,32)) AND x"0000_00FF"));
                     end if;
                 end if;
             end if;

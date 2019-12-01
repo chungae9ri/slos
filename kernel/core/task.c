@@ -299,35 +299,33 @@ uint32_t cfs_worker3(void )
 
 #define O_STREAM_START		0x38000000
 #define O_STREAM_END		0x3C000000
-#define O_STREAM_STEP		0x0000100 /* 256B */
+#define O_STREAM_BURST_SZ	0x00000040 /* 64B */
+#define O_STREAM_STEP		0x00000100 /* 256B */
+#define O_STREAM_WRAP		0x00001000 /* 4096 */
 
 uint32_t cfs_worker4(void)
 {
 	uint8_t *psrc;
-	uint32_t i, j, k;
+	uint32_t i, j;
 
 	psrc = (uint8_t *)O_STREAM_START;
 
-	for (i = 0; i < O_STREAM_STEP; i++) {
-		psrc[i] = (uint8_t)((i + 1) % 256);
-	}
-
 	// To avoid underflow, prepare initial data first
 	start_odev();
-	for (i = 0; i < 100; i++) {
-		((uint32_t *)((uint32_t)psrc + O_STREAM_STEP * i))[0] = i;
-		put_to_itab(O_STREAM_START + O_STREAM_STEP * i, O_STREAM_STEP);
+	for (i = 0; i < O_STREAM_WRAP * 4; i++) {
+		/* seq number starting from 1*/
+		((uint32_t *)((uint32_t)psrc + O_STREAM_BURST_SZ * i))[0] = i + 1;
 	}
-
-	set_consume_latency(10000);
+	// 
+	xil_printf("start odev \n");
+	set_consume_latency(1000);
 
 	start_odev_stream();
 
-	j = 0;
-	k = i;
+	i = j = 0;
 	/* out stream forever */
 	for (;;) {
-		((uint32_t *)((uint32_t)psrc + O_STREAM_STEP * i))[0] = k++;
+		/*((uint32_t *)((uint32_t)psrc + O_STREAM_STEP * i))[0] = k++;*/
 		if (!put_to_itab(O_STREAM_START + O_STREAM_STEP * i, O_STREAM_STEP)) {
 			i++;
 			/*xil_printf("put_to_itab: %d\n", i);*/
@@ -339,7 +337,7 @@ uint32_t cfs_worker4(void)
 		j = 0;
 		while (j < 100) 
 			j++;
-		i = i % 10000;
+		i = i % O_STREAM_WRAP;
 	}
 
 	stop_consumer();
@@ -556,8 +554,9 @@ void print_task_stat(void)
 void shell(void)
 {
 	char byte;
+	char cspeed;
 	char cmdline[CMD_LEN];
-	int i, j, pid;
+	int i, j, pid, ispeed;
 	struct task_struct *pwait_task;
 	struct list_head *next_lh = NULL;
 
@@ -581,7 +580,7 @@ void shell(void)
 			xil_printf("taskstat, whoami, hide whoami\n");
 			xil_printf("cfs task, rt task, oneshot task\n");
 			xil_printf("sleep, run \n");
-			xil_printf("apprun, cs\n");
+			xil_printf("apprun, start cs, set cs\n");
 		} else if (!strcmp(cmdline, "taskstat")) {
 			print_task_stat();
 		} else if (!strcmp(cmdline, "whoami")) {
@@ -636,9 +635,22 @@ void shell(void)
 			}
 		} else if (!strcmp(cmdline, "apprun")) {
 			load_ramdisk_app(0);
-		} else if (!strcmp(cmdline,"cs")) {
+		} else if (!strcmp(cmdline,"start cs")) {
 			start_consumer();
-		} else {
+		} else if (!strcmp(cmdline, "set cs")) {
+			xil_printf("input cs speed: ");
+			ispeed = 0;
+			while (1) {
+				cspeed = inbyte();
+				if (cspeed == '\n') 
+					break;
+				else {
+					ispeed = ispeed * 10 + (cspeed - '0');
+				}
+			}
+
+			set_consume_latency(ispeed);
+		} else{
 			xil_printf("I don't know.... ^^;\n");
 		}
 	}

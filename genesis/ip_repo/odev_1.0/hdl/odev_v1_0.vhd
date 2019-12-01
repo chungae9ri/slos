@@ -121,6 +121,7 @@ architecture arch_imp of odev_v1_0 is
 	signal sig_intr_done: std_logic;
 	signal sig_dma_irq: std_logic;
 	signal sig_consumer_start: std_logic;
+	signal sig_seq_err: std_logic;
 	
 	attribute MARK_DEBUG : string;
 --	attribute MARK_DEBUG of sig_in_trans_valid : signal is "TRUE";
@@ -149,6 +150,7 @@ architecture arch_imp of odev_v1_0 is
 		S_RDBUFF_ALMOST_FULL: in std_logic;
         S_RDBUFF_EMPTY: in std_logic;
         S_CONSUMER_START: out std_logic;
+        S_SEQ_ERR: in std_logic;
 		-------------------------------------------
 		S_AXI_ACLK	: in std_logic;
 		S_AXI_ARESETN	: in std_logic;
@@ -267,7 +269,8 @@ architecture arch_imp of odev_v1_0 is
          RDBUFF_EMPTY: out std_logic;
          OUTDATA: out std_logic_vector (31 downto 0);
          OUTVALID: out std_logic;
-         OUTREQ: in std_logic         
+         OUTREQ: in std_logic
+--         RDBUFF_SEQ_ERR: out std_logic         
     ); 
     end component RdBuff;
     
@@ -280,7 +283,10 @@ architecture arch_imp of odev_v1_0 is
         DATA_VALID: in std_logic;
         DATA_REQ: out std_logic;
         DATA_CONSUME_LATENCY: in std_logic_vector(31 downto 0);
-        DATA_CONSUMER_START: in std_logic
+        DATA_CONSUMER_START: in std_logic;
+        DATA_RDBUFF_EMPTY: in std_logic;
+        DATA_SEQ_ERR: out std_logic
+
     );
     end component DataConsumer;
 begin
@@ -306,6 +312,7 @@ odev_v1_0_S00_AXI_inst : odev_v1_0_S00_AXI
 	    S_RDBUFF_ALMOST_FULL => sig_rdbuff_almost_full,
         S_RDBUFF_EMPTY => sig_rdbuff_empty,
         S_CONSUMER_START => sig_consumer_start,
+        S_SEQ_ERR => sig_seq_err,
 	    -----------------------------
 		S_AXI_ACLK	=> s00_axi_aclk,
 		S_AXI_ARESETN	=> s00_axi_aresetn,
@@ -425,6 +432,7 @@ odev_v1_0_M00_AXI_inst : odev_v1_0_M00_AXI
          OUTDATA => sig_outdata,
          OUTVALID => sig_outvalid,
          OUTREQ => sig_outreq
+--         RDBUFF_SEQ_ERR => sig_seq_err
     );
     
     DataConsumer_inst: DataConsumer
@@ -436,7 +444,9 @@ odev_v1_0_M00_AXI_inst : odev_v1_0_M00_AXI
         DATA_VALID => sig_outvalid,
         DATA_REQ => sig_outreq,
         DATA_CONSUME_LATENCY => sig_consume_latency,
-        DATA_CONSUMER_START => sig_consumer_start
+        DATA_CONSUMER_START => sig_consumer_start,
+        DATA_RDBUFF_EMPTY => sig_rdbuff_empty,
+        DATA_SEQ_ERR => sig_seq_err
     );
     
     SW_DMA_IRQ <= sig_dma_irq;
@@ -444,8 +454,7 @@ odev_v1_0_M00_AXI_inst : odev_v1_0_M00_AXI
     begin
         if (rising_edge(s00_axi_aclk)) then
             if (sig_stream_start = '1' AND sig_consumer_start = '1') then
---                if (sig_itab_empty = '1' OR sig_rdbuff_empty = '1') then
-                if (sig_rdbuff_empty = '1') then -- only rdbuff empty is a hazard
+                if (sig_rdbuff_empty = '1' OR sig_seq_err = '1') then -- only rdbuff empty is a hazard
                     if (sig_dma_irq = '0') then 
                         sig_dma_irq <= '1';
                     elsif (sig_intr_done = '1') then

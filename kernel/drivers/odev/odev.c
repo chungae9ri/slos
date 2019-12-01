@@ -141,7 +141,10 @@ int32_t start_consumer(void)
 
 int32_t stop_consumer(void)
 {
-	uint32_t cntl;
+	uint32_t cntl, status;
+
+	status = readl(ODEV_REG_STATUS);
+	xil_printf("odev status: 0x%x!\n", status);
 
 	cntl = readl(ODEV_REG_CTRL);
 	cntl &= ~CTRL_CONSUMER_START_MASK;

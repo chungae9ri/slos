@@ -256,23 +256,24 @@ begin
 	--manner as the write address channel.
 
 	  process(M_AXI_ACLK)
-	   variable rep: integer;										  
+--	   variable rep: integer;										  
 	  begin                                                              
 	    if (rising_edge (M_AXI_ACLK)) then                               
 			if (M_STREAM_START = '0') then                                 
 	        axi_arvalid <= '0'; 
 	        axi_araddr <= (others => '0');
-	        rep := 0;                                         
+--	        rep := 0;                                         
 	     -- If previously not valid , start next transaction             
 	      else                                                           
 	        if (axi_arvalid = '0' and start_single_burst_read = '1') then
 	          axi_arvalid <= '1';  
-	          axi_araddr <= std_logic_vector(unsigned(sig_src_addr) + to_unsigned(burst_size_bytes * rep, 32));  
-			  rep := rep + 1;                                      
+--	          axi_araddr <= std_logic_vector(unsigned(sig_src_addr) + to_unsigned(burst_size_bytes * rep, 32));
+              axi_araddr <= std_logic_vector(unsigned(sig_src_addr) + to_unsigned(rdata_done_len, 32));  
+--			  rep := rep + 1;                                      
 	        elsif (M_AXI_ARREADY = '1' and axi_arvalid = '1') then       
 	          axi_arvalid <= '0'; 
 	          axi_araddr <= axi_araddr; 
-	          rep := 0;                                      
+--	          rep := 0;                                      
 	        end if;                                                      
 	      end if;                                                        
 	    end if;                                                          

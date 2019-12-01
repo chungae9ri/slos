@@ -5,6 +5,7 @@ libxil.a
 *.bak
 *.swp
 *.bin
+build
 out
 tags
 cscope*

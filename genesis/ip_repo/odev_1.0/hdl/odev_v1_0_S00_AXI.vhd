@@ -30,6 +30,7 @@ entity odev_v1_0_S00_AXI is
         S_RDBUFF_ALMOST_FULL: in std_logic;
         S_RDBUFF_EMPTY: in std_logic;
         S_CONSUMER_START: out std_logic;
+        S_SEQ_ERR: in std_logic;
 		-- User ports ends
 		-- Do not modify the ports beyond this line
 
@@ -159,12 +160,13 @@ architecture arch_imp of odev_v1_0_S00_AXI is
 	constant STAT_ITAB_FULL_BIT: integer := 2; 
 	constant STAT_TRANS_DONE_BIT: integer := 3; 
 	constant STAT_RDBUFF_FULL_BIT: integer := 4;
+	constant STAT_SEQ_ERR_BIT: integer := 5;
 	
-	attribute MARK_DEBUG : string;
-	attribute MARK_DEBUG of reg_ctrl : signal is "TRUE";
-	attribute MARK_DEBUG of reg_status : signal is "TRUE";
-    attribute MARK_DEBUG of slave_state : signal is "TRUE";
-    attribute MARK_DEBUG of reg_addr : signal is "TRUE";
+--	attribute MARK_DEBUG : string;
+--	attribute MARK_DEBUG of reg_ctrl : signal is "TRUE";
+--	attribute MARK_DEBUG of reg_status : signal is "TRUE";
+--    attribute MARK_DEBUG of slave_state : signal is "TRUE";
+--    attribute MARK_DEBUG of reg_addr : signal is "TRUE";
 --    attribute MARK_DEBUG of sig_in_trans_valid : signal is "TRUE";
 begin
 	-- I/O Connections assignments
@@ -534,6 +536,12 @@ begin
 			    else 
 			        reg_status(STAT_RDBUFF_FULL_BIT) <= '0';
 			        reg_status(STAT_RDBUF_EMPTY_BIT) <= '0';
+			    end if;
+			    -- SEQ error check
+			    if (S_SEQ_ERR = '1') then
+			        reg_status(STAT_SEQ_ERR_BIT) <= '1';
+			    else
+			        reg_status(STAT_SEQ_ERR_BIT) <= '0';
 			    end if;
 			    -- slave state machine
 				case (slave_state) is
