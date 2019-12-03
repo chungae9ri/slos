@@ -36,7 +36,7 @@ entity odev_v1_0_M00_AXI is
         M_ITAB_EMPTY : in std_logic;
         M_RDATA: out std_logic_vector(31 downto 0);
         M_RDATA_VALID: out std_logic;
-        M_RDBUFF_AL_FULL: in std_logic;
+        M_RDBUFF_FULL: in std_logic;
 		-- User ports ends
 		-- Do not modify the ports beyond this line
 		-- Asserts when transaction is complete
@@ -161,6 +161,7 @@ architecture implementation of odev_v1_0_M00_AXI is
 	 							-- once reads are done, the state machine 
 	 							-- changes state to INIT_COMPARE 
 	 				ITAB_EMPTY,
+	 				RDBUFF_FULL_CHK,
 	 				RDBUFF_FULL);
 
 	 signal dma_state  : DMAStateType; 
@@ -199,7 +200,7 @@ architecture implementation of odev_v1_0_M00_AXI is
 --	attribute MARK_DEBUG of sig_rdata_valid: signal is "TRUE";
 --	attribute MARK_DEBUG of M_AXI_RDATA: signal is "TRUE";
     attribute MARK_DEBUG of rnext: signal is "TRUE";
---    attribute MARK_DEBUG of M_AXI_RLAST: signal is "TRUE";
+    attribute MARK_DEBUG of M_AXI_RLAST: signal is "TRUE";
 --    attribute MARK_DEBUG of sig_src_len: signal is "TRUE";
 --    attribute MARK_DEBUG of rdata_done_len: signal is "TRUE";
     
@@ -397,14 +398,14 @@ begin
 					-- issued until burst_read_active signal is asserted.                                          
 					-- read controller                                                                             
 					elsif (M_AXI_RVALID = '1' and axi_rready = '1' and M_AXI_RLAST = '1') then
-						if (M_RDBUFF_AL_FULL = '1') then
-				            dma_state <= RDBUFF_FULL;
-				        elsif (rdata_done_len + 64 >= to_integer(unsigned(sig_src_len))) then 
-							dma_state <= ITAB_READ;
-						else 
-							rdata_done_len <= rdata_done_len + 64;
-							dma_state <= MEM_READ;
-						end if;
+--						if (M_RDBUFF_FULL = '1') then
+				            dma_state <= RDBUFF_FULL_CHK;
+--				        elsif (rdata_done_len + 64 >= to_integer(unsigned(sig_src_len))) then 
+--							dma_state <= ITAB_READ;
+--						else 
+--							rdata_done_len <= rdata_done_len + 64;
+--							dma_state <= MEM_READ;
+--						end if;
 					else  
 						-- start next burst read						
 						if (axi_arvalid = '0' and burst_read_active = '0' and start_single_burst_read = '0') then    
@@ -413,12 +414,24 @@ begin
 							start_single_burst_read <= '0'; -- Negate to generate a pulse                               
 						end if;
 						dma_state <= MEM_READ;						
-					end if;                                                                               
-	                                                                                                             
+					end if;   
+					                                                                            
+	            when RDBUFF_FULL_CHK =>
+	                if (M_STREAM_START = '0') then
+					   dma_state <= IDLE;
+					elsif(M_RDBUFF_FULL = '1')then
+					   dma_state <= RDBUFF_FULL;
+					elsif (rdata_done_len + 64 >= to_integer(unsigned(sig_src_len))) then 
+						dma_state <= ITAB_READ;
+					else 
+						rdata_done_len <= rdata_done_len + 64;
+						dma_state <= MEM_READ;
+					end if;     
+					                                                                                            
 				when RDBUFF_FULL =>                                                                               
 	            	if (M_STREAM_START = '0') then
 					   dma_state <= IDLE;
-					elsif(M_RDBUFF_AL_FULL = '1')then
+					elsif(M_RDBUFF_FULL = '1')then
 					   dma_state <= RDBUFF_FULL;
 					elsif (rdata_done_len + 64 >= to_integer(unsigned(sig_src_len))) then 
 							dma_state <= ITAB_READ;

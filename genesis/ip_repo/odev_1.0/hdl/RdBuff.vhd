@@ -38,7 +38,7 @@ entity RdBuff is
          RDBUFF_STREAM_START: in std_logic;
          RDATA: in std_logic_vector(31 downto 0);
          RDATA_VALID: in std_logic;
-         RDBUFF_ALMOST_FULL: out std_logic;
+         RDBUFF_FULL: out std_logic;
          RDBUFF_EMPTY: out std_logic;
          OUTDATA: out std_logic_vector (31 downto 0);
          OUTVALID: out std_logic;
@@ -60,24 +60,24 @@ architecture Behavioral of RdBuff is
     signal sig_inIdx: integer;
     signal sig_outIdx: integer;
     
-    signal sig_rdbuff_almost_full: std_logic;
+    signal sig_rdbuff_full: std_logic;
     signal sig_rdbuff_empty: std_logic; 
 --    signal sig_seq_err: std_logic; 
     
    	attribute MARK_DEBUG: string;
 	attribute MARK_DEBUG of sig_inCnt: signal is "TRUE";
 	attribute MARK_DEBUG of sig_outCnt: signal is "TRUE"; 
-	attribute MARK_DEBUG of sig_outIdx: signal is "TRUE"; 
+	attribute MARK_DEBUG of sig_rdbuff_full: signal is "TRUE"; 
 --	attribute MARK_DEBUG of sig_outvalid: signal is "TRUE";
-	attribute MARK_DEBUG of RDATA_VALID: signal is "TRUE";
+--	attribute MARK_DEBUG of RDATA_VALID: signal is "TRUE";
 --	attribute MARK_DEBUG of sig_seq_err: signal is "TRUE";
-	attribute MARK_DEBUG of RDATA: signal is "TRUE";
+--	attribute MARK_DEBUG of RDATA: signal is "TRUE";
 
 begin
 
     OUTDATA <= sig_outdata;
     OUTVALID <= sig_outvalid;
-    RDBUFF_ALMOST_FULL <= sig_rdbuff_almost_full;
+    RDBUFF_FULL <= sig_rdbuff_full;
     RDBUFF_EMPTY <=  '0'; -- sig_rdbuff_empty;
 --    RDBUFF_SEQ_ERR <= sig_seq_err;
         
@@ -136,25 +136,37 @@ begin
     begin
         if (rising_edge(CLK)) then
             if (RDBUFF_STREAM_START = '0') then
-                sig_rdbuff_almost_full <= '0';
+                sig_rdbuff_full <= '0';
                 sig_rdbuff_empty <= '0';
             else
-                if (sig_inCnt <= sig_outCnt + 150) then
-                    sig_rdbuff_almost_full <= '0';
-                    if (sig_inCnt = sig_outCnt + 1 AND OUTREQ = '1' AND RDATA_VALID = '0') then
-					   sig_rdbuff_empty <= '1';
-				    elsif (sig_inCnt = sig_outCnt) then
-					   sig_rdbuff_empty <= '1';
-					else
-					   sig_rdbuff_empty <= '0';
-					end if;
-                elsif (sig_inCnt >= sig_outCnt + 200) then
-                    sig_rdbuff_almost_full <= '1';
-				    sig_rdbuff_empty <= '0';
+                if (sig_inCnt = sig_outCnt) then
+                    sig_rdbuff_empty <= '1';
+                elsif (sig_inCnt = sig_outCnt + 1 AND OUTREQ = '1' AND RDATA_VALID = '0') then
+                    sig_rdbuff_empty <= '1';
+                elsif (sig_inCnt = sig_outCnt + 256) then
+                    sig_rdbuff_full <= '1';
+                elsif (sig_inCnt = sig_outCnt + 255 AND OUTREQ = '0' AND RDATA_VALID = '1') then
+                    sig_rdbuff_full <= '1';
                 else  
                     sig_rdbuff_empty <= '0';
-                    sig_rdbuff_almost_full <= '0';
+                    sig_rdbuff_full <= '0';
                 end if;
+--                if (sig_inCnt <= sig_outCnt + 150) then
+--                    sig_rdbuff_almost_full <= '0';
+--                    if (sig_inCnt = sig_outCnt + 1 AND OUTREQ = '1' AND RDATA_VALID = '0') then
+--					   sig_rdbuff_empty <= '1';
+--				    elsif (sig_inCnt = sig_outCnt) then
+--					   sig_rdbuff_empty <= '1';
+--					else
+--					   sig_rdbuff_empty <= '0';
+--					end if;
+--                elsif (sig_inCnt >= sig_outCnt + 200) then
+--                    sig_rdbuff_almost_full <= '1';
+--				    sig_rdbuff_empty <= '0';
+--                else  
+--                    sig_rdbuff_empty <= '0';
+--                    sig_rdbuff_almost_full <= '0';
+--                end if;
             end if;
         end if;   
     end process;

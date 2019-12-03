@@ -107,7 +107,7 @@ architecture arch_imp of odev_v1_0 is
 	signal sig_itab_empty: std_logic;
 --	signal sig_intr: std_logic;
 	signal sig_rdata: std_logic_vector(31 downto 0);
-	signal sig_rdbuff_almost_full: std_logic;
+	signal sig_rdbuff_full: std_logic;
 	signal sig_rdbuff_empty: std_logic;
 	signal sig_rdata_valid: std_logic;
     signal sig_outdata: std_logic_vector (31 downto 0);
@@ -147,7 +147,7 @@ architecture arch_imp of odev_v1_0 is
 		S_CONSUME_LATENCY: out std_logic_vector(C_S_AXI_DATA_WIDTH-1 downto 0);
 		S_INTR_DONE: out std_logic;
 		S_ITAB_EMPTY: in std_logic;
-		S_RDBUFF_ALMOST_FULL: in std_logic;
+		S_RDBUFF_FULL: in std_logic;
         S_RDBUFF_EMPTY: in std_logic;
         S_CONSUMER_START: out std_logic;
         S_SEQ_ERR: in std_logic;
@@ -195,7 +195,7 @@ architecture arch_imp of odev_v1_0 is
 		M_ITAB_EMPTY : in std_logic;
 		M_RDATA: out std_logic_vector(31 downto 0);
         M_RDATA_VALID: out std_logic;
-        M_RDBUFF_AL_FULL: in std_logic;
+        M_RDBUFF_FULL: in std_logic;
 		M_AXI_ACLK	: in std_logic;
 		M_AXI_ARESETN	: in std_logic;
 		M_AXI_AWID	: out std_logic_vector(C_M_AXI_ID_WIDTH-1 downto 0);
@@ -265,7 +265,7 @@ architecture arch_imp of odev_v1_0 is
          RDBUFF_STREAM_START: in std_logic;
          RDATA: in std_logic_vector(31 downto 0);
          RDATA_VALID: in std_logic;
-         RDBUFF_ALMOST_FULL: out std_logic;
+         RDBUFF_FULL: out std_logic;
          RDBUFF_EMPTY: out std_logic;
          OUTDATA: out std_logic_vector (31 downto 0);
          OUTVALID: out std_logic;
@@ -309,7 +309,7 @@ odev_v1_0_S00_AXI_inst : odev_v1_0_S00_AXI
 	    S_CONSUME_LATENCY => sig_consume_latency,
 	    S_INTR_DONE => sig_intr_done,
 	    S_ITAB_EMPTY => sig_itab_empty,
-	    S_RDBUFF_ALMOST_FULL => sig_rdbuff_almost_full,
+	    S_RDBUFF_FULL => sig_rdbuff_full,
         S_RDBUFF_EMPTY => sig_rdbuff_empty,
         S_CONSUMER_START => sig_consumer_start,
         S_SEQ_ERR => sig_seq_err,
@@ -357,7 +357,7 @@ odev_v1_0_M00_AXI_inst : odev_v1_0_M00_AXI
 		M_ITAB_EMPTY => sig_itab_empty,
 		M_RDATA => sig_rdata,
         M_RDATA_VALID => sig_rdata_valid,
-        M_RDBUFF_AL_FULL => sig_rdbuff_almost_full,
+        M_RDBUFF_FULL => sig_rdbuff_full,
 		M_AXI_ACLK	=> m00_axi_aclk,
 		M_AXI_ARESETN	=> m00_axi_aresetn,
 		M_AXI_AWID	=> m00_axi_awid,
@@ -427,7 +427,7 @@ odev_v1_0_M00_AXI_inst : odev_v1_0_M00_AXI
          RDBUFF_STREAM_START => sig_stream_start,
          RDATA => sig_rdata,
          RDATA_VALID => sig_rdata_valid,
-         RDBUFF_ALMOST_FULL => sig_rdbuff_almost_full,
+         RDBUFF_FULL => sig_rdbuff_full,
          RDBUFF_EMPTY => sig_rdbuff_empty,
          OUTDATA => sig_outdata,
          OUTVALID => sig_outvalid,

@@ -27,7 +27,7 @@ entity odev_v1_0_S00_AXI is
         S_CONSUME_LATENCY: out std_logic_vector(C_S_AXI_DATA_WIDTH-1 downto 0);
         S_INTR_DONE: out std_logic;
         S_ITAB_EMPTY: in std_logic;
-        S_RDBUFF_ALMOST_FULL: in std_logic;
+        S_RDBUFF_FULL: in std_logic;
         S_RDBUFF_EMPTY: in std_logic;
         S_CONSUMER_START: out std_logic;
         S_SEQ_ERR: in std_logic;
@@ -529,7 +529,7 @@ begin
 			        reg_status(STAT_ITAB_EMPTY_BIT) <= '0';
 			    end if;
 			    -- RDBUFF empty/full status update
-			    if (S_RDBUFF_ALMOST_FULL = '1') then
+			    if (S_RDBUFF_FULL = '1') then
 			        reg_status(STAT_RDBUFF_FULL_BIT) <= '1';
 			    elsif (S_RDBUFF_EMPTY = '1') then
 			        reg_status(STAT_RDBUF_EMPTY_BIT) <= '1';
@@ -709,7 +709,7 @@ begin
        end if;	
 	end process;
 	
-	process (S_ITAB_FULL, S_ITAB_EMPTY, S_RDBUFF_ALMOST_FULL)
+	process (S_ITAB_FULL, S_ITAB_EMPTY, S_RDBUFF_FULL)
 	begin
 	   if (reg_ctrl(CTRL_GBL_START_BIT) = '0') then
 	       reg_itab_empty_cnt <= (others => '0');
@@ -722,7 +722,7 @@ begin
            if (S_ITAB_EMPTY = '1') then
                reg_itab_empty_cnt <= std_logic_vector(to_unsigned(to_integer(unsigned(reg_itab_empty_cnt)) + 1, 32));
            end if;
-           if (S_RDBUFF_ALMOST_FULL = '1') then
+           if (S_RDBUFF_FULL = '1') then
                reg_rdbuff_full_cnt <= std_logic_vector(to_unsigned(to_integer(unsigned(reg_rdbuff_full_cnt)) + 1, 32));    
            end if;
 	   end if;
