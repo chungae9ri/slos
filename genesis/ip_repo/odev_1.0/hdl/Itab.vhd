@@ -78,7 +78,7 @@ architecture Behavioral of Itab is
 --	attribute MARK_DEBUG of sig_src_addr_out: signal is "TRUE";
 --	attribute MARK_DEBUG of sig_itab_out_valid : signal is "TRUE";
 --	attribute MARK_DEBUG of ITAB_OUT_TRANS_REQ : signal is "TRUE";
---    attribute MARK_DEBUG of sig_itab_full: signal is "TRUE";
+    attribute MARK_DEBUG of sig_itab_full: signal is "TRUE";
 --	attribute MARK_DEBUG of out_pos : signal is "TRUE";
 --	attribute MARK_DEBUG of in_pos : signal is "TRUE";
 	attribute MARK_DEBUG of sig_valid_src_addr : signal is "TRUE";

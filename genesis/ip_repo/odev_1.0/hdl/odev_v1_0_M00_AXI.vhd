@@ -160,8 +160,10 @@ architecture implementation of odev_v1_0_M00_AXI is
 	 				MEM_READ,    -- This state initializes read transaction
 	 							-- once reads are done, the state machine 
 	 							-- changes state to INIT_COMPARE 
-	 				ITAB_EMPTY,
-	 				RDBUFF_FULL_CHK,
+	 				RDBUFF_FULL_CHK_1,
+	 				RDBUFF_FULL_CHK_2,
+	 				RDBUFF_FULL_CHK_3,
+	 				RDBUFF_FULL_CHK_4,
 	 				RDBUFF_FULL);
 
 	 signal dma_state  : DMAStateType; 
@@ -398,14 +400,7 @@ begin
 					-- issued until burst_read_active signal is asserted.                                          
 					-- read controller                                                                             
 					elsif (M_AXI_RVALID = '1' and axi_rready = '1' and M_AXI_RLAST = '1') then
---						if (M_RDBUFF_FULL = '1') then
-				            dma_state <= RDBUFF_FULL_CHK;
---				        elsif (rdata_done_len + 64 >= to_integer(unsigned(sig_src_len))) then 
---							dma_state <= ITAB_READ;
---						else 
---							rdata_done_len <= rdata_done_len + 64;
---							dma_state <= MEM_READ;
---						end if;
+			            dma_state <= RDBUFF_FULL_CHK_1;
 					else  
 						-- start next burst read						
 						if (axi_arvalid = '0' and burst_read_active = '0' and start_single_burst_read = '0') then    
@@ -415,8 +410,28 @@ begin
 						end if;
 						dma_state <= MEM_READ;						
 					end if;   
-					                                                                            
-	            when RDBUFF_FULL_CHK =>
+				when RDBUFF_FULL_CHK_1 =>
+				    if (M_STREAM_START = '0') then
+					   dma_state <= IDLE;
+					else 
+					   dma_state <= RDBUFF_FULL_CHK_2;
+					end if;
+					   
+				when RDBUFF_FULL_CHK_2 =>
+					if (M_STREAM_START = '0') then
+					   dma_state <= IDLE;
+					else 
+					   dma_state <= RDBUFF_FULL_CHK_3;
+					end if;
+					
+				when RDBUFF_FULL_CHK_3 =>
+					if (M_STREAM_START = '0') then
+					   dma_state <= IDLE;	
+					else 
+					   dma_state <= RDBUFF_FULL_CHK_4;
+					end if;	
+					                                                                                  
+	            when RDBUFF_FULL_CHK_4 =>
 	                if (M_STREAM_START = '0') then
 					   dma_state <= IDLE;
 					elsif(M_RDBUFF_FULL = '1')then

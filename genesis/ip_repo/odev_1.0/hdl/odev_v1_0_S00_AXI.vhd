@@ -31,6 +31,7 @@ entity odev_v1_0_S00_AXI is
         S_RDBUFF_EMPTY: in std_logic;
         S_CONSUMER_START: out std_logic;
         S_SEQ_ERR: in std_logic;
+        S_SEQ_ERR_CHK_OUT: out std_logic;
 		-- User ports ends
 		-- Do not modify the ports beyond this line
 
@@ -145,9 +146,19 @@ architecture arch_imp of odev_v1_0_S00_AXI is
     signal sig_before: std_logic;
     signal sig_after: std_logic;
     signal sig_consumer_start: std_logic;
-	type AXIS_STATE is (IDLE, WARMINGUP, RECEIVING, WRITING, DONE_WRITING, CLOSING, FULL, EMPTY);
+	type AXIS_STATE is (IDLE, 
+	                   WARMINGUP, 
+	                   RECEIVING, 
+	                   WRITING, 
+	                   DONE_WRITING, 
+	                   FULL_CHK_1,
+	                   CLOSING, 
+	                   FULL, 
+	                   EMPTY);
 	signal slave_state : AXIS_STATE;
 	signal sig_stream_start: std_logic;
+	signal sig_seq_err_chk_out: std_logic;
+	signal sig_seq_addr: integer;
 	-- Control register bit mask  
 	constant CTRL_GBL_START_BIT: integer := 0; 
 	constant CTRL_INTR_DONE_BIT: integer := 1; 
@@ -162,12 +173,13 @@ architecture arch_imp of odev_v1_0_S00_AXI is
 	constant STAT_RDBUFF_FULL_BIT: integer := 4;
 	constant STAT_SEQ_ERR_BIT: integer := 5;
 	
---	attribute MARK_DEBUG : string;
---	attribute MARK_DEBUG of reg_ctrl : signal is "TRUE";
---	attribute MARK_DEBUG of reg_status : signal is "TRUE";
---    attribute MARK_DEBUG of slave_state : signal is "TRUE";
---    attribute MARK_DEBUG of reg_addr : signal is "TRUE";
---    attribute MARK_DEBUG of sig_in_trans_valid : signal is "TRUE";
+	attribute MARK_DEBUG : string;
+	attribute MARK_DEBUG of reg_ctrl : signal is "TRUE";
+	attribute MARK_DEBUG of reg_status : signal is "TRUE";
+    attribute MARK_DEBUG of slave_state : signal is "TRUE";
+    attribute MARK_DEBUG of reg_addr : signal is "TRUE";
+    attribute MARK_DEBUG of sig_seq_err_chk_out : signal is "TRUE";
+    attribute MARK_DEBUG of sig_seq_addr: signal is "TRUE";
 begin
 	-- I/O Connections assignments
 
@@ -182,6 +194,7 @@ begin
 	S_CONSUME_LATENCY <= reg_latency;
 	S_INTR_DONE <= reg_ctrl(CTRL_INTR_DONE_BIT); --sig_intr_done;
 	S_CONSUMER_START <= sig_consumer_start;
+	S_SEQ_ERR_CHK_OUT <= sig_seq_err_chk_out;
 	-- Implement axi_awready generation
 	-- axi_awready is asserted for one S_AXI_ACLK clock cycle when both
 	-- S_AXI_AWVALID and S_AXI_WVALID are asserted. axi_awready is
@@ -552,6 +565,8 @@ begin
 							sig_after <= sig_before;
 							-- S_G_PULSE generation
 							slave_state <= WARMINGUP;
+							sig_seq_addr <= 16#38000000#;
+							sig_seq_err_chk_out <= '0';
 						else
 							sig_trig_g_start <= '0';
 							sig_before <= '0';
@@ -562,7 +577,7 @@ begin
 							slave_state <= IDLE;
 							reg_status <= (others => '0');
 						end if;
-					-- generate a S_G_PULSE
+
 					when WARMINGUP =>
 						sig_before <= '1';
 						sig_after <= sig_before;
@@ -576,11 +591,17 @@ begin
 								sig_src_len <= reg_len;
 								sig_in_trans_valid <= '1';
 								reg_status(STAT_TRANS_DONE_BIT) <= '0';
-								reg_status(STAT_ITAB_FULL_BIT) <= '0';
 								slave_state <= WRITING;
-							else 
---								sig_in_trans_valid <= '0'; 
---								reg_status(STAT_TRANS_DONE_BIT) <= '1';    
+								if (sig_seq_addr /= to_integer(unsigned(reg_addr))) then
+								    if (reg_addr /= x"3800_0000") then
+								        sig_seq_err_chk_out <= '1';
+							        else
+								        sig_seq_addr <= 16#38000100#;
+								    end if;
+							    else
+							        sig_seq_addr <= sig_seq_addr + 256;
+							    end if;
+							else    
 								slave_state <= RECEIVING; 
 							end if;
 						else 
@@ -594,8 +615,6 @@ begin
 					-- generate a S_G_PULSE     
 					when WRITING =>
 						if (reg_ctrl(CTRL_GBL_START_BIT) = '1') then
-							-- pulse sig_in_trans_valid to input one entry to Itab
---							if (reg_ctrl(CTRL_IN_TRANS_BIT) = '1') then
                             if (S_IN_TRANS_DONE = '0') then
 								sig_in_trans_valid <= '0';
 								reg_status(STAT_TRANS_DONE_BIT) <= '0';
@@ -620,26 +639,33 @@ begin
                                 reg_status(STAT_TRANS_DONE_BIT) <= '1';
                                 slave_state <= DONE_WRITING;
                             else
-                                if (S_ITAB_FULL = '1') then
-                               	    sig_in_trans_valid <= '0';
-                                    reg_status(STAT_TRANS_DONE_BIT) <= '0'; 
-                                    reg_status(STAT_ITAB_FULL_BIT) <= '1';							   
-                                    slave_state <= FULL;                                 
-                                else
-                                    sig_in_trans_valid <= '0';
-                                    reg_status(STAT_TRANS_DONE_BIT) <= '0';
-                                    slave_state <= RECEIVING;
-                                end if;
+                                -- temporary block future put_to_itab() call
+                                reg_status(STAT_ITAB_FULL_BIT) <= '1';
+                                slave_state <= FULL_CHK_1;
                             end if;
                         else 
                             sig_trig_g_start <= '0';
                             sig_in_trans_valid <= '0';
                             sig_before <= '0';
                             sig_after <= sig_before;
-                            -- generate closing pulse
                             slave_state <= CLOSING;	
                         end if;
-						
+                        
+                    when FULL_CHK_1 =>
+                        -- one more clock delay after S_ITAB_FULL
+                        if (S_ITAB_FULL = '1') then
+                            sig_in_trans_valid <= '0';
+                            reg_status(STAT_TRANS_DONE_BIT) <= '0'; 
+                            reg_status(STAT_ITAB_FULL_BIT) <= '1';							   
+                            slave_state <= FULL;                                 
+                        else
+                            sig_in_trans_valid <= '0';
+                            -- must release blocking put_to_itab() call
+                            reg_status(STAT_ITAB_FULL_BIT) <= '0';
+                            reg_status(STAT_TRANS_DONE_BIT) <= '0';
+                            slave_state <= RECEIVING;
+                        end if;
+                        
 					when CLOSING =>
 						sig_before <= '0';
 						sig_after <= sig_before;
@@ -651,7 +677,9 @@ begin
 								reg_status(STAT_ITAB_FULL_BIT) <= '1';
 								slave_state <= FULL;
 							else
-								reg_status(STAT_ITAB_FULL_BIT) <= '0'; 
+							    sig_in_trans_valid <= '0';
+								reg_status(STAT_ITAB_FULL_BIT) <= '0';
+								reg_status(STAT_TRANS_DONE_BIT) <= '0'; 
 								slave_state <= RECEIVING;
 							end if;
 						else 

@@ -42,8 +42,8 @@ entity RdBuff is
          RDBUFF_EMPTY: out std_logic;
          OUTDATA: out std_logic_vector (31 downto 0);
          OUTVALID: out std_logic;
-         OUTREQ: in std_logic
---         RDBUFF_SEQ_ERR: out std_logic
+         OUTREQ: in std_logic;
+         RDBUFF_SEQ_ERR: out std_logic
     );
 end RdBuff;
  
@@ -62,15 +62,15 @@ architecture Behavioral of RdBuff is
     
     signal sig_rdbuff_full: std_logic;
     signal sig_rdbuff_empty: std_logic; 
---    signal sig_seq_err: std_logic; 
-    
+    signal rdbuff_sig_seq_err: std_logic; 
+    constant int_Rdbuff_wrap_around: integer := (4096 * 4); --4096 stream wrap-around
    	attribute MARK_DEBUG: string;
 	attribute MARK_DEBUG of sig_inCnt: signal is "TRUE";
 	attribute MARK_DEBUG of sig_outCnt: signal is "TRUE"; 
-	attribute MARK_DEBUG of sig_rdbuff_full: signal is "TRUE"; 
+--	attribute MARK_DEBUG of sig_rdbuff_full: signal is "TRUE"; 
 --	attribute MARK_DEBUG of sig_outvalid: signal is "TRUE";
 --	attribute MARK_DEBUG of RDATA_VALID: signal is "TRUE";
---	attribute MARK_DEBUG of sig_seq_err: signal is "TRUE";
+	attribute MARK_DEBUG of rdbuff_sig_seq_err: signal is "TRUE";
 --	attribute MARK_DEBUG of RDATA: signal is "TRUE";
 
 begin
@@ -79,28 +79,35 @@ begin
     OUTVALID <= sig_outvalid;
     RDBUFF_FULL <= sig_rdbuff_full;
     RDBUFF_EMPTY <=  '0'; -- sig_rdbuff_empty;
---    RDBUFF_SEQ_ERR <= sig_seq_err;
+    RDBUFF_SEQ_ERR <= rdbuff_sig_seq_err;
         
     process (CLK) is
+        variable rdbuffblkcnt: integer;
     begin
         if (rising_edge(CLK)) then
             if (RDBUFF_STREAM_START = '0') then
                 sig_inCnt <= 0;
                 sig_inIdx <= 0;
                 sig_in_beat_idx <= 0;
---                sig_seq_err <= '0';
+                rdbuff_sig_seq_err <= '0';
+                rdbuffblkcnt := 1;
             else 
                 if (RDATA_VALID = '1') then
                     sig_RDBuff(sig_inIdx)(sig_in_beat_idx * 32 + 31 downto sig_in_beat_idx * 32) <= RDATA;
                     sig_in_beat_idx <= sig_in_beat_idx + 1;
---                    if (sig_in_beat_idx = 0 AND to_integer(unsigned(RDATA)) /= sig_inCnt) then
---                        sig_seq_err <= '1';
---                    end if;
+                    if (sig_in_beat_idx = 0 AND to_integer(unsigned(RDATA)) /= rdbuffblkcnt) then
+                        rdbuff_sig_seq_err <= '1';
+                    end if;
                     
                     if (sig_in_beat_idx = 15) then
                         sig_in_beat_idx <= 0;
                         sig_inCnt <= sig_inCnt + 1;
                         sig_inIdx <= to_integer(unsigned(std_logic_vector(to_unsigned(sig_inCnt + 1,32)) AND x"0000_00FF"));
+                        if (rdbuffblkcnt = int_Rdbuff_wrap_around) then
+                            rdbuffblkcnt := 1;
+                        else
+                            rdbuffblkcnt := rdbuffblkcnt + 1;
+                        end if;
                     end if;
                 end if;
             end if;
@@ -151,22 +158,6 @@ begin
                     sig_rdbuff_empty <= '0';
                     sig_rdbuff_full <= '0';
                 end if;
---                if (sig_inCnt <= sig_outCnt + 150) then
---                    sig_rdbuff_almost_full <= '0';
---                    if (sig_inCnt = sig_outCnt + 1 AND OUTREQ = '1' AND RDATA_VALID = '0') then
---					   sig_rdbuff_empty <= '1';
---				    elsif (sig_inCnt = sig_outCnt) then
---					   sig_rdbuff_empty <= '1';
---					else
---					   sig_rdbuff_empty <= '0';
---					end if;
---                elsif (sig_inCnt >= sig_outCnt + 200) then
---                    sig_rdbuff_almost_full <= '1';
---				    sig_rdbuff_empty <= '0';
---                else  
---                    sig_rdbuff_empty <= '0';
---                    sig_rdbuff_almost_full <= '0';
---                end if;
             end if;
         end if;   
     end process;

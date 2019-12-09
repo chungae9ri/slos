@@ -659,7 +659,7 @@
         <spirit:parameters>
           <spirit:parameter>
             <spirit:name>viewChecksum</spirit:name>
-            <spirit:value>3779017f</spirit:value>
+            <spirit:value>b51d46e0</spirit:value>
           </spirit:parameter>
         </spirit:parameters>
       </spirit:view>
@@ -675,7 +675,7 @@
         <spirit:parameters>
           <spirit:parameter>
             <spirit:name>viewChecksum</spirit:name>
-            <spirit:value>3779017f</spirit:value>
+            <spirit:value>b51d46e0</spirit:value>
           </spirit:parameter>
         </spirit:parameters>
       </spirit:view>
@@ -1791,7 +1791,7 @@
       <spirit:file>
         <spirit:name>hdl/odev_v1_0.vhd</spirit:name>
         <spirit:fileType>vhdlSource</spirit:fileType>
-        <spirit:userFileType>CHECKSUM_b8c59390</spirit:userFileType>
+        <spirit:userFileType>CHECKSUM_39cc17b6</spirit:userFileType>
       </spirit:file>
     </spirit:fileSet>
     <spirit:fileSet>
@@ -1980,8 +1980,8 @@
         <xilinx:taxonomy>AXI_Peripheral</xilinx:taxonomy>
       </xilinx:taxonomies>
       <xilinx:displayName>odev_v1.0</xilinx:displayName>
-      <xilinx:coreRevision>100</xilinx:coreRevision>
-      <xilinx:coreCreationDateTime>2019-12-03T01:42:43Z</xilinx:coreCreationDateTime>
+      <xilinx:coreRevision>116</xilinx:coreRevision>
+      <xilinx:coreCreationDateTime>2019-12-08T00:38:31Z</xilinx:coreCreationDateTime>
       <xilinx:tags>
         <xilinx:tag xilinx:name="ui.data.coregen.dd@675801f5_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos-git/genesis/ip_repo/odev_1.0</xilinx:tag>
         <xilinx:tag xilinx:name="ui.data.coregen.dd@7f870031_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos-git/genesis/ip_repo/odev_1.0</xilinx:tag>
@@ -3274,6 +3274,202 @@
         <xilinx:tag xilinx:name="ui.data.coregen.dd@19997dce_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
         <xilinx:tag xilinx:name="ui.data.coregen.dd@61f29608_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
         <xilinx:tag xilinx:name="ui.data.coregen.dd@26ef7006_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@34196375_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@5e4f25bf_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@150a7b75_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@573f87d4_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@5cbbd62e_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@39330463_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@c29cf45_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@48a3ee4f_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@45367bb4_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@fabbb94_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@1b5890fa_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@3abade3b_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@60835337_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@289345fb_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@2e5fc557_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@509b79de_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@5180bb27_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@51acbe8e_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@45eb4457_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@47edfd71_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@661f549b_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@372e256b_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@4b6f9d17_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@65590e86_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@74ca9b45_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@3f0a7dca_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@2ee64223_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@17188ff1_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@2ae06a67_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@493746c1_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@2f286367_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@469205c6_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@56fc3bde_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@5e29d142_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@1fb42654_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@5ad2bc5f_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@878aa81_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@2e46fcf7_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@5b7323a6_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@829f2af_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@39239421_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@371d0988_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@622aba56_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@31762f78_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@31b7f6b4_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@5963affb_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@1204e592_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@6cb19c3f_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@6e66a165_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@dede120_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@388e8331_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@24f9ff0d_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@63405a8a_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@2fd9b8c9_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@34e81852_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@787be3dd_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@7d2621d0_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@2977f1e4_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@57a25f10_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@bdeb004_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@135c977_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@4935cb8d_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@78e8c0f9_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@3c90ecc7_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@ed0a884_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@24677c4f_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@67d804e0_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@29f34a6a_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@2b666fb_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@74217248_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@7e6b5de0_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@2c340c20_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@24ce4609_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@10d7ea04_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@1dabfcde_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@789462f0_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@560a3699_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@6cbac809_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@4aec8bfd_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@1d64be2d_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@3b8a0143_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@45dad596_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@4142f111_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@43d77cea_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@7e7a9854_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@7755d77f_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@174ac366_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@38b92541_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@2b367fad_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@3ab6995c_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@434f6174_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@5e5c0557_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@26f4339b_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@4eb454b6_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@7dc116f3_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@45c5f168_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@6d2cc064_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@2ec08551_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@d26855_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@a7a5291_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@220d3662_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@44c5a11e_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@70f2af5e_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@5e47cfac_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@6659ddfd_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@1f8005c1_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@5a0621c9_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@7e36c7c8_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@61c25bc9_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@30f3aaeb_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@63240d16_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@6d09f1b0_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@36f14652_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@6e0f06e7_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@4507ab4b_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@727afbaa_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@f52e3d3_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@61fcea1f_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@20ae6c10_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@775f9c0_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@625bd6ea_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@681dd157_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@3c8fc605_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@8c8e45_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@31f6df8d_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@39857c6a_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@138b3d22_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@3c13f551_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@2723c3e_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@3c8d571a_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@3956fff9_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@851375c_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@6d5184bb_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@7ee4cb5e_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@4d3a194a_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@735b3793_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@78b5ab_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@64e23c5_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@773d5df2_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@6b29e31e_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@5f5324ff_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@156bccc3_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@20adf486_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@7f2ae648_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@d367444_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@2260e4c6_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@5b809417_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@754e4828_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@7e4ebdfb_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@7373c187_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@7a1052a4_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@44b368a2_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@6c9ec28_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@6e913f79_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@6dcc6e8_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@197250aa_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@6b6d5896_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@5ef19d53_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@5d877e1e_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@536e04f8_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@3f66985e_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@5766d10c_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@6e0785a_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@2c302263_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@21307837_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@3073437e_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@2096c7cc_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@60b12bea_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@2999e4aa_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@c8ec5cb_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@2746180c_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@33d48c3_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@193b4a24_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@14791924_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@619443f1_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@4b89766d_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@254f8d24_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@77d47341_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@3962cc2f_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@54b923d1_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@74058197_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@30312d68_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@532986a7_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@7f58a694_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@204be14_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@43ae6b16_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@13bb352b_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@8f7db3c_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@13a513a2_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@f6629a9_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@74f9e834_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@12c06106_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@11d40b2d_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@2875cf44_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@6905b5b0_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@5e391f10_ARCHIVE_LOCATION">c:/dotori/prj/slos/slos/genesis/ip_repo/odev_1.0</xilinx:tag>
       </xilinx:tags>
     </xilinx:coreExtensions>
     <xilinx:packagingInfo>
@@ -3281,7 +3477,7 @@
       <xilinx:checksum xilinx:scope="busInterfaces" xilinx:value="1ebeb024"/>
       <xilinx:checksum xilinx:scope="addressSpaces" xilinx:value="55bfeea0"/>
       <xilinx:checksum xilinx:scope="memoryMaps" xilinx:value="ed1368d5"/>
-      <xilinx:checksum xilinx:scope="fileGroups" xilinx:value="541ebb04"/>
+      <xilinx:checksum xilinx:scope="fileGroups" xilinx:value="65620b8c"/>
       <xilinx:checksum xilinx:scope="ports" xilinx:value="ee06e733"/>
       <xilinx:checksum xilinx:scope="hdlParameters" xilinx:value="2d679ec4"/>
       <xilinx:checksum xilinx:scope="parameters" xilinx:value="9dbcf3f9"/>
