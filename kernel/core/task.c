@@ -318,7 +318,7 @@ uint32_t cfs_worker4(void)
 	}
 	// 
 	xil_printf("start odev \n");
-	set_consume_latency(1000);
+	set_consume_latency(10000);
 
 	start_odev_stream();
 
@@ -327,17 +327,20 @@ uint32_t cfs_worker4(void)
 	for (;;) {
 		/*((uint32_t *)((uint32_t)psrc + O_STREAM_STEP * i))[0] = k++;*/
 		if (!put_to_itab(O_STREAM_START + O_STREAM_STEP * i, O_STREAM_STEP)) {
-			i++;
 			/*xil_printf("put_to_itab: %d\n", i);*/
+			/* spin for a while */
+			j = 0;
+			while (j < 100) 
+				j++;
+			i++;
+			i = i % O_STREAM_WRAP;
 		} else {
-			/*xil_printf("odev buff full \n");*/
+			/* spin for a while */
+			j = 0;
+			while (j < 100) 
+				j++;
 		}
-
-		/* spin for a while */
-		j = 0;
-		while (j < 100) 
-			j++;
-		i = i % O_STREAM_WRAP;
+		xil_printf("i: %d\n", i);
 	}
 
 	stop_consumer();
