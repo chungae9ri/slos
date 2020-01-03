@@ -32,7 +32,9 @@ Implementation list
    - ram disk and elf loader for use applications
 7. syscalls through the svc instruction - libslos.a
 8. Hardware-Software codesign
-   - FPGA design for a custom peripheral device in PL subsystem
+   - Two FPGA (modcore, odev) implementations for a custom peripheral HW in PL subsystem 
+   - Script base Vivado project implementation
    - a device driver with DMA interrupt handler
+   - a device driver for out-stream device
 
 Refer A little book on custom OS developement from scratch.pdf for more information.
