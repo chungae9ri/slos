@@ -113,46 +113,108 @@ void init_pgt(void)
 
 	/* 
 	 * for kernel with direct mapped address.
-	 * 0x00000000 ~ 0xBFFFFFFF: 3GB, directly mapped address.
-	 * 0xC0000000 ~ 0xDFFFFFFF: 512MB, Kernel virtual address.
-	 * 0xE0000000 ~ 0xFFFFFFFF: 512MB, System(M_AXI_GP0/1, I/O peri, SLCR, 
-	 *                          PS system reg, cpu private reg) directly mapped address.
+	 * 0x00000000 ~ 0x3FFFFFFF: 1GB, external RAM memory, directly mapped address except blanked 
+	 		            heap 0x04000000 ~ 0x08000000(64MiB) area.
+	 * 0x40000000 ~ 0xBFFFFFFF: 2GB M_AXI_GP0/1 bufferable, not cacheable, directly mapped
+	 * 0xC0000000 ~ 0xDFFFFFFF: 512MB, Kernel virtual address, remapped to 0x00000000 ~ 0x20000000.
+	 * 0xE0000000 ~ 0xE02FFFFF: 3MB memory mapped peripheral IO registers
+	 * 0xE1000000 ~ 0xFFFFFFFF: Directly mapped to SMC, SLCR, PS system reg, cpu private reg, 
+	 *                          not bufferable, not cacheable
 	 */
-	/* The 4GB direct mapped address */
-	for (i = 0; i < 1024 * 4; i++) {
-	/*for (i = 0; i < 0xF89; i++) {*/
+	/* The 1GB RAM direct mapped address */
+	for (i = 0; i < 1024; i++) {
 		for (j = 0; j < 256; j++) {
 			/* 
 			 * 0x472 is
-	 		 * Bit[0] = 1'b0 : XN(eXecution Never)
-	 		 * Bit[1] = 1'b1 : 0: Large page, 1: Small page
-	 		 * Bit[2] = 1'b0 : Bufferable
-	 		 * Bit[3] = 1'b0 : Cacheable
-	 		 * Bit[5:4] = 2'b11: SCTLR.AFE is 0. AP[1:0] R/W full access with AP[2]=1'b0
-	 		 * Bit[8:6] = 3'b001: TEX[2:0] should be 001 with C = 1'b0, B = 1'b0. 
-	                      		This is Outer and Inner Non Cacheable mode
-	 		 * Bit[9] = 1'b0: AP[2] should be 0 for full access
-	 		 * Bit[10] = 1'b1: S: shareable
-	 		 * Bit[11] = 1'b0: nG(non-Global) bit. 0 for global
-	 		 */
+			 * Bit[0] = 1'b0 : XN(eXecution Never)
+			 * Bit[1] = 1'b1 : 0: Large page, 1: Small page
+			 * Bit[2] = 1'b0 : Bufferable
+			 * Bit[3] = 1'b0 : Cacheable
+			 * Bit[5:4] = 2'b11: SCTLR.AFE is 0. AP[1:0] R/W full access with AP[2]=1'b0
+			 * Bit[8:6] = 3'b001: TEX[2:0] should be 001 with C = 1'b0, B = 1'b0. 
+			 This is Outer and Inner Non Cacheable mode
+			 * Bit[9] = 1'b0: AP[2] should be 0 for full access
+			 * Bit[10] = 1'b1: S: shareable
+			 * Bit[11] = 1'b0: nG(non-Global) bit. 0 for global
+			 */
 			ppage_tbl[i * 256 + j] = ((i * 256 + j) * 4096) | 0x472;
+
+		} 
+	}
+
+	/* M_AXI_GP0/1 mapped address */
+	for (i = 0; i < 1024 * 3; i++) {
+		for (j = 0; j < 256; j++) {
+			/* 
+			 * M_AXI_GP0/1 (bufferable, not cacheable)
+			 * 0x473 is
+			 * Bit[0] = 1'b0 : XN(eXecution Never)
+			 * Bit[1] = 1'b1 : 0: Large page, 1: Small page
+			 * Bit[2] = 1'b1 : Bufferable
+			 * Bit[3] = 1'b0 : Cacheable
+			 * Bit[5:4] = 2'b11: SCTLR.AFE is 0. AP[1:0] R/W full access with AP[2]=1'b0
+			 * Bit[8:6] = 3'b001: TEX[2:0] should be 001 with C = 1'b0, B = 1'b0. 
+			 This is Outer and Inner Non Cacheable mode
+			 * Bit[9] = 1'b0: AP[2] should be 0 for full access
+			 * Bit[10] = 1'b1: S: shareable
+			 * Bit[11] = 1'b0: nG(non-Global) bit. 0 for global
+			 */
+			ppage_tbl[i * 256 + j] = ((i * 256 + j) * 4096) | 0x473;
 		}
 	}
 
 	/* 
-	 * remap kernel area(0xC0000000 ~ 0xDFFFFFFF) to 0x00000000 ~ 0x20000000 physical address
+	 * kernel virtual address
+	 * remap kernel area(0xC0000000 ~ 0xDFFFFFFF) to 0x00000000 ~ 0x1FFFFFFF physical address
 	 */
-	for (i = (0xC00 * 256), j = 0; i < (0xC00 * 256) + 0x1FFFF; i++, j++) {
+	for (i = (0xC00 * 256), j = 0; i < (0xC00 * 256) + 0x20000; i++, j++) {
+		/* 
+		 * bufferable, cacheable
+		 * 0x47E is
+		 * Bit[0] = 1'b0 : XN(eXecution Never)
+		 * Bit[1] = 1'b1 : 0: Large page, 1: Small page
+		 * Bit[2] = 1'b1 : Bufferable
+		 * Bit[3] = 1'b1 : Cacheable
+		 * Bit[5:4] = 2'b11: SCTLR.AFE is 0. AP[1:0] R/W full access with AP[2]=1'b0
+		 * Bit[8:6] = 3'b001: TEX[2:0] should be 001 with C = 1'b0, B = 1'b0. 
+		 This is Outer and Inner Non Cacheable mode
+		 * Bit[9] = 1'b0: AP[2] should be 0 for full access
+		 * Bit[10] = 1'b1: S: shareable
+		 * Bit[11] = 1'b0: nG(non-Global) bit. 0 for global
+		 */
 		ppage_tbl[i] = (j * 4096) | 0x472;
 	}
 
 	/* 
-	 * remap cpu private register.
-	 * cpu private register(0xF8900000~0xF8F02FFFF) must be Device or Strongly-ordered area
+	 * remap IOP address.
+	 * IO peripheral registers (0xE0000000 ~ 0xE02FFFFF, 3MiB) is set for device IO memory
+	 * bufferable, not cacheable
+	 */
+	for (i = (0xE00 * 256), j = 0; i < (0xE00 * 256) + 0x300; i++, j++) {
+		/* 
+			 *  0x433 is
+	 		 * Bit[0] = 1'b0 : XN(eXecution Never)
+	 		 * Bit[1] = 1'b1 : 0: Large page, 1: Small page
+	 		 * Bit[2] = 1'b1 : Bufferable, 0 for Device or Strongly-ordered memory
+	 		 * Bit[3] = 1'b0 : Cacheable, 0 for Device or Strongly-ordered memory
+	 		 * Bit[5:4] = 2'b11: AP[1:0] R/W full access with AP[2]=1'b0
+	 		 * Bit[8:6] = 3'b000: TEX[2:0] should be 000 for Device or Strongly-ordered memory
+	 		 * Bit[9] = 1'b0: AP[2] should be 0 for full access
+	 		 * Bit[10] = 1'b1: S: shareable
+	 		 * Bit[11] = 1'b0: nG(non-Global) bit. 0 for global
+	 		 */
+			ppage_tbl[i] = (0xE0000000 + (j * 4096)) | 0x433;
+	}
+
+
+	/* 
+	 * 0xE1000000 ~ 0xFFFFFFFF: Directly mapped to SMC, SLCR, PS system reg, cpu private reg, 
+	 * not bufferable, not cacheable
+	 * cpu private register(0xE1000000~0xFFFFFFFF) must be Device or Strongly-ordered area
 	 * in Cortex-A9 MPCore TRM
 	 */
-	for (i = (0xF89 * 256), j = 0; i < (0xF89 * 256) + 0x602; i++, j++) {
-			/* 
+	for (i = (0xE10 * 256), j = 0; i < (0xE10 * 256) + 0x1F000; i++, j++) {
+		/* 
 			 *  0x432 is
 	 		 * Bit[0] = 1'b0 : XN(eXecution Never)
 	 		 * Bit[1] = 1'b1 : 0: Large page, 1: Small page
@@ -164,7 +226,7 @@ void init_pgt(void)
 	 		 * Bit[10] = 1'b1: S: shareable
 	 		 * Bit[11] = 1'b0: nG(non-Global) bit. 0 for global
 	 		 */
-			ppage_tbl[i] = (0xF8900000 + (j * 4096)) | 0x432;
+			ppage_tbl[i] = (0xE1000000 + (j * 4096)) | 0x432;
 	}
 
 	/* 

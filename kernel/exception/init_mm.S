@@ -43,7 +43,7 @@ ssbl:
 	bl	invalidate_dcache		/* invalidate dcache */
 
 	/* Disable MMU, if enabled */
-	mrc	p15, 0, r0, c1, c0, 0		/* read CP15 register 1 */
+	mrc	p15, 0, r0, c1, c0, 0		/* read SCTLR register 1 */
 	bic	r0, r0, #0x1			/* clear bit 0 */
 	mcr	p15, 0, r0, c1, c0, 0		/* write value back */
 
@@ -96,13 +96,19 @@ ssbl:
 	orr	r0, r0, #MASK_MMU | MASK_DCACHE
 	orr	r0, r0, #MASK_ICACHE
 	bic	r0, r0, #MASK_AFE /* clear AFE bit, Access flag is disabled, AP[2:0] is used */
-	/* enable MMU, D cache, I cache */
-	mcr	p15, 0, r0, c1, c0, 0
+	/* enable D cache, I cache */
+	mrc	p15, 0, r0, c1, c0, 0		/* read SCTLR register 1 */
+	orr 	r0, r0, #0x1000 		/* set bits for IU  */
+	orr 	r0, r0, #0x100 			/* set bits for D */
+	orr 	r0, r0, #0x1			/* set bits for MMU  */
+	mcr	p15, 0, r0, c1, c0, 0		/* write value back */
+#if 0
 	/* Write to ACTLR */
 	mrc	p15, 0, r0, c1, c0, 1		/* Read ACTLR*/
 	orr	r0, r0, #(0x01 << 6)		/* set SMP bit */
 	orr	r0, r0, #(0x01 )		/* Cache/TLB maintenance broadcast */
 	mcr	p15, 0, r0, c1, c0, 1		/* Write ACTLR*/
+#endif
 	/* jump to reset handler*/
 	ldr 	r0, =reset_handler
 	mov	pc, r0
@@ -134,7 +140,7 @@ loop1:
 	isb					/* isb to sync the change to the CacheSizeID reg */
 	mrc	p15, 1, r1, c0, c0, 0		/* reads current Cache Size ID register */
 	and	r2, r1, #7			/* extract the line length field */
-	add	r2, r2, #4			/* add 4 for the line length offset (log2 16 bytes) */
+	add	r2, r2, #5			/* add 5 for the line length offset (log2 32 bytes) */
 	ldr	r4, =0x3ff
 	ands	r4, r4, r1, lsr #3		/* r4 is the max number on the way size (right aligned) */
 	clz	r5, r4				/* r5 is the bit position of the way size increment */
@@ -145,7 +151,7 @@ loop2:
 loop3:
 	orr	r11, r10, r9, lsl r5		/* factor in the way number and cache number into r11 */
 	orr	r11, r11, r7, lsl r2		/* factor in the index number */
-	mcr	p15, 0, r11, c7, c6, 2		/* invalidate by set/way */
+	mcr	p15, 0, r11, c7, c14, 2		/* invalidate and clean (DCCISW) by set/way */
 	subs	r9, r9, #1			/* decrement the way number */
 	bge	loop3
 	subs	r7, r7, #1			/* decrement the index */
