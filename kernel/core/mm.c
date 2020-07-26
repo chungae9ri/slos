@@ -182,7 +182,7 @@ void init_pgt(void)
 		 * Bit[10] = 1'b1: S: shareable
 		 * Bit[11] = 1'b0: nG(non-Global) bit. 0 for global
 		 */
-		ppage_tbl[i] = (j * 4096) | 0x472;
+		ppage_tbl[i] = (j * 4096) | 0x47E;
 	}
 
 	/* 
