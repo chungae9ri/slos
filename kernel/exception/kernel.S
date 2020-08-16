@@ -130,34 +130,25 @@ reserved:
 	b	.
 ;
 irq_handler:
-	stmia 	r13, {r4-r6}
-	mov	r4, r13
-	sub 	r5, lr, #4
-	msr	cpsr_c,#MODE_SVC | I_BIT | F_BIT /* irq/fiq disabled, SVC mode */
-	mov	r6,#CONTEXT_MEM
-	str	r5, [r6],#4 /* save return addr */
-	str	lr, [r6],#4  /* save current task lr */
-	str	r13, [r6],#4 /* save sp */
-	stmia	r6!, {r0-r3} 
-	mov	r1, r6
-	ldmia	r4, {r4-r6} /* restore r4-r6 */
-	stmia	r1!,{r4-r12}
-	mrs	r5, spsr
-	str	r5, [r1],#4 /* save spsr */
-	bl 	gic_irq_handler
-;	
-	mov 	r12, #CONTEXT_MEM 
-	add 	r12,r12,#4
-	ldr	r14,[r12],#4
-	ldr	r13,[r12],#4
-	ldmia	r12!,{r0-r11}
-	add 	r12,r12,#4
-	ldr	r12,[r12]
-	msr	cpsr_c,#MODE_SVC
-	mov 	r12,#CONTEXT_MEM 
-	ldr	r12,[r12]
-	mov	pc,r12
-;
+	ldr 	r12, =CONTEXT_MEM
+	sub	r12, #4
+	stmfa	r12!, {r0-r11}
+	sub 	r0, lr, #4
+	msr	cpsr_c, #MODE_SVC | I_BIT | F_BIT  /* irq,fiq disabled */
+	mov	r12, #0x402C
+	stmfa	r12!, {sp, lr}
+	/* r0 should be saved after storing sp, lr 
+	 * stmfa r12!, {sp, lr, r0} doesn't work.
+	 * Compiler changes the order.
+	 */
+	str	r0, [r12, #4]
+	bl	gic_irq_handler
+	;
+	mrs	r0, CPSR
+	bic	r1, r0, #I_BIT|F_BIT
+	msr	cpsr_c, r1
+	ldr	r12, =CONTEXT_MEM_END
+	ldmfa	r12!, {r0-r11, sp, lr, pc}
 
 fiq_handler:
 	b 	.

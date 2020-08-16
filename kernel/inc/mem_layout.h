@@ -44,6 +44,10 @@
 .set I_BIT, 					0x80
 .set F_BIT, 					0x40
 .set IF_BIT, 					0xC0
+.set CONTEXT_MEM, 0x4000
+.set CONTEXT_MEM_END, 0x4038
+.set CONTEXT_MEM_LEN, 0xF
+.set SP_MEM, 0x4100
 #else
 #define ODEV_REG_CTRL				0x43c00000
 #define ODEV_REG_STATUS				0x43c00004

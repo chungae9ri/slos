@@ -730,10 +730,8 @@ struct task_struct *forkyi(char *name, task_entry fn, TASKTYPE type)
 	pt->yield_task = NULL;
 	pt->ct.sp = (uint32_t)(SVC_STACK_BASE - TASK_STACK_GAP * ++task_created_num);
 	asm ("mov %0, r14" : "+r" (lr) : : );
-	/*pt->ct.lr = (uint32_t)pt->entry;*/
 	pt->ct.lr = (uint32_t)lr;
 	pt->ct.pc = (uint32_t)pt->entry;
-	pt->ct.spsr = SVCSPSR;
 
 	/* get the last task from task list and add this task to the end of the task list*/
 	last->task.next = &(pt->task);

@@ -59,11 +59,10 @@ struct cfs_rq {
 };
 /* do not change the order */
 struct task_context_struct {
-	uint32_t pc;
-	uint32_t lr;
+	uint32_t r[12];
 	uint32_t sp;
-	uint32_t r[13];
-	uint32_t spsr;
+	uint32_t lr;
+	uint32_t pc;
 };
 
 typedef enum {
