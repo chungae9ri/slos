@@ -37,7 +37,7 @@
 
 uint32_t task_created_num = 1; /* cpuidle task is not created by forkyi. it is already made from start */
 extern void do_switch_context(struct task_struct *, struct task_struct *);
-extern void switch_context_yield(struct task_struct *, struct task_struct *);
+extern void switch_context_yield(struct task_struct *, struct task_struct *, uint32_t lr);
 extern uint32_t	jiffies;
 struct task_struct *current = NULL;
 struct task_struct *last = NULL;
@@ -171,7 +171,7 @@ extern void disable_interrupt(void);
 
 void yield(void)
 {
-	/*uint32_t elapsed;*/
+	uint32_t lr;
 	struct task_struct *temp;
 
 	disable_interrupt();
@@ -187,7 +187,9 @@ void yield(void)
 	if (current->yield_task->state == TASK_RUNNING)
 		current = current->yield_task;
 	else current = idle_task;
-	switch_context_yield(temp, current);
+	/* keep current lr and save it to task's ctx */
+	asm ("mov %0, r14" : "+r" (lr) : : );
+	switch_context_yield(temp, current, lr);
 }
 
 #define TEST_KMALLOC_SZ 	1024 * 1024	
@@ -500,12 +502,10 @@ void set_priority(struct task_struct *pt, uint32_t pri)
 
 void create_cfs_workers(void)
 {
-	/*
 	create_cfs_task("cfs_worker1", cfs_worker1, 8);
 	create_cfs_task("cfs_worker2", cfs_worker2, 4);
 	create_cfs_task("cfs_worker3", cfs_worker3, 8);
-	*/
-	create_cfs_task("cfs_worker4", cfs_worker4, 4);
+	/*create_cfs_task("cfs_worker4", cfs_worker4, 4);*/
 }
 
 void create_rt_workers(void)

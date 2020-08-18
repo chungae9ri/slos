@@ -35,20 +35,27 @@ dsb:
 .global switch_context_yield
 switch_context_yield:
 	mov	r12, r0
-	str	lr, [r12],#4
-	str	lr, [r12],#4
-	str	r13, [r12],#4
+	/* keep current frame ptr (r11).
+	 * r0-r3 will be auto-updated
+	 * after returning to the caller (lr).
+	 * Don't upte the stack ptr, frame ptr (r11, r13),
+	 * and save the previous frame and stack ptr.
+	 */
 	stmia	r12, {r0-r11}
+	str	sp, [r12],#4
+	str	r2, [r12],#4
+	/* save current lr to the saved pc */
+	str	lr, [r12]
+	/* update regs with new task's ctx */
 	mov 	r12, r1
-	add	r12, #56
-	ldmda	r12, {r0-r11}
-	sub	r12, #48
-	ldr	r13, [r12],#-4
-	ldr	r14, [r12],#-4
+	ldmia	r12!, {r0-r11}
+	ldr	sp, [r12],#4
+	ldr	lr, [r12],#4
 	/* enable interrupt */
 	mrs	r1,	CPSR
 	bic	r1,	r1,#IF_BIT
 	msr	CPSR_c, r1	
+	/* jump to the saved pc */
 	ldr	pc, [r12]
 	nop
 
