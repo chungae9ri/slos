@@ -86,6 +86,8 @@ struct task_struct {
 	uint32_t state;
 	uint32_t timeinterval;
 	struct mm_struct mm;
+	uint32_t done;
+	uint32_t preempted;
 };
 
 void init_rq(void);

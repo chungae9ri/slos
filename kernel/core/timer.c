@@ -106,8 +106,8 @@ void timer_disable(void)
 
 int timer_irq (void *arg)
 {
-	struct timer_struct *pnt, *pct; 
 	uint32_t elapsed;
+	struct timer_struct *pnt, *pct; 
 
 	elapsed = get_elapsedtime();
 	pct = container_of(ptroot->rb_leftmost, struct timer_struct, run_node);
@@ -121,22 +121,39 @@ int timer_irq (void *arg)
 
 	switch(pct->type) {
 		case SCHED_TIMER:
-			if (current->type != RT_TASK) {
-				sched_timer->handler(elapsed);
-			}
+			/* cfs task doesn't preempt rt task.
+			 * Let's wait until rt task complete its
+			 * task and yield()
+			 */
+			if (current->type == RT_TASK)
+				break;
+
+			sched_timer->handler(elapsed);
+			pct->pt = current;
 			break;
 
 		case REALTIME_TIMER:
 		case ONESHOT_TIMER:
 			if (current != pct->pt) {
+				if (current->type == RT_TASK)
+					current->preempted = 1;
+
 				switch_context(current, pct->pt);
 				pct->pt->yield_task = current;
 				current = pct->pt;
-			}
+			} 
+
 			if (pct->type == ONESHOT_TIMER) {
 				/* remove oneshot timer from timer tree */
 				del_timer(ptroot, pct);
-			}
+			} else if (!current->done && !current->preempted)
+				/* missed the deadline
+				 * when another timer intr 
+				 * fires before rt task done and next 
+				 * periodic timer. missed its deadline.
+				 */
+				current->missed_cnt++;
+
 			break;
 
 		default:
@@ -198,6 +215,7 @@ void init_timer(void)
 
 	/*tc = sched_timer->tc;*/
 	pct = container_of(ptroot->rb_leftmost, struct timer_struct, run_node);
+	pct->pt = current;
 	tc = pct->tc;
 	writel(tc, PRIV_TMR_LD);
 	gic_register_int_handler(PRIV_TMR_INT_VEC, timer_irq, NULL);

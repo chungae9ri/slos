@@ -63,21 +63,24 @@ void update_timer_tree(uint32_t elapsed)
 	while (pcur != NULL) {
 		pct = container_of(pcur, struct timer_struct, run_node);
 		if (pcur == ptroot->rb_leftmost) {
-			pct->tc = pct->intvl;
-		} else {
-			/* deadline has a margin since the timer intr
-			   has some overhead
-			 */
-			/* if miss the deadline with margin */
-			if (pct->tc + MSEC_MARGIN <= elapsed) {
-				if (pct->type == REALTIME_TIMER) {
-					pct->pt->missed_cnt++;
-				} 
-				pct->tc = MIN_TIME_INT;
+			if (pct->pt->done) {
+				pct->tc = pct->intvl;
 			} else {
+				/* re-enqueue this rt task to finish
+				 * its work in 1msec
+				 */
 				temp = (pct->tc - elapsed); 
-				pct->tc = temp > MIN_TIME_INT ? temp : MIN_TIME_INT;
+				if (temp < MIN_TIME_INT) 
+					pct->tc = MIN_TIME_INT;
+				else 
+					pct->tc = temp;
 			}
+		} else {
+			temp = (pct->tc - elapsed); 
+			if (temp < MIN_TIME_INT) 
+				pct->tc = MIN_TIME_INT;
+			else 
+				pct->tc = temp;
 		}
 		pcur = rb_next(pcur);
 	}

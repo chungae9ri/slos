@@ -54,6 +54,8 @@ extern struct timer_struct *sched_timer;
 struct task_struct *idle_task;
 
 extern struct task_struct *upt[MAX_USR_TASK];
+extern void enable_interrupt(void);
+extern void disable_interrupt(void);
 
 void create_usr_cfs_task(char *name, 
 		task_entry cfs_task, 
@@ -86,7 +88,10 @@ void create_rt_task(char *name, task_entry handler, uint32_t dur)
 	temp = forkyi(name, (task_entry)handler, RT_TASK);
 	temp->timeinterval = dur;
 	temp->state = TASK_RUNNING;
+
+	disable_interrupt();
 	create_rt_timer(temp, dur, rt_timer_idx++, NULL);
+	enable_interrupt();
 }
 
 void create_oneshot_task(char *name, task_entry handler, uint32_t dur)
@@ -105,14 +110,19 @@ uint32_t rt_worker2(void)
 	int i, j = 0;
 	while (1) {
 		/* do some real time work here */
+		current->done = 0;
+		if (show_stat) {
+			xil_printf("I am rt worker2 j: %d\n", j);
+		}
 		for (i = 0; i < 500; i++) {
 			j++;
 		}
-		j = 0;
 
 		if (show_stat) {
-			xil_printf("I am rt worker2 \n");
+			xil_printf("I am rt worker2 j: %d\n", j);
 		}
+		j = 0;
+		current->done = 1;
 		/* should yield after finish current work */
 		yield();
 	}
@@ -124,14 +134,19 @@ uint32_t rt_worker1(void)
 	int i, j = 0;
 	while (1) {
 		/* do some real time work here */
+		current->done = 0;
+		if (show_stat) {
+			xil_printf("I am rt worker1 j: %d\n", j);	
+		}
 		for (i = 0; i < 1000; i++) {
 			j++;
 		}
-		j = 0;
 
 		if (show_stat) {
-			xil_printf("I am rt worker1\n");	
+			xil_printf("I am rt worker1 j: %d\n", j);	
 		}
+		j = 0;
+		current->done = 1;
 		/* should yield after finish current work */
 		yield();
 	}
@@ -166,12 +181,10 @@ uint32_t oneshot_worker(void)
 	return ERR_NO;
 }
 
-extern void enable_interrupt(void);
-extern void disable_interrupt(void);
 
 void yield(void)
 {
-	uint32_t lr;
+	uint32_t lr = 0;
 	struct task_struct *temp;
 
 	disable_interrupt();
@@ -190,6 +203,21 @@ void yield(void)
 	/* keep current lr and save it to task's ctx */
 	asm ("mov %0, r14" : "+r" (lr) : : );
 	switch_context_yield(temp, current, lr);
+}
+
+uint32_t cfs_dummy(void )
+{
+	uint32_t cnt;
+	int i; 
+
+	cnt = 0;
+	while (1) {
+		cnt++;
+		if (cnt > 1000000)
+			cnt = 0;
+		xil_printf("dummy cfs worker cnt: %d\n", cnt);
+		for (i = 0; i < 1000000; i++);
+	}
 }
 
 #define TEST_KMALLOC_SZ 	1024 * 1024	
@@ -502,16 +530,22 @@ void set_priority(struct task_struct *pt, uint32_t pri)
 
 void create_cfs_workers(void)
 {
-	create_cfs_task("cfs_worker1", cfs_worker1, 8);
+#if 1
+	create_cfs_task("cfs_worker1", cfs_dummy, 8);
+	create_cfs_task("cfs_worker2", cfs_dummy, 4);
+	create_cfs_task("cfs_worker3", cfs_dummy, 8);
+#else
+	/*create_cfs_task("cfs_worker1", cfs_worker1, 8);*/
 	create_cfs_task("cfs_worker2", cfs_worker2, 4);
 	create_cfs_task("cfs_worker3", cfs_worker3, 8);
 	/*create_cfs_task("cfs_worker4", cfs_worker4, 4);*/
+#endif
 }
 
 void create_rt_workers(void)
 {
-	create_rt_task("rt_worker1", rt_worker1, 20);
-	create_rt_task("rt_worker2", rt_worker2, 25);
+	create_rt_task("rt_worker1", rt_worker1, 120);
+	create_rt_task("rt_worker2", rt_worker2, 125);
 }
 
 #include <inttypes.h>
@@ -697,6 +731,7 @@ void init_idletask(void)
 	pt->type = CFS_TASK;
 	pt->missed_cnt = 0;
 	pt->pid = 0;
+	pt->preempted = 0;
 	set_priority(pt, 16);
 	idle_task = current = first = last = pt;
 }
@@ -704,7 +739,7 @@ void init_idletask(void)
 void init_cfs_scheduler(void)
 {
 	set_ticks_per_sec(get_timer_freq());
-	create_sched_timer(NULL, 10, 0, NULL);
+	create_sched_timer(current, 10, 0, NULL);
 	init_jiffies();
 }
 
@@ -728,6 +763,8 @@ struct task_struct *forkyi(char *name, task_entry fn, TASKTYPE type)
 	pt->se.jiffies_vruntime = 0L;
 	pt->se.jiffies_consumed = 0L;
 	pt->yield_task = NULL;
+	pt->preempted = 0;
+	pt->done = 1;
 	pt->ct.sp = (uint32_t)(SVC_STACK_BASE - TASK_STACK_GAP * ++task_created_num);
 	asm ("mov %0, r14" : "+r" (lr) : : );
 	pt->ct.lr = (uint32_t)lr;
