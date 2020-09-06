@@ -21,7 +21,9 @@
 #include <ktimer.h>
 #include <timer.h>
 #include <task.h>
-#include <wait.h>
+#include <sched.h>
+#include <runq.h>
+#include <waitq.h>
 #include <mm.h>
 #include <file_system.h>
 #include <loader.h>

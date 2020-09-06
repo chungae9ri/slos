@@ -23,12 +23,12 @@
 #include <mm.h>
 #include <xil_printf.h>
 #include <regops.h>
-#include <task.h>
+#include <sched.h>
+#include <runq.h>
 
 struct clock_source_device csd;
 struct timer_root *ptroot = NULL;
 struct timer_struct *sched_timer = NULL;
-uint64_t jiffies;
 volatile uint32_t timertree_lock;
 
 #define MIN_TIME_INT 	(get_ticks_per_sec() / 1000)

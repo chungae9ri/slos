@@ -1,5 +1,5 @@
 /*
-  kernel/inc/task.h 
+  kernel/inc/wait.h 
   (C) 2018 Kwangdo Yi <kwangdo.yi@gmail.com>
  
   This program is free software; you can redistribute it and/or modify
@@ -16,24 +16,25 @@
   along with this program; if not, see <http://www.gnu.org/licenses/>
 */
 
-#ifndef __TASK_H__
-#define __TASK_H__
-
 #include <stdint-gcc.h>
-#include <stddef.h>
-#include <mem_layout.h>
 #include <sched.h>
+#include <stdbool.h>
 
-void init_idletask(void);
-void init_cfs_workers(void);
-void init_shell(void);
-void init_workers(void);
+struct wait_queue {
+	int magic;
+	volatile uint32_t queuelock;
+	struct list_head task_list;
+	int count;
+};
 
-void create_usr_cfs_task(char *name, 
-		task_entry cfs_task, 
-		uint32_t pri, 
-		uint32_t appIdx);
-void create_cfs_task(char *name, task_entry cfs_task, uint32_t pri);
-void create_rt_task(char *name, task_entry handler, uint32_t dur);
+struct wait_queue wq;
 
-#endif
+extern void spin_lock_acquire(volatile uint32_t *pl);
+extern void spin_lock_release(volatile uint32_t *pl);
+
+void init_wq(void);
+void add_to_wq(struct task_struct *tp);
+void dequeue_se_to_wq(struct sched_entity *se, bool update);
+void remove_from_wq(struct task_struct *tp);
+void dequeue_se_to_exit(struct sched_entity *se);
+void dequeue_se_to_waitq(struct sched_entity *se, bool update);

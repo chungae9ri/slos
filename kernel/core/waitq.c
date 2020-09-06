@@ -1,5 +1,5 @@
 /*
-  kernel/core/wait.c process wait manager 
+  kernel/core/waitq.c process wait manager 
   (C) 2018 Kwangdo Yi <kwangdo.yi@gmail.com>
  
   This program is free software; you can redistribute it and/or modify
@@ -17,11 +17,13 @@
 */
 
 #include <task.h>
-#include <wait.h>
+#include <waitq.h>
 #include <stdbool.h>
 #include <defs.h>
+#include <runq.h>
 
-struct wait_queue wq;
+extern volatile uint32_t rqlock;
+extern struct cfs_rq *runq;
 
 void init_wq(void)
 {
@@ -103,3 +105,43 @@ int wait_queue_wake_all(bool resched)
 {
 	return 0;
 }
+
+void dequeue_se_to_wq(struct sched_entity *se, bool update)
+{
+	struct task_struct *tp;
+
+	if (update) {
+		tp = container_of(se, struct task_struct, se);
+		runq->priority_sum -= se->priority;
+		add_to_wq(tp);
+		tp->state = TASK_WAITING;
+
+		spin_lock_acquire(&rqlock);
+		update_vruntime_runq(se);
+		spin_lock_release(&rqlock);
+	}
+
+	spin_lock_acquire(&rqlock);
+	dequeue_se(se);
+	spin_lock_release(&rqlock);
+}
+
+void dequeue_se_to_exit(struct sched_entity *se)
+{
+	struct task_struct *tp;
+	tp = container_of(se, struct task_struct, se);
+	if (tp->state == TASK_RUNNING || tp->state == TASK_STOP_RUNNING){
+		runq->priority_sum -= se->priority;
+		spin_lock_acquire(&rqlock);
+		update_vruntime_runq(se);
+		dequeue_se(se);
+		spin_lock_release(&rqlock);
+		tp->state = TASK_STOP;
+	} else if (tp->state == TASK_WAITING) {
+		spin_lock_acquire(&rqlock);
+		remove_from_wq(tp);
+		spin_lock_release(&rqlock);
+		tp->state = TASK_STOP;
+	}
+}
+
