@@ -64,13 +64,13 @@ architecture Behavioral of RdBuff is
     signal sig_rdbuff_empty: std_logic; 
     signal rdbuff_sig_seq_err: std_logic; 
     constant int_Rdbuff_wrap_around: integer := (4096 * 4); --4096 stream wrap-around
-   	attribute MARK_DEBUG: string;
-	attribute MARK_DEBUG of sig_inCnt: signal is "TRUE";
-	attribute MARK_DEBUG of sig_outCnt: signal is "TRUE"; 
+--   	attribute MARK_DEBUG: string;
+--	attribute MARK_DEBUG of sig_inCnt: signal is "TRUE";
+--	attribute MARK_DEBUG of sig_outCnt: signal is "TRUE"; 
 --	attribute MARK_DEBUG of sig_rdbuff_full: signal is "TRUE"; 
 --	attribute MARK_DEBUG of sig_outvalid: signal is "TRUE";
 --	attribute MARK_DEBUG of RDATA_VALID: signal is "TRUE";
-	attribute MARK_DEBUG of rdbuff_sig_seq_err: signal is "TRUE";
+--	attribute MARK_DEBUG of rdbuff_sig_seq_err: signal is "TRUE";
 --	attribute MARK_DEBUG of RDATA: signal is "TRUE";
 
 begin

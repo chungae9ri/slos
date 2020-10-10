@@ -12,10 +12,7 @@ entity modcore_v1_0 is
 
 		-- Parameters of Axi Slave Bus Interface S00_AXI
 		C_S00_AXI_DATA_WIDTH	: integer	:= 32;
-		C_S00_AXI_ADDR_WIDTH	: integer	:= 5;
-
-		-- Parameters of Axi Master Bus Interface M00_AXI
-		C_M00_AXI_TARGET_SLAVE_BASE_ADDR	: std_logic_vector	:= x"40000000";
+		C_S00_AXI_ADDR_WIDTH	: integer	:= 7;
 		C_M00_AXI_BURST_LEN	: integer	:= 16;
 		C_M00_AXI_ID_WIDTH	: integer	:= 1;
 		C_M00_AXI_ADDR_WIDTH	: integer	:= 32;
@@ -98,29 +95,45 @@ end modcore_v1_0;
 
 architecture arch_imp of modcore_v1_0 is
 
-	signal sig_trig_mem_cpy : std_logic;
-	signal sig_src_addr : std_logic_vector(C_M00_AXI_DATA_WIDTH-1 downto 0);
-	signal sig_src_len : std_logic_vector(C_M00_AXI_DATA_WIDTH-1 downto 0);
-	signal sig_tgt_addr : std_logic_vector(C_M00_AXI_DATA_WIDTH-1 downto 0);
-	signal sig_intr_done : std_logic;
-	signal sig_dma_irq_done : std_logic;
+    signal sig_g_reset: std_logic;
+    signal sig_dma_start: std_logic;
+    signal sig_intr_done: std_logic;
+    signal sig_reg_in_addr: std_logic_vector(4 downto 0);
+    signal sig_reg_in_addr_valid: std_logic;
+    signal sig_reg_in_data: std_logic_vector(31 downto 0);
+    signal sig_reg_in_data_valid: std_logic;
+    signal sig_reg_out_data: std_logic_vector(31 downto 0);
+    signal sig_reg_out_addr: std_logic_vector(4 downto 0);
+    signal sig_reg_out_data_valid: std_logic;
+    signal sig_reg_out_addr_valid: std_logic;
+    signal sig_mdproc_data_in: std_logic_vector(31 downto 0);
+    signal sig_mdproc_data_in_valid: std_logic;
+    signal sig_mdproc_data_out_req: std_logic;
+    signal sig_mdproc_data_out: std_logic_vector(31 downto 0);
+    signal sig_mdproc_data_out_valid: std_logic;
+    signal sig_dma_intr: std_logic;
 	
 	attribute MARK_DEBUG : string;
-    attribute MARK_DEBUG of sig_dma_irq_done : signal is "TRUE";
+    attribute MARK_DEBUG of SW_DMA_IRQ : signal is "TRUE";
 	
 	-- component declaration
 	component modcore_v1_0_S00_AXI is
 		generic (
 		C_S_AXI_DATA_WIDTH	: integer	:= 32;
-		C_S_AXI_ADDR_WIDTH	: integer	:= 5
+		C_S_AXI_ADDR_WIDTH	: integer	:= 7
 		);
 		port (
-		S_DMA_IRQ_DONE : in std_logic;
-		TRIG_MEM_CPY : out std_logic;
-		S_SRC_ADDR : out std_logic_vector(C_S_AXI_DATA_WIDTH-1 downto 0);
-		S_SRC_LEN : out std_logic_vector(C_S_AXI_DATA_WIDTH-1 downto 0);
-		S_TGT_ADDR : out std_logic_vector(C_S_AXI_DATA_WIDTH-1 downto 0);
-		S_INTR_DONE : out std_logic;
+		g_reset: out std_logic;
+		dma_start: out std_logic;
+		intr_done: out std_logic;
+		reg_in_addr: in std_logic_vector(4 downto 0); -- 32 regs
+		reg_in_addr_valid: in std_logic;
+        reg_in_data: in std_logic_vector(31 downto 0);        
+        reg_in_data_valid: in std_logic;
+        reg_out_addr: in std_logic_vector(4 downto 0);
+        reg_out_addr_valid: in std_logic;     
+        reg_out_data: out std_logic_vector(31 downto 0);
+        reg_out_data_valid: out std_logic;  
 		-------------------------------------------
 		S_AXI_ACLK	: in std_logic;
 		S_AXI_ARESETN	: in std_logic;
@@ -148,21 +161,29 @@ architecture arch_imp of modcore_v1_0 is
 
 	component modcore_v1_0_M00_AXI is
 		generic (
-		C_M_TARGET_SLAVE_BASE_ADDR	: std_logic_vector	:= x"40000000";
 		C_M_AXI_BURST_LEN	: integer	:= 16;
 		C_M_AXI_ID_WIDTH	: integer	:= 1;
 		C_M_AXI_ADDR_WIDTH	: integer	:= 32;
 		C_M_AXI_DATA_WIDTH	: integer	:= 32
 		);
 		port (
-		M_DMA_IRQ_DONE : out std_logic;
-		INIT_AXI_TXN	: in std_logic;
-		M_SRC_ADDR : in std_logic_vector(C_M_AXI_DATA_WIDTH-1 downto 0);
-		M_SRC_LEN : in std_logic_vector(C_M_AXI_DATA_WIDTH-1 downto 0);
-		M_TGT_ADDR : in std_logic_vector(C_M_AXI_DATA_WIDTH-1 downto 0);
-		M_DMA_IRQ : out std_logic;
-		M_INTR_DONE : in std_logic;
-		-- kyi TXN_DONE	: out std_logic;
+		g_reset: in std_logic;
+		dma_start: in std_logic;
+		reg_in_addr: out std_logic_vector(4 downto 0);
+		reg_in_addr_valid: out std_logic;
+		reg_in_data: out std_logic_vector(31 downto 0);
+		reg_in_data_valid: out std_logic;
+		reg_out_addr: out std_logic_vector(4 downto 0);
+		reg_out_addr_valid: out std_logic;
+		reg_out_data: in std_logic_vector(31 downto 0);
+		reg_out_data_valid: in std_logic;
+        mdproc_data_in: out std_logic_vector(31 downto 0);
+        mdproc_data_in_valid: out std_logic;
+        mdproc_data_out_req: out std_logic;
+        mdproc_data_out: in std_logic_vector(31 downto 0);
+        mdproc_data_out_valid: in std_logic;
+        dma_intr: out std_logic;
+        ----------------------------
 		M_AXI_ACLK	: in std_logic;
 		M_AXI_ARESETN	: in std_logic;
 		M_AXI_AWID	: out std_logic_vector(C_M_AXI_ID_WIDTH-1 downto 0);
@@ -204,7 +225,18 @@ architecture arch_imp of modcore_v1_0 is
 		M_AXI_RREADY	: out std_logic
 		);
 	end component modcore_v1_0_M00_AXI;
-
+	
+	component mdproc is
+        Port ( 
+        clk: in std_logic;
+        g_reset: in std_logic;
+        mdproc_data_in: in std_logic_vector(31 downto 0);
+        mdproc_data_in_valid: in std_logic;
+        mdproc_data_out_req: in std_logic;
+        mdproc_data_out: out std_logic_vector(31 downto 0);
+        mdproc_data_out_valid: out std_logic
+        );
+    end component mdproc;
 begin
 
 -- Instantiation of Axi Bus Interface S00_AXI
@@ -214,12 +246,18 @@ modcore_v1_0_S00_AXI_inst : modcore_v1_0_S00_AXI
 		C_S_AXI_ADDR_WIDTH	=> C_S00_AXI_ADDR_WIDTH
 	)
 	port map (
-	    S_DMA_IRQ_DONE => sig_dma_irq_done,
-	    TRIG_MEM_CPY => sig_trig_mem_cpy,
-	    S_SRC_ADDR => sig_src_addr,
-	    S_SRC_LEN => sig_src_len,
-	    s_TGT_ADDR => sig_tgt_addr,
-	    S_INTR_DONE => sig_intr_done,
+		g_reset => sig_g_reset,
+		dma_start => sig_dma_start,
+		intr_done => sig_intr_done,
+		reg_in_addr => sig_reg_in_addr,
+		reg_in_addr_valid => sig_reg_in_addr_valid,
+        reg_in_data => sig_reg_in_data,        
+        reg_in_data_valid => sig_reg_in_data_valid,
+        reg_out_addr => sig_reg_out_addr,
+        reg_out_addr_valid => sig_reg_out_addr_valid,     
+        reg_out_data => sig_reg_out_data,
+        reg_out_data_valid => sig_reg_out_data_valid,  	
+	---
 		S_AXI_ACLK	=> s00_axi_aclk,
 		S_AXI_ARESETN	=> s00_axi_aresetn,
 		S_AXI_AWADDR	=> s00_axi_awaddr,
@@ -246,21 +284,29 @@ modcore_v1_0_S00_AXI_inst : modcore_v1_0_S00_AXI
 -- Instantiation of Axi Bus Interface M00_AXI
 modcore_v1_0_M00_AXI_inst : modcore_v1_0_M00_AXI
 	generic map (
-		C_M_TARGET_SLAVE_BASE_ADDR	=> C_M00_AXI_TARGET_SLAVE_BASE_ADDR,
 		C_M_AXI_BURST_LEN	=> C_M00_AXI_BURST_LEN,
 		C_M_AXI_ID_WIDTH	=> C_M00_AXI_ID_WIDTH,
 		C_M_AXI_ADDR_WIDTH	=> C_M00_AXI_ADDR_WIDTH,
 		C_M_AXI_DATA_WIDTH	=> C_M00_AXI_DATA_WIDTH
 	)
 	port map (
-	    M_DMA_IRQ_DONE => sig_dma_irq_done,
-		INIT_AXI_TXN => sig_trig_mem_cpy,
-		M_SRC_ADDR => sig_src_addr,
-		M_SRC_LEN => sig_src_len,
-		M_TGT_ADDR => sig_tgt_addr,
-		M_DMA_IRQ => SW_DMA_IRQ,
-		M_INTR_DONE =>sig_intr_done,
-		-- kyi TXN_DONE	=> m00_axi_txn_done,
+		g_reset => sig_g_reset,
+		dma_start => sig_dma_start,
+		reg_in_addr => sig_reg_in_addr,
+		reg_in_addr_valid => sig_reg_in_addr_valid,
+		reg_in_data => sig_reg_in_data,
+		reg_in_data_valid => sig_reg_in_data_valid,
+		reg_out_addr => sig_reg_out_addr,
+		reg_out_addr_valid => sig_reg_out_addr_valid,
+		reg_out_data => sig_reg_out_data,
+		reg_out_data_valid => sig_reg_out_data_valid,
+        mdproc_data_in => sig_mdproc_data_in,
+        mdproc_data_in_valid => sig_mdproc_data_in_valid,
+        mdproc_data_out_req => sig_mdproc_data_out_req,
+        mdproc_data_out => sig_mdproc_data_out,
+        mdproc_data_out_valid => sig_mdproc_data_out_valid,
+        dma_intr => sig_dma_intr,
+		----------------------
 		M_AXI_ACLK	=> m00_axi_aclk,
 		M_AXI_ARESETN	=> m00_axi_aresetn,
 		M_AXI_AWID	=> m00_axi_awid,
@@ -303,7 +349,33 @@ modcore_v1_0_M00_AXI_inst : modcore_v1_0_M00_AXI
 	);
 
 	-- Add user logic here
-
+	mdproc_inst: mdproc 
+        Port map ( 
+        clk => m00_axi_aclk,
+        g_reset => sig_g_reset,
+        mdproc_data_in => sig_mdproc_data_in,
+        mdproc_data_in_valid => sig_mdproc_data_in_valid,
+        mdproc_data_out_req => sig_mdproc_data_out_req,
+        mdproc_data_out => sig_mdproc_data_out,
+        mdproc_data_out_valid => sig_mdproc_data_out_valid
+        );
+    
+    process(m00_axi_aclk) is
+    begin
+        if rising_edge(m00_axi_aclk) then
+            if (sig_g_reset = '1') then
+                SW_DMA_IRQ <= '0';
+            else
+                if (sig_dma_intr = '1') then
+                    SW_DMA_IRQ <= '1';
+                end if;
+                
+                if (sig_intr_done = '1') then
+                    SW_DMA_IRQ <= '0';
+                end if;
+            end if;
+        end if;
+    end process;
 	-- User logic ends
 
 end arch_imp;

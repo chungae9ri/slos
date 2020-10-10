@@ -173,13 +173,13 @@ architecture arch_imp of odev_v1_0_S00_AXI is
 	constant STAT_RDBUFF_FULL_BIT: integer := 4;
 	constant STAT_SEQ_ERR_BIT: integer := 5;
 	
-	attribute MARK_DEBUG : string;
-	attribute MARK_DEBUG of reg_ctrl : signal is "TRUE";
-	attribute MARK_DEBUG of reg_status : signal is "TRUE";
-    attribute MARK_DEBUG of slave_state : signal is "TRUE";
-    attribute MARK_DEBUG of reg_addr : signal is "TRUE";
-    attribute MARK_DEBUG of sig_seq_err_chk_out : signal is "TRUE";
-    attribute MARK_DEBUG of sig_seq_addr: signal is "TRUE";
+--	attribute MARK_DEBUG : string;
+--	attribute MARK_DEBUG of reg_ctrl : signal is "TRUE";
+--	attribute MARK_DEBUG of reg_status : signal is "TRUE";
+--    attribute MARK_DEBUG of slave_state : signal is "TRUE";
+--    attribute MARK_DEBUG of reg_addr : signal is "TRUE";
+--    attribute MARK_DEBUG of sig_seq_err_chk_out : signal is "TRUE";
+--    attribute MARK_DEBUG of sig_seq_addr: signal is "TRUE";
 begin
 	-- I/O Connections assignments
 

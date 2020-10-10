@@ -190,19 +190,19 @@ architecture implementation of odev_v1_0_M00_AXI is
     signal sig_rdata_valid: std_logic;
     signal rdata_done_len: integer;
     
-	attribute MARK_DEBUG : string;
-	attribute MARK_DEBUG of dma_state: signal is "TRUE";
-	attribute MARK_DEBUG of axi_araddr: signal is "TRUE";
+--	attribute MARK_DEBUG : string;
+--	attribute MARK_DEBUG of dma_state: signal is "TRUE";
+--	attribute MARK_DEBUG of axi_araddr: signal is "TRUE";
 --	attribute MARK_DEBUG of burst_read_active: signal is "TRUE";
-	attribute MARK_DEBUG of sig_rdata: signal is "TRUE";
+--	attribute MARK_DEBUG of sig_rdata: signal is "TRUE";
 --	attribute MARK_DEBUG of axi_arvalid: signal is "TRUE";
 --	attribute MARK_DEBUG of M_AXI_ARREADY: signal is "TRUE";
 --	attribute MARK_DEBUG of M_AXI_RVALID: signal is "TRUE";
 --	attribute MARK_DEBUG of axi_rready: signal is "TRUE";
 --	attribute MARK_DEBUG of sig_rdata_valid: signal is "TRUE";
 --	attribute MARK_DEBUG of M_AXI_RDATA: signal is "TRUE";
-    attribute MARK_DEBUG of rnext: signal is "TRUE";
-    attribute MARK_DEBUG of M_AXI_RLAST: signal is "TRUE";
+--    attribute MARK_DEBUG of rnext: signal is "TRUE";
+--    attribute MARK_DEBUG of M_AXI_RLAST: signal is "TRUE";
 --    attribute MARK_DEBUG of sig_src_len: signal is "TRUE";
 --    attribute MARK_DEBUG of rdata_done_len: signal is "TRUE";
     

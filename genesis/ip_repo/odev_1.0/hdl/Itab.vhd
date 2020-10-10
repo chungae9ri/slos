@@ -69,19 +69,19 @@ architecture Behavioral of Itab is
     signal sig_itab_in_trans_done: std_logic;
     signal sig_valid_src_addr: std_logic_vector(31 downto 0);
     
-	attribute MARK_DEBUG: string;
+--	attribute MARK_DEBUG: string;
 	--attribute MARK_DEBUG of ITAB_G_START : signal is "TRUE";
 --	attribute MARK_DEBUG of ITAB_IN_TRANS_VALID : signal is "TRUE";
 --	attribute MARK_DEBUG of SRC_ADDR_IN : signal is "TRUE";
-	attribute MARK_DEBUG of in_count : signal is "TRUE";
-	attribute MARK_DEBUG of out_count : signal is "TRUE";
+--	attribute MARK_DEBUG of in_count : signal is "TRUE";
+--	attribute MARK_DEBUG of out_count : signal is "TRUE";
 --	attribute MARK_DEBUG of sig_src_addr_out: signal is "TRUE";
 --	attribute MARK_DEBUG of sig_itab_out_valid : signal is "TRUE";
 --	attribute MARK_DEBUG of ITAB_OUT_TRANS_REQ : signal is "TRUE";
-    attribute MARK_DEBUG of sig_itab_full: signal is "TRUE";
+--    attribute MARK_DEBUG of sig_itab_full: signal is "TRUE";
 --	attribute MARK_DEBUG of out_pos : signal is "TRUE";
 --	attribute MARK_DEBUG of in_pos : signal is "TRUE";
-	attribute MARK_DEBUG of sig_valid_src_addr : signal is "TRUE";
+--	attribute MARK_DEBUG of sig_valid_src_addr : signal is "TRUE";
 begin
     
     SRC_ADDR_OUT <= sig_src_addr_out;
