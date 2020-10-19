@@ -26,13 +26,18 @@
 
 struct dma_work_order *p_dma_work_order;
 int bFirst;
-
+uint32_t enqueue_workq(void (*func)(void *), void *arg) ;
 
 void init_dma(void)
 {
+	uint32_t cntl;
+
 	gic_register_int_handler(MODCORE_DMA_IRQ_ID, dma_irq, NULL);
 	gic_mask_interrupt(MODCORE_DMA_IRQ_ID);
 	p_dma_work_order = NULL;
+	// reset mdcore hw
+	cntl = MODCORE_RESET;
+	writel(cntl, MODCORE_DMA_REG_CNTL);
 }
 
 void set_dma_work(uint32_t src, uint32_t dst, uint32_t len)
@@ -86,55 +91,49 @@ void set_dma_work(uint32_t src, uint32_t dst, uint32_t len)
 	}
 }
 
-int start_dma(void)
+void start_dma(void *arg)
 {
 	uint32_t cntl, src, dst, len;
 	struct dma_work_order *ptemp;
 
-	if (p_dma_work_order) {
-		if (bFirst) {
-			flush_ent_dcache();
-			bFirst = 0;
-		}
-
-		src = p_dma_work_order->src;
-		dst = p_dma_work_order->dst;
-		len = p_dma_work_order->len;
-
-		writel(src, MODCORE_DMA_REG_SRC_ADDR);
-		writel(dst, MODCORE_DMA_REG_DST_ADDR);
-		writel(len, MODCORE_DMA_REG_LEN);
-
-		ptemp = p_dma_work_order;
-		p_dma_work_order = p_dma_work_order->next;
-		kfree((uint32_t)ptemp);
-
-		cntl = readl(MODCORE_DMA_REG_CNTL);
-		cntl |= MODCORE_DMA_START;
-		writel(cntl, MODCORE_DMA_REG_CNTL);
-
-		return 0;
-	} else {
-		return 1;
+	if (bFirst) {
+		flush_ent_dcache();
+		bFirst = 0;
 	}
+
+	src = p_dma_work_order->src;
+	dst = p_dma_work_order->dst;
+	len = p_dma_work_order->len;
+	xil_printf("dma start: 0x%x, 0x%x, 0x%x\n", src, dst, len);
+
+	writel(src, MODCORE_DMA_REG_SRC_ADDR);
+	writel(dst, MODCORE_DMA_REG_DST_ADDR);
+	writel(len, MODCORE_DMA_REG_LEN);
+
+	ptemp = p_dma_work_order;
+	p_dma_work_order = p_dma_work_order->next;
+	kfree((uint32_t)ptemp);
+
+	cntl = readl(MODCORE_DMA_REG_CNTL);
+	cntl |= MODCORE_DMA_START;
+	writel(cntl, MODCORE_DMA_REG_CNTL);
 }
 
 int dma_irq (void *arg)
 {
 	uint32_t cntl;
+	if (p_dma_work_order) {
+		enqueue_workq(start_dma, NULL);
+	} else {
+		cntl = readl(MODCORE_DMA_REG_CNTL);
+		cntl &= ~MODCORE_DMA_START;
+		writel(cntl, MODCORE_DMA_REG_CNTL);
+		/*xil_printf("dma done!\n");*/
+	}
 
 	cntl = readl(MODCORE_DMA_REG_CNTL);
 	cntl |= MODCORE_DMA_IRQ_DONE;
 	writel(cntl, MODCORE_DMA_REG_CNTL);
-
-	/* start next dma order */
-	if (start_dma()) {
-		cntl = readl(MODCORE_DMA_REG_CNTL);
-		cntl &= ~MODCORE_DMA_START;
-		writel(cntl, MODCORE_DMA_REG_CNTL);
-
-		xil_printf("dma done!\n");
-	} 
 
 	return 0;
 }

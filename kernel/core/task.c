@@ -33,6 +33,9 @@
 #include <odev.h>
 
 #define SVCSPSR 0x13 
+#define COPROC_SRC_ADDR		0x20000000
+#define COPROC_DST_ADDR		0x30000000
+#define COPROC_DAT_LEN		0x10000
 
 uint32_t show_stat = 0;
 extern char inbyte(void);
@@ -261,10 +264,6 @@ uint32_t cfs_worker2(void)
 	return ERR_NO;
 }
 
-#define COPROC_SRC_ADDR		0x20000000
-#define COPROC_DST_ADDR		0x30000000
-#define COPROC_DAT_LEN		0x10000
-
 uint32_t cfs_worker3(void )
 {
 	uint8_t *psrc;
@@ -285,7 +284,7 @@ uint32_t cfs_worker3(void )
 
 		if (i == 0) {
 			set_dma_work(COPROC_SRC_ADDR, COPROC_DST_ADDR, COPROC_DAT_LEN);
-			start_dma();
+			start_dma(NULL);
 			i++;
 		}
 	}
@@ -348,13 +347,68 @@ uint32_t cfs_worker4(void)
 	return ERR_NO;
 }
 
+extern void mdelay(unsigned msecs);
+
+uint32_t workq_worker(void)
+{
+	int i, j, enq_idx, deq_idx;
+
+	while (1) {
+		/*xil_printf("%s deq_idx:%d\n", __func__, qworker.deq_idx);*/
+		enq_idx = qworker.enq_idx;
+		deq_idx = qworker.deq_idx;
+		
+		/* enq_idx is wrapped around */
+		if (enq_idx < deq_idx)
+			enq_idx += MAX_WORKQ; 
+		/* enq_idx is no atomic, but it's ok */
+		for (i = deq_idx; i < enq_idx; i++) {
+			j = i % MAX_WORKQ;
+			qworker.wkq[j].func(qworker.wkq[j].arg);
+		}
+
+		if (enq_idx >= MAX_WORKQ)
+			enq_idx -= MAX_WORKQ;
+
+		qworker.deq_idx = enq_idx;
+
+		/*xil_printf("qworker_deq_idx: %d\n", qworker.deq_idx);*/
+
+		for (i = 0; i < 10000; i++);
+	}
+
+	return ERR_NO;
+}
+
+uint32_t enqueue_workq(void (*func)(void *), void *arg) 
+{
+	qworker.wkq[qworker.enq_idx].func = func;
+	qworker.wkq[qworker.enq_idx].arg = arg;
+
+	if (qworker.enq_idx == MAX_WORKQ - 1) {
+		qworker.enq_idx = 0;
+	} else {
+		qworker.enq_idx++;
+	}
+
+	return ERR_NO;
+}
+
+void create_workq_worker(void)
+{
+	qworker.enq_idx = 0;
+	qworker.deq_idx = 0;
+
+	create_cfs_task("workq_worker", workq_worker, 4);
+}
+
 void create_cfs_workers(void)
 {
 #if 1
 	create_cfs_task("cfs_worker1", cfs_dummy, 8);
 	create_cfs_task("cfs_worker2", cfs_dummy, 4);
-	create_cfs_task("cfs_worker3", cfs_dummy, 8);
-	create_cfs_task("cfs_worker4", cfs_worker4, 4);
+	/*create_cfs_task("cfs_worker3", cfs_worker3, 8);*/
+	/*create_cfs_task("cfs_worker4", cfs_worker4, 4);*/
 #else
 	/*create_cfs_task("cfs_worker1", cfs_worker1, 8);*/
 	create_cfs_task("cfs_worker2", cfs_worker2, 4);
@@ -370,10 +424,12 @@ void create_rt_workers(void)
 }
 #define CMD_LEN		32	
 
+
 void shell(void)
 {
 	char byte;
 	char cmdline[CMD_LEN];
+	uint8_t *psrc;
 	int i, j, pid;
 	struct task_struct *pwait_task;
 	struct list_head *next_lh = NULL;
@@ -397,7 +453,7 @@ void shell(void)
 		if (cmdline[0] == '\0' || !strcmp(cmdline, "help")) {
 			xil_printf("taskstat, whoami, hide whoami\n");
 			xil_printf("cfs task, rt task, oneshot task\n");
-			xil_printf("sleep, run \n");
+			xil_printf("sleep, run, start dma \n");
 			xil_printf("apprun, start cs, set cs\n");
 		} else if (!strcmp(cmdline, "taskstat")) {
 			print_task_stat();
@@ -457,6 +513,14 @@ void shell(void)
 			start_consumer();
 		} else if (!strcmp(cmdline, "stop cs")) {
 			stop_consumer();
+		} else if (!strcmp(cmdline, "start dma")) {
+			psrc = (uint8_t *)COPROC_SRC_ADDR;
+			for (j = 0; j < COPROC_DAT_LEN; j++) {
+				psrc[j] = (uint8_t)(j % 256);
+			}
+
+			set_dma_work(COPROC_SRC_ADDR, COPROC_DST_ADDR, COPROC_DAT_LEN);
+			start_dma(NULL);
 		} else{
 			xil_printf("I don't know.... ^^;\n");
 		}

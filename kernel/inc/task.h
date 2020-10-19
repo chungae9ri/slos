@@ -24,6 +24,22 @@
 #include <mem_layout.h>
 #include <sched.h>
 
+#define MAX_WORKQ	32
+#define WORKQ_DMA	0
+
+struct workq {
+	void (*func)(void *);
+	void *arg;
+};
+
+struct worker {
+	int enq_idx;
+	int deq_idx;
+	struct workq wkq[MAX_WORKQ];
+};
+
+struct worker qworker;
+
 void init_idletask(void);
 void init_cfs_workers(void);
 void init_shell(void);
@@ -35,5 +51,6 @@ void create_usr_cfs_task(char *name,
 		uint32_t appIdx);
 void create_cfs_task(char *name, task_entry cfs_task, uint32_t pri);
 void create_rt_task(char *name, task_entry handler, uint32_t dur);
+void create_workq_worker(void);
 
 #endif

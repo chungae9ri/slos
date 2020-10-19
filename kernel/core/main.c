@@ -77,6 +77,7 @@ int start_kernel(void)
 	xil_printf("### load user app to slfs.\n");
 	init_dma();
 	init_odev();
+	create_workq_worker();
 	cpuidle();
 
 	return 0;

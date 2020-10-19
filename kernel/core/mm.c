@@ -192,18 +192,18 @@ void init_pgt(void)
 	 */
 	for (i = (0xE00 * 256), j = 0; i < (0xE00 * 256) + 0x300; i++, j++) {
 		/* 
-			 *  0x433 is
-	 		 * Bit[0] = 1'b0 : XN(eXecution Never)
-	 		 * Bit[1] = 1'b1 : 0: Large page, 1: Small page
-	 		 * Bit[2] = 1'b1 : Bufferable, 0 for Device or Strongly-ordered memory
-	 		 * Bit[3] = 1'b0 : Cacheable, 0 for Device or Strongly-ordered memory
-	 		 * Bit[5:4] = 2'b11: AP[1:0] R/W full access with AP[2]=1'b0
-	 		 * Bit[8:6] = 3'b000: TEX[2:0] should be 000 for Device or Strongly-ordered memory
-	 		 * Bit[9] = 1'b0: AP[2] should be 0 for full access
-	 		 * Bit[10] = 1'b1: S: shareable
-	 		 * Bit[11] = 1'b0: nG(non-Global) bit. 0 for global
-	 		 */
-			ppage_tbl[i] = (0xE0000000 + (j * 4096)) | 0x436;
+		 *  0x433 is
+		 * Bit[0] = 1'b0 : XN(eXecution Never)
+		 * Bit[1] = 1'b1 : 0: Large page, 1: Small page
+		 * Bit[2] = 1'b1 : Bufferable, 0 for Device or Strongly-ordered memory
+		 * Bit[3] = 1'b0 : Cacheable, 0 for Device or Strongly-ordered memory
+		 * Bit[5:4] = 2'b11: AP[1:0] R/W full access with AP[2]=1'b0
+		 * Bit[8:6] = 3'b000: TEX[2:0] should be 000 for Device or Strongly-ordered memory
+		 * Bit[9] = 1'b0: AP[2] should be 0 for full access
+		 * Bit[10] = 1'b1: S: shareable
+		 * Bit[11] = 1'b0: nG(non-Global) bit. 0 for global
+		 */
+		ppage_tbl[i] = (0xE0000000 + (j * 4096)) | 0x436;
 	}
 
 
