@@ -7,7 +7,7 @@ Implementation list
 1. Process Management
    - TCB (Task Control Block)
    - task fork - forkyi()
-   - GIC - interrupt handler
+   - GIC - interrupt handler (top half / bottom half)
    - task synchronization(spin lock)
 2. Timer frame work
    - realtime timer, sched timer, oneshot timer
