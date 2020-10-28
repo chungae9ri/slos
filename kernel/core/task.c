@@ -264,6 +264,8 @@ uint32_t cfs_worker2(void)
 	return ERR_NO;
 }
 
+/* not used. shell cmd start dma does this. deprecated.*/
+#if 0 
 uint32_t cfs_worker3(void )
 {
 	uint8_t *psrc;
@@ -291,6 +293,7 @@ uint32_t cfs_worker3(void )
 
 	return ERR_NO;
 }
+#endif
 
 #define O_STREAM_START		0x38000000
 #define O_STREAM_END		0x3C000000
@@ -405,10 +408,10 @@ void create_workq_worker(void)
 void create_cfs_workers(void)
 {
 #if 1
-	create_cfs_task("cfs_worker1", cfs_dummy, 8);
-	create_cfs_task("cfs_worker2", cfs_dummy, 4);
+	/*create_cfs_task("cfs_worker1", cfs_dummy, 8);*/
+	/*create_cfs_task("cfs_worker2", cfs_dummy, 4);*/
 	/*create_cfs_task("cfs_worker3", cfs_worker3, 8);*/
-	/*create_cfs_task("cfs_worker4", cfs_worker4, 4);*/
+	create_cfs_task("cfs_worker4", cfs_worker4, 4);
 #else
 	/*create_cfs_task("cfs_worker1", cfs_worker1, 8);*/
 	create_cfs_task("cfs_worker2", cfs_worker2, 4);

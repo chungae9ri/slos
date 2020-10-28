@@ -24,31 +24,41 @@
 void init_gic_dist(void)
 {
 	uint32_t i;
-	uint32_t num_irq = 0;
-	uint32_t cpumask = 1;
-
-	cpumask |= cpumask << 8;
-	cpumask |= cpumask << 16; /* 0x01010101 : CPU0 targeted */
+	uint32_t ext_irq_num = 0;
+	/* 0x01010101 : CPU0 targeted */
+	uint32_t cpumask = 0x01010101;
 
 	/* Disabling GIC */
 	writel(0, GIC_ICDDCR);
 
 	/*  
+	 * GIC_ICDICTR: interrupt controller type reg.
 	 * Find out how many interrupts are supported.
 	 */
-	num_irq = readl(GIC_ICDICTR) & 0x1f;
-	num_irq = (num_irq + 1) * 32; 
+	ext_irq_num = readl(GIC_ICDICTR) & 0x1f;
+	ext_irq_num = ext_irq_num * 32; 
 
 	/* Set each interrupt line based on UG585 
 	 * interrupt polarities are set
+	 * GIC_ICDICFR0~1 are ro
+	 * Only 3 intrs are configured
+	 * 1. CPU private timer intr #29 can't be edited.
+	 * 2. GIC_ICDICFR3[27:26] is 01 for high level 
+	 * polarity for intr ID #61 of dma intr
+	 * 3. GIC_ICDICFR3[29:28] is 01 for high level 
+	 * polarity for intr ID #62 of odev intr
+	 * All others are don't-care
 	 */
 	writel(0x555D555F, GIC_ICDICFR2);
-	writel(0xFD55D555, GIC_ICDICFR3);
+	writel(0xDD55D555, GIC_ICDICFR3);
 	writel(0x755557FF, GIC_ICDICFR4);
 	writel(0x03FFFF55, GIC_ICDICFR5);
 
-	/* setup target cpu for each interrupt */
-	for (i = 0; i < num_irq; i += 4)
+	/* setup target cpu for each interrupt 
+	 * all intr are targeted to CPU0.
+	 * GIC_ICDIPTR0~7 for intr #0~#31 are ro
+	 */
+	for (i = 0; i < ext_irq_num; i += 4)
 		writel(cpumask, GIC_ICDIPTR8 + i); 
 
 	/* Disabling interrupts forwarding */
@@ -117,6 +127,10 @@ uint32_t gic_mask_interrupt(int vec)
 	reg = GIC_ICDISER0 + (uint32_t)(vec / 32) * 4;
 	bit = 1 << (vec & 31);
 
+	/* 
+	 * writing 1 enables intr
+	 * writing 0 has no effect 
+	 */
 	writel(bit, reg);
 	return 0;
 }
@@ -129,6 +143,10 @@ uint32_t gic_unmask_interrupt(int vec)
 	reg = GIC_ICDICER0 + (uint32_t)(vec / 32) * 4;
 	bit = 1 << (vec & 31);
 
+	/* 
+	 * writing 1 disables intr
+	 * writing 0 has no effect 
+	 */
 	writel(bit, reg);
 	return 0;
 }
