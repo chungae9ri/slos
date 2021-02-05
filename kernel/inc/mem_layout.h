@@ -29,9 +29,8 @@
 .set UNDEF_STACK_BASE, 				0x200FFC /* 3M + 4KB */
 .set TASK_STACK_GAP, 				0x1000 /* 4k */
 .set RAMDISK_FS_BASE, 				0x3000000 /* 48M */
-.set CONTEXT_MEM, 				0x200000
 .set KERN_PGT_START_BASE, 			0x21A000 /* page table base 4MB = 4K page tables * 256 entries * 4B size */
-.set KERN_PGD_START_BASE, 			0x00000000 /* page directory base16KB = 1 page directory * 4KEntries * 4B size */
+.set KERN_PGD_START_BASE, 			0x00008000 /* page directory base at 16KB, size 16KB aligned = 1 page directory * 4KEntries * 4B size */
 .set KERNEL_FRAME_BITMAP,			0x215000 /* need 1 bitmap for 4MB kernel memory */
 .set KENEL_END,					0x800000
 .set USERTASK_START,				0x800000
@@ -44,7 +43,7 @@
 .set I_BIT, 					0x80
 .set F_BIT, 					0x40
 .set IF_BIT, 					0xC0
-.set CONTEXT_MEM, 0x4000
+.set CONTEXT_MEM, 				0x00004000
 .set CONTEXT_MEM_END, 0x4038
 .set CONTEXT_MEM_LEN, 0xF
 .set SP_MEM, 0x4100
@@ -71,12 +70,11 @@
 #define ABT_STACK_BASE 				0x201FFC /* 3M + 4KB*2 */
 #define UNDEF_STACK_BASE			0x200FFC /* 3M + 4KB */
 #define TASK_STACK_GAP 				0x1000 /* 4k */
-#define RAMDISK_FS_BASE				0x3000000 /* 48M */
-#define SCRATCH_BASE				0x2000000 /* 32M */
-#define CONTEXT_MEM 				0x200000
+#define RAMDISK_FS_BASE				0x03000000 /* 48M */
+#define SCRATCH_BASE				0x02000000 /* 32M */
+#define CONTEXT_MEM 				0x00004000
 #define KERN_PGT_START_BASE 			0x21A000 /* page table base 4MB = 4K page tables * 256 entries * 4B size */
-#define KERN_PGD_START_BASE			0x00000000 /* page directory base16KB = 1 page directory * 4KEntries * 4B size */
-//#define KERN_PGD_START_BASE			0x216000 /* page directory base16KB = 1 page directory * 4KEntries * 4B size */
+#define KERN_PGD_START_BASE			0x00008000 /* page directory base16KB = 1 page directory * 4KEntries * 4B size */
 #define KERNEL_FRAME_BITMAP			0x215000 /* need 1 bitmap for 4MB kernel memory */
 
 #define USERTASK_START				0x800000
