@@ -39,6 +39,12 @@ SECTIONS
 	.bss : AT(ADDR(.bss) - 0xC0000000) { 
 		*(.bss) 
 	}
+
+	. = 0xC0200000;
+	.secondary : AT(ADDR(.secondary) - 0xC0000000) {
+		*(SECONDARY_EXCEPTIONS);
+	}	
+
 	. = KERNEL_HEAP_START;
 	.kheap : AT(ADDR(.kheap) - 0xC0000000) {
 		__kernel_heap_start__ = .;

@@ -31,21 +31,54 @@
 #include <odev.h>
 
 extern uint32_t show_stat;
+extern void secondary_reset();
 
 void cpuidle(void)
 {
 	uint32_t i = 0;
+	uint32_t A9_rst_ctrl;
 	xil_printf("I am cpuidle.....\n");
 
 	while (1) {
 		if (show_stat) {
 			xil_printf("cpuidle is running....\n");
 		}
-		if (i == 0xFFFFFFF) i = 0;
+#if 1
+		if (i == 0) {
+			A9_rst_ctrl = *(volatile uint32_t *)(0xF8000244);
+			A9_rst_ctrl |= (0x22); // set clock disable, reset bit for cpu1
+			*(volatile uint32_t *)(0xF8000244) = A9_rst_ctrl;
+
+			*(volatile uint32_t *) (0x0) = *(volatile uint32_t *)(secondary_reset);
+			*(volatile uint32_t *) (0x4) = *(volatile uint32_t *)(secondary_reset + 4);
+			*(volatile uint32_t *) (0x8) = (uint32_t)(0x200000);
+
+			while (i < 1000)
+				i++;
+
+			// release cpu1 reset
+			A9_rst_ctrl &= ~(0x2);
+			*(volatile uint32_t *)(0xF8000244) = A9_rst_ctrl;
+			// release cpu1 clock
+			A9_rst_ctrl &= ~(0x20);
+			*(volatile uint32_t *)(0xF8000244) = A9_rst_ctrl;
+		}
+#endif
+
+		if (i == 0xFFFFFFF) i = 1;
 		else i++;
 		asm ("DSB" :::);
 		asm ("WFI" :::);
 	}
+}
+
+int secondary_start_kernel(void)
+{
+	xil_printf("I am secondary cpu!\n");
+
+	while (1);
+
+	return 0;
 }
 
 int start_kernel(void) 

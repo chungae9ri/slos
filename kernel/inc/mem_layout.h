@@ -20,18 +20,24 @@
 .set KERNEL_CODE_BASE, 				0x100000
 .set USER_APP_BASE, 				0x1000000 /* user app base */
 .set USER_APP_GAP, 				0x100000  /* 1MB user app gap */
-.set KERNEL_END, 				0x200000
-.set SVC_STACK_BASE, 				0x214FFC /* 3M + 4KB*16 support 16 kernel threads */
-.set SYS_STACK_BASE, 				0x204FFC /* 3M + 4KB*5 */
-.set IRQ_STACK_BASE, 				0x203FFC /* 3M + 4KB*4 */
-.set FIQ_STACK_BASE, 				0x202FFC /* 3M + 4KB*3 */
-.set ABT_STACK_BASE, 				0x201FFC /* 3M + 4KB*2 */
-.set UNDEF_STACK_BASE, 				0x200FFC /* 3M + 4KB */
+.set KERNEL_END, 				0x300000
+.set SVC_STACK_BASE, 				0x314FFC /* 3M + 4KB*16 support 16 kernel threads */
+.set SYS_STACK_BASE, 				0x304FFC /* 3M + 4KB*5 */
+.set IRQ_STACK_BASE, 				0x303FFC /* 3M + 4KB*4 */
+.set FIQ_STACK_BASE, 				0x302FFC /* 3M + 4KB*3 */
+.set ABT_STACK_BASE, 				0x301FFC /* 3M + 4KB*2 */
+.set UNDEF_STACK_BASE, 				0x300FFC /* 3M + 4KB */
+.set SEC_SVC_STACK_BASE,			0x414FFC /* 3M + 4KB*16 support 16 kernel threads */
+.set SEC_SYS_STACK_BASE, 			0x404FFC /* 3M + 4KB*5 */
+.set SEC_IRQ_STACK_BASE, 			0x403FFC /* 3M + 4KB*4 */
+.set SEC_FIQ_STACK_BASE, 			0x402FFC /* 3M + 4KB*3 */
+.set SEC_ABT_STACK_BASE, 			0x401FFC /* 3M + 4KB*2 */
+.set SEC_UNDEF_STACK_BASE, 			0x400FFC /* 3M + 4KB */
 .set TASK_STACK_GAP, 				0x1000 /* 4k */
 .set RAMDISK_FS_BASE, 				0x3000000 /* 48M */
-.set KERN_PGT_START_BASE, 			0x21A000 /* page table base 4MB = 4K page tables * 256 entries * 4B size */
+.set KERN_PGT_START_BASE, 			0x41A000 /* page table base 4MB = 4K page tables * 256 entries * 4B size */
 .set KERN_PGD_START_BASE, 			0x00008000 /* page directory base at 16KB, size 16KB aligned = 1 page directory * 4KEntries * 4B size */
-.set KERNEL_FRAME_BITMAP,			0x215000 /* need 1 bitmap for 4MB kernel memory */
+.set KERNEL_FRAME_BITMAP,			0x415000 /* need 1 bitmap for 4MB kernel memory */
 .set KENEL_END,					0x800000
 .set USERTASK_START,				0x800000
 .set MODE_SVC, 					0x13
@@ -62,20 +68,26 @@
 #define KERNEL_CODE_BASE			0x100000
 #define USER_APP_BASE 				0x1000000 /* user app base */
 #define USER_APP_GAP 				0x100000  /* 1MB user app gap */
-#define KERNEL_END 				0x200000
-#define SVC_STACK_BASE 				0x214FFC /* 3M + 4KB*16 support 16 kernel threads */
-#define SYS_STACK_BASE 				0x204FFC /* 3M + 4KB*5 */
-#define IRQ_STACK_BASE 				0x203FFC /* 3M + 4KB*4 */
-#define FIQ_STACK_BASE 				0x202FFC /* 3M + 4KB*3 */
-#define ABT_STACK_BASE 				0x201FFC /* 3M + 4KB*2 */
-#define UNDEF_STACK_BASE			0x200FFC /* 3M + 4KB */
+#define KERNEL_END 				0x300000
+#define SVC_STACK_BASE 				0x314FFC /* 3M + 4KB*16 support 16 kernel threads */
+#define SYS_STACK_BASE 				0x304FFC /* 3M + 4KB*5 */
+#define IRQ_STACK_BASE 				0x303FFC /* 3M + 4KB*4 */
+#define FIQ_STACK_BASE 				0x302FFC /* 3M + 4KB*3 */
+#define ABT_STACK_BASE 				0x301FFC /* 3M + 4KB*2 */
+#define UNDEF_STACK_BASE			0x300FFC /* 3M + 4KB */
+#define SEC_SVC_STACK_BASE 			0x414FFC /* 3M + 4KB*16 support 16 kernel threads */
+#define SEC_SYS_STACK_BASE 			0x404FFC /* 3M + 4KB*5 */
+#define SEC_IRQ_STACK_BASE 			0x403FFC /* 3M + 4KB*4 */
+#define SEC_FIQ_STACK_BASE 			0x402FFC /* 3M + 4KB*3 */
+#define SEC_ABT_STACK_BASE 			0x401FFC /* 3M + 4KB*2 */
+#define SEC_UNDEF_STACK_BASE			0x400FFC /* 3M + 4KB */
 #define TASK_STACK_GAP 				0x1000 /* 4k */
 #define RAMDISK_FS_BASE				0x03000000 /* 48M */
 #define SCRATCH_BASE				0x02000000 /* 32M */
 #define CONTEXT_MEM 				0x00004000
-#define KERN_PGT_START_BASE 			0x21A000 /* page table base 4MB = 4K page tables * 256 entries * 4B size */
+#define KERN_PGT_START_BASE 			0x41A000 /* page table base 4MB = 4K page tables * 256 entries * 4B size */
 #define KERN_PGD_START_BASE			0x00008000 /* page directory base16KB = 1 page directory * 4KEntries * 4B size */
-#define KERNEL_FRAME_BITMAP			0x215000 /* need 1 bitmap for 4MB kernel memory */
+#define KERNEL_FRAME_BITMAP			0x315000 /* need 1 bitmap for 4MB kernel memory */
 
 #define USERTASK_START				0x800000
 #define GB * (0x1 << 30)

@@ -13,7 +13,7 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program; if not, see <http://www.gnu.org/licenses/>
 
-KERNMODULES := core exception drivers/xil_standalone drivers/dma drivers/odev
+KERNMODULES := core arm drivers/xil_standalone drivers/dma drivers/odev
 KERNOUTDIR := $(addprefix ../out/kernel/,$(KERNMODULES)) 
 
 KERNCSRC := $(foreach sdir,$(KERNMODULES),$(wildcard $(sdir)/*.c))
