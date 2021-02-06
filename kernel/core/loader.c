@@ -40,7 +40,7 @@ int32_t create_ramdisk_fs(void)
 	offset += 4;
 
 	for (i = 0; i < appCnt; i++) {
-		szApp = *((uint32_t *)(SCRATCH_BASE + offset));
+		szApp = *((volatile uint32_t *)(SCRATCH_BASE + offset));
 		offset += 4;
 		psrc = (char *)(SCRATCH_BASE + offset);
 		sprintf(fname, "App_%u", (unsigned int)i);

@@ -25,7 +25,7 @@
 .arm
 .section SECONDARY_EXCEPTIONS, "ax"
 .set SECONDARY_EXCEPTION_START, 0xC0200000			
-.global sec_reset_handler
+.global secondary_exceptions
 
 secondary_exceptions:
 	b sec_reset_handler		
