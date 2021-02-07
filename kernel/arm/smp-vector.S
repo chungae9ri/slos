@@ -21,12 +21,11 @@
 /* arm exception code */
 
 .extern secondary_start_kernel 
+.section SECONDARY_EXCEPTIONS, "ax"
 
 .arm
-.section SECONDARY_EXCEPTIONS, "ax"
-.set SECONDARY_EXCEPTION_START, 0xC0200000			
+.set SECONDARY_EXCEPTION_START, 0xC0201000			
 .global secondary_exceptions
-
 secondary_exceptions:
 	b sec_reset_handler		
 	b sec_undefined_instruction_handler

@@ -24,16 +24,18 @@ SECONDARY_CPU_START = 0x00200000;
 
 SECTIONS
 {
-	. = 0x100000;
+	. = 0x00100000;
 	.ssbl : {
 		*(SSBL);
 		*(PGT_INIT);
 	}
+
 	. = 0xC0101000;
-	.boot : AT(ADDR(.boot) - 0xC0000000) {
+	.text : AT(ADDR(.text) - 0xC0000000) {
 		*(EXCEPTIONS);
 		*(.text);
 	}
+
 	.data : AT(ADDR(.data) - 0xC0000000) { 
 		*(.data)
 	}
@@ -42,9 +44,13 @@ SECTIONS
 	}
 
 	. = 0xC0200000;
-	.secondary : AT(SECONDARY_CPU_START) {
-		*(SECONDARY_EXCEPTIONS);
+	.secondary : AT(ADDR(.secondary) - 0xC0000000) {
+		*(SECONDARY_BOOT);
 	}	
+	. = 0xC0201000;
+	.secexceptions : AT(ADDR(.secexceptions) - 0xC0000000) {
+		*(SECONDARY_EXCEPTIONS);
+	}
 
 	. = KERNEL_HEAP_START;
 	.kheap : AT(ADDR(.kheap) - 0xC0000000) {
