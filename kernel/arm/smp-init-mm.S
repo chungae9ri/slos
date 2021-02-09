@@ -30,7 +30,7 @@ secondary_mmu_init:
 	msr     CPSR_c, #MODE_SVC
 	/*invalidate scu*/
 	ldr	r7, =0xf8f0000c
-	ldr	r6, =0xffff
+	ldr	r6, =0x000000ff /* for cpu0 and cpu1 */
 	str	r6, [r7]
 
 	/* Invalidate caches and TLBs */
@@ -45,8 +45,6 @@ secondary_mmu_init:
 	bic	r0, r0, #0x1			/* clear bit 0 */
 	mcr	p15, 0, r0, c1, c0, 0		/* write value back */
 
-	/*; jump to kernel page table init */
-	bl	smp_init_pgt	
 
 	/* set scu enable bit in scu */
 	ldr	r7, =0xf8f00000
@@ -100,13 +98,11 @@ secondary_mmu_init:
 	orr 	r0, r0, #0x100 			/* set bits for D */
 	orr 	r0, r0, #0x1			/* set bits for MMU  */
 	mcr	p15, 0, r0, c1, c0, 0		/* write value back */
-#if 0
 	/* Write to ACTLR */
 	mrc	p15, 0, r0, c1, c0, 1		/* Read ACTLR*/
 	orr	r0, r0, #(0x01 << 6)		/* set SMP bit */
 	orr	r0, r0, #(0x01 )		/* Cache/TLB maintenance broadcast */
 	mcr	p15, 0, r0, c1, c0, 1		/* Write ACTLR*/
-#endif
 	/* jump to reset handler*/
 	ldr 	r0, =secondary_exceptions
 	mov	pc, r0
