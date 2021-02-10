@@ -33,7 +33,6 @@
 extern uint32_t show_stat;
 extern void secondary_reset(void);
 extern void flush_ent_dcache(void);
-extern uint32_t SECONDARY_CPU_START;
 
 #define A9_CPU_RST_CTRL		(0xF8000244)
 #define A9_RST0_MASK		(0x1)
@@ -79,7 +78,7 @@ void start_cpu1(void)
 	*(volatile uint32_t *) (0x0) = *(uint32_t *)(secondary_reset);
 	/* bx to [r0] */
 	*(volatile uint32_t *) (0x4) = *(uint32_t *)(secondary_reset + 4);
-	*(volatile uint32_t *) (0x8) = &SECONDARY_CPU_START;
+	*(volatile uint32_t *) (0x8) = KERNEL_CODE_BASE;
 
 	/* flush cache of cpu 0 */
 	flush_ent_dcache();

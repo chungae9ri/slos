@@ -20,7 +20,6 @@ OUTPUT_ARCH(arm)
 ENTRY(ssbl) 
 KERNEL_HEAP_START = 0xC4000000;
 KERNEL_HEAP_SIZE = 0x4000000;
-SECONDARY_CPU_START = 0x00200000;
 
 SECTIONS
 {
@@ -43,10 +42,6 @@ SECTIONS
 		*(.bss) 
 	}
 
-	. = 0xC0200000;
-	.secondary : AT(ADDR(.secondary) - 0xC0000000) {
-		*(SECONDARY_BOOT);
-	}	
 	. = 0xC0201000;
 	.secexceptions : AT(ADDR(.secexceptions) - 0xC0000000) {
 		*(SECONDARY_EXCEPTIONS);

@@ -47,8 +47,22 @@ ssbl:
 	bic	r0, r0, #0x1			/* clear bit 0 */
 	mcr	p15, 0, r0, c1, c0, 0		/* write value back */
 
-	/*; jump to kernel page table init */
-	bl	init_pgt	
+	/* jump to translation table init 
+	 * if current cpu is 0
+	 */
+	mrc 	p15, 0, r0, c0, c0, 5		/* read MPIDR */
+	bic 	r0, r0, #0xFFFFFFFC		/* load cpuid */
+	cmp	r0, #0x0
+	bleq	init_pgt			/* cpu0 sets up pgd, pgt */
+	
+	/* enable scu if current cpu is 1*/
+	mrc 	p15, 0, r0, c0, c0, 5		/* read MPIDR */
+	bic 	r0, r0, #0xFFFFFFFC		/* load cpuid */
+	cmp	r0, #0x1
+	ldreq	r7, =0xf8f00000
+	ldreq	r0, [r7]
+	orreq	r0, r0, #0x1
+	streq	r0, [r7]
 
 	/* set the domain access register as manager mode */
 	ldr	r0, =0xFFFFFFFF
@@ -73,12 +87,12 @@ ssbl:
 	mcr	p15, 0, r0, c2, c0, 1
 #endif
 	/* set TTBR0 Bit[6:0] = 0x22 means
-	   Bit[0]: 1'b0: IRGN[1]: 0 IRGN[1:0] =2'b00 means non-cacheable
-	   Bit[1]: 1'b1: S: Shareable
-	   Bit[2]: 1'b0: IMP
-	   Bit[4:3]: 2'b00: RGN, outer Noncacheable
-	   Bit[5]: 1'b1: NOS, Inner shareable
-	   Bit[6]: 1'b0: IRGN[0]:0
+	 * Bit[0]: 1'b0: IRGN[1]: 0 IRGN[1:0] =2'b00 means non-cacheable
+	 * Bit[1]: 1'b1: S: Shareable
+	 * Bit[2]: 1'b0: IMP
+	 * Bit[4:3]: 2'b00: RGN, outer Noncacheable
+	 * Bit[5]: 1'b1: NOS, Inner shareable
+	 * Bit[6]: 1'b0: IRGN[0]:0
 	 */
 	/* set TTBR0 as 0x0 */
 	ldr	r0, =KERN_PGD_START_BASE
@@ -101,8 +115,20 @@ ssbl:
 	orr	r0, r0, #(0x01 << 6)		/* set SMP bit */
 	orr	r0, r0, #(0x01 )		/* Cache/TLB maintenance broadcast */
 	mcr	p15, 0, r0, c1, c0, 1		/* Write ACTLR*/
+	mrc 	p15, 0, r0, c0, c0, 5		/* read MPIDR */
+	bic 	r0, r0, #0xFFFFFFFC		/* load cpuid */
+	cmp	r0, #0x0
 	/* jump to reset handler*/
+	beq	cpu0_start
+	bne	cpu1_start
+	nop
+
+cpu0_start:
 	ldr 	r0, =reset_handler
+	mov	pc, r0
+	nop
+cpu1_start:
+	ldr	r0, =secondary_exceptions
 	mov	pc, r0
 	nop
 
