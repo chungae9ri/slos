@@ -1,5 +1,5 @@
 /*
-  kernel/core/gic.c general interrupt controller 
+  kernel/arm/gic.c general interrupt controller 
   (C) 2018 Kwangdo Yi <kwangdo.yi@gmail.com>
  
   This program is free software; you can redistribute it and/or modify
@@ -71,13 +71,23 @@ void init_gic_dist(void)
 	/* enable TTC0 interrupt forwarding, not here */
 	/*writel(0x00001C00, GIC_ICDISER1);*/
 
-	/*Enabling GIC */
+	/* enable GIC distributor, 
+	 * banked register 
+	 */
 	writel(1, GIC_ICDDCR);
 }
 
 void init_gic_cpu(void)
 {
-	writel(0xF0, GIC_ICCPMR);
+	/* 32 priority level supported
+	 * priority mask for the lowest priority
+	 * which has max value of priority.
+	 * Pass all levels of interrupts.
+	 */
+	writel(0xF8, GIC_ICCPMR);
+	/* enable GIC cpu interface,
+	 * banked register
+	 */ 
 	writel(0x07, GIC_ICCICR);
 }
 

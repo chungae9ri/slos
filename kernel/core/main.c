@@ -57,15 +57,6 @@ void cpuidle(void)
 	}
 }
 
-int secondary_start_kernel(void)
-{
-	xil_printf("I am secondary cpu!\n");
-
-	while (1);
-
-	return 0;
-}
-
 void start_cpu1(void)
 {
 	uint32_t i, A9_rst_ctrl;
@@ -92,6 +83,45 @@ void start_cpu1(void)
 	// release cpu1 clock
 	A9_rst_ctrl &= ~(A9_CLKSTOP1_MASK);
 	*(volatile uint32_t *)(A9_CPU_RST_CTRL) = A9_rst_ctrl;
+}
+
+int secondary_start_kernel(void)
+{
+	uint32_t ctrl;
+	xil_printf("I am secondary cpu!\n");
+	/* enable GIC distributor, 
+	 * banked register 
+	 */
+	*(volatile uint32_t *)(GIC_ICDDCR) = 0x1;
+	/* 32 priority level supported
+	 * priority mask for the lowest priority
+	 * which has max value of priority.
+	 * Pass all levels of interrupts.
+	 */
+	*(volatile uint32_t *)(GIC_ICCPMR) = 0xF8;
+	/* enable GIC cpu interface, 
+	 * banked register
+	 */ 
+	*(volatile uint32_t *)(GIC_ICCICR) = 0x07;
+
+	/* init timer */
+	*(volatile uint32_t *)(PRIV_TMR_LD) = 1000000;
+	gic_mask_interrupt(PRIV_TMR_INT_VEC);
+	*(volatile uint32_t *)(GIC_ICDICER0) = 0xDFFFFFFF;
+
+	/* enable timer */
+	ctrl = *(volatile uint32_t *)(PRIV_TMR_CTRL);
+	ctrl = ctrl | (PRIV_TMR_EN_MASK 
+			| PRIV_TMR_AUTO_RE_MASK
+			| PRIV_TMR_IRQ_EN_MASK);
+		
+	*(volatile uint32_t *)(PRIV_TMR_CTRL) = ctrl;
+
+	/* enable intr*/
+
+	while (1);
+
+	return 0;
 }
 
 int start_kernel(void) 

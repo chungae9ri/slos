@@ -1,5 +1,5 @@
 /*
-  kernel/exception/init_mm.S initialization of memory manager
+  kernel/arm/init_mm.S initialization of memory manager
   (C) 2018 Kwangdo Yi <kwangdo.yi@gmail.com>
  
   This program is free software; you can redistribute it and/or modify

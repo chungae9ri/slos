@@ -1,5 +1,5 @@
 /*
-  kernel/core/kernel.S kernel exception handler
+  kernel/arm/vector.S kernel exception handler
   (C) 2018 Kwangdo Yi <kwangdo.yi@gmail.com>
  
   This program is free software; you can redistribute it and/or modify
@@ -45,6 +45,8 @@ exceptions:
 	b fiq_handler
 
 reset_handler:
+	/* read scr */
+	mrc 	p15, 0, r0, c1, c1, 0
 	 /*set VBAR with 0x100000 */
 	ldr	r0, =KERNEL_EXCEPTION_START
 	mcr	p15,0,r0,c12,c0,0 

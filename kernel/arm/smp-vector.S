@@ -1,5 +1,5 @@
 /*
-  kernel/core/kernel.S kernel exception handler
+  kernel/arm/smp-vector.S kernel exception handler
   (C) 2018 Kwangdo Yi <kwangdo.yi@gmail.com>
  
   This program is free software; you can redistribute it and/or modify
@@ -37,11 +37,13 @@ secondary_exceptions:
 	b sec_fiq_handler
 
 sec_reset_handler:
-	 /*set VBAR for secondary core */
+	/* read scr */
+	mrc 	p15, 0, r0, c1, c1, 0
+	/*set VBAR for secondary core */
 	ldr	r0, =SECONDARY_EXCEPTION_START
 	mcr	p15,0,r0,c12,c0,0 
 
-	 /*change to supervisor*/
+	/*change to supervisor*/
 	msr	CPSR_c, #MODE_SVC | I_BIT | F_BIT
 	
 	/*; setup svc stack*/
@@ -73,7 +75,7 @@ sec_reset_handler:
 	ldr	r0,=SEC_FIQ_STACK_BASE
 	mov     r13, r0
 
-	/*; Return to supervisor mode*/
+	/* Return to supervisor mode*/
 	msr     CPSR_c, #MODE_SVC
 	b	secondary_start_kernel
 ;

@@ -1,5 +1,5 @@
 /*
-  kernel/exception/faults.c abort handler
+  kernel/arm/faults.c abort handler
   (C) 2018 Kwangdo Yi <kwangdo.yi@gmail.com>
  
   This program is free software; you can redistribute it and/or modify
