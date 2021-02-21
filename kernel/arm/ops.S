@@ -30,7 +30,7 @@
 dsb:
 	mov 	r0, #0
 	mcr 	p15, 0, r0, c7, c10, 4
-	bx 	lr
+	mov 	pc, lr
 ;
 .global switch_context_yield
 switch_context_yield:
@@ -112,11 +112,11 @@ loop1:	ldrex	r2,[r0]
 	beq	loop1
 	/*lock acquired*/
 	DMB
-	bx	lr
+	mov	pc, lr
 .global spin_lock_release
 spin_lock_release:
 	ldr	r1,=UNLOCKED
 	DMB
 	str	r1,[r0]
-	bx	lr
+	mov	pc, lr
 .end
