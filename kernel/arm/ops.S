@@ -30,7 +30,7 @@
 dsb:
 	mov 	r0, #0
 	mcr 	p15, 0, r0, c7, c10, 4
-	mov 	pc, lr
+	mov	pc, lr
 ;
 .global switch_context_yield
 switch_context_yield:
@@ -119,4 +119,8 @@ spin_lock_release:
 	DMB
 	str	r1,[r0]
 	mov	pc, lr
+.global smp_processor_id
+smp_processor_id:
+	mrc	p15, 0, r0, c0, c0, 5 /* read MPIDR */
+	mov 	pc, lr
 .end

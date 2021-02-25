@@ -16,30 +16,42 @@
   along with this program; if not, see <http://www.gnu.org/licenses/>
 */
 #include <runq.h>
+#include <percpu.h>
 
-volatile uint32_t rqlock = 0;
-struct cfs_rq *runq = NULL;
-
-extern struct task_struct *idle_task;
 extern void remove_from_wq(struct task_struct *p);
 
 void init_rq(void)
 {
-	runq = (struct cfs_rq *)kmalloc(sizeof(struct cfs_rq));
-	runq->root = RB_ROOT;
-	runq->priority_sum = 0;
-	runq->rb_leftmost = &idle_task->se.run_node;
-	runq->cfs_task_num = 0;
+	struct task_struct *this_idle_task = NULL;
+	struct cfs_rq *this_runq = NULL;
+#if _ENABLE_SMP_
+	this_idle_task = (struct task_struct*)__get_cpu_var(idle_task);
+	__get_cpu_var(runq) = (struct cfs_rq *)kmalloc(sizeof(struct cfs_rq));
+	this_runq = (struct cfs_rq*)__get_cpu_var(runq);
+#else
+	this_idle_task = idle_task;
+	runq = this_runq = (struct cfs_rq *)kmalloc(sizeof(struct cfs_rq));
+#endif
+	this_runq->root = RB_ROOT;
+	this_runq->priority_sum = 0;
+	this_runq->rb_leftmost = &this_idle_task->se.run_node;
+	this_runq->cfs_task_num = 0;
 	
-	rb_init_node(&idle_task->se.run_node);
-	enqueue_se_to_runq(&idle_task->se, true);
-	runq->cfs_task_num++;
+	rb_init_node(&this_idle_task->se.run_node);
+	enqueue_se_to_runq(&this_idle_task->se, true);
+	this_runq->cfs_task_num++;
 }
 
 /* from lwn.net/Articles/184495 */
 void enqueue_se(struct sched_entity *se)
 {
-	struct rb_node **link = &runq->root.rb_node, *parent=NULL;
+	struct cfs_rq *this_runq = NULL;
+#if _ENABLE_SMP_
+	this_runq = (struct cfs_rq *)__get_cpu_var(runq);
+#else
+	this_runq = runq;
+#endif
+	struct rb_node **link = &this_runq->root.rb_node, *parent=NULL;
 	uint64_t value = se->jiffies_vruntime;
 	int leftmost = 1;
 
@@ -67,43 +79,55 @@ void enqueue_se(struct sched_entity *se)
 	 * used):
 	 */
 	if (leftmost) 
-		runq->rb_leftmost = &se->run_node;
+		this_runq->rb_leftmost = &se->run_node;
 
 	/* Put the new node there */
 	rb_link_node(&se->run_node, parent, link);
-	rb_insert_color(&se->run_node, &runq->root);
+	rb_insert_color(&se->run_node, &this_runq->root);
 }
 
 void dequeue_se(struct sched_entity *se)
 {
-	if (runq->rb_leftmost == (struct rb_node *)&se->run_node) {
+	struct cfs_rq *this_runq = NULL;
+#if _ENABLE_SMP_
+	this_runq = (struct cfs_rq *)__get_cpu_var(runq);
+#else
+	this_runq = runq;
+#endif
+	if (this_runq->rb_leftmost == (struct rb_node *)&se->run_node) {
 		struct rb_node *next_node;
 
 		next_node = rb_next(&se->run_node);
-		runq->rb_leftmost = next_node;
+		this_runq->rb_leftmost = next_node;
 	}
 
-	rb_erase(&se->run_node, &runq->root);
+	rb_erase(&se->run_node, &this_runq->root);
 }
 
 void update_vruntime_runq(struct sched_entity *se)
 {
+	struct cfs_rq *this_runq = NULL;
+#if _ENABLE_SMP_
+	this_runq = (struct cfs_rq *)__get_cpu_var(runq);
+#else
+	this_runq = runq;
+#endif
 	struct sched_entity *cur_se, *se_leftmost;
 	struct rb_node *cur_rb_node;
 	/* in very first time, the leftmost should be null */
-	if (!runq->rb_leftmost) 
+	if (!this_runq->rb_leftmost) 
 		return; 
 
-	cur_rb_node = runq->rb_leftmost;
+	cur_rb_node = this_runq->rb_leftmost;
 	se_leftmost = container_of(cur_rb_node, struct sched_entity, run_node);
 	cur_se = se_leftmost;
 
-	se->jiffies_consumed = se_leftmost->jiffies_vruntime * runq->priority_sum / se->priority;
-	se->jiffies_vruntime = se->jiffies_consumed * se->priority / runq->priority_sum;
+	se->jiffies_consumed = se_leftmost->jiffies_vruntime * this_runq->priority_sum / se->priority;
+	se->jiffies_vruntime = se->jiffies_consumed * se->priority / this_runq->priority_sum;
 
 	while (cur_se) {
-		cur_se->jiffies_consumed = se_leftmost->jiffies_vruntime * runq->priority_sum / cur_se->priority;
-		cur_se->jiffies_vruntime = cur_se->jiffies_consumed * cur_se->priority / runq->priority_sum;
+		cur_se->jiffies_consumed = se_leftmost->jiffies_vruntime * this_runq->priority_sum / cur_se->priority;
+		cur_se->jiffies_vruntime = cur_se->jiffies_consumed * cur_se->priority / this_runq->priority_sum;
 
 		cur_rb_node = rb_next(&cur_se->run_node);
 		if (cur_rb_node)
@@ -115,28 +139,42 @@ void update_vruntime_runq(struct sched_entity *se)
 void enqueue_se_to_runq(struct sched_entity *se, bool update)
 {
 	/*struct sched_entity *se_leftmost;*/
-	struct task_struct *tp;
-
+	struct task_struct *tp = NULL;
+	struct cfs_rq *this_runq = NULL;
+	volatile uint32_t *pthis_rqlock;
+#if _ENABLE_SMP_
+	this_runq = (struct cfs_rq *)__get_cpu_var(runq);
+	pthis_rqlock = (volatile uint32_t *)__get_cpu_var_ptr(rqlock);
+#else
+	this_runq = runq;
+	pthis_rqlock = &rqlock;
+#endif
 	if (update) {
 		tp = container_of(se, struct task_struct, se);
-		runq->priority_sum += se->priority;
+		this_runq->priority_sum += se->priority;
 		remove_from_wq(tp);
 		tp->state = TASK_RUNNING;
-		spin_lock_acquire(&rqlock);
+		spin_lock_acquire(pthis_rqlock);
 		update_vruntime_runq(se);
-		spin_lock_release(&rqlock);
-
+		spin_lock_release(pthis_rqlock);
 	}
 
-	spin_lock_acquire(&rqlock);
+	spin_lock_acquire(pthis_rqlock);
 	enqueue_se(se);
-	spin_lock_release(&rqlock);
+	spin_lock_release(pthis_rqlock);
 }
 
 void update_se(uint32_t elapsed)
 {
-	struct sched_entity *next_se, *cur_se;
-	struct rb_node *next_node;
+	struct sched_entity *next_se = NULL, *cur_se = NULL;
+	struct rb_node *next_node = NULL;
+	struct cfs_rq *this_runq = NULL;
+
+#if _ENABLE_SMP_
+	this_runq = (struct cfs_rq *)__get_cpu_var(runq);
+#else
+	this_runq = runq;
+#endif
 
 /* updating vruntime of current is moved to timer_irq routine */
 #if 0
@@ -156,8 +194,8 @@ void update_se(uint32_t elapsed)
 		enqueue_se(runq, &current->se);
 	}
 #else
-	cur_se = container_of(runq->rb_leftmost, struct sched_entity, run_node);
-	next_node = rb_next(runq->rb_leftmost);
+	cur_se = container_of(this_runq->rb_leftmost, struct sched_entity, run_node);
+	next_node = rb_next(this_runq->rb_leftmost);
 	next_se = container_of(next_node, struct sched_entity, run_node);
 	if (next_se->jiffies_vruntime < cur_se->jiffies_vruntime) {
 		dequeue_se(cur_se);

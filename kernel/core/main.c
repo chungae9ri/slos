@@ -89,21 +89,7 @@ int secondary_start_kernel(void)
 {
 	uint32_t ctrl;
 	xil_printf("I am secondary cpu!\n");
-	/* enable GIC distributor, 
-	 * banked register 
-	 */
-	*(volatile uint32_t *)(GIC_ICDDCR) = 0x1;
-	/* 32 priority level supported
-	 * priority mask for the lowest priority
-	 * which has max value of priority.
-	 * Pass all levels of interrupts.
-	 */
-	*(volatile uint32_t *)(GIC_ICCPMR) = 0xF8;
-	/* enable GIC cpu interface, 
-	 * banked register
-	 */ 
-	*(volatile uint32_t *)(GIC_ICCICR) = 0x07;
-
+	init_gic_secondary();
 	/* init timer */
 	*(volatile uint32_t *)(PRIV_TMR_LD) = 1000000;
 	gic_mask_interrupt(PRIV_TMR_INT_VEC);

@@ -97,6 +97,24 @@ void init_gic(void)
 	init_gic_cpu();
 }
 
+void init_gic_secondary(void)
+{
+	/* enable GIC distributor, 
+	 * banked register 
+	 */
+	writel(0x1, GIC_ICDDCR);
+	/* 32 priority level supported
+	 * priority mask for the lowest priority
+	 * which has max value of priority.
+	 * Pass all levels of interrupts.
+	 */
+	writel(0xF8, GIC_ICCPMR);
+	/* enable GIC cpu interface, 
+	 * banked register
+	 */ 
+	writel(0x7, GIC_ICCICR);
+}
+
 void gic_fiq(void)
 {
 	/* do nothing */

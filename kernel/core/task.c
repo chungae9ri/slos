@@ -31,6 +31,7 @@
 #include <loader.h>
 #include <slos_error.h>
 #include <odev.h>
+#include <percpu.h>
 
 #define SVCSPSR 0x13 
 #define COPROC_SRC_ADDR		0x20000000
@@ -39,12 +40,6 @@
 
 uint32_t show_stat = 0;
 extern char inbyte(void);
-struct task_struct *idle_task;
-
-extern struct cfs_rq *runq;
-extern struct task_struct *current;
-extern struct task_struct *last;
-extern struct task_struct *first;
 extern struct task_struct *upt[MAX_USR_TASK];
 extern void enable_interrupt(void);
 extern void disable_interrupt(void);
@@ -54,22 +49,37 @@ void create_usr_cfs_task(char *name,
 		uint32_t pri, 
 		uint32_t appIdx)
 {
+	struct cfs_rq *this_runq = NULL;
+
+#if _ENABLE_SMP_
+	this_runq = (struct cfs_rq *)__get_cpu_var(runq);
+#else
+	this_runq = runq;
+#endif
+
 	upt[appIdx] = forkyi(name, (task_entry)cfs_task, CFS_TASK);
 	set_priority(upt[appIdx], pri);
 	rb_init_node(&(upt[appIdx]->se).run_node);
 	enqueue_se_to_runq(&(upt[appIdx]->se), true);
-	runq->cfs_task_num++;
+	this_runq->cfs_task_num++;
 }
 
 void create_cfs_task(char *name, task_entry cfs_task, uint32_t pri)
 {
-	struct task_struct *temp;
+	struct task_struct *temp = NULL;
+	struct cfs_rq *this_runq = NULL;
+
+#if _ENABLE_SMP_
+	this_runq = (struct cfs_rq *)__get_cpu_var(runq);
+#else
+	this_runq = runq;
+#endif
 
 	temp = forkyi(name, (task_entry)cfs_task, CFS_TASK);
 	set_priority(temp, pri);
 	rb_init_node(&temp->se.run_node);
 	enqueue_se_to_runq(&temp->se, true);
-	runq->cfs_task_num++;
+	this_runq->cfs_task_num++;
 }
 
 void create_rt_task(char *name, task_entry handler, uint32_t dur)
@@ -100,9 +110,15 @@ void create_oneshot_task(char *name, task_entry handler, uint32_t dur)
 uint32_t rt_worker2(void)
 {
 	int i, j = 0;
+	struct task_struct *this_current = NULL;
+#if _ENABLE_SMP_
+		this_current = (struct task_struct*)__get_cpu_var(current);
+#else
+		this_current = current;
+#endif
 	while (1) {
 		/* do some real time work here */
-		current->done = 0;
+		this_current->done = 0;
 		if (show_stat) {
 			xil_printf("I am rt worker2 j: %d\n", j);
 		}
@@ -114,7 +130,7 @@ uint32_t rt_worker2(void)
 			xil_printf("I am rt worker2 j: %d\n", j);
 		}
 		j = 0;
-		current->done = 1;
+		this_current->done = 1;
 		/* should yield after finish current work */
 		yield();
 	}
@@ -124,9 +140,16 @@ uint32_t rt_worker2(void)
 uint32_t rt_worker1(void)
 {
 	int i, j = 0;
+	struct task_struct *this_current = NULL;
+
+#if _ENABLE_SMP_
+		this_current = (struct task_struct*)__get_cpu_var(current);
+#else
+		this_current = current;
+#endif
 	while (1) {
 		/* do some real time work here */
-		current->done = 0;
+		this_current->done = 0;
 		if (show_stat) {
 			xil_printf("I am rt worker1 j: %d\n", j);	
 		}
@@ -138,7 +161,7 @@ uint32_t rt_worker1(void)
 			xil_printf("I am rt worker1 j: %d\n", j);	
 		}
 		j = 0;
-		current->done = 1;
+		this_current->done = 1;
 		/* should yield after finish current work */
 		yield();
 	}
@@ -436,6 +459,13 @@ void shell(void)
 	int i, j, pid;
 	struct task_struct *pwait_task;
 	struct list_head *next_lh = NULL;
+	struct cfs_rq *this_runq = NULL;
+
+#if _ENABLE_SMP_
+	this_runq = (struct cfs_rq *)__get_cpu_var(runq);
+#else
+	this_runq = runq;
+#endif
 
 	show_stat = 0;
 
@@ -479,14 +509,17 @@ void shell(void)
 			outbyte(byte);
 			outbyte('\n');
 			pid = byte - '0';
-
+#if _ENABLE_SMP_
+			next_lh = &(((struct task_struct*)(__get_cpu_var(first)))->task);
+#else
 			next_lh = &first->task;
-			for (j = 0; j < runq->cfs_task_num; j++) {
+#endif
+			for (j = 0; j < this_runq->cfs_task_num; j++) {
 				pwait_task = (struct task_struct *)to_task_from_listhead(next_lh);
 				if (pwait_task->pid == pid) break;
 				next_lh = next_lh->next;
 			}
-			if (j < runq->cfs_task_num && pwait_task->state == TASK_RUNNING) {
+			if (j < this_runq->cfs_task_num && pwait_task->state == TASK_RUNNING) {
 				dequeue_se_to_wq(&pwait_task->se, true);
 			} else {
 				xil_printf("task %d is not in runq\n", pid);
@@ -499,13 +532,17 @@ void shell(void)
 			outbyte('\n');
 			pid = byte - '0';
 
+#if _ENABLE_SMP_
+			next_lh = &(((struct task_struct*)(__get_cpu_var(first)))->task);
+#else
 			next_lh = &first->task;
-			for (j = 0; j < runq->cfs_task_num; j++) {
+#endif
+			for (j = 0; j < this_runq->cfs_task_num; j++) {
 				pwait_task = (struct task_struct *)to_task_from_listhead(next_lh);
 				if (pwait_task->pid == pid) break;
 				next_lh = next_lh->next;
 			}
-			if (j < runq->cfs_task_num && pwait_task->state == TASK_WAITING) {
+			if (j < this_runq->cfs_task_num && pwait_task->state == TASK_WAITING) {
 				enqueue_se_to_runq(&pwait_task->se, true);
 			} else {
 				xil_printf("task %d is not in runq\n", pid);
@@ -532,13 +569,20 @@ void shell(void)
 
 void init_shell(void)
 {
-	struct task_struct *temp;
+	struct task_struct *temp = NULL;
+	struct cfs_rq *this_runq = NULL;
+
+#if _ENABLE_SMP_
+	this_runq = (struct cfs_rq *)__get_cpu_var(runq);
+#else
+	this_runq = runq;
+#endif
 
 	temp = forkyi("shell", (task_entry)shell, CFS_TASK);
 	set_priority(temp, 2);
 	rb_init_node(&temp->se.run_node);
 	enqueue_se_to_runq(&temp->se, true);
-	runq->cfs_task_num++;
+	this_runq->cfs_task_num++;
 }
 void init_idletask(void)
 {
@@ -556,5 +600,9 @@ void init_idletask(void)
 	pt->pid = 0;
 	pt->preempted = 0;
 	set_priority(pt, 16);
+#if _ENABLE_SMP_
+	__get_cpu_var(idle_task) = __get_cpu_var(current) = __get_cpu_var(first) = __get_cpu_var(last) = pt;
+#else
 	idle_task = current = first = last = pt;
+#endif
 }

@@ -81,6 +81,7 @@ struct ihandler {
 struct ihandler handler[NUM_IRQS];
 
 void init_gic(void);
+void init_gic_secondary(void);
 uint32_t gic_mask_interrupt(int vec);
 uint32_t gic_unmask_interrupt(int vec);
 void gic_register_int_handler(int vec, int_handler func, void *arg);

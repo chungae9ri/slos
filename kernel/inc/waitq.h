@@ -27,8 +27,6 @@ struct wait_queue {
 	int count;
 };
 
-struct wait_queue wq;
-
 extern void spin_lock_acquire(volatile uint32_t *pl);
 extern void spin_lock_release(volatile uint32_t *pl);
 

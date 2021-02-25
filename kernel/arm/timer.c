@@ -26,13 +26,9 @@
 #include <rbtree.h>
 #include <ktimer.h>
 #include <defs.h>
+#include <percpu.h>
 
-/*static uint32_t tc;*/
-static uint32_t tc;
 static uint32_t ticks_per_sec;
-extern struct timer_struct *sched_timer;
-extern struct timer_root *ptroot;
-extern struct task_struct *current;
 
 static void delay(uint32_t ticks)
 {
@@ -106,13 +102,26 @@ void timer_disable(void)
 
 int timer_irq (void *arg)
 {
-	uint32_t elapsed;
-	struct timer_struct *pnt, *pct; 
+	uint32_t elapsed = 0;
+	uint32_t tc = 0;
+	struct timer_struct *pnt = NULL, *pct = NULL; 
+	struct task_struct *this_current = NULL;
+	struct timer_struct *this_sched_timer = NULL;
+	struct timer_root *this_ptroot;
+#if _ENABLE_SMP_
+	this_current = __get_cpu_var(current);
+	this_sched_timer = (struct timer_struct *)__get_cpu_var(sched_timer);
+	this_ptroot = (struct timer_root *)__get_cpu_var(ptroot);
+#else
+	this_current = current;
+	this_sched_timer = sched_timer;
+	this_ptroot = ptroot;
+#endif
 
 	elapsed = get_elapsedtime();
-	pct = container_of(ptroot->rb_leftmost, struct timer_struct, run_node);
+	pct = container_of(this_ptroot->rb_leftmost, struct timer_struct, run_node);
 	update_timer_tree(elapsed);
-	pnt = container_of(ptroot->rb_leftmost, struct timer_struct, run_node);
+	pnt = container_of(this_ptroot->rb_leftmost, struct timer_struct, run_node);
 	tc = pnt->tc;
 	/* reprogram next earliest deadline timer intr */
 	writel(tc, PRIV_TMR_LD);
@@ -125,34 +134,34 @@ int timer_irq (void *arg)
 			 * Let's wait until rt task complete its
 			 * task and yield()
 			 */
-			if (current->type == RT_TASK)
+			if (this_current->type == RT_TASK)
 				break;
 
-			sched_timer->handler(elapsed);
-			pct->pt = current;
+			this_sched_timer->handler(elapsed);
+			pct->pt = this_current;
 			break;
 
 		case REALTIME_TIMER:
 		case ONESHOT_TIMER:
-			if (current != pct->pt) {
-				if (current->type == RT_TASK)
-					current->preempted = 1;
+			if (this_current != pct->pt) {
+				if (this_current->type == RT_TASK)
+					this_current->preempted = 1;
 
-				switch_context(current, pct->pt);
-				pct->pt->yield_task = current;
-				current = pct->pt;
+				switch_context(this_current, pct->pt);
+				pct->pt->yield_task = this_current;
+				this_current = pct->pt;
 			} 
 
 			if (pct->type == ONESHOT_TIMER) {
 				/* remove oneshot timer from timer tree */
-				del_timer(ptroot, pct);
-			} else if (!current->done && !current->preempted)
+				del_timer(this_ptroot, pct);
+			} else if (!this_current->done && !this_current->preempted)
 				/* missed the deadline
 				 * when another timer intr 
 				 * fires before rt task done and next 
 				 * periodic timer. missed its deadline.
 				 */
-				current->missed_cnt++;
+				this_current->missed_cnt++;
 
 			break;
 
@@ -208,14 +217,24 @@ void create_rt_timers(void)
 
 void init_timer(void)
 {
-	struct timer_struct *pct;
+	uint32_t tc = 0;
+	struct timer_struct *pct = NULL;
+	struct task_struct *this_current = NULL;
+	struct timer_root *this_ptroot = NULL; 
+#if _ENABLE_SMP_
+	this_current = (struct task_struct *)__get_cpu_var(current);
+	this_ptroot = (struct timer_root *)__get_cpu_var(ptroot);
+#else
+	this_current = current;
+	this_ptroot = ptroot;
+#endif
 	/*init_timertree();*/
 	/*create_sched_timer(cfs_sched_task, 10, 0, NULL);*/
 	/*create_rt_timers();*/
 
 	/*tc = sched_timer->tc;*/
-	pct = container_of(ptroot->rb_leftmost, struct timer_struct, run_node);
-	pct->pt = current;
+	pct = container_of(this_ptroot->rb_leftmost, struct timer_struct, run_node);
+	pct->pt = this_current;
 	tc = pct->tc;
 	writel(tc, PRIV_TMR_LD);
 	gic_register_int_handler(PRIV_TMR_INT_VEC, timer_irq, NULL);

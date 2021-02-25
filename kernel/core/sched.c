@@ -22,24 +22,30 @@
 #include <ktimer.h>
 #include <runq.h>
 #include <xil_printf.h>
+#include <percpu.h>
 
-struct task_struct *current = NULL;
-struct task_struct *last = NULL;
-struct task_struct *first = NULL;
-uint32_t task_created_num = 1; /* cpuidle task is not created by forkyi. it is already made from start */
-extern struct task_struct *idle_task;
-extern struct cfs_rq *runq;
 
 void init_cfs_scheduler(void)
 {
+	struct task_struct *this_current = NULL;
+#if _ENABLE_SMP_
+	this_current = (struct task_struct *)__get_cpu_var(current);
+#else
+	this_current = current;
+#endif
+
 	set_ticks_per_sec(get_timer_freq());
-	create_sched_timer(current, 10, 0, NULL);
+	create_sched_timer(this_current, 10, 0, NULL);
 	init_jiffies();
 }
 
 void init_jiffies(void)
 {
+#if _ENABLE_SMP_
+	__get_cpu_var(jiffies) = 0;
+#else
 	jiffies = 0;
+#endif
 }
 
 void set_priority(struct task_struct *pt, uint32_t pri)
@@ -54,8 +60,14 @@ void print_task_stat(void)
 	int i, num = 0;
 	struct task_struct *pcur = NULL;
 	struct list_head *next_lh = NULL;
+	struct task_struct *this_first = NULL;
 
-	next_lh = &first->task;
+#if _ENABLE_SMP_
+	this_first = (struct task_struct*)(__get_cpu_var(first));
+#else
+	this_first = first;
+#endif
+	next_lh = &this_first->task;
 	pcur = (struct task_struct *)to_task_from_listhead(next_lh);
 	/*for (i = 0; i < runq->cfs_task_num; i++) {*/
 	do {
@@ -82,16 +94,23 @@ void print_task_stat(void)
 
 		next_lh = next_lh->next;
 		pcur = (struct task_struct *)to_task_from_listhead(next_lh);
-	} while (pcur != first);
+	} while (pcur != this_first);
 }
 
 void schedule(void)
 {
-	struct task_struct *next;
-	struct sched_entity *se;
+	struct task_struct *next = NULL;
+	struct sched_entity *se = NULL;
+	struct task_struct *this_current = NULL;
+	struct cfs_rq *this_runq = NULL;
+#if _ENABLE_SMP_
+	this_runq = (struct cfs_rq*)(__get_cpu_var(runq));
+#else
+	this_runq = runq;
+#endif
 
 	/* Don't check task type since CSF task can interrupt RT task!! */
-	se = rb_entry(runq->rb_leftmost, struct sched_entity, run_node);
+	se = rb_entry(this_runq->rb_leftmost, struct sched_entity, run_node);
 	next = (struct task_struct *)to_task_from_se(se);
 
 	/* you should not print message in interrupt context. 
@@ -100,11 +119,16 @@ void schedule(void)
 	 */
 	/*if (show_stat && next->pfwhoami) next->pfwhoami();*/
 
-	if (current==next) return;
+#if _ENABLE_SMP_
+	this_current = (struct task_struct *)__get_cpu_var(current);
+#else
+	this_current = current;
+#endif
+	if (this_current==next) return;
 
-	switch_context(current, next);
-	next->yield_task = current;
-	current = next;
+	switch_context(this_current, next);
+	next->yield_task = this_current;
+	this_current = next;
 }
 
 struct task_struct *forkyi(char *name, task_entry fn, TASKTYPE type)
@@ -112,8 +136,23 @@ struct task_struct *forkyi(char *name, task_entry fn, TASKTYPE type)
 	/* cpuidle is pid 0 */
 	uint32_t lr = 0;
 	static uint32_t pid = 1;
-	struct task_struct *pt;
-	if (task_created_num == MAX_TASK) return NULL;
+	struct task_struct *pt = NULL;
+	struct task_struct *this_first = NULL;
+	struct task_struct *this_last = NULL;
+	uint32_t *pthis_task_created_num = NULL;
+
+#if _ENABLE_SMP_
+	this_first = (struct task_struct *)__get_cpu_var(first);
+	this_last = (struct task_struct *)__get_cpu_var(last);
+	pthis_task_created_num = (uint32_t *)__get_cpu_var_ptr(task_created_num);
+#else
+	this_first = first;
+	this_last = last;
+	pthis_task_created_num = &task_created_num;
+#endif
+
+	if (*pthis_task_created_num == MAX_TASK) 
+		return NULL;
 
 	pt = (struct task_struct *)kmalloc(sizeof(struct task_struct));
 
@@ -129,17 +168,18 @@ struct task_struct *forkyi(char *name, task_entry fn, TASKTYPE type)
 	pt->yield_task = NULL;
 	pt->preempted = 0;
 	pt->done = 1;
-	pt->ct.sp = (uint32_t)(SVC_STACK_BASE - TASK_STACK_GAP * ++task_created_num);
+	(*pthis_task_created_num)++;
+	pt->ct.sp = (uint32_t)(SVC_STACK_BASE - TASK_STACK_GAP * (*pthis_task_created_num));
 	asm ("mov %0, r14" : "+r" (lr) : : );
 	pt->ct.lr = (uint32_t)lr;
 	pt->ct.pc = (uint32_t)pt->entry;
 
 	/* get the last task from task list and add this task to the end of the task list*/
-	last->task.next = &(pt->task);
-	pt->task.prev = &(last->task);
-	pt->task.next = &(first->task);
-	first->task.prev = &(pt->task);
-	last = pt;
+	this_last->task.next = &(pt->task);
+	pt->task.prev = &(this_last->task);
+	pt->task.next = &(this_first->task);
+	this_first->task.prev = &(pt->task);
+	this_last = pt;
 
 	return pt;
 }
@@ -148,7 +188,16 @@ extern void disable_interrupt(void);
 void yield(void)
 {
 	uint32_t lr = 0;
-	struct task_struct *temp;
+	struct task_struct *temp = NULL;
+	struct task_struct *this_current = NULL, *this_idle_task = NULL;
+
+#if _ENABLE_SMP_
+	this_current = (struct task_struct *)__get_cpu_var(current);
+	this_idle_task = (struct task_struct *)__get_cpu_var(idle_task);
+#else
+	this_current = current;
+	this_idle_task = idle_task;
+#endif
 
 	disable_interrupt();
 	/* need to update ticks_consumed of RT task
@@ -159,13 +208,13 @@ void yield(void)
 	update_timer_tree(elapsed);
 	current->se.ticks_consumed += elapsed;
 #endif
-	temp = current;
-	if (current->yield_task->state == TASK_RUNNING)
-		current = current->yield_task;
-	else current = idle_task;
+	temp = this_current;
+	if (this_current->yield_task->state == TASK_RUNNING)
+		this_current = this_current->yield_task;
+	else this_current = this_idle_task;
 	/* keep current lr and save it to task's ctx */
 	asm ("mov %0, r14" : "+r" (lr) : : );
-	switch_context_yield(temp, current, lr);
+	switch_context_yield(temp, this_current, lr);
 }
 
 void switch_context(struct task_struct *prev, struct task_struct *next)
@@ -175,17 +224,31 @@ void switch_context(struct task_struct *prev, struct task_struct *next)
 
 void update_current(uint32_t elapsed)
 {
-	if (current->type == CFS_TASK) {
+	struct task_struct *this_current = NULL;
+	struct cfs_rq *this_runq = NULL;
+#if _ENABLE_SMP_
+	this_current = (struct task_struct*)__get_cpu_var(current);
+	this_runq = (struct cfs_rq *)__get_cpu_var(runq);
+#else
+	this_current = current;
+	this_runq = runq;
+#endif
+
+	if (this_current->type == CFS_TASK) {
+#if _ENABLE_SMP_
+		__get_cpu_var(jiffies) += 1;
+#else
 		jiffies++;
-		current->se.jiffies_consumed++;
-		current->se.ticks_consumed += (uint64_t) elapsed;
+#endif
+		this_current->se.jiffies_consumed++;
+		this_current->se.ticks_consumed += (uint64_t) elapsed;
 		/*current->se.ticks_vruntime = (current->se.ticks_consumed) *
 			(current->se.priority) / runq->priority_sum;
 			*/
-		current->se.jiffies_vruntime = (current->se.jiffies_consumed) *
-			(current->se.priority) / runq->priority_sum;
-	} else if (current->type == RT_TASK) {
-		current->se.ticks_consumed += (uint64_t)elapsed;
+		this_current->se.jiffies_vruntime = (this_current->se.jiffies_consumed) *
+			(this_current->se.priority) / this_runq->priority_sum;
+	} else if (this_current->type == RT_TASK) {
+		this_current->se.ticks_consumed += (uint64_t)elapsed;
 	}
 }
 
