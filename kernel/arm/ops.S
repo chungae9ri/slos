@@ -122,5 +122,6 @@ spin_lock_release:
 .global smp_processor_id
 smp_processor_id:
 	mrc	p15, 0, r0, c0, c0, 5 /* read MPIDR */
+	bic	r0, r0, #0xFFFFFFFC
 	mov 	pc, lr
 .end

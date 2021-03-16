@@ -112,9 +112,9 @@ uint32_t rt_worker2(void)
 	int i, j = 0;
 	struct task_struct *this_current = NULL;
 #if _ENABLE_SMP_
-		this_current = (struct task_struct*)__get_cpu_var(current);
+	this_current = (struct task_struct*)__get_cpu_var(current);
 #else
-		this_current = current;
+	this_current = current;
 #endif
 	while (1) {
 		/* do some real time work here */

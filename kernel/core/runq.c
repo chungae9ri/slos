@@ -18,6 +18,8 @@
 #include <runq.h>
 #include <percpu.h>
 
+volatile uint32_t rqlock = 0;
+
 extern void remove_from_wq(struct task_struct *p);
 
 void init_rq(void)
@@ -46,14 +48,15 @@ void init_rq(void)
 void enqueue_se(struct sched_entity *se)
 {
 	struct cfs_rq *this_runq = NULL;
+	struct rb_node **link, *parent=NULL;
+	uint64_t value = se->jiffies_vruntime;
+	int leftmost = 1;
 #if _ENABLE_SMP_
 	this_runq = (struct cfs_rq *)__get_cpu_var(runq);
 #else
 	this_runq = runq;
 #endif
-	struct rb_node **link = &this_runq->root.rb_node, *parent=NULL;
-	uint64_t value = se->jiffies_vruntime;
-	int leftmost = 1;
+	link = &this_runq->root.rb_node;
 
 	/* Go to the bottom of the tree */
 	while (*link) {
@@ -107,13 +110,13 @@ void dequeue_se(struct sched_entity *se)
 void update_vruntime_runq(struct sched_entity *se)
 {
 	struct cfs_rq *this_runq = NULL;
+	struct sched_entity *cur_se, *se_leftmost;
+	struct rb_node *cur_rb_node;
 #if _ENABLE_SMP_
 	this_runq = (struct cfs_rq *)__get_cpu_var(runq);
 #else
 	this_runq = runq;
 #endif
-	struct sched_entity *cur_se, *se_leftmost;
-	struct rb_node *cur_rb_node;
 	/* in very first time, the leftmost should be null */
 	if (!this_runq->rb_leftmost) 
 		return; 
@@ -141,27 +144,24 @@ void enqueue_se_to_runq(struct sched_entity *se, bool update)
 	/*struct sched_entity *se_leftmost;*/
 	struct task_struct *tp = NULL;
 	struct cfs_rq *this_runq = NULL;
-	volatile uint32_t *pthis_rqlock;
 #if _ENABLE_SMP_
 	this_runq = (struct cfs_rq *)__get_cpu_var(runq);
-	pthis_rqlock = (volatile uint32_t *)__get_cpu_var_ptr(rqlock);
 #else
 	this_runq = runq;
-	pthis_rqlock = &rqlock;
 #endif
 	if (update) {
 		tp = container_of(se, struct task_struct, se);
 		this_runq->priority_sum += se->priority;
 		remove_from_wq(tp);
 		tp->state = TASK_RUNNING;
-		spin_lock_acquire(pthis_rqlock);
+		spin_lock_acquire(&rqlock);
 		update_vruntime_runq(se);
-		spin_lock_release(pthis_rqlock);
+		spin_lock_release(&rqlock);
 	}
 
-	spin_lock_acquire(pthis_rqlock);
+	spin_lock_acquire(&rqlock);
 	enqueue_se(se);
-	spin_lock_release(pthis_rqlock);
+	spin_lock_release(&rqlock);
 }
 
 void update_se(uint32_t elapsed)

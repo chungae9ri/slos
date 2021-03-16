@@ -109,7 +109,7 @@ int timer_irq (void *arg)
 	struct timer_struct *this_sched_timer = NULL;
 	struct timer_root *this_ptroot;
 #if _ENABLE_SMP_
-	this_current = __get_cpu_var(current);
+	this_current = (struct task_struct *)__get_cpu_var(current);
 	this_sched_timer = (struct timer_struct *)__get_cpu_var(sched_timer);
 	this_ptroot = (struct timer_root *)__get_cpu_var(ptroot);
 #else
@@ -149,7 +149,7 @@ int timer_irq (void *arg)
 
 				switch_context(this_current, pct->pt);
 				pct->pt->yield_task = this_current;
-				this_current = pct->pt;
+				current = pct->pt;
 			} 
 
 			if (pct->type == ONESHOT_TIMER) {

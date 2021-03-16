@@ -24,7 +24,6 @@
 #include <xil_printf.h>
 #include <percpu.h>
 
-
 void init_cfs_scheduler(void)
 {
 	struct task_struct *this_current = NULL;
@@ -124,11 +123,12 @@ void schedule(void)
 #else
 	this_current = current;
 #endif
-	if (this_current==next) return;
+	if (this_current == next) 
+		return;
 
 	switch_context(this_current, next);
 	next->yield_task = this_current;
-	this_current = next;
+	current = next;
 }
 
 struct task_struct *forkyi(char *name, task_entry fn, TASKTYPE type)
@@ -144,7 +144,7 @@ struct task_struct *forkyi(char *name, task_entry fn, TASKTYPE type)
 #if _ENABLE_SMP_
 	this_first = (struct task_struct *)__get_cpu_var(first);
 	this_last = (struct task_struct *)__get_cpu_var(last);
-	pthis_task_created_num = (uint32_t *)__get_cpu_var_ptr(task_created_num);
+	pthis_task_created_num = (uint32_t *)__get_cpu_var(task_created_num);
 #else
 	this_first = first;
 	this_last = last;
@@ -179,7 +179,7 @@ struct task_struct *forkyi(char *name, task_entry fn, TASKTYPE type)
 	pt->task.prev = &(this_last->task);
 	pt->task.next = &(this_first->task);
 	this_first->task.prev = &(pt->task);
-	this_last = pt;
+	last = pt;
 
 	return pt;
 }
@@ -210,11 +210,11 @@ void yield(void)
 #endif
 	temp = this_current;
 	if (this_current->yield_task->state == TASK_RUNNING)
-		this_current = this_current->yield_task;
-	else this_current = this_idle_task;
+		current = this_current->yield_task;
+	else current = this_idle_task;
 	/* keep current lr and save it to task's ctx */
 	asm ("mov %0, r14" : "+r" (lr) : : );
-	switch_context_yield(temp, this_current, lr);
+	switch_context_yield(temp, current, lr);
 }
 
 void switch_context(struct task_struct *prev, struct task_struct *next)

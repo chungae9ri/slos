@@ -24,10 +24,12 @@ KERNEL_HEAP_SIZE = 0x4000000;
 SECTIONS
 {
 	/* percpu storage, allocated 2 pages */
+	/*
 	. = 0x2000;
 	.data.percpu : {
 		*(.data.percpu);
 	}
+	*/
 
 	. = 0x00100000;
 	.ssbl : {
@@ -47,6 +49,10 @@ SECTIONS
 
 	.bss : AT(ADDR(.bss) - 0xC0000000) { 
 		*(.bss) 
+	}
+
+	.data.percpu : AT(ADDR(.data.percpu) - 0xC0000000) {
+		*(.data.percpu);
 	}
 
 	. = 0xC0201000;

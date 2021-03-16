@@ -126,8 +126,8 @@ int start_kernel(void)
 	format_file_system();
 	xil_printf("### mount slfs file system.\n");
 
-	init_rq();
 	init_wq();
+	init_rq();
 	init_shell();
 	init_timertree();
 	init_cfs_scheduler();
@@ -140,7 +140,10 @@ int start_kernel(void)
 	init_dma();
 	init_odev();
 	create_workq_worker();
+
+#if _ENABLE_SMP_
 	start_cpu1();
+#endif
 	cpuidle();
 
 	return 0;

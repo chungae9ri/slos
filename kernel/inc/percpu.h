@@ -14,7 +14,7 @@ extern DEFINE_PER_CPU(uint32_t, rqlock);
 extern DEFINE_PER_CPU(uint32_t, jiffies);
 extern DEFINE_PER_CPU(struct timer_struct *, sched_timer);
 extern DEFINE_PER_CPU(struct timer_root *, ptroot);
-extern DEFINE_PER_CPU(struct clock_source_device, csd);
+extern DEFINE_PER_CPU(struct clock_source_device *, csd);
 extern DEFINE_PER_CPU(struct wait_queue*, wq);
 #else /* ! _ENABLE_SMP_*/
 extern struct task_struct *idle_task;
@@ -27,7 +27,8 @@ extern volatile uint32_t rqlock;
 extern uint32_t jiffies;
 extern struct timer_struct *sched_timer;
 extern struct timer_root *ptroot;
-extern struct clock_source_device csd;
+extern struct clock_source_device *csd;
 extern struct wait_queue *wq;
+extern uint32_t tc;
 #endif /* ! _ENABLE_SMP_*/
 #endif
