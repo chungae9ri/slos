@@ -149,7 +149,11 @@ int timer_irq (void *arg)
 
 				switch_context(this_current, pct->pt);
 				pct->pt->yield_task = this_current;
+#if _ENABLE_SMP_
+				__get_cpu_var(current) = pct->pt;
+#else
 				current = pct->pt;
+#endif
 			} 
 
 			if (pct->type == ONESHOT_TIMER) {

@@ -1,7 +1,7 @@
 #ifndef _PER_CPU_DEF_
 #define _PER_CPU_DEF_
 
-#define _ENABLE_SMP_	0
+#define _ENABLE_SMP_	1
 
 #ifdef _ENABLE_SMP_
 
@@ -25,13 +25,5 @@ extern unsigned long __per_cpu_offset[NR_CPUS];
 #define per_cpu(var, cpu) (*RELOC_HIDE(&per_cpu_##var, __per_cpu_offset[cpu]))
 #define __get_cpu_var(var) per_cpu(var, smp_processor_id())
 
-#define PTR_ADDR(addr, off) 			\
-	({ unsigned long __addr;		\
-	   __addr = (unsigned long)addr; 	\
-	   (typeof(addr))(__addr + off); })
-
-#define per_cpu_ptr(var, cpu) (PTR_ADDR(&per_cpu_##var, __per_cpu_offset[cpu]))
-#define __get_cpu_var_addr(var) per_cpu_ptr(var, smp_processor_id())
 #endif
-
 #endif

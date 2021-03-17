@@ -27,9 +27,9 @@ void init_rq(void)
 	struct task_struct *this_idle_task = NULL;
 	struct cfs_rq *this_runq = NULL;
 #if _ENABLE_SMP_
-	this_idle_task = (struct task_struct*)__get_cpu_var(idle_task);
+	this_idle_task = __get_cpu_var(idle_task);
 	__get_cpu_var(runq) = (struct cfs_rq *)kmalloc(sizeof(struct cfs_rq));
-	this_runq = (struct cfs_rq*)__get_cpu_var(runq);
+	this_runq = __get_cpu_var(runq);
 #else
 	this_idle_task = idle_task;
 	runq = this_runq = (struct cfs_rq *)kmalloc(sizeof(struct cfs_rq));
@@ -51,8 +51,9 @@ void enqueue_se(struct sched_entity *se)
 	struct rb_node **link, *parent=NULL;
 	uint64_t value = se->jiffies_vruntime;
 	int leftmost = 1;
+
 #if _ENABLE_SMP_
-	this_runq = (struct cfs_rq *)__get_cpu_var(runq);
+	this_runq = __get_cpu_var(runq);
 #else
 	this_runq = runq;
 #endif
@@ -93,7 +94,7 @@ void dequeue_se(struct sched_entity *se)
 {
 	struct cfs_rq *this_runq = NULL;
 #if _ENABLE_SMP_
-	this_runq = (struct cfs_rq *)__get_cpu_var(runq);
+	this_runq = __get_cpu_var(runq);
 #else
 	this_runq = runq;
 #endif
@@ -113,7 +114,7 @@ void update_vruntime_runq(struct sched_entity *se)
 	struct sched_entity *cur_se, *se_leftmost;
 	struct rb_node *cur_rb_node;
 #if _ENABLE_SMP_
-	this_runq = (struct cfs_rq *)__get_cpu_var(runq);
+	this_runq = __get_cpu_var(runq);
 #else
 	this_runq = runq;
 #endif
@@ -145,7 +146,7 @@ void enqueue_se_to_runq(struct sched_entity *se, bool update)
 	struct task_struct *tp = NULL;
 	struct cfs_rq *this_runq = NULL;
 #if _ENABLE_SMP_
-	this_runq = (struct cfs_rq *)__get_cpu_var(runq);
+	this_runq = __get_cpu_var(runq);
 #else
 	this_runq = runq;
 #endif
@@ -171,7 +172,7 @@ void update_se(uint32_t elapsed)
 	struct cfs_rq *this_runq = NULL;
 
 #if _ENABLE_SMP_
-	this_runq = (struct cfs_rq *)__get_cpu_var(runq);
+	this_runq = __get_cpu_var(runq);
 #else
 	this_runq = runq;
 #endif

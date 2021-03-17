@@ -50,7 +50,7 @@ void update_csd(void)
 {
 	struct clock_source_device *pthis_csd;
 #if _ENABLE_SMP_
-	pthis_csd = (struct clock_source_device *)__get_cpu_var(csd);
+	pthis_csd = __get_cpu_var(csd);
 #else
 	pthis_csd = csd;
 #endif
@@ -70,7 +70,7 @@ void update_timer_tree(uint32_t elapsed)
 	struct timer_struct *pct = NULL;
 
 #if _ENABLE_SMP_
-	this_ptroot = (struct timer_root *)__get_cpu_var(ptroot);
+	this_ptroot = __get_cpu_var(ptroot);
 #else
 	this_ptroot = ptroot;
 #endif
@@ -136,8 +136,9 @@ void create_rt_timer(struct task_struct *rt_task,
 	rt_timer->intvl = rt_timer->tc;
 	rt_timer->idx = idx;
 	rt_timer->arg = arg;
+
 #if _ENABLE_SMP_
-	this_ptroot = (struct timer_root *)__get_cpu_var(ptroot);
+	this_ptroot = __get_cpu_var(ptroot);
 #else
 	this_ptroot = ptroot;
 #endif
@@ -157,6 +158,7 @@ void create_oneshot_timer(struct task_struct *oneshot_task,
 	oneshot_timer->intvl = oneshot_timer->tc;
 	oneshot_timer->idx = idx;
 	oneshot_timer->arg = arg;
+
 #if _ENABLE_SMP_
 	this_ptroot = (struct timer_root *)__get_cpu_var(ptroot);
 #else
@@ -170,10 +172,11 @@ void create_sched_timer(struct task_struct *cfs_sched_task,
 {
 	struct timer_struct *this_sched_timer = NULL;
 	struct timer_root *this_ptroot = NULL;
+
 #if _ENABLE_SMP_
 	__get_cpu_var(sched_timer) = (struct timer_struct *)kmalloc(sizeof(struct timer_struct));
-	this_sched_timer = (struct timer_struct *)__get_cpu_var(sched_timer);
-	this_ptroot = (struct timer_root *)__get_cpu_var(ptroot);
+	this_sched_timer = __get_cpu_var(sched_timer);
+	this_ptroot = __get_cpu_var(ptroot);
 #else
 	sched_timer = (struct timer_struct *)kmalloc(sizeof(struct timer_struct));
 	this_sched_timer = sched_timer;

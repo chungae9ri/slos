@@ -28,7 +28,7 @@ void init_cfs_scheduler(void)
 {
 	struct task_struct *this_current = NULL;
 #if _ENABLE_SMP_
-	this_current = (struct task_struct *)__get_cpu_var(current);
+	this_current = __get_cpu_var(current);
 #else
 	this_current = current;
 #endif
@@ -62,7 +62,7 @@ void print_task_stat(void)
 	struct task_struct *this_first = NULL;
 
 #if _ENABLE_SMP_
-	this_first = (struct task_struct*)(__get_cpu_var(first));
+	this_first = __get_cpu_var(first);
 #else
 	this_first = first;
 #endif
@@ -103,7 +103,7 @@ void schedule(void)
 	struct task_struct *this_current = NULL;
 	struct cfs_rq *this_runq = NULL;
 #if _ENABLE_SMP_
-	this_runq = (struct cfs_rq*)(__get_cpu_var(runq));
+	this_runq = __get_cpu_var(runq);
 #else
 	this_runq = runq;
 #endif
@@ -119,7 +119,7 @@ void schedule(void)
 	/*if (show_stat && next->pfwhoami) next->pfwhoami();*/
 
 #if _ENABLE_SMP_
-	this_current = (struct task_struct *)__get_cpu_var(current);
+	this_current = __get_cpu_var(current);
 #else
 	this_current = current;
 #endif
@@ -128,7 +128,11 @@ void schedule(void)
 
 	switch_context(this_current, next);
 	next->yield_task = this_current;
+#if _ENABLE_SMP_
+	__get_cpu_var(current) = next;
+#else
 	current = next;
+#endif
 }
 
 struct task_struct *forkyi(char *name, task_entry fn, TASKTYPE type)
@@ -142,9 +146,9 @@ struct task_struct *forkyi(char *name, task_entry fn, TASKTYPE type)
 	uint32_t *pthis_task_created_num = NULL;
 
 #if _ENABLE_SMP_
-	this_first = (struct task_struct *)__get_cpu_var(first);
-	this_last = (struct task_struct *)__get_cpu_var(last);
-	pthis_task_created_num = (uint32_t *)__get_cpu_var(task_created_num);
+	this_first = __get_cpu_var(first);
+	this_last = __get_cpu_var(last);
+	pthis_task_created_num = __get_cpu_var(task_created_num);
 #else
 	this_first = first;
 	this_last = last;
@@ -179,7 +183,11 @@ struct task_struct *forkyi(char *name, task_entry fn, TASKTYPE type)
 	pt->task.prev = &(this_last->task);
 	pt->task.next = &(this_first->task);
 	this_first->task.prev = &(pt->task);
+#if _ENABLE_SMP_
+	__get_cpu_var(last) = pt;
+#else
 	last = pt;
+#endif
 
 	return pt;
 }
@@ -192,8 +200,8 @@ void yield(void)
 	struct task_struct *this_current = NULL, *this_idle_task = NULL;
 
 #if _ENABLE_SMP_
-	this_current = (struct task_struct *)__get_cpu_var(current);
-	this_idle_task = (struct task_struct *)__get_cpu_var(idle_task);
+	this_current = __get_cpu_var(current);
+	this_idle_task = __get_cpu_var(idle_task);
 #else
 	this_current = current;
 	this_idle_task = idle_task;
@@ -209,12 +217,26 @@ void yield(void)
 	current->se.ticks_consumed += elapsed;
 #endif
 	temp = this_current;
+#if _ENABLE_SMP_
+	if (this_current->yield_task->state == TASK_RUNNING)
+		__get_cpu_var(current) = this_current->yield_task;
+	else 
+		__get_cpu_var(current) = this_idle_task;
+
+	this_current = __get_cpu_var(current);
+	/* keep current lr and save it to task's ctx */
+	asm ("mov %0, r14" : "+r" (lr) : : );
+	switch_context_yield(temp, this_current, lr);
+#else
 	if (this_current->yield_task->state == TASK_RUNNING)
 		current = this_current->yield_task;
-	else current = this_idle_task;
+	else 
+		current = this_idle_task;
+
 	/* keep current lr and save it to task's ctx */
 	asm ("mov %0, r14" : "+r" (lr) : : );
 	switch_context_yield(temp, current, lr);
+#endif
 }
 
 void switch_context(struct task_struct *prev, struct task_struct *next)
@@ -227,8 +249,8 @@ void update_current(uint32_t elapsed)
 	struct task_struct *this_current = NULL;
 	struct cfs_rq *this_runq = NULL;
 #if _ENABLE_SMP_
-	this_current = (struct task_struct*)__get_cpu_var(current);
-	this_runq = (struct cfs_rq *)__get_cpu_var(runq);
+	this_current = __get_cpu_var(current);
+	this_runq = __get_cpu_var(runq);
 #else
 	this_current = current;
 	this_runq = runq;
@@ -251,4 +273,3 @@ void update_current(uint32_t elapsed)
 		this_current->se.ticks_consumed += (uint64_t)elapsed;
 	}
 }
-

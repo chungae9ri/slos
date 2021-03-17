@@ -52,7 +52,7 @@ void create_usr_cfs_task(char *name,
 	struct cfs_rq *this_runq = NULL;
 
 #if _ENABLE_SMP_
-	this_runq = (struct cfs_rq *)__get_cpu_var(runq);
+	this_runq = __get_cpu_var(runq);
 #else
 	this_runq = runq;
 #endif
@@ -70,7 +70,7 @@ void create_cfs_task(char *name, task_entry cfs_task, uint32_t pri)
 	struct cfs_rq *this_runq = NULL;
 
 #if _ENABLE_SMP_
-	this_runq = (struct cfs_rq *)__get_cpu_var(runq);
+	this_runq = __get_cpu_var(runq);
 #else
 	this_runq = runq;
 #endif
@@ -112,7 +112,7 @@ uint32_t rt_worker2(void)
 	int i, j = 0;
 	struct task_struct *this_current = NULL;
 #if _ENABLE_SMP_
-	this_current = (struct task_struct*)__get_cpu_var(current);
+	this_current = __get_cpu_var(current);
 #else
 	this_current = current;
 #endif
@@ -143,7 +143,7 @@ uint32_t rt_worker1(void)
 	struct task_struct *this_current = NULL;
 
 #if _ENABLE_SMP_
-		this_current = (struct task_struct*)__get_cpu_var(current);
+		this_current = __get_cpu_var(current);
 #else
 		this_current = current;
 #endif
@@ -462,7 +462,7 @@ void shell(void)
 	struct cfs_rq *this_runq = NULL;
 
 #if _ENABLE_SMP_
-	this_runq = (struct cfs_rq *)__get_cpu_var(runq);
+	this_runq = __get_cpu_var(runq);
 #else
 	this_runq = runq;
 #endif
@@ -573,7 +573,7 @@ void init_shell(void)
 	struct cfs_rq *this_runq = NULL;
 
 #if _ENABLE_SMP_
-	this_runq = (struct cfs_rq *)__get_cpu_var(runq);
+	this_runq = __get_cpu_var(runq);
 #else
 	this_runq = runq;
 #endif

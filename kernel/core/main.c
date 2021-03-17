@@ -29,6 +29,7 @@
 #include <loader.h>
 #include <dma.h>
 #include <odev.h>
+#include <percpu.h>
 
 extern uint32_t show_stat;
 extern void secondary_reset(void);
@@ -142,6 +143,7 @@ int start_kernel(void)
 	create_workq_worker();
 
 #if _ENABLE_SMP_
+	xil_printf("### start secondary cpu.\n");
 	start_cpu1();
 #endif
 	cpuidle();

@@ -30,7 +30,7 @@ void init_wq(void)
 	struct wait_queue *this_wq;
 #if _ENABLE_SMP_
 	__get_cpu_var(wq) = (struct wait_queue *)kmalloc(sizeof(struct wait_queue));
-	this_wq = (struct wait_queue *)__get_cpu_var(wq);
+	this_wq = __get_cpu_var(wq);
 #else
 	this_wq = wq = (struct wait_queue *)kmalloc(sizeof(struct wait_queue));;
 #endif
@@ -45,7 +45,7 @@ void wake_all_wq(void)
 	struct list_head *cur, *next;
 	struct wait_queue *this_wq;
 #if _ENABLE_SMP_
-	this_wq = (struct wait_queue *)__get_cpu_var(wq);
+	this_wq = __get_cpu_var(wq);
 #else
 	this_wq = wq;
 #endif
@@ -66,7 +66,7 @@ void destroy_wq(void)
 {
 	struct wait_queue *this_wq;
 #if _ENABLE_SMP_
-	this_wq = (struct wait_queue *)__get_cpu_var(wq);
+	this_wq = __get_cpu_var(wq);
 #else
 	this_wq = wq;
 #endif
@@ -83,7 +83,7 @@ void add_to_wq(struct task_struct *p)
 	struct wait_queue *this_wq;
 
 #if _ENABLE_SMP_
-	this_wq = (struct wait_queue *)__get_cpu_var(wq);
+	this_wq = __get_cpu_var(wq);
 #else
 	this_wq = wq;
 #endif
@@ -111,7 +111,7 @@ void remove_from_wq(struct task_struct *p)
 	struct wait_queue *this_wq = NULL;
 
 #if _ENABLE_SMP_
-	this_wq = (struct wait_queue *)__get_cpu_var(wq);
+	this_wq = __get_cpu_var(wq);
 #else
 	this_wq = wq;
 #endif
@@ -156,7 +156,7 @@ void dequeue_se_to_wq(struct sched_entity *se, bool update)
 	struct cfs_rq *this_runq = NULL;
 
 #if _ENABLE_SMP_
-	this_runq = (struct cfs_rq *)__get_cpu_var(runq);
+	this_runq = __get_cpu_var(runq);
 #else
 	this_runq = runq;
 #endif
@@ -183,12 +183,9 @@ void dequeue_se_to_exit(struct sched_entity *se)
 {
 	struct task_struct *tp;
 	struct cfs_rq *this_runq;
-	volatile uint32_t *pthis_rqlock;
 #if _ENABLE_SMP_
-	pthis_rqlock = (uint32_t *)__get_cpu_var(rqlock);
-	this_runq = (struct cfs_rq *)__get_cpu_var(runq);
+	this_runq = __get_cpu_var(runq);
 #else
-	pthis_rqlock = &rqlock;
 	this_runq = runq;
 #endif
 	if (!this_runq)
@@ -197,15 +194,15 @@ void dequeue_se_to_exit(struct sched_entity *se)
 	tp = container_of(se, struct task_struct, se);
 	if (tp->state == TASK_RUNNING || tp->state == TASK_STOP_RUNNING){
 		this_runq->priority_sum -= se->priority;
-		spin_lock_acquire(pthis_rqlock);
+		spin_lock_acquire(&rqlock);
 		update_vruntime_runq(se);
 		dequeue_se(se);
-		spin_lock_release(pthis_rqlock);
+		spin_lock_release(&rqlock);
 		tp->state = TASK_STOP;
 	} else if (tp->state == TASK_WAITING) {
-		spin_lock_acquire(pthis_rqlock);
+		spin_lock_acquire(&rqlock);
 		remove_from_wq(tp);
-		spin_lock_release(pthis_rqlock);
+		spin_lock_release(&rqlock);
 		tp->state = TASK_STOP;
 	}
 }
