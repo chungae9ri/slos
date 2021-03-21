@@ -62,23 +62,34 @@ switch_context_yield:
 .global do_switch_context
 /* do_switch_context(struct task_struct *curr, struct task_struct *next) */
 do_switch_context:
-	push	{r0-r4}
+	push	{r0-r5, lr}
+	mov 	r5, r0
+	bl 	smp_processor_id
+	cmp	r0, #0x1
+	beq	secondary_context
 	mov 	r2,#CONTEXT_MEM_LEN
 	ldr 	r4,=CONTEXT_MEM
+	mov 	r0, r5
+	mov	r12, r4
+	b	savectxt
+secondary_context:
+	mov 	r0, r5
+	mov	r2, #CONTEXT_MEM_LEN
+	ldr	r4,=SEC_CONTEXT_MEM
+	mov	r12, r4		/* back up context mem addr to r12 */
 savectxt:
 	ldr	r3,[r4],#4
 	str	r3,[r0],#4
 	subs	r2,r2,#1
 	bne	savectxt
 	mov 	r2,#CONTEXT_MEM_LEN
-	ldr	r4,=CONTEXT_MEM
+	mov	r4, r12
 restrctxt:
 	ldr	r3,[r1],#4
 	str	r3,[r4],#4
 	subs	r2,r2,#1
 	bne	restrctxt
-	pop	{r0-r4}
-	mov	pc,lr
+	pop	{r0-r5, pc}
 
 .global enable_interrupt
 enable_interrupt:

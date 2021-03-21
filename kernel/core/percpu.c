@@ -16,7 +16,6 @@ DEFINE_PER_CPU(struct timer_struct *, sched_timer);
 DEFINE_PER_CPU(struct timer_root *, ptroot);
 DEFINE_PER_CPU(struct clock_source_device*, csd);
 DEFINE_PER_CPU(struct wait_queue*, wq);
-DEFINE_PER_CPU(uint32_t, tc);
 #else
 struct task_struct *idle_task;
 struct task_struct *current = NULL;
@@ -29,5 +28,4 @@ struct timer_struct *sched_timer = NULL;
 struct timer_root *ptroot = NULL;
 struct clock_source_device *csd;
 struct wait_queue *wq;
-uint32_t tc;
 #endif

@@ -94,8 +94,6 @@ static inline struct task_struct *to_task_from_se(struct sched_entity *s)
 	return ((struct task_struct *)((uint32_t)s-offsetof(struct task_struct, se)));
 }
 
-uint32_t jiffies;
-
 extern void do_switch_context(struct task_struct *, struct task_struct *);
 extern void switch_context_yield(struct task_struct *, struct task_struct *, uint32_t lr);
 void init_cfs_scheduler(void);

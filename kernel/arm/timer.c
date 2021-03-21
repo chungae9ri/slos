@@ -100,9 +100,11 @@ void timer_disable(void)
 	writel(ctrl, PRIV_TMR_CTRL);
 }
 
+extern int smp_processor_id();
+
 int timer_irq (void *arg)
 {
-	uint32_t elapsed = 0;
+	uint32_t elapsed = 0, id;
 	uint32_t tc = 0;
 	struct timer_struct *pnt = NULL, *pct = NULL; 
 	struct task_struct *this_current = NULL;
@@ -117,6 +119,12 @@ int timer_irq (void *arg)
 	this_sched_timer = sched_timer;
 	this_ptroot = ptroot;
 #endif
+	id = smp_processor_id();
+	/*
+	if (id == 1) {
+		xil_printf("timer inter in cpu1\n");
+	}
+	*/
 
 	elapsed = get_elapsedtime();
 	pct = container_of(this_ptroot->rb_leftmost, struct timer_struct, run_node);
@@ -226,8 +234,8 @@ void init_timer(void)
 	struct task_struct *this_current = NULL;
 	struct timer_root *this_ptroot = NULL; 
 #if _ENABLE_SMP_
-	this_current = (struct task_struct *)__get_cpu_var(current);
-	this_ptroot = (struct timer_root *)__get_cpu_var(ptroot);
+	this_current = __get_cpu_var(current);
+	this_ptroot = __get_cpu_var(ptroot);
 #else
 	this_current = current;
 	this_ptroot = ptroot;

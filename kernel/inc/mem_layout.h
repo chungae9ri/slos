@@ -50,9 +50,11 @@
 .set F_BIT, 					0x40
 .set IF_BIT, 					0xC0
 .set CONTEXT_MEM, 				0x00004000
-.set CONTEXT_MEM_END, 0x4038
-.set CONTEXT_MEM_LEN, 0xF
-.set SP_MEM, 0x4100
+.set CONTEXT_MEM_END, 				0x00004038
+.set SEC_CONTEXT_MEM, 				0x00006000
+.set SEC_CONTEXT_MEM_END, 			0x00006038
+.set CONTEXT_MEM_LEN, 				0xF
+/*.set SP_MEM, 0x4100*/
 #else
 #define ODEV_REG_CTRL				0x43c00000
 #define ODEV_REG_STATUS				0x43c00004
@@ -85,6 +87,7 @@
 #define RAMDISK_FS_BASE				0x03000000 /* 48M */
 #define SCRATCH_BASE				0x02000000 /* 32M */
 #define CONTEXT_MEM 				0x00004000
+#define SEC_CONTEXT_MEM 			0x00006000
 #define KERN_PGT_START_BASE 			0x41A000 /* page table base 4MB = 4K page tables * 256 entries * 4B size */
 #define KERN_PGD_START_BASE			0x00008000 /* page directory base16KB = 1 page directory * 4KEntries * 4B size */
 #define KERNEL_FRAME_BITMAP			0x315000 /* need 1 bitmap for 4MB kernel memory */

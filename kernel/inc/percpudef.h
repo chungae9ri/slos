@@ -24,6 +24,15 @@ extern unsigned long __per_cpu_offset[NR_CPUS];
 
 #define per_cpu(var, cpu) (*RELOC_HIDE(&per_cpu_##var, __per_cpu_offset[cpu]))
 #define __get_cpu_var(var) per_cpu(var, smp_processor_id())
+//
+#define RELOC_ADDR(ptr, off) 			\
+	( { unsigned long __ptr; 		\
+	    __ptr = (unsigned long)ptr; 	\
+	    (unsigned long)(__ptr + off); })
+
+#define per_cpu_addr(var, cpu) (RELOC_ADDR(&per_cpu_##var, __per_cpu_offset[cpu]))
+#define __get_cpu_var_addr(var) per_cpu_addr(var, smp_processor_id())
+
 
 #endif
 #endif

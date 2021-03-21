@@ -95,7 +95,25 @@ sec_reserved:
 	b	.
 ;
 sec_irq_handler:
-	b	.
+	ldr 	r12, =SEC_CONTEXT_MEM
+	sub	r12, #4
+	stmfa	r12!, {r0-r11}
+	sub 	r0, lr, #4
+	msr	cpsr_c, #MODE_SVC | I_BIT | F_BIT  /* irq,fiq disabled */
+	mov	r12, #0x602C
+	stmfa	r12!, {sp, lr}
+	/* r0 should be saved after storing sp, lr 
+	 * stmfa r12!, {sp, lr, r0} doesn't work.
+	 * Compiler changes the order.
+	 */
+	str	r0, [r12, #4]
+	bl	gic_irq_handler
+	;
+	mrs	r0, CPSR
+	bic	r1, r0, #I_BIT|F_BIT
+	msr	cpsr_c, r1
+	ldr	r12, =SEC_CONTEXT_MEM_END
+	ldmfa	r12!, {r0-r11, sp, lr, pc}
 ;
 sec_fiq_handler:
 	b 	.

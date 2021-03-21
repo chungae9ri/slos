@@ -148,7 +148,7 @@ struct task_struct *forkyi(char *name, task_entry fn, TASKTYPE type)
 #if _ENABLE_SMP_
 	this_first = __get_cpu_var(first);
 	this_last = __get_cpu_var(last);
-	pthis_task_created_num = __get_cpu_var(task_created_num);
+	pthis_task_created_num =(uint32_t *) __get_cpu_var_addr(task_created_num);
 #else
 	this_first = first;
 	this_last = last;
