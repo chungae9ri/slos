@@ -41,6 +41,24 @@ extern void flush_ent_dcache(void);
 #define A9_CLKSTOP0_MASK	(0x10)
 #define A9_CLKSTOP1_MASK	(0x20)
 
+void cpuidle_secondary(void)
+{
+	uint32_t i = 0;
+	xil_printf("I am cpuidle_secondary.....\n");
+
+	while (1) {
+		if (show_stat) {
+			xil_printf("cpuidle_secondary is running....\n");
+		}
+
+		while( i <= 10000){
+			i++;
+		}
+		i = 0;
+	}
+}
+
+
 void cpuidle(void)
 {
 	uint32_t i = 0;
@@ -88,25 +106,20 @@ void start_cpu1(void)
 
 int secondary_start_kernel(void)
 {
-	uint32_t ctrl;
 	xil_printf("I am secondary cpu!\n");
 	init_gic_secondary();
-	/* init timer */
-	*(volatile uint32_t *)(PRIV_TMR_LD) = 1000000;
-	gic_mask_interrupt(PRIV_TMR_INT_VEC);
-	*(volatile uint32_t *)(GIC_ICDICER0) = 0xDFFFFFFF;
+	init_idletask();
+	init_wq();
+	init_rq();
 
-	/* enable timer */
-	ctrl = *(volatile uint32_t *)(PRIV_TMR_CTRL);
-	ctrl = ctrl | (PRIV_TMR_EN_MASK 
-			| PRIV_TMR_AUTO_RE_MASK
-			| PRIV_TMR_IRQ_EN_MASK);
-		
-	*(volatile uint32_t *)(PRIV_TMR_CTRL) = ctrl;
+	init_timertree();
+	init_cfs_scheduler();
+	init_timer();
+	update_csd();
+	/* */
+	timer_enable_secondary();
 
-	/* enable intr*/
-
-	while (1);
+	cpuidle_secondary();
 
 	return 0;
 }

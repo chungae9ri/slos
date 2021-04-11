@@ -130,6 +130,7 @@ uint32_t gic_irq_handler(void)
 	val = readl(GIC_ICCIAR);
 	/* cpuid is not used */
 	/*cpuid = val & 0x1C00;*/
+
 	num = val & 0x3FF;
 
 	if (num >= NUM_IRQS) {
@@ -152,6 +153,7 @@ uint32_t gic_mask_interrupt(int vec)
 	uint32_t reg;
 	uint32_t bit;
 
+	/* banked register set-enable ICDISER0 */
 	reg = GIC_ICDISER0 + (uint32_t)(vec / 32) * 4;
 	bit = 1 << (vec & 31);
 
@@ -168,6 +170,7 @@ uint32_t gic_unmask_interrupt(int vec)
 	uint32_t reg;
 	uint32_t bit;
 
+	/* banked register clear-enable ICDICER0 */
 	reg = GIC_ICDICER0 + (uint32_t)(vec / 32) * 4;
 	bit = 1 << (vec & 31);
 
@@ -184,3 +187,5 @@ void gic_register_int_handler(int vec, int_handler func, void *arg)
 	handler[vec].func = func;
 	handler[vec].arg = arg;
 }
+
+

@@ -89,7 +89,17 @@ sec_prefetch_abort_handler:
 	b	.
 ;
 sec_data_abort_handler:
-	b	.
+	sub	r12, r14, #8
+	msr 	cpsr_c, #MODE_SVC | I_BIT | F_BIT
+	stmfd	sp!, {r0-r11, r12}
+	push	{r14}
+	mrc	p15, 0, r0, c5, c0, 0 /* read dfsr, test code */
+	bl	platform_data_abort_handler
+	pop	{r14}
+	mrs	r0, CPSR
+	bic	r1, r0, #I_BIT|F_BIT
+	msr	cpsr_c, r1
+	ldmfd	sp!, {r0-r11, pc}
 ;
 sec_reserved:
 	b	.

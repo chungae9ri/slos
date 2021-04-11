@@ -5,7 +5,7 @@
 
 #ifdef _ENABLE_SMP_
 
-extern int smp_processor_id(void);
+extern uint32_t smp_processor_id(void);
 
 #define NR_CPUS		2
 extern unsigned long __per_cpu_offset[NR_CPUS]; 

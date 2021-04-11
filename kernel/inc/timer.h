@@ -47,3 +47,4 @@ int timer_irq (void *arg);
 uint32_t timer_get_phy_tick_cnt(void);
 void init_timer(void);
 void timer_enable(void);
+void timer_enable_secondary(void);

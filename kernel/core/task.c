@@ -586,9 +586,15 @@ void init_shell(void)
 }
 void init_idletask(void)
 {
+	uint32_t cpuid = 0;
 	uint32_t *pthis_task_created_num;
 	struct task_struct *pt = (struct task_struct *)kmalloc(sizeof(struct task_struct));
-	strcpy(pt->name, "idle task");
+	cpuid = smp_processor_id();
+	if (cpuid == 0)
+		strcpy(pt->name, "idle task");
+	else 
+		strcpy(pt->name, "idle task secondary");
+
 	pt->task.next = NULL;
 	pt->task.prev = NULL;
 	pt->yield_task = NULL;
@@ -603,7 +609,7 @@ void init_idletask(void)
 	set_priority(pt, 16);
 #if _ENABLE_SMP_
 	__get_cpu_var(idle_task) = __get_cpu_var(current) = __get_cpu_var(first) = __get_cpu_var(last) = pt;
-	pthis_task_created_num =(uint32_t *) __get_cpu_var_addr(task_created_num);
+	pthis_task_created_num = (uint32_t *) __get_cpu_var_addr(task_created_num);
 #else
 	idle_task = current = first = last = pt;
 	pthis_task_created_num = &task_created_num;

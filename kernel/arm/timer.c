@@ -28,6 +28,7 @@
 #include <defs.h>
 #include <percpu.h>
 
+extern uint32_t smp_processor_id();
 static uint32_t ticks_per_sec;
 
 static void delay(uint32_t ticks)
@@ -90,6 +91,23 @@ void timer_enable(void)
 	writel(ctrl, PRIV_TMR_CTRL);
 }
 
+void timer_enable_secondary(void)
+{
+	uint32_t ctrl;
+	/* init timer */
+	*(volatile uint32_t *)(PRIV_TMR_LD) = 1000000;
+	gic_mask_interrupt(PRIV_TMR_INT_VEC);
+	*(volatile uint32_t *)(GIC_ICDICER0) = 0xDFFFFFFF;
+
+	/* enable timer */
+	ctrl = *(volatile uint32_t *)(PRIV_TMR_CTRL);
+	ctrl = ctrl | (PRIV_TMR_EN_MASK 
+			| PRIV_TMR_AUTO_RE_MASK
+			| PRIV_TMR_IRQ_EN_MASK);
+
+	*(volatile uint32_t *)(PRIV_TMR_CTRL) = ctrl;
+}
+
 void timer_disable(void)
 {
 	int ctrl;
@@ -100,11 +118,10 @@ void timer_disable(void)
 	writel(ctrl, PRIV_TMR_CTRL);
 }
 
-extern int smp_processor_id();
 
 int timer_irq (void *arg)
 {
-	uint32_t elapsed = 0, id;
+	uint32_t elapsed = 0;
 	uint32_t tc = 0;
 	struct timer_struct *pnt = NULL, *pct = NULL; 
 	struct task_struct *this_current = NULL;
@@ -119,14 +136,17 @@ int timer_irq (void *arg)
 	this_sched_timer = sched_timer;
 	this_ptroot = ptroot;
 #endif
+
+#if 0
 	id = smp_processor_id();
-	/*
 	if (id == 1) {
 		xil_printf("timer inter in cpu1\n");
+		return 0;
 	}
-	*/
+#endif
 
-	elapsed = get_elapsedtime();
+	elapsed = (uint32_t)(readl(PRIV_TMR_LD));
+
 	pct = container_of(this_ptroot->rb_leftmost, struct timer_struct, run_node);
 	update_timer_tree(elapsed);
 	pnt = container_of(this_ptroot->rb_leftmost, struct timer_struct, run_node);
@@ -229,7 +249,7 @@ void create_rt_timers(void)
 
 void init_timer(void)
 {
-	uint32_t tc = 0;
+	uint32_t tc = 0, cpuid = 0;
 	struct timer_struct *pct = NULL;
 	struct task_struct *this_current = NULL;
 	struct timer_root *this_ptroot = NULL; 
@@ -249,7 +269,16 @@ void init_timer(void)
 	pct->pt = this_current;
 	tc = pct->tc;
 	writel(tc, PRIV_TMR_LD);
-	gic_register_int_handler(PRIV_TMR_INT_VEC, timer_irq, NULL);
+	/* register timer isr only from CPU 0.
+	 * This is becasue CPU 0 and CPU 1 share the 
+	 * same isr for its banked private timer intr.
+	 * timer_irq doesn't need to be banked per cpu.
+	 */
+	cpuid = smp_processor_id();
+	if (cpuid == 0)
+		gic_register_int_handler(PRIV_TMR_INT_VEC, timer_irq, NULL);
+
 	gic_mask_interrupt(PRIV_TMR_INT_VEC);
 }
+
 
