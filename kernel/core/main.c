@@ -34,6 +34,7 @@
 extern uint32_t show_stat;
 extern void secondary_reset(void);
 extern void flush_ent_dcache(void);
+extern uint32_t read_scr(void);
 
 #define A9_CPU_RST_CTRL		(0xF8000244)
 #define A9_RST0_MASK		(0x1)
@@ -104,8 +105,19 @@ void start_cpu1(void)
 	*(volatile uint32_t *)(A9_CPU_RST_CTRL) = A9_rst_ctrl;
 }
 
+int sgi_handler_secondary(void *arg)
+{
+	uint32_t *pcpuid;
+	pcpuid = (uint32_t *)arg;
+	xil_printf("sgi intr 15 from cpu: %d\n", *pcpuid);
+
+	return 0;
+}
+
 int secondary_start_kernel(void)
 {
+	uint32_t scr = 0xFFFFFFFF;
+
 	xil_printf("I am secondary cpu!\n");
 	init_gic_secondary();
 	init_idletask();
@@ -119,6 +131,9 @@ int secondary_start_kernel(void)
 	/* */
 	timer_enable_secondary();
 
+	scr = read_scr();
+	xil_printf("cpu1 scr: 0x%x\n", scr);
+	gic_register_int_handler(0xF, sgi_handler_secondary, NULL);
 	cpuidle_secondary();
 
 	return 0;
@@ -126,9 +141,13 @@ int secondary_start_kernel(void)
 
 int start_kernel(void) 
 {
+	uint32_t scr = 0xFFFFFFFF;
 	struct framepool framepool;
 	struct pagetable pgt;
 	struct vmpool kheap;
+
+	scr = read_scr();
+	xil_printf("cpu0 scr: 0x%x\n", scr);
 
 	init_kernmem(&framepool, &pgt, &kheap);
 	xil_printf("### init_kernmem done.\n");

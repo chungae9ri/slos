@@ -21,6 +21,8 @@
 #include <gic.h>
 #include <timer.h>
 
+#define SGI_IRQ_NUM	16
+
 void init_gic_dist(void)
 {
 	uint32_t i;
@@ -66,7 +68,12 @@ void init_gic_dist(void)
 	writel(0xFFFFFFFF, GIC_ICDICER1);
 	writel(0xFFFFFFFF, GIC_ICDICER2);
 
-	/* Enable PPI interrupts forwarding */
+	/* banked register set-enable ICDISER0. 
+	 * writing 1 enables intr.
+	 * writing 0 has no effect. 
+	 * Enable all PPIs and SGI #15
+	 */
+	writel(0xFFFF8000, GIC_ICDISER0);
 
 	/* enable TTC0 interrupt forwarding, not here */
 	/*writel(0x00001C00, GIC_ICDISER1);*/
@@ -79,8 +86,10 @@ void init_gic_dist(void)
 
 void init_gic_cpu(void)
 {
-	/* 32 priority level supported
-	 * priority mask for the lowest priority
+	/* 32 priority level (ICCPMR[2:0] = 2b000)
+	 * supported. ICDIPR0 ~ 23 is used to set 
+	 * interrupt priority. Reset value 0.
+	 * Priority mask for the lowest priority
 	 * which has max value of priority.
 	 * Pass all levels of interrupts.
 	 */
@@ -99,20 +108,37 @@ void init_gic(void)
 
 void init_gic_secondary(void)
 {
+	/* Disabling interrupts forwarding */
+	writel(0x0000FFFF, GIC_ICDICER0);
+	writel(0xFFFFFFFF, GIC_ICDICER1);
+	writel(0xFFFFFFFF, GIC_ICDICER2);
+
 	/* enable GIC distributor, 
 	 * banked register 
 	 */
 	writel(0x1, GIC_ICDDCR);
-	/* 32 priority level supported
-	 * priority mask for the lowest priority
+
+	/* 32 priority level (ICCPMR[2:0] = 2b000)
+	 * supported. ICDIPR0 ~ 23 is used to set 
+	 * interrupt priority. Reset value 0.
+	 * Priority mask for the lowest priority
 	 * which has max value of priority.
 	 * Pass all levels of interrupts.
 	 */
 	writel(0xF8, GIC_ICCPMR);
+
 	/* enable GIC cpu interface, 
-	 * banked register
+	 * banked register.
 	 */ 
 	writel(0x7, GIC_ICCICR);
+
+	/* banked register set-enable ICDISER0. 
+	 * writing 1 enables intr.
+	 * writing 0 has no effect. 
+	 * Enable all PPIs and SGI #15
+	 */
+	writel(0xFFFF8000, GIC_ICDISER0);
+	/*writel(0xFFFFFFFF, GIC_ICDISER0);*/
 }
 
 void gic_fiq(void)
@@ -123,22 +149,21 @@ void gic_fiq(void)
 /*imsi for test uint32_t gic_irq(struct task_struct *frame)*/
 uint32_t gic_irq_handler(void)
 {
-	uint32_t ret = 0;
+	uint32_t ret = 0, cpuid = 0xFFFFFFFF;
 	uint32_t num, val;
 
 	/* ack the interrupt */
 	val = readl(GIC_ICCIAR);
-	/* cpuid is not used */
-	/*cpuid = val & 0x1C00;*/
 
 	num = val & 0x3FF;
 
 	if (num >= NUM_IRQS) {
 		return 1;
+	} else if (num < SGI_IRQ_NUM) {
+		cpuid = val & 0x1C00;
 	}
-	
-	/*ret = handler[num].func(frame);*/
-	ret = handler[num].func(0);
+
+	ret = handler[num].func(&cpuid);
 	/* clear timer int(29U) status bit */
 	if (num == PRIV_TMR_INT_VEC) {
 		writel(1, PRIV_TMR_INTSTAT);

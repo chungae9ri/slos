@@ -47,7 +47,7 @@ exceptions:
 reset_handler:
 	/* read scr */
 	mrc 	p15, 0, r0, c1, c1, 0
-	 /*set VBAR with 0x100000 */
+	 /*set VBAR (banked) with 0x100000 */
 	ldr	r0, =KERNEL_EXCEPTION_START
 	mcr	p15,0,r0,c12,c0,0 
 

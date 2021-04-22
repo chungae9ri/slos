@@ -39,7 +39,7 @@ secondary_exceptions:
 sec_reset_handler:
 	/* read scr */
 	mrc 	p15, 0, r0, c1, c1, 0
-	/*set VBAR for secondary core */
+	/*set VBAR (banked) for secondary core */
 	ldr	r0, =SECONDARY_EXCEPTION_START
 	mcr	p15,0,r0,c12,c0,0 
 

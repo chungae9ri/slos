@@ -43,7 +43,7 @@ ssbl:
 	bl	invalidate_dcache		/* invalidate dcache */
 
 	/* Disable MMU, if enabled */
-	mrc	p15, 0, r0, c1, c0, 0		/* read SCTLR register 1 */
+	mrc	p15, 0, r0, c1, c0, 0		/* read SCTLR (partially banked) register 1 */
 	bic	r0, r0, #0x1			/* clear bit 0 */
 	mcr	p15, 0, r0, c1, c0, 0		/* write value back */
 
@@ -99,13 +99,13 @@ ssbl:
 	/* Outer-cacheable, WB */
 	/*orr	r0, r0, #0x5B	*/
 	mcr	p15, 0, r0, c2, c0, 0
-	/* read system control register (SCTLR) of cp 15 */
+	/* read system control register (SCTLR (partially banked)) of cp 15 */
 	mrc	p15, 0, r0, c1, c0, 0	
 	orr	r0, r0, #MASK_MMU | MASK_DCACHE
 	orr	r0, r0, #MASK_ICACHE
 	bic	r0, r0, #MASK_AFE /* clear AFE bit, Access flag is disabled, AP[2:0] is used */
 	/* enable D cache, I cache */
-	mrc	p15, 0, r0, c1, c0, 0		/* read SCTLR register 1 */
+	mrc	p15, 0, r0, c1, c0, 0		/* read SCTLR (partially banked) register 1 */
 	orr 	r0, r0, #0x1000 		/* set bits for IU  */
 	orr 	r0, r0, #0x100 			/* set bits for D */
 	orr 	r0, r0, #0x1			/* set bits for MMU  */

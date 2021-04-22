@@ -135,4 +135,14 @@ smp_processor_id:
 	mrc	p15, 0, r0, c0, c0, 5 /* read MPIDR */
 	bic	r0, r0, #0xFFFFFFFC
 	mov 	pc, lr
+
+.global read_scr
+read_scr:
+	mrc 	p15, 0, r0, c1, c1, 0 /* read SCR */
+#if 0
+	orr	r0, r0, #6 /* Monitor mode entered when IRQ, FIQ is taken*/
+	mcr 	p15, 0, r0, c1, c1, 0 /* write to SCR */
+	mrc 	p15, 0, r0, c1, c1, 0 /* read SCR again to check */
+#endif
+	mov	pc, lr
 .end
