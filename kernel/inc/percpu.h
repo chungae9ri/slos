@@ -15,6 +15,7 @@ extern DEFINE_PER_CPU(struct timer_struct *, sched_timer);
 extern DEFINE_PER_CPU(struct timer_root *, ptroot);
 extern DEFINE_PER_CPU(struct clock_source_device *, csd);
 extern DEFINE_PER_CPU(struct wait_queue*, wq);
+extern DEFINE_PER_CPU(struct worker*, qworker);
 #else /* ! _ENABLE_SMP_*/
 extern struct task_struct *idle_task;
 extern struct task_struct *current;
@@ -27,5 +28,6 @@ extern struct timer_struct *sched_timer;
 extern struct timer_root *ptroot;
 extern struct clock_source_device *csd;
 extern struct wait_queue *wq;
+extern struct worker *qworker;
 #endif /* ! _ENABLE_SMP_*/
 #endif

@@ -149,8 +149,9 @@ void gic_fiq(void)
 /*imsi for test uint32_t gic_irq(struct task_struct *frame)*/
 uint32_t gic_irq_handler(void)
 {
-	uint32_t ret = 0, cpuid = 0xFFFFFFFF;
+	uint32_t ret = 0;
 	uint32_t num, val;
+	struct sgi_data dat = {0, 0};
 
 	/* ack the interrupt */
 	val = readl(GIC_ICCIAR);
@@ -160,10 +161,11 @@ uint32_t gic_irq_handler(void)
 	if (num >= NUM_IRQS) {
 		return 1;
 	} else if (num < SGI_IRQ_NUM) {
-		cpuid = val & 0x1C00;
+		dat.cpuid = val & 0x1C00;
+		dat.num = num;
 	}
 
-	ret = handler[num].func(&cpuid);
+	ret = handler[num].func(&dat);
 	/* clear timer int(29U) status bit */
 	if (num == PRIV_TMR_INT_VEC) {
 		writel(1, PRIV_TMR_INTSTAT);

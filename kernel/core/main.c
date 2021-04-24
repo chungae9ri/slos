@@ -107,9 +107,9 @@ void start_cpu1(void)
 
 int sgi_handler_secondary(void *arg)
 {
-	uint32_t *pcpuid;
-	pcpuid = (uint32_t *)arg;
-	xil_printf("sgi intr 15 from cpu: %d\n", *pcpuid);
+	struct sgi_data *pdat;
+	pdat = (struct sgi_data *)arg;
+	xil_printf("sgi intr %d from cpu: %d\n", pdat->num, pdat->cpuid);
 
 	return 0;
 }
@@ -119,6 +119,9 @@ int secondary_start_kernel(void)
 	uint32_t scr = 0xFFFFFFFF;
 
 	xil_printf("I am secondary cpu!\n");
+	scr = read_scr();
+	xil_printf("cpu1 scr: 0x%x\n", scr);
+
 	init_gic_secondary();
 	init_idletask();
 	init_wq();
@@ -131,8 +134,6 @@ int secondary_start_kernel(void)
 	/* */
 	timer_enable_secondary();
 
-	scr = read_scr();
-	xil_printf("cpu1 scr: 0x%x\n", scr);
 	gic_register_int_handler(0xF, sgi_handler_secondary, NULL);
 	cpuidle_secondary();
 

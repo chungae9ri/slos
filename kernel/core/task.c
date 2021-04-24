@@ -378,11 +378,18 @@ extern void mdelay(unsigned msecs);
 uint32_t workq_worker(void)
 {
 	int i, j, enq_idx, deq_idx;
+	struct worker *this_qworker;
+
+#if _ENABLE_SMP_
+	this_qworker = __get_cpu_var(qworker);
+#else
+	this_qworker = qworker;
+#endif
 
 	while (1) {
 		/*xil_printf("%s deq_idx:%d\n", __func__, qworker.deq_idx);*/
-		enq_idx = qworker.enq_idx;
-		deq_idx = qworker.deq_idx;
+		enq_idx = this_qworker->enq_idx;
+		deq_idx = this_qworker->deq_idx;
 		
 		/* enq_idx is wrapped around */
 		if (enq_idx < deq_idx)
@@ -390,15 +397,15 @@ uint32_t workq_worker(void)
 		/* enq_idx is no atomic, but it's ok */
 		for (i = deq_idx; i < enq_idx; i++) {
 			j = i % MAX_WORKQ;
-			qworker.wkq[j].func(qworker.wkq[j].arg);
+			this_qworker->wkq[j].func(this_qworker->wkq[j].arg);
 		}
 
 		if (enq_idx >= MAX_WORKQ)
 			enq_idx -= MAX_WORKQ;
 
-		qworker.deq_idx = enq_idx;
+		this_qworker->deq_idx = enq_idx;
 
-		/*xil_printf("qworker_deq_idx: %d\n", qworker.deq_idx);*/
+		/*xil_printf("qworker_deq_idx: %d\n", this_qworker->deq_idx);*/
 
 		for (i = 0; i < 10000; i++);
 	}
@@ -408,13 +415,19 @@ uint32_t workq_worker(void)
 
 uint32_t enqueue_workq(void (*func)(void *), void *arg) 
 {
-	qworker.wkq[qworker.enq_idx].func = func;
-	qworker.wkq[qworker.enq_idx].arg = arg;
+	struct worker *this_qworker;
+#if _ENABLE_SMP_
+	this_qworker = __get_cpu_var(qworker);
+#else
+	this_qworker = qworker;
+#endif
+	this_qworker->wkq[this_qworker->enq_idx].func = func;
+	this_qworker->wkq[this_qworker->enq_idx].arg = arg;
 
-	if (qworker.enq_idx == MAX_WORKQ - 1) {
-		qworker.enq_idx = 0;
+	if (this_qworker->enq_idx == MAX_WORKQ - 1) {
+		this_qworker->enq_idx = 0;
 	} else {
-		qworker.enq_idx++;
+		this_qworker->enq_idx++;
 	}
 
 	return ERR_NO;
@@ -422,10 +435,22 @@ uint32_t enqueue_workq(void (*func)(void *), void *arg)
 
 void create_workq_worker(void)
 {
-	qworker.enq_idx = 0;
-	qworker.deq_idx = 0;
+	char worker_name[16];
+	uint32_t cpuid;
+	struct worker *this_qworker;
+#if _ENABLE_SMP_
+	__get_cpu_var(qworker) = (struct worker *)kmalloc(sizeof(struct worker));
+	this_qworker = __get_cpu_var(qworker);
+#else
+	qworker = (struct worker *)kmalloc(sizeof(struct worker));
+	this_qworker = qworker;
+#endif
+	this_qworker->enq_idx = 0;
+	this_qworker->deq_idx = 0;
 
-	create_cfs_task("workq_worker", workq_worker, 4);
+	cpuid = smp_processor_id();
+	sprintf(worker_name, "workq_worker:%d", (int)cpuid); 
+	create_cfs_task(worker_name, workq_worker, 4);
 }
 
 void create_cfs_workers(void)

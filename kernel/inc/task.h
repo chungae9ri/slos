@@ -38,8 +38,6 @@ struct worker {
 	struct workq wkq[MAX_WORKQ];
 };
 
-struct worker qworker;
-
 void init_idletask(void);
 void init_cfs_workers(void);
 void init_shell(void);

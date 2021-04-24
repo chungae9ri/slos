@@ -2,6 +2,7 @@
 #include <percpudef.h>
 #include <ktimer.h>
 #include <waitq.h>
+
 #if _ENABLE_SMP_
 unsigned long __per_cpu_offset[NR_CPUS] = {0, 0x1000}; 
 
@@ -16,6 +17,7 @@ DEFINE_PER_CPU(struct timer_struct *, sched_timer);
 DEFINE_PER_CPU(struct timer_root *, ptroot);
 DEFINE_PER_CPU(struct clock_source_device*, csd);
 DEFINE_PER_CPU(struct wait_queue*, wq);
+DEFINE_PER_CPU(struct worker*, qworker);
 #else
 struct task_struct *idle_task;
 struct task_struct *current = NULL;
@@ -28,4 +30,5 @@ struct timer_struct *sched_timer = NULL;
 struct timer_root *ptroot = NULL;
 struct clock_source_device *csd;
 struct wait_queue *wq;
+struct worker *qworker;
 #endif
