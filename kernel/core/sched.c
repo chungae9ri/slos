@@ -108,6 +108,7 @@ void schedule(void)
 	struct sched_entity *se = NULL;
 	struct task_struct *this_current = NULL;
 	struct cfs_rq *this_runq = NULL;
+
 #if _ENABLE_SMP_
 	this_runq = __get_cpu_var(runq);
 #else
@@ -144,7 +145,7 @@ void schedule(void)
 struct task_struct *forkyi(char *name, task_entry fn, TASKTYPE type)
 {
 	/* cpuidle is pid 0 */
-	uint32_t lr = 0;
+	uint32_t lr = 0, cpuid;
 	static uint32_t pid = 1;
 	struct task_struct *pt = NULL;
 	struct task_struct *this_first = NULL;
@@ -179,7 +180,12 @@ struct task_struct *forkyi(char *name, task_entry fn, TASKTYPE type)
 	pt->preempted = 0;
 	pt->done = 1;
 	(*pthis_task_created_num)++;
-	pt->ct.sp = (uint32_t)(SVC_STACK_BASE - TASK_STACK_GAP * (*pthis_task_created_num));
+	cpuid = smp_processor_id();
+	if (cpuid == 0)
+		pt->ct.sp = (uint32_t)(SVC_STACK_BASE - TASK_STACK_GAP * (*pthis_task_created_num));
+	else 
+		pt->ct.sp = (uint32_t)(SEC_SVC_STACK_BASE - TASK_STACK_GAP * (*pthis_task_created_num));
+
 	asm ("mov %0, r14" : "+r" (lr) : : );
 	pt->ct.lr = (uint32_t)lr;
 	pt->ct.pc = (uint32_t)pt->entry;
