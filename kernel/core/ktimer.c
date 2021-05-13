@@ -111,12 +111,6 @@ void update_timer_tree(uint32_t elapsed)
 	insert_timer(this_ptroot, pct);
 }
 
-void do_sched_timer(uint32_t elapsed)
-{
-	update_se(elapsed);
-	schedule();
-}
-
 void cfs_scheduler(uint32_t elapsed)
 {
 	update_se(elapsed);

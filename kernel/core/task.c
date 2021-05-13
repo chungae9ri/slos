@@ -324,6 +324,10 @@ uint32_t cfs_worker3(void )
 #define O_STREAM_STEP		0x00000100 /* 256B */
 #define O_STREAM_WRAP		0x00001000 /* 4096 */
 
+/* This task is run in the cpu1 triggered 
+ * by sgi interrupt. sgi interrupt in the 
+ * cpu1 is triggered by shell 'sgi' cmd.
+ */
 uint32_t cfs_worker4(void)
 {
 	uint8_t *psrc;
@@ -348,7 +352,7 @@ uint32_t cfs_worker4(void)
 	for (;;) {
 		/*((uint32_t *)((uint32_t)psrc + O_STREAM_STEP * i))[0] = k++;*/
 		if (!put_to_itab(O_STREAM_START + O_STREAM_STEP * i, O_STREAM_STEP)) {
-			/*xil_printf("put_to_itab: %d\n", i);*/
+			xil_printf("put_to_itab: %d\n", i);
 			/* spin for a while */
 			j = 0;
 			while (j < 100) 
@@ -358,10 +362,10 @@ uint32_t cfs_worker4(void)
 		} else {
 			/* spin for a while */
 			j = 0;
-			while (j < 100) 
+			while (j < 10000) 
 				j++;
 		}
-		xil_printf("i: %d\n", i);
+		/*xil_printf("i: %d\n", i);*/
 	}
 
 	stop_consumer();
@@ -459,7 +463,7 @@ void create_cfs_workers(void)
 	/*create_cfs_task("cfs_worker1", cfs_dummy, 8);*/
 	/*create_cfs_task("cfs_worker2", cfs_dummy, 4);*/
 	/*create_cfs_task("cfs_worker3", cfs_worker3, 8);*/
-	create_cfs_task("cfs_worker4", cfs_worker4, 4);
+	/*create_cfs_task("cfs_worker4", cfs_worker4, 4);*/
 #else
 	/*create_cfs_task("cfs_worker1", cfs_worker1, 8);*/
 	create_cfs_task("cfs_worker2", cfs_worker2, 4);
@@ -499,12 +503,14 @@ void shell(void)
 	while (1) {
 		i = 0;
 		xil_printf("shell > ");
+
 		do {
 			byte = inbyte();
 			outbyte(byte);
 			cmdline[i++] = byte;
 
 		} while(byte != '\n' && byte != '\r' && i < CMD_LEN);
+
 		cmdline[--i] = '\0';
 
 		xil_printf("\n");

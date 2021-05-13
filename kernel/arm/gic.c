@@ -20,8 +20,11 @@
 #include <regops.h>
 #include <gic.h>
 #include <timer.h>
+#include <sgi.h>
 
 #define SGI_IRQ_NUM	16
+
+uint32_t smp_processor_id();
 
 void init_gic_dist(void)
 {
@@ -58,7 +61,9 @@ void init_gic_dist(void)
 
 	/* setup target cpu for each interrupt 
 	 * all intr are targeted to CPU0.
-	 * GIC_ICDIPTR0~7 for intr #0~#31 are ro
+	 * GIC_ICDIPTR0~7 for intr #0~#31 are ro.
+	 * SPI will be retargeted when it is 
+	 * enabled in gic_mask_interrupt().
 	 */
 	for (i = 0; i < ext_irq_num; i += 4)
 		writel(cpumask, GIC_ICDIPTR8 + i); 
@@ -177,12 +182,23 @@ uint32_t gic_irq_handler(void)
 
 uint32_t gic_mask_interrupt(int vec)
 {
-	uint32_t reg;
-	uint32_t bit;
+	uint32_t cpuid, reg, bit, val, byte;
+
+	/* get current cpuid */
+	cpuid = smp_processor_id();
+	/* reprogram GIC_ICDIPTR */
+	reg = GIC_ICDIPTR0 + (uint32_t)(vec / 4) * 4;
+	byte = (uint32_t)(vec % 4);
+	val = readl(reg);
+	/* clear current cpuid in the byte */
+	val = val & (0xFFFFFFFF & (0x00 << (byte * 8)));
+	/* set the cpuid in the byte */
+	val = val | ((0x1 << cpuid) << (byte * 8));
+	writel(val, reg);
 
 	/* banked register set-enable ICDISER0 */
 	reg = GIC_ICDISER0 + (uint32_t)(vec / 32) * 4;
-	bit = 1 << (vec & 31);
+	bit = 1 << (vec & 0x1F);
 
 	/* 
 	 * writing 1 enables intr

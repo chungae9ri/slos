@@ -137,21 +137,14 @@ int timer_irq (void *arg)
 	this_ptroot = ptroot;
 #endif
 
-#if 0
-	id = smp_processor_id();
-	if (id == 1) {
-		xil_printf("timer inter in cpu1\n");
-		return 0;
-	}
-#endif
-
+	// read banked PRIV_TMR_LD register.
 	elapsed = (uint32_t)(readl(PRIV_TMR_LD));
 
 	pct = container_of(this_ptroot->rb_leftmost, struct timer_struct, run_node);
 	update_timer_tree(elapsed);
 	pnt = container_of(this_ptroot->rb_leftmost, struct timer_struct, run_node);
 	tc = pnt->tc;
-	/* reprogram next earliest deadline timer intr */
+	/* reprogram next earliest deadline timer intr. */
 	writel(tc, PRIV_TMR_LD);
 
 	update_current(elapsed);
@@ -160,7 +153,7 @@ int timer_irq (void *arg)
 		case SCHED_TIMER:
 			/* cfs task doesn't preempt rt task.
 			 * Let's wait until rt task complete its
-			 * task and yield()
+			 * task and yield().
 			 */
 			if (this_current->type == RT_TASK)
 				break;

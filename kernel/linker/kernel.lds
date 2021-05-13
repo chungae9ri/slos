@@ -51,6 +51,7 @@ SECTIONS
 		*(.bss) 
 	}
 
+	. = 0xC01A0000;
 	.data.percpu : AT(ADDR(.data.percpu) - 0xC0000000) {
 		*(.data.percpu);
 	}

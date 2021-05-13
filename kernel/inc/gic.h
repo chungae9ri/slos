@@ -79,11 +79,6 @@ struct ihandler {
 	void *arg;
 };
 
-struct sgi_data {
-	uint32_t num;
-	uint32_t cpuid;
-};
-
 struct ihandler handler[NUM_IRQS];
 
 void init_gic(void);

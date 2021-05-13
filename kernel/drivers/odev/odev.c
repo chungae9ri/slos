@@ -9,6 +9,9 @@
 int32_t init_odev(void)
 {
 	gic_register_int_handler(ODEV_IRQ_ID, odev_irq, NULL);
+	/* This also reprogram the distributor 
+	 * forwarding target cpu in the ICDIPTR register.
+	 */
 	gic_mask_interrupt(ODEV_IRQ_ID);
 
 	return ERR_NO;

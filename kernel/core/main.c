@@ -30,6 +30,7 @@
 #include <dma.h>
 #include <odev.h>
 #include <percpu.h>
+#include <sgi.h>
 
 extern uint32_t show_stat;
 extern void secondary_reset(void);
@@ -70,10 +71,10 @@ void cpuidle(void)
 			xil_printf("cpuidle is running....\n");
 		}
 
-		if (i == 0xFFFFFFF) i = 1;
-		else i++;
-		asm ("DSB" :::);
-		asm ("WFI" :::);
+		while( i <= 10000){
+			i++;
+		}
+		i = 0;
 	}
 }
 
@@ -105,22 +106,15 @@ void start_cpu1(void)
 	*(volatile uint32_t *)(A9_CPU_RST_CTRL) = A9_rst_ctrl;
 }
 
-int sgi_handler_secondary(void *arg)
-{
-	struct sgi_data *pdat;
-	pdat = (struct sgi_data *)arg;
-	xil_printf("sgi intr %d from cpu: %d\n", pdat->num, pdat->cpuid);
-
-	return 0;
-}
-
 int secondary_start_kernel(void)
 {
+	uint32_t cpuid;
 	uint32_t scr = 0xFFFFFFFF;
 
-	xil_printf("I am secondary cpu!\n");
+	cpuid = smp_processor_id();
+	xil_printf("I am cpu%d!\n", cpuid);
 	scr = read_scr();
-	xil_printf("cpu1 scr: 0x%x\n", scr);
+	xil_printf("cpu%d scr: 0x%x\n", cpuid, scr);
 
 	init_gic_secondary();
 	init_idletask();
@@ -131,10 +125,13 @@ int secondary_start_kernel(void)
 	init_cfs_scheduler();
 	init_timer();
 	update_csd();
-	/* */
 	timer_enable_secondary();
+	/* enable sgi 15 for starting odev task */
+	enable_sgi_irq(0xF, sgi_irq);
 
-	gic_register_int_handler(0xF, sgi_handler_secondary, NULL);
+	/* odev device driver is running in the cpu1 */
+	init_odev();
+	create_workq_worker();
 	cpuidle_secondary();
 
 	return 0;
@@ -143,12 +140,14 @@ int secondary_start_kernel(void)
 int start_kernel(void) 
 {
 	uint32_t scr = 0xFFFFFFFF;
+	uint32_t cpuid;
 	struct framepool framepool;
 	struct pagetable pgt;
 	struct vmpool kheap;
 
+	cpuid = smp_processor_id();
 	scr = read_scr();
-	xil_printf("cpu0 scr: 0x%x\n", scr);
+	xil_printf("cpu%d scr: 0x%x\n", cpuid, scr);
 
 	init_kernmem(&framepool, &pgt, &kheap);
 	xil_printf("### init_kernmem done.\n");
@@ -172,7 +171,6 @@ int start_kernel(void)
 	create_ramdisk_fs();
 	xil_printf("### load user app to slfs.\n");
 	init_dma();
-	init_odev();
 	create_workq_worker();
 
 #if _ENABLE_SMP_
