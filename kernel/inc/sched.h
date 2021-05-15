@@ -85,13 +85,13 @@ struct task_struct {
 static inline struct task_struct *to_task_from_listhead(struct list_head *t)
 {       
 	/*return container_of(t, struct task_struct, task);*/
-	return ((struct task_struct *)((uint32_t)t-offsetof(struct task_struct, task)));
+	return ((struct task_struct *)((uint32_t)t - offsetof(struct task_struct, task)));
 }
 
 static inline struct task_struct *to_task_from_se(struct sched_entity *s)
 {       
 	/*return container_of(t, struct task_struct, task);*/
-	return ((struct task_struct *)((uint32_t)s-offsetof(struct task_struct, se)));
+	return ((struct task_struct *)((uint32_t)s - offsetof(struct task_struct, se)));
 }
 
 extern void do_switch_context(struct task_struct *, struct task_struct *);

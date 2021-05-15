@@ -50,5 +50,6 @@ void create_usr_cfs_task(char *name,
 void create_cfs_task(char *name, task_entry cfs_task, uint32_t pri);
 void create_rt_task(char *name, task_entry handler, uint32_t dur);
 void create_workq_worker(void);
+uint32_t enqueue_workq(void (*func)(void *), void *arg);
 
 #endif

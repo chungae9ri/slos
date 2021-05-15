@@ -318,65 +318,6 @@ uint32_t cfs_worker3(void )
 }
 #endif
 
-#define O_STREAM_START		0x38000000
-#define O_STREAM_END		0x3C000000
-#define O_STREAM_BURST_SZ	0x00000040 /* 64B */
-#define O_STREAM_STEP		0x00000100 /* 256B */
-#define O_STREAM_WRAP		0x00001000 /* 4096 */
-
-/* This task is run in the cpu1 triggered 
- * by sgi interrupt. sgi interrupt in the 
- * cpu1 is triggered by shell 'sgi' cmd.
- */
-uint32_t cfs_worker4(void)
-{
-	uint8_t *psrc;
-	uint32_t i, j;
-
-	psrc = (uint8_t *)O_STREAM_START;
-
-	// To avoid underflow, prepare initial data first
-	start_odev();
-	for (i = 0; i < O_STREAM_WRAP * 4; i++) {
-		/* seq number starting from 1*/
-		((uint32_t *)((uint32_t)psrc + O_STREAM_BURST_SZ * i))[0] = i + 1;
-	}
-	// 
-	xil_printf("start odev \n");
-	set_consume_latency(10000);
-
-	start_odev_stream();
-
-	i = j = 0;
-	/* out stream forever */
-	for (;;) {
-		/*((uint32_t *)((uint32_t)psrc + O_STREAM_STEP * i))[0] = k++;*/
-		if (!put_to_itab(O_STREAM_START + O_STREAM_STEP * i, O_STREAM_STEP)) {
-			xil_printf("put_to_itab: %d\n", i);
-			/* spin for a while */
-			j = 0;
-			while (j < 100) 
-				j++;
-			i++;
-			i = i % O_STREAM_WRAP;
-		} else {
-			/* spin for a while */
-			j = 0;
-			while (j < 10000) 
-				j++;
-		}
-		/*xil_printf("i: %d\n", i);*/
-	}
-
-	stop_consumer();
-	stop_odev_stream();
-	stop_odev();
-
-	/* spin forever */
-	while (1) ;
-	return ERR_NO;
-}
-
 extern void mdelay(unsigned msecs);
 
 uint32_t workq_worker(void)

@@ -1,6 +1,7 @@
 #include <gic.h>
 #include <sgi.h>
 #include <task.h>
+#include <odev.h>
 #include <xil_printf.h>
 
 uint32_t cfs_worker4(void);
@@ -15,7 +16,7 @@ int sgi_irq(void *arg)
 	struct sgi_data *pdat;
 	pdat = (struct sgi_data *)arg;
 	xil_printf("sgi intr %d from cpu: %d\n", pdat->num, pdat->cpuid);
-	create_cfs_task("cfs_worker4", cfs_worker4, 4);
+	enqueue_workq(create_odev_task, NULL);
 
 	return 0;
 }
