@@ -109,6 +109,8 @@ int32_t put_to_itab(uint32_t sAddr, uint32_t sLen)
 	return ERR_NO;
 }
 
+extern uint32_t smp_processor_id(void);
+
 int odev_irq(void *arg)
 {
 	uint32_t cntl;
@@ -116,10 +118,12 @@ int odev_irq(void *arg)
 	/* stop consumer hw first */
 	stop_consumer();
 
+	uint32_t cpuid = smp_processor_id();
+
 	cntl = readl(ODEV_REG_CTRL);
 	cntl |= CTRL_INTR_DONE_MASK;
 	writel(cntl, ODEV_REG_CTRL);
-	xil_printf("odev irq done!\n");
+	xil_printf("odev irq done from cpu: %d!\n", cpuid);
 
 	return ERR_NO;
 }
@@ -194,6 +198,13 @@ uint32_t run_odev_task(void)
 			while (j < 100) 
 				j++;
 			i++;
+#if 0
+			/* make a sequence error */
+			if (i == O_STREAM_WRAP) {
+				*(uint32_t *)psrc = 0xFFFFFFFF;
+			}
+#endif
+
 			i = i % O_STREAM_WRAP;
 		} else {
 			/* spin for a while */
