@@ -1,11 +1,10 @@
 #include <gic.h>
 #include <sgi.h>
+#include <sched.h>
 #include <task.h>
 #include <odev.h>
 #include <xil_printf.h>
 #include <mailbox.h>
-
-uint32_t cfs_worker4(void);
 
 void enable_sgi_irq(int vec, int (sgi_irq_handler)(void *arg))
 {
@@ -27,6 +26,7 @@ int sgi_irq(void *arg)
 		break;
 
 	case TASK_STAT:
+		enqueue_workq(print_task_stat, NULL);
 		break;
 
 	case TASK_ODEV:
@@ -39,5 +39,3 @@ int sgi_irq(void *arg)
 
 	return 0;
 }
-
-

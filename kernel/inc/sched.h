@@ -104,5 +104,5 @@ void schedule(void);
 void set_priority(struct task_struct *pt, uint32_t pri);
 void yield(void);
 void update_current(uint32_t elapsed);
-void print_task_stat(void);
+void print_task_stat(void *);
 #endif

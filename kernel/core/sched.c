@@ -59,10 +59,11 @@ void set_priority(struct task_struct *pt, uint32_t pri)
 }
 
 #include <inttypes.h>
-void print_task_stat(void)
+void print_task_stat(void *arg)
 {
 	char buff[256];
 	int i, num = 0;
+	uint32_t cpuid;
 	struct task_struct *pcur = NULL;
 	struct list_head *next_lh = NULL;
 	struct task_struct *this_first = NULL;
@@ -72,6 +73,8 @@ void print_task_stat(void)
 #else
 	this_first = first;
 #endif
+	cpuid = smp_processor_id();
+	xil_printf("**** cpu:%d taskstat ****\n", cpuid);
 	next_lh = &this_first->task;
 	pcur = (struct task_struct *)to_task_from_listhead(next_lh);
 	/*for (i = 0; i < runq->cfs_task_num; i++) {*/

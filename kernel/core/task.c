@@ -462,7 +462,12 @@ void shell(void)
 			xil_printf("sleep, run, start dma \n");
 			xil_printf("apprun, start cs, set cs\n");
 		} else if (!strcmp(cmdline, "taskstat")) {
-			print_task_stat();
+			print_task_stat(NULL);
+			/* show cpu 1 taskstat */
+			enum letter_type letter = TASK_STAT;
+			push_mail(1, letter);
+			uint32_t sgir = 0x0002000F;
+			*(volatile uint32_t *)(0xF8F01F00) = sgir;
 		} else if (!strcmp(cmdline, "whoami")) {
 			show_stat = 1;
 		} else if (!strcmp(cmdline, "hide whoami")) {
