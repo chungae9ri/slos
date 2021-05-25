@@ -32,6 +32,7 @@
 #include <slos_error.h>
 #include <odev.h>
 #include <percpu.h>
+#include <mailbox.h>
 
 #define SVCSPSR 0x13 
 #define COPROC_SRC_ADDR		0x20000000
@@ -534,6 +535,8 @@ void shell(void)
 			set_dma_work(COPROC_SRC_ADDR, COPROC_DST_ADDR, COPROC_DAT_LEN);
 			start_dma(NULL);
 		} else if (!strcmp(cmdline, "sgi")) {
+			enum letter_type letter = TASK_ODEV;
+			push_mail(1, letter);
 			uint32_t sgir = 0x0002000F;
 			*(volatile uint32_t *)(0xF8F01F00) = sgir;
 		}

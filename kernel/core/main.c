@@ -31,6 +31,7 @@
 #include <odev.h>
 #include <percpu.h>
 #include <sgi.h>
+#include <mailbox.h>
 
 extern uint32_t show_stat;
 extern void secondary_reset(void);
@@ -165,6 +166,7 @@ int start_kernel(void)
 	init_timertree();
 	init_cfs_scheduler();
 	init_timer();
+	init_mailbox();
 	update_csd();
 	timer_enable();
 

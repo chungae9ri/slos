@@ -44,11 +44,12 @@ SECTIONS
 	}
 
 	.data : AT(ADDR(.data) - 0xC0000000) { 
-		*(.data)
+		*(.data);
+		*(.mailbox);
 	}
 
 	.bss : AT(ADDR(.bss) - 0xC0000000) { 
-		*(.bss) 
+		*(.bss);
 	}
 
 	. = 0xC01A0000;
