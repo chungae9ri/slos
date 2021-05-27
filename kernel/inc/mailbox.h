@@ -21,5 +21,5 @@ extern void spin_lock_acquire(volatile uint32_t *pl);
 extern void spin_lock_release(volatile uint32_t *pl);
 void init_mailbox(void);
 enum letter_type pull_mail(void);
-void push_mail(uint32_t cpuid, enum letter_type letter);
+void push_mail(enum letter_type letter);
 #endif

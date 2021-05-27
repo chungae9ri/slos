@@ -18,14 +18,19 @@ void init_mailbox(void)
 	mailbox_1.letter = EMPTY;
 }
 
-void push_mail(uint32_t cpuid, enum letter_type letter)
+void push_mail(enum letter_type letter)
 {
+	uint32_t cpuid;
 	struct mailbox_struct *pmailbox;
 
+	/* get current cpuid and 
+	 * set target cpuid
+	 */
+	cpuid = smp_processor_id();
 	if (cpuid == 0) {
-		pmailbox = &mailbox_0;
-	} else {
 		pmailbox = &mailbox_1;
+	} else {
+		pmailbox = &mailbox_0;
 	}
 
 	// blocking until the letter is read
@@ -55,9 +60,13 @@ enum letter_type pull_mail(void)
 	}
 
 	spin_lock_acquire(&mailbox_lock);
-	letter = pmailbox->letter;
-	pmailbox->status = READ;
-	spin_lock_release(&mailbox_lock);
-
-	return letter;
+	if (pmailbox->status == READ) {
+		spin_lock_release(&mailbox_lock);
+		return EMPTY;
+	} else {
+		letter = pmailbox->letter;
+		pmailbox->status = READ;
+		spin_lock_release(&mailbox_lock);
+		return letter;
+	}
 }

@@ -13,14 +13,14 @@ void enable_sgi_irq(int vec, int (sgi_irq_handler)(void *arg))
 
 int sgi_irq(void *arg)
 {
+#if 0
 	struct sgi_data *pdat;
-	enum letter_type letter;
 
 	pdat = (struct sgi_data *)arg;
 	xil_printf("sgi intr %d from cpu: %d\n", pdat->num, pdat->cpuid);
+#endif
 
-
-	letter = pull_mail();
+	enum letter_type letter = pull_mail();
 	switch (letter) {
 	case EMPTY:
 		break;

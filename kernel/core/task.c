@@ -463,11 +463,13 @@ void shell(void)
 			xil_printf("apprun, start cs, set cs\n");
 		} else if (!strcmp(cmdline, "taskstat")) {
 			print_task_stat(NULL);
+#if _ENABLE_SMP_
 			/* show cpu 1 taskstat */
 			enum letter_type letter = TASK_STAT;
-			push_mail(1, letter);
+			push_mail(letter);
 			uint32_t sgir = 0x0002000F;
 			*(volatile uint32_t *)(0xF8F01F00) = sgir;
+#endif
 		} else if (!strcmp(cmdline, "whoami")) {
 			show_stat = 1;
 		} else if (!strcmp(cmdline, "hide whoami")) {
@@ -539,12 +541,15 @@ void shell(void)
 
 			set_dma_work(COPROC_SRC_ADDR, COPROC_DST_ADDR, COPROC_DAT_LEN);
 			start_dma(NULL);
-		} else if (!strcmp(cmdline, "sgi")) {
+		} 
+#if _ENABLE_SMP_
+		else if (!strcmp(cmdline, "sgi")) {
 			enum letter_type letter = TASK_ODEV;
-			push_mail(1, letter);
+			push_mail(letter);
 			uint32_t sgir = 0x0002000F;
 			*(volatile uint32_t *)(0xF8F01F00) = sgir;
 		}
+#endif
 		else {
 			xil_printf("I don't know.... ^^;\n");
 		}
