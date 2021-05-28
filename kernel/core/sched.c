@@ -149,7 +149,11 @@ struct task_struct *forkyi(char *name, task_entry fn, TASKTYPE type)
 {
 	/* cpuidle is pid 0 */
 	uint32_t lr = 0, cpuid;
+#if _ENABLE_SMP_
+	static uint32_t pid = 2;
+#else
 	static uint32_t pid = 1;
+#endif
 	struct task_struct *pt = NULL;
 	struct task_struct *this_first = NULL;
 	struct task_struct *this_last = NULL;

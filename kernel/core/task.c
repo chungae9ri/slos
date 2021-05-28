@@ -593,7 +593,7 @@ void init_idletask(void)
 	pt->se.jiffies_consumed = 0L;
 	pt->type = CFS_TASK;
 	pt->missed_cnt = 0;
-	pt->pid = 0;
+	pt->pid = cpuid;
 	pt->preempted = 0;
 	set_priority(pt, 16);
 #if _ENABLE_SMP_
