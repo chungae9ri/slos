@@ -27,6 +27,7 @@
 #include <runq.h>
 #include <percpu.h>
 
+#define MAX_ONESHOT_TIMER_NUM		32
 #define MIN_TIME_INT 	(get_ticks_per_sec() / 1000)
 #define MSEC_MARGIN	(get_ticks_per_sec() / 1000)
 
@@ -118,7 +119,7 @@ void cfs_scheduler(uint32_t elapsed)
 }
 
 void create_rt_timer(struct task_struct *rt_task, 
-		uint32_t msec, uint32_t idx, void *arg)
+		uint32_t msec, void *arg)
 {
 	struct timer_root *this_ptroot;
 	struct timer_struct *rt_timer = (struct timer_struct *)kmalloc(sizeof(struct timer_struct));
@@ -128,7 +129,6 @@ void create_rt_timer(struct task_struct *rt_task,
 	rt_timer->type = REALTIME_TIMER;
 	rt_timer->tc = get_ticks_per_sec() / 1000 * msec;
 	rt_timer->intvl = rt_timer->tc;
-	rt_timer->idx = idx;
 	rt_timer->arg = arg;
 
 #if _ENABLE_SMP_
@@ -139,30 +139,69 @@ void create_rt_timer(struct task_struct *rt_task,
 	insert_timer(this_ptroot, rt_timer);
 }
 
-void create_oneshot_timer(struct task_struct *oneshot_task, 
-		uint32_t msec, uint32_t idx, void *arg)
+void init_oneshot_timers(void)
 {
-	struct timer_root *this_ptroot;
-	struct timer_struct *oneshot_timer = (struct timer_struct *)kmalloc(sizeof(struct timer_struct));
+	int i;
+	uint32_t *pthis_oneshot_timer_idx;
+	struct timer_struct *this_oneshot_timer;
 
-	oneshot_timer->pt = oneshot_task;
-	oneshot_timer->handler = NULL;
-	oneshot_timer->type = ONESHOT_TIMER;
-	oneshot_timer->tc = get_ticks_per_sec() / 1000 * msec;
-	oneshot_timer->intvl = oneshot_timer->tc;
-	oneshot_timer->idx = idx;
-	oneshot_timer->arg = arg;
+	this_oneshot_timer = (struct timer_struct *)kmalloc(sizeof(struct timer_struct) * MAX_ONESHOT_TIMER_NUM);
+#if _ENABLE_SMP_
+	__get_cpu_var(oneshot_timer) = this_oneshot_timer;
+	pthis_oneshot_timer_idx = (uint32_t *)__get_cpu_var_addr(oneshot_timer_idx);
+#else
+	oneshot_timer = this_oneshot_timer;
+	pthis_oneshot_timer_idx = &oneshot_timer_idx;
+#endif
+	*pthis_oneshot_timer_idx = 0;
+
+	for (i = 0; i < MAX_ONESHOT_TIMER_NUM; i++) {
+		this_oneshot_timer->pt = NULL;
+		this_oneshot_timer->handler = NULL;
+		this_oneshot_timer->type = ONESHOT_TIMER;
+		this_oneshot_timer->tc = 0;
+		this_oneshot_timer->intvl = 0;
+		this_oneshot_timer->arg = NULL;
+		this_oneshot_timer++;
+	}
+}
+
+void create_oneshot_timer(struct task_struct *oneshot_task, 
+		uint32_t tc, void *arg)
+{
+	uint32_t *pthis_oneshot_timer_idx;
+	struct timer_root *this_ptroot;
+	struct timer_struct *this_oneshot_timer;
 
 #if _ENABLE_SMP_
 	this_ptroot = (struct timer_root *)__get_cpu_var(ptroot);
+	this_oneshot_timer = (struct timer_struct *)__get_cpu_var(oneshot_timer);
+	pthis_oneshot_timer_idx = (uint32_t *)__get_cpu_var_addr(oneshot_timer_idx);
 #else
 	this_ptroot = ptroot;
+	this_oneshot_timer = oneshot_timer;
+	pthis_oneshot_timer_idx = &oneshot_timer_idx;
 #endif
-	insert_timer(this_ptroot, oneshot_timer);
+
+	this_oneshot_timer[*pthis_oneshot_timer_idx].pt = oneshot_task;
+	this_oneshot_timer[*pthis_oneshot_timer_idx].handler = NULL;
+	this_oneshot_timer[*pthis_oneshot_timer_idx].type = ONESHOT_TIMER;
+	this_oneshot_timer[*pthis_oneshot_timer_idx].tc = tc;
+	this_oneshot_timer[*pthis_oneshot_timer_idx].intvl = tc;
+	/* idx is inited in init_oneshot_timers and 
+	 * not used in oneshot timer. 
+	 */
+	this_oneshot_timer[*pthis_oneshot_timer_idx].arg = arg;
+	insert_timer(this_ptroot, this_oneshot_timer);
+
+	(*pthis_oneshot_timer_idx)++;
+	if (*pthis_oneshot_timer_idx == MAX_ONESHOT_TIMER_NUM) {
+		*pthis_oneshot_timer_idx = 0;
+	}
 }
 
 void create_sched_timer(struct task_struct *cfs_sched_task, 
-		uint32_t msec, uint32_t idx, void *arg)
+		uint32_t msec, void *arg)
 {
 	struct timer_struct *this_sched_timer = NULL;
 	struct timer_root *this_ptroot = NULL;
@@ -182,7 +221,6 @@ void create_sched_timer(struct task_struct *cfs_sched_task,
 	/* 10msec sched timer tick */
 	this_sched_timer->tc = get_ticks_per_sec() / 1000 * msec;
 	this_sched_timer->intvl = this_sched_timer->tc;
-	this_sched_timer->idx = idx;
 	this_sched_timer->arg = arg;
 
 	insert_timer(this_ptroot, this_sched_timer);
@@ -216,6 +254,11 @@ void insert_timer(struct timer_root *ptr, struct timer_struct *pts)
 
 void del_timer(struct timer_root *ptr, struct timer_struct *pts)
 {
+	/* oneshot timer doesn't need to be deleted.
+	 * update rb timer tree only.
+	 * Other timers' resource that was kmalloc-ed
+	 * isn't free-ed for now.
+	 */
 	if (ptr->rb_leftmost == (struct rb_node *)&pts->run_node) {
 		struct rb_node *next_node;
 

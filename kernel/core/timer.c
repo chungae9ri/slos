@@ -27,45 +27,38 @@
 #include <ktimer.h>
 #include <defs.h>
 #include <percpu.h>
+#include <waitq.h>
+#include <runq.h>
 
 extern uint32_t smp_processor_id();
 static uint32_t ticks_per_sec;
 
 static void delay(uint32_t ticks)
 {
-	volatile uint32_t cnt;
-	uint32_t init_cnt;
-	uint32_t timeout = 0;
+	struct task_struct *this_current;
 
-	cnt = timer_get_phy_tick_cnt();
-	init_cnt = cnt;
+#if _ENABLE_SMP_
+	this_current = (struct task_struct *)__get_cpu_var(current);
+#else
+	this_current = current;
+#endif
 
-	if (init_cnt < ticks) {
-		while (init_cnt >= cnt)
-			cnt = timer_get_phy_tick_cnt();
-		timeout = ticks - init_cnt;
-		init_cnt = cnt;
-		while (init_cnt - cnt <= timeout) 
-			cnt = timer_get_phy_tick_cnt();
-	} else {
-		timeout = init_cnt - ticks;
-		while (init_cnt - cnt <= timeout) 
-			cnt = timer_get_phy_tick_cnt();
-	}
-
+	dequeue_se_to_wq(&this_current->se);
+	create_oneshot_timer(this_current, ticks, NULL);
+	yield();
 }
 
-void mdelay(unsigned msecs)
+void msleep(unsigned msecs)
 {
 	uint64_t ticks;
-	ticks = ((uint64_t)msecs * ticks_per_sec)/1000;
+	ticks = ((uint64_t)msecs * ticks_per_sec) / 1000;
 	delay(ticks);
 }
 
-void udelay(unsigned usecs)
+void usleep(unsigned usecs)
 {
 	uint64_t ticks;
-	ticks = ((uint64_t)usecs * ticks_per_sec)/1000000;
+	ticks = ((uint64_t)usecs * ticks_per_sec) / 1000000;
 	delay(ticks);
 }
 
@@ -168,6 +161,9 @@ int timer_irq (void *arg)
 				if (this_current->type == RT_TASK)
 					this_current->preempted = 1;
 
+				/* oneshot, realtime timer task should 
+				 * be switched everytime.
+				 */
 				switch_context(this_current, pct->pt);
 				pct->pt->yield_task = this_current;
 #if _ENABLE_SMP_
@@ -178,6 +174,9 @@ int timer_irq (void *arg)
 			} 
 
 			if (pct->type == ONESHOT_TIMER) {
+				if (pct->pt->state == TASK_WAITING) {
+					enqueue_se_to_runq(&pct->pt->se);
+				}
 				/* remove oneshot timer from timer tree */
 				del_timer(this_ptroot, pct);
 			} else if (!this_current->done && !this_current->preempted)
@@ -207,45 +206,13 @@ void set_ticks_per_sec(uint32_t tps)
 	ticks_per_sec = tps;
 }
 
-#if 0
-#define RT_TIMER_NUM		3
-
-void rt_timer1(uint32_t el)
-{
-	xil_printf("rt timer 1!!\n");
-}
-
-void rt_timer2(uint32_t el)
-{
-	xil_printf("rt timer 2!!\n");
-}
-
-void rt_timer3(uint32_t el)
-{
-	xil_printf("rt timer 3!!\n");
-}
-
-timer_handler rt_timer_handler[RT_TIMER_NUM] = {
-	rt_timer1,
-	rt_timer2,
-	rt_timer3,
-};
-
-void create_rt_timers(void)
-{
-	int i;
-	for (i = 0; i < RT_TIMER_NUM; i++) {
-		create_rt_timer(rt_timer_handler[i], 200 + 20 * i, i + 1, NULL);
-	}
-}
-#endif
-
 void init_timer(void)
 {
 	uint32_t tc = 0, cpuid = 0;
 	struct timer_struct *pct = NULL;
 	struct task_struct *this_current = NULL;
 	struct timer_root *this_ptroot = NULL; 
+
 #if _ENABLE_SMP_
 	this_current = __get_cpu_var(current);
 	this_ptroot = __get_cpu_var(ptroot);
@@ -253,11 +220,6 @@ void init_timer(void)
 	this_current = current;
 	this_ptroot = ptroot;
 #endif
-	/*init_timertree();*/
-	/*create_sched_timer(cfs_sched_task, 10, 0, NULL);*/
-	/*create_rt_timers();*/
-
-	/*tc = sched_timer->tc;*/
 	pct = container_of(this_ptroot->rb_leftmost, struct timer_struct, run_node);
 	pct->pt = this_current;
 	tc = pct->tc;

@@ -26,7 +26,7 @@
 
 #define MAX_TASK	((SVC_STACK_BASE-SYS_STACK_BASE)/(TASK_STACK_GAP))
 
-enum {
+enum task_state {
 	TASK_RUNNING,
 	TASK_WAITING,
 	TASK_STOP_RUNNING,
@@ -75,7 +75,7 @@ struct task_struct {
 	struct list_head waitlist;
 	TASKTYPE type; 
 	uint32_t missed_cnt;
-	uint32_t state;
+	enum task_state state;
 	uint32_t timeinterval;
 	struct mm_struct mm;
 	uint32_t done;

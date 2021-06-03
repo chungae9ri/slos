@@ -41,6 +41,6 @@ void dequeue_se(struct sched_entity *se);
 void update_vruntime_runq(struct sched_entity *se);
 void update_se(uint32_t elapsed);
 
-void enqueue_se_to_runq(struct sched_entity *se, bool update);
+void enqueue_se_to_runq(struct sched_entity *se);
 
 #endif

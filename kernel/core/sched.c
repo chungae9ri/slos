@@ -40,7 +40,7 @@ void init_cfs_scheduler(void)
 	if (cpuid == 0)
 		set_ticks_per_sec(get_timer_freq());
 
-	create_sched_timer(this_current, 10, 0, NULL);
+	create_sched_timer(this_current, 10, NULL);
 	init_jiffies();
 }
 
@@ -86,7 +86,7 @@ void print_task_stat(void *arg)
 		if (pcur->type == CFS_TASK) {
 			num += sprintf(&buff[num],"cfs task:%s\n", pcur->name);
 			num += sprintf(&buff[num], "pid: %lu\n", pcur->pid);
-			num += sprintf(&buff[num], "state: %lu\n", pcur->state);
+			num += sprintf(&buff[num], "state: %lu\n", (uint32_t)pcur->state);
 			num += sprintf(&buff[num], "priority: %lu\n", pcur->se.priority);
 			num += sprintf(&buff[num], "jiffies_vruntime: %lu\n", pcur->se.jiffies_vruntime);
 			num = sprintf(&buff[num], "jiffies_consumed: %lu\n", pcur->se.jiffies_consumed);
@@ -94,7 +94,7 @@ void print_task_stat(void *arg)
 		} else if (pcur->type == RT_TASK) {
 			num += sprintf(&buff[num],"rt task:%s\n", pcur->name);
 			num += sprintf(&buff[num], "pid: %lu\n", pcur->pid);
-			num += sprintf(&buff[num], "state: %lu\n", pcur->state);
+			num += sprintf(&buff[num], "state: %lu\n", (uint32_t)pcur->state);
 			num += sprintf(&buff[num], "time interval: %lu msec\n", pcur->timeinterval);
 			num += sprintf(&buff[num], "deadline %lu times missed\n", pcur->missed_cnt);
 			xil_printf("%s\n", buff);
@@ -137,7 +137,7 @@ void schedule(void)
 		return;
 
 	switch_context(this_current, next);
-	next->yield_task = this_current;
+	/*next->yield_task = this_current;*/
 #if _ENABLE_SMP_
 	__get_cpu_var(current) = next;
 #else
@@ -157,16 +157,19 @@ struct task_struct *forkyi(char *name, task_entry fn, TASKTYPE type)
 	struct task_struct *pt = NULL;
 	struct task_struct *this_first = NULL;
 	struct task_struct *this_last = NULL;
+	struct task_struct *this_current = NULL;
 	uint32_t *pthis_task_created_num = NULL;
 
 #if _ENABLE_SMP_
 	this_first = __get_cpu_var(first);
 	this_last = __get_cpu_var(last);
 	pthis_task_created_num =(uint32_t *) __get_cpu_var_addr(task_created_num);
+	this_current = __get_cpu_var(current);
 #else
 	this_first = first;
 	this_last = last;
 	pthis_task_created_num = &task_created_num;
+	this_current = current;
 #endif
 
 	if (*pthis_task_created_num == MAX_TASK) 
@@ -183,7 +186,7 @@ struct task_struct *forkyi(char *name, task_entry fn, TASKTYPE type)
 	pt->se.ticks_consumed = 0LL;
 	pt->se.jiffies_vruntime = 0L;
 	pt->se.jiffies_consumed = 0L;
-	pt->yield_task = NULL;
+	pt->yield_task = this_current;
 	pt->preempted = 0;
 	pt->done = 1;
 	(*pthis_task_created_num)++;
@@ -226,16 +229,25 @@ void yield(void)
 	this_idle_task = idle_task;
 #endif
 
+	/* only cpuidle task has NULL for yield_task.
+	 * This is true because cpuidle doesn't yield, rather
+	 * it enters arch-dependent power collapse routines.
+	 */
+	if (!this_current->yield_task)
+		return;
+
 	disable_interrupt();
 	/* need to update ticks_consumed of RT task
-	   but data abort exception happens. Fix me
+	 * but data abort exception happens. Fix me
 	 */
 #if 0
 	elapsed = get_elapsedtime();
 	update_timer_tree(elapsed);
 	current->se.ticks_consumed += elapsed;
 #endif
+
 	temp = this_current;
+
 #if _ENABLE_SMP_
 	if (this_current->yield_task->state == TASK_RUNNING)
 		__get_cpu_var(current) = this_current->yield_task;

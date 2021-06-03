@@ -54,6 +54,8 @@ void cpuidle_secondary(void)
 			xil_printf("cpuidle_secondary is running....\n");
 		}
 
+		/* arch-dependent power saving routine here.
+		 */
 		while( i <= 10000){
 			i++;
 		}
@@ -72,6 +74,8 @@ void cpuidle(void)
 			xil_printf("cpuidle is running....\n");
 		}
 
+		/* arch-dependent power saving routine here.
+		 */
 		while( i <= 10000){
 			i++;
 		}
@@ -79,6 +83,7 @@ void cpuidle(void)
 	}
 }
 
+/* Running from CPU 0 */
 void start_cpu1(void)
 {
 	uint32_t i, A9_rst_ctrl;
@@ -107,6 +112,7 @@ void start_cpu1(void)
 	*(volatile uint32_t *)(A9_CPU_RST_CTRL) = A9_rst_ctrl;
 }
 
+/* Running from CPU 1 */
 int secondary_start_kernel(void)
 {
 	uint32_t cpuid;
@@ -123,6 +129,7 @@ int secondary_start_kernel(void)
 	init_rq();
 
 	init_timertree();
+	init_oneshot_timers();
 	init_cfs_scheduler();
 	init_timer();
 	update_csd();
@@ -164,6 +171,7 @@ int start_kernel(void)
 	init_rq();
 	init_shell();
 	init_timertree();
+	init_oneshot_timers();
 	init_cfs_scheduler();
 	init_timer();
 	init_mailbox();

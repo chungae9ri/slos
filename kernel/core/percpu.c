@@ -18,6 +18,9 @@ DEFINE_PER_CPU(struct timer_root *, ptroot);
 DEFINE_PER_CPU(struct clock_source_device*, csd);
 DEFINE_PER_CPU(struct wait_queue*, wq);
 DEFINE_PER_CPU(struct worker*, qworker);
+DEFINE_PER_CPU(struct timer_struct *, oneshot_timer);
+DEFINE_PER_CPU(volatile uint32_t, rqlock);
+DEFINE_PER_CPU(uint32_t, oneshot_timer_idx);
 #else
 struct task_struct *idle_task;
 struct task_struct *current = NULL;
@@ -28,7 +31,10 @@ struct cfs_rq *runq = NULL;
 uint32_t jiffies;
 struct timer_struct *sched_timer = NULL;
 struct timer_root *ptroot = NULL;
-struct clock_source_device *csd;
-struct wait_queue *wq;
-struct worker *qworker;
+struct clock_source_device *csd = NULL;
+struct wait_queue *wq = NULL;
+struct worker *qworker = NULL;
+struct timer_struct *oneshot_timer = NULL;
+volatile uint32_t rqlock = 0;
+uint32_t oneshot_timer_idx = 0;
 #endif

@@ -18,8 +18,6 @@
 #include <runq.h>
 #include <percpu.h>
 
-volatile uint32_t rqlock = 0;
-
 extern void remove_from_wq(struct task_struct *p);
 
 void init_rq(void)
@@ -40,7 +38,7 @@ void init_rq(void)
 	this_runq->cfs_task_num = 0;
 	
 	rb_init_node(&this_idle_task->se.run_node);
-	enqueue_se_to_runq(&this_idle_task->se, true);
+	enqueue_se_to_runq(&this_idle_task->se);
 	this_runq->cfs_task_num++;
 }
 
@@ -140,29 +138,27 @@ void update_vruntime_runq(struct sched_entity *se)
 	}
 }
 
-void enqueue_se_to_runq(struct sched_entity *se, bool update)
+void enqueue_se_to_runq(struct sched_entity *se)
 {
 	/*struct sched_entity *se_leftmost;*/
 	struct task_struct *tp = NULL;
 	struct cfs_rq *this_runq = NULL;
+	uint32_t *this_rqlock = NULL;
 #if _ENABLE_SMP_
 	this_runq = __get_cpu_var(runq);
+	this_rqlock = (uint32_t *)__get_cpu_var_addr(rqlock);
 #else
 	this_runq = runq;
+	this_rqlock = &rqlock;
 #endif
-	if (update) {
-		tp = container_of(se, struct task_struct, se);
-		this_runq->priority_sum += se->priority;
-		remove_from_wq(tp);
-		tp->state = TASK_RUNNING;
-		spin_lock_acquire(&rqlock);
-		update_vruntime_runq(se);
-		spin_lock_release(&rqlock);
-	}
-
-	spin_lock_acquire(&rqlock);
+	tp = container_of(se, struct task_struct, se);
+	this_runq->priority_sum += se->priority;
+	remove_from_wq(tp);
+	tp->state = TASK_RUNNING;
+	spin_lock_acquire(this_rqlock);
+	update_vruntime_runq(se);
 	enqueue_se(se);
-	spin_lock_release(&rqlock);
+	spin_lock_release(this_rqlock);
 }
 
 void update_se(uint32_t elapsed)

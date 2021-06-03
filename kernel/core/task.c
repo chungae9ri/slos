@@ -33,6 +33,7 @@
 #include <odev.h>
 #include <percpu.h>
 #include <mailbox.h>
+#include <timer.h>
 
 #define SVCSPSR 0x13 
 #define COPROC_SRC_ADDR		0x20000000
@@ -61,7 +62,7 @@ void create_usr_cfs_task(char *name,
 	upt[appIdx] = forkyi(name, (task_entry)cfs_task, CFS_TASK);
 	set_priority(upt[appIdx], pri);
 	rb_init_node(&(upt[appIdx]->se).run_node);
-	enqueue_se_to_runq(&(upt[appIdx]->se), true);
+	enqueue_se_to_runq(&(upt[appIdx]->se));
 	this_runq->cfs_task_num++;
 }
 
@@ -79,33 +80,33 @@ void create_cfs_task(char *name, task_entry cfs_task, uint32_t pri)
 	temp = forkyi(name, (task_entry)cfs_task, CFS_TASK);
 	set_priority(temp, pri);
 	rb_init_node(&temp->se.run_node);
-	enqueue_se_to_runq(&temp->se, true);
+	enqueue_se_to_runq(&temp->se);
 	this_runq->cfs_task_num++;
 }
 
-void create_rt_task(char *name, task_entry handler, uint32_t dur)
+void create_rt_task(char *name, task_entry handler, uint32_t msec)
 {
-	static uint32_t rt_timer_idx = 0;
 	struct task_struct *temp;
 
 	temp = forkyi(name, (task_entry)handler, RT_TASK);
-	temp->timeinterval = dur;
+	temp->timeinterval = msec;
 	temp->state = TASK_RUNNING;
 
 	disable_interrupt();
-	create_rt_timer(temp, dur, rt_timer_idx++, NULL);
+	create_rt_timer(temp, msec, NULL);
 	enable_interrupt();
 }
 
-void create_oneshot_task(char *name, task_entry handler, uint32_t dur)
+void create_oneshot_task(char *name, task_entry handler, uint32_t msec)
 {
-	static uint32_t oneshot_timer_idx = 0;
-	struct task_struct *temp;
+	struct task_struct *temp = NULL;
+	uint32_t tc = 0;
 
 	temp = forkyi(name, (task_entry)handler, ONESHOT_TASK);
-	temp->timeinterval = dur;
+	temp->timeinterval = msec;
 	temp->state = TASK_RUNNING;
-	create_oneshot_timer(temp, dur, oneshot_timer_idx++, NULL);
+	tc = get_ticks_per_sec() / 1000 * msec;
+	create_oneshot_timer(temp, tc, NULL);
 }
 
 uint32_t rt_worker2(void)
@@ -319,10 +320,9 @@ uint32_t cfs_worker3(void )
 }
 #endif
 
-extern void mdelay(unsigned msecs);
-
 uint32_t workq_worker(void)
 {
+	uint32_t cpuid;
 	int i, j, enq_idx, deq_idx;
 	struct worker *this_qworker;
 
@@ -331,6 +331,8 @@ uint32_t workq_worker(void)
 #else
 	this_qworker = qworker;
 #endif
+
+	cpuid = smp_processor_id();
 
 	while (1) {
 		/*xil_printf("%s deq_idx:%d\n", __func__, qworker.deq_idx);*/
@@ -351,9 +353,10 @@ uint32_t workq_worker(void)
 
 		this_qworker->deq_idx = enq_idx;
 
-		/*xil_printf("qworker_deq_idx: %d\n", this_qworker->deq_idx);*/
+		xil_printf("cpu%d qworker_deq_idx: %d\n", cpuid, this_qworker->deq_idx);
 
-		for (i = 0; i < 10000; i++);
+		/*for (i = 0; i < 10000; i++);*/
+		msleep(1000);
 	}
 
 	return ERR_NO;
@@ -500,7 +503,7 @@ void shell(void)
 				next_lh = next_lh->next;
 			}
 			if (j < this_runq->cfs_task_num && pwait_task->state == TASK_RUNNING) {
-				dequeue_se_to_wq(&pwait_task->se, true);
+				dequeue_se_to_wq(&pwait_task->se);
 			} else {
 				xil_printf("task %d is not in runq\n", pid);
 			}
@@ -523,7 +526,7 @@ void shell(void)
 				next_lh = next_lh->next;
 			}
 			if (j < this_runq->cfs_task_num && pwait_task->state == TASK_WAITING) {
-				enqueue_se_to_runq(&pwait_task->se, true);
+				enqueue_se_to_runq(&pwait_task->se);
 			} else {
 				xil_printf("task %d is not in runq\n", pid);
 			}
@@ -570,7 +573,7 @@ void init_shell(void)
 	temp = forkyi("shell", (task_entry)shell, CFS_TASK);
 	set_priority(temp, 2);
 	rb_init_node(&temp->se.run_node);
-	enqueue_se_to_runq(&temp->se, true);
+	enqueue_se_to_runq(&temp->se);
 	this_runq->cfs_task_num++;
 }
 void init_idletask(void)
@@ -578,6 +581,7 @@ void init_idletask(void)
 	uint32_t cpuid = 0;
 	uint32_t *pthis_task_created_num;
 	struct task_struct *pt = (struct task_struct *)kmalloc(sizeof(struct task_struct));
+
 	cpuid = smp_processor_id();
 	if (cpuid == 0)
 		strcpy(pt->name, "idle task");
@@ -595,6 +599,7 @@ void init_idletask(void)
 	pt->missed_cnt = 0;
 	pt->pid = cpuid;
 	pt->preempted = 0;
+	pt->state = TASK_RUNNING;
 	set_priority(pt, 16);
 #if _ENABLE_SMP_
 	__get_cpu_var(idle_task) = __get_cpu_var(current) = __get_cpu_var(first) = __get_cpu_var(last) = pt;

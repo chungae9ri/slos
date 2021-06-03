@@ -16,6 +16,9 @@ extern DEFINE_PER_CPU(struct timer_root *, ptroot);
 extern DEFINE_PER_CPU(struct clock_source_device *, csd);
 extern DEFINE_PER_CPU(struct wait_queue*, wq);
 extern DEFINE_PER_CPU(struct worker*, qworker);
+extern DEFINE_PER_CPU(struct timer_struct *, oneshot_timer);
+extern DEFINE_PER_CPU(volatile uint32_t, rqlock);
+extern DEFINE_PER_CPU(uint32_t, oneshot_timer_idx);
 #else /* ! _ENABLE_SMP_*/
 extern struct task_struct *idle_task;
 extern struct task_struct *current;
@@ -29,5 +32,8 @@ extern struct timer_root *ptroot;
 extern struct clock_source_device *csd;
 extern struct wait_queue *wq;
 extern struct worker *qworker;
+extern struct timer_struct *oneshot_timer;
+extern volatile uint32_t rqlock;
+extern uint32_t oneshot_timer_idx;
 #endif /* ! _ENABLE_SMP_*/
 #endif
