@@ -212,7 +212,7 @@ uint32_t cfs_dummy(void )
 		if (cnt > 1000000)
 			cnt = 0;
 		xil_printf("dummy cfs worker cnt: %d\n", cnt);
-		for (i = 0; i < 1000000; i++);
+		msleep(1000);
 	}
 }
 

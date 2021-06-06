@@ -54,7 +54,8 @@ void cpuidle_secondary(void)
 			xil_printf("cpuidle_secondary is running....\n");
 		}
 
-		/* arch-dependent power saving routine here.
+		/* cpuidle can't go to waitq.
+		 * arch-dependent power saving routine here.
 		 */
 		while( i <= 10000){
 			i++;
@@ -73,8 +74,8 @@ void cpuidle(void)
 		if (show_stat) {
 			xil_printf("cpuidle is running....\n");
 		}
-
-		/* arch-dependent power saving routine here.
+		/* cpuidle can't go to waitq.
+		 * arch-dependent power saving routine here.
 		 */
 		while( i <= 10000){
 			i++;
@@ -101,6 +102,7 @@ void start_cpu1(void)
 	/* flush cache of cpu 0 */
 	flush_ent_dcache();
 
+	/* msleep isn't ready yet */
 	while (i < 1000)
 		i++;
 
