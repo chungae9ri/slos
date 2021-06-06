@@ -215,6 +215,10 @@ struct task_struct *forkyi(char *name, task_entry fn, TASKTYPE type)
 }
 
 extern void disable_interrupt(void);
+/* yield() isn't fully thread-safe. yield() is used
+ * from RT task and msleep() and ramdomly crashed
+ * when both tasks are running. Fix me 
+ */
 void yield(void)
 {
 	struct task_struct *temp = NULL;

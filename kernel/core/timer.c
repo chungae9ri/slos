@@ -35,16 +35,22 @@ static uint32_t ticks_per_sec;
 
 static void delay(uint32_t ticks)
 {
-	struct task_struct *this_current;
+	struct task_struct *this_current = NULL;
+	struct task_struct *this_idle_task = NULL;
 
 #if _ENABLE_SMP_
 	this_current = (struct task_struct *)__get_cpu_var(current);
+	this_idle_task = (struct task_struct *)__get_cpu_var(idle_task);
 #else
 	this_current = current;
+	this_idle_task = idle_task;
 #endif
 
 	dequeue_se_to_wq(&this_current->se);
 	create_oneshot_timer(this_current, ticks, NULL);
+	if (this_current->yield_task->state == TASK_WAITING) {
+		this_current->yield_task = this_idle_task;
+	}
 	yield();
 }
 

@@ -6,6 +6,7 @@
 #include <gic.h>
 #include <xil_printf.h>
 #include <task.h>
+#include <timer.h>
 
 int32_t init_odev(void)
 {
@@ -171,7 +172,7 @@ int32_t stop_consumer(void)
 uint32_t run_odev_task(void)
 {
 	uint8_t *psrc;
-	uint32_t i, j;
+	uint32_t i;
 
 	psrc = (uint8_t *)O_STREAM_START;
 
@@ -182,21 +183,19 @@ uint32_t run_odev_task(void)
 		((uint32_t *)((uint32_t)psrc + O_STREAM_BURST_SZ * i))[0] = i + 1;
 	}
 	// 
-	xil_printf("start odev \n");
+	/*xil_printf("start odev \n");*/
 	set_consume_latency(10000);
 
 	start_odev_stream();
 
-	i = j = 0;
+	i = 0;
 	/* out stream forever */
 	for (;;) {
 		/*((uint32_t *)((uint32_t)psrc + O_STREAM_STEP * i))[0] = k++;*/
 		if (!put_to_itab(O_STREAM_START + O_STREAM_STEP * i, O_STREAM_STEP)) {
 			xil_printf("put_to_itab: %d\n", i);
 			/* spin for a while */
-			j = 0;
-			while (j < 100) 
-				j++;
+			msleep(10);
 			i++;
 #if 0
 			/* make a sequence error */
@@ -207,10 +206,7 @@ uint32_t run_odev_task(void)
 
 			i = i % O_STREAM_WRAP;
 		} else {
-			/* spin for a while */
-			j = 0;
-			while (j < 10000) 
-				j++;
+			msleep(100);
 		}
 		/*xil_printf("i: %d\n", i);*/
 	}
@@ -224,7 +220,6 @@ uint32_t run_odev_task(void)
 	return ERR_NO;
 
 }
-
 
 void create_odev_task(void *arg)
 {

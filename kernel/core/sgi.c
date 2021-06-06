@@ -27,10 +27,12 @@ int sgi_irq(void *arg)
 
 	case TASK_STAT:
 		enqueue_workq(print_task_stat, NULL);
+		wakeup_workq_worker();
 		break;
 
 	case TASK_ODEV:
 		enqueue_workq(create_odev_task, NULL);
+		wakeup_workq_worker();
 		break;
 
 	default:

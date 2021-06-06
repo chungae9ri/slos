@@ -46,7 +46,7 @@ extern struct task_struct *upt[MAX_USR_TASK];
 extern void enable_interrupt(void);
 extern void disable_interrupt(void);
 
-void create_usr_cfs_task(char *name, 
+struct task_struct* create_usr_cfs_task(char *name, 
 		task_entry cfs_task, 
 		uint32_t pri, 
 		uint32_t appIdx)
@@ -64,11 +64,13 @@ void create_usr_cfs_task(char *name,
 	rb_init_node(&(upt[appIdx]->se).run_node);
 	enqueue_se_to_runq(&(upt[appIdx]->se));
 	this_runq->cfs_task_num++;
+
+	return upt[appIdx];
 }
 
-void create_cfs_task(char *name, task_entry cfs_task, uint32_t pri)
+struct task_struct* create_cfs_task(char *name, task_entry cfs_task, uint32_t pri)
 {
-	struct task_struct *temp = NULL;
+	struct task_struct *task = NULL;
 	struct cfs_rq *this_runq = NULL;
 
 #if _ENABLE_SMP_
@@ -77,36 +79,42 @@ void create_cfs_task(char *name, task_entry cfs_task, uint32_t pri)
 	this_runq = runq;
 #endif
 
-	temp = forkyi(name, (task_entry)cfs_task, CFS_TASK);
-	set_priority(temp, pri);
-	rb_init_node(&temp->se.run_node);
-	enqueue_se_to_runq(&temp->se);
+	task = forkyi(name, (task_entry)cfs_task, CFS_TASK);
+	set_priority(task, pri);
+	rb_init_node(&task->se.run_node);
+	enqueue_se_to_runq(&task->se);
 	this_runq->cfs_task_num++;
+
+	return task;
 }
 
-void create_rt_task(char *name, task_entry handler, uint32_t msec)
+struct task_struct* create_rt_task(char *name, task_entry handler, uint32_t msec)
 {
-	struct task_struct *temp;
+	struct task_struct *task;
 
-	temp = forkyi(name, (task_entry)handler, RT_TASK);
-	temp->timeinterval = msec;
-	temp->state = TASK_RUNNING;
+	task= forkyi(name, (task_entry)handler, RT_TASK);
+	task->timeinterval = msec;
+	task->state = TASK_RUNNING;
 
 	disable_interrupt();
-	create_rt_timer(temp, msec, NULL);
+	create_rt_timer(task, msec, NULL);
 	enable_interrupt();
+
+	return task;
 }
 
-void create_oneshot_task(char *name, task_entry handler, uint32_t msec)
+struct task_struct* create_oneshot_task(char *name, task_entry handler, uint32_t msec)
 {
-	struct task_struct *temp = NULL;
+	struct task_struct *task= NULL;
 	uint32_t tc = 0;
 
-	temp = forkyi(name, (task_entry)handler, ONESHOT_TASK);
-	temp->timeinterval = msec;
-	temp->state = TASK_RUNNING;
+	task= forkyi(name, (task_entry)handler, ONESHOT_TASK);
+	task->timeinterval = msec;
+	task->state = TASK_RUNNING;
 	tc = get_ticks_per_sec() / 1000 * msec;
-	create_oneshot_timer(temp, tc, NULL);
+	create_oneshot_timer(task, tc, NULL);
+
+	return task;
 }
 
 uint32_t rt_worker2(void)
@@ -128,9 +136,6 @@ uint32_t rt_worker2(void)
 			j++;
 		}
 
-		if (show_stat) {
-			xil_printf("I am rt worker2 j: %d\n", j);
-		}
 		j = 0;
 		this_current->done = 1;
 		/* should yield after finish current work */
@@ -159,9 +164,6 @@ uint32_t rt_worker1(void)
 			j++;
 		}
 
-		if (show_stat) {
-			xil_printf("I am rt worker1 j: %d\n", j);	
-		}
 		j = 0;
 		this_current->done = 1;
 		/* should yield after finish current work */
@@ -325,19 +327,23 @@ uint32_t workq_worker(void)
 	uint32_t cpuid;
 	int i, j, enq_idx, deq_idx;
 	struct worker *this_qworker;
+	struct task_struct *this_current;
 
 #if _ENABLE_SMP_
 	this_qworker = __get_cpu_var(qworker);
+	this_current = __get_cpu_var(current);
 #else
 	this_qworker = qworker;
+	this_current = current;
 #endif
 
 	cpuid = smp_processor_id();
 
 	while (1) {
-		/*xil_printf("%s deq_idx:%d\n", __func__, qworker.deq_idx);*/
+		/* Woken up */
 		enq_idx = this_qworker->enq_idx;
 		deq_idx = this_qworker->deq_idx;
+		xil_printf("cpu%d qworker enq_idx: %d, deq_idx: %d\n", cpuid, enq_idx, deq_idx);
 		
 		/* enq_idx is wrapped around */
 		if (enq_idx < deq_idx)
@@ -353,13 +359,27 @@ uint32_t workq_worker(void)
 
 		this_qworker->deq_idx = enq_idx;
 
-		xil_printf("cpu%d qworker_deq_idx: %d\n", cpuid, this_qworker->deq_idx);
-
-		/*for (i = 0; i < 10000; i++);*/
-		msleep(1000);
+		/* Fall back into waiting state */
+		dequeue_se_to_wq(&this_current->se);
+		yield();
 	}
 
 	return ERR_NO;
+}
+
+void wakeup_workq_worker(void)
+{
+	struct worker *this_qworker;
+	struct task_struct *this_task;
+#if _ENABLE_SMP_
+	this_qworker = __get_cpu_var(qworker);
+	this_task = this_qworker->task;
+#else
+	this_qworker = qworker;
+	this_task = this_qworker->task;
+#endif
+
+	enqueue_se_to_runq(&this_task->se);
 }
 
 uint32_t enqueue_workq(void (*func)(void *), void *arg) 
@@ -399,7 +419,7 @@ void create_workq_worker(void)
 
 	cpuid = smp_processor_id();
 	sprintf(worker_name, "workq_worker:%d", (int)cpuid); 
-	create_cfs_task(worker_name, workq_worker, 4);
+	this_qworker->task = create_cfs_task(worker_name, workq_worker, 4);
 }
 
 void create_cfs_workers(void)
