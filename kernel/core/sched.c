@@ -217,7 +217,6 @@ struct task_struct *forkyi(char *name, task_entry fn, TASKTYPE type)
 extern void disable_interrupt(void);
 void yield(void)
 {
-	uint32_t lr = 0;
 	struct task_struct *temp = NULL;
 	struct task_struct *this_current = NULL, *this_idle_task = NULL;
 
@@ -255,18 +254,14 @@ void yield(void)
 		__get_cpu_var(current) = this_idle_task;
 
 	this_current = __get_cpu_var(current);
-	/* keep current lr and save it to task's ctx */
-	asm ("mov %0, r14" : "+r" (lr) : : );
-	switch_context_yield(temp, this_current, lr);
+	switch_context_yield(temp, this_current);
 #else
 	if (this_current->yield_task->state == TASK_RUNNING)
 		current = this_current->yield_task;
 	else 
 		current = this_idle_task;
 
-	/* keep current lr and save it to task's ctx */
-	asm ("mov %0, r14" : "+r" (lr) : : );
-	switch_context_yield(temp, current, lr);
+	switch_context_yield(temp, current);
 #endif
 }
 

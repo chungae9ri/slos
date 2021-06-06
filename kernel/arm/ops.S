@@ -41,9 +41,9 @@ switch_context_yield:
 	 * Don't upte the stack ptr, frame ptr (r11, r13),
 	 * and save the previous frame and stack ptr.
 	 */
-	stmia	r12, {r0-r11}
+	stmia	r12!, {r0-r11}
 	str	sp, [r12],#4
-	str	r2, [r12],#4
+	str	lr, [r12],#4
 	/* save current lr to the saved pc */
 	str	lr, [r12]
 	/* update regs with new task's ctx */
