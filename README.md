@@ -9,6 +9,7 @@ Implementation list
    - task fork - forkyi()
    - GIC - interrupt handler (top half / bottom half)
    - task synchronization(spin lock)
+   - task state - TASK_RUNNING, TASK_WAITING
 2. Timer frame work
    - realtime timer, sched timer, oneshot timer
    - timer interrupt handler
@@ -26,7 +27,7 @@ Implementation list
    - virtual memory manager
    - page fault handler
    - demand paging
-6. slfs(Simple Light File System) 
+6. SLFS (Simple Light File System) 
    - based on ramdisk
    - 2 level file system : file size up to 800KB
    - ram disk and elf loader for use applications
@@ -36,5 +37,10 @@ Implementation list
    - Script base Vivado project implementation
    - a device driver with DMA interrupt handler
    - a device driver for out-stream device
+9. SMP (Symmetric Multiprocessor)
+   - CPU 0 and CPU 1 boots up and running with the identical kernel
+   - PERCPU resource storage
+   - SGI (Software Generated Interrupt) between CPU 0 and CPU 1
+   - Mailbox for communication between CPU 0 and CPU 1 
 
 Refer A little book on custom OS developement from scratch.pdf for more information.
