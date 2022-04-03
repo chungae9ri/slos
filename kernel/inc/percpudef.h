@@ -1,8 +1,6 @@
 #ifndef _PER_CPU_DEF_
 #define _PER_CPU_DEF_
 
-#define _ENABLE_SMP_	1
-
 #ifdef _ENABLE_SMP_
 
 extern uint32_t smp_processor_id(void);

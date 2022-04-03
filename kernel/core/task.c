@@ -204,7 +204,6 @@ uint32_t oneshot_worker(void)
 uint32_t cfs_dummy(void )
 {
 	uint32_t cnt;
-	int i; 
 
 	cnt = 0;
 	while (1) {
