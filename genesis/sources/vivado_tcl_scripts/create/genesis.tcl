@@ -4,7 +4,7 @@ set project genesis
 
 # Now create the project, build block design from script, and build.
 start_gui
-create_project -force $project $project -part xc7z020clg400-1
+create_project -force $project $project -part xc7z010clg400-1
 set_property target_language VHDL [current_project]
 set_property simulator_language VHDL [current_project]
 set_property  ip_repo_paths ip_repo [current_project]
