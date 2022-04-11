@@ -134,8 +134,10 @@ int32_t file_system_create_file(struct file *fp)
 	 * But our max file_id is 7, the quotient is 
 	 * always 0. 
 	 */
+#ifndef FREESTANDING
 	blk_off = (int)((inodeIdx >> 3) / pfs->BlkSize);
 	byte = (inodeIdx >> 3) % pfs->BlkSize;
+#endif
 	bit = inodeIdx % 8;
 
 	/* if file already exists, return already exist */

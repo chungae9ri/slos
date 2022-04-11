@@ -13,6 +13,7 @@ void enable_sgi_irq(int vec, int (sgi_irq_handler)(void *arg))
 
 int sgi_irq(void *arg)
 {
+	/* don't enable this message */
 #if 0
 	struct sgi_data *pdat;
 

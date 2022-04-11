@@ -25,6 +25,7 @@
 #include <mm.h>
 
 #define MAX_TASK	((SVC_STACK_BASE-SYS_STACK_BASE)/(TASK_STACK_GAP))
+#define CFS_PRI_NUM	(5u)
 
 enum task_state {
 	TASK_RUNNING,
@@ -47,6 +48,7 @@ struct sched_entity {
 	uint32_t jiffies_consumed;
 	struct rb_node run_node;
 	uint32_t priority;
+	uint32_t pri_div_shift;
 };
 
 /* do not change the order */
@@ -98,10 +100,9 @@ extern void do_switch_context(struct task_struct *, struct task_struct *);
 extern void switch_context_yield(struct task_struct *, struct task_struct *);
 void init_cfs_scheduler(void);
 void init_jiffies(void);
-struct task_struct *forkyi(char *name, task_entry fn, TASKTYPE type);
+struct task_struct *forkyi(char *name, task_entry fn, TASKTYPE type, uint32_t pri);
 void switch_context(struct task_struct *prev, struct task_struct *next);
 void schedule(void);
-void set_priority(struct task_struct *pt, uint32_t pri);
 void yield(void);
 void update_current(uint32_t elapsed);
 void print_task_stat(void *);

@@ -39,6 +39,7 @@
 #define COPROC_SRC_ADDR		0x20000000
 #define COPROC_DST_ADDR		0x30000000
 #define COPROC_DAT_LEN		0x10000
+#define ICDSGIR			0xF8F01F00
 
 uint32_t show_stat = 0;
 extern char inbyte(void);
@@ -59,8 +60,7 @@ struct task_struct* create_usr_cfs_task(char *name,
 	this_runq = runq;
 #endif
 
-	upt[appIdx] = forkyi(name, (task_entry)cfs_task, CFS_TASK);
-	set_priority(upt[appIdx], pri);
+	upt[appIdx] = forkyi(name, (task_entry)cfs_task, CFS_TASK, pri);
 	rb_init_node(&(upt[appIdx]->se).run_node);
 	enqueue_se_to_runq(&(upt[appIdx]->se));
 	this_runq->cfs_task_num++;
@@ -73,14 +73,15 @@ struct task_struct* create_cfs_task(char *name, task_entry cfs_task, uint32_t pr
 	struct task_struct *task = NULL;
 	struct cfs_rq *this_runq = NULL;
 
+
+
 #if _ENABLE_SMP_
 	this_runq = __get_cpu_var(runq);
 #else
 	this_runq = runq;
 #endif
 
-	task = forkyi(name, (task_entry)cfs_task, CFS_TASK);
-	set_priority(task, pri);
+	task = forkyi(name, (task_entry)cfs_task, CFS_TASK, pri);
 	rb_init_node(&task->se.run_node);
 	enqueue_se_to_runq(&task->se);
 	this_runq->cfs_task_num++;
@@ -92,7 +93,7 @@ struct task_struct* create_rt_task(char *name, task_entry handler, uint32_t msec
 {
 	struct task_struct *task;
 
-	task= forkyi(name, (task_entry)handler, RT_TASK);
+	task= forkyi(name, (task_entry)handler, RT_TASK, 0);
 	task->timeinterval = msec;
 	task->state = TASK_RUNNING;
 
@@ -108,7 +109,7 @@ struct task_struct* create_oneshot_task(char *name, task_entry handler, uint32_t
 	struct task_struct *task= NULL;
 	uint32_t tc = 0;
 
-	task= forkyi(name, (task_entry)handler, ONESHOT_TASK);
+	task= forkyi(name, (task_entry)handler, ONESHOT_TASK, 0);
 	task->timeinterval = msec;
 	task->state = TASK_RUNNING;
 	tc = get_ticks_per_sec() / 1000 * msec;
@@ -489,8 +490,16 @@ void shell(void)
 			/* show cpu 1 taskstat */
 			enum letter_type letter = TASK_STAT;
 			push_mail(letter);
+			/* TargetListFilter: b[25:24] 2b00 send the interrupt to the 
+			 *  		     CPU interfaces specified in the CPU TargetList field
+			 * CPUTargetList: b[23:16] 2b00000010 CPU 1 CPU interface
+			 * SATT: b[15] 2b0 only if SGI is configured as Secure on that interface
+			 * SBZ: b[14:4]
+			 * SGIINTID: b[3:0] 0xF interrupt ID of SGI to send to the 
+			 *           specified CPU interface
+			 */
 			uint32_t sgir = 0x0002000F;
-			*(volatile uint32_t *)(0xF8F01F00) = sgir;
+			*(uint32_t *)(ICDSGIR) = sgir;
 #endif
 		} else if (!strcmp(cmdline, "whoami")) {
 			show_stat = 1;
@@ -569,7 +578,7 @@ void shell(void)
 			enum letter_type letter = TASK_ODEV;
 			push_mail(letter);
 			uint32_t sgir = 0x0002000F;
-			*(volatile uint32_t *)(0xF8F01F00) = sgir;
+			*(uint32_t *)(ICDSGIR) = sgir;
 		}
 #endif
 		else {
@@ -589,8 +598,7 @@ void init_shell(void)
 	this_runq = runq;
 #endif
 
-	temp = forkyi("shell", (task_entry)shell, CFS_TASK);
-	set_priority(temp, 2);
+	temp = forkyi("shell", (task_entry)shell, CFS_TASK, 2);
 	rb_init_node(&temp->se.run_node);
 	enqueue_se_to_runq(&temp->se);
 	this_runq->cfs_task_num++;
@@ -614,12 +622,13 @@ void init_idletask(void)
 	pt->se.ticks_consumed = 0LL;
 	pt->se.jiffies_vruntime = 0L;
 	pt->se.jiffies_consumed = 0L;
+	pt->se.priority = 16;
+	pt->se.pri_div_shift = 4;
 	pt->type = CFS_TASK;
 	pt->missed_cnt = 0;
 	pt->pid = cpuid;
 	pt->preempted = 0;
 	pt->state = TASK_RUNNING;
-	set_priority(pt, 16);
 #if _ENABLE_SMP_
 	__get_cpu_var(idle_task) = __get_cpu_var(current) = __get_cpu_var(first) = __get_cpu_var(last) = pt;
 	pthis_task_created_num = (uint32_t *) __get_cpu_var_addr(task_created_num);

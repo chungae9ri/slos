@@ -57,20 +57,22 @@ static void delay(uint32_t ticks)
 void msleep(unsigned msecs)
 {
 	uint64_t ticks;
-	ticks = ((uint64_t)msecs * ticks_per_sec) / 1000;
+	/* divide by 1024 */
+	ticks = ((uint64_t)msecs * ticks_per_sec) >> 10;
 	delay(ticks);
 }
 
 void usleep(unsigned usecs)
 {
 	uint64_t ticks;
-	ticks = ((uint64_t)usecs * ticks_per_sec) / 1000000;
+	/* divide by 1024 * 1024 */
+	ticks = ((uint64_t)usecs * ticks_per_sec) >> 20;
 	delay(ticks);
 }
 
 inline uint32_t get_timer_freq()
 {
-	return (XPAR_CPU_CORTEXA9_0_CPU_CLK_FREQ_HZ / 2);
+	return (XPAR_CPU_CORTEXA9_0_CPU_CLK_FREQ_HZ >> 1);
 }
 
 inline uint32_t timer_get_phy_tick_cnt(void)

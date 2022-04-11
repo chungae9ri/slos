@@ -77,7 +77,7 @@ uint32_t read(struct file *fp, uint32_t _n, char *_buf)
 	struct inode iNode;
 	uint32_t BlkSize = DATA_BLK_SIZE;
 
-	sec_entries = (uint32_t)(DATA_BLK_SIZE / sizeof(uint32_t)); /* must be 64 */
+	sec_entries = (uint32_t)(DATA_BLK_SIZE >> 2); /* must be 64 */
 
 	/* read inode
 	 * since there is not a root directory, fd is the index
@@ -88,9 +88,11 @@ uint32_t read(struct file *fp, uint32_t _n, char *_buf)
 
 	if (iNode.file_size <= _n + fp->pos) _n = iNode.file_size - fp->pos;
 
+#ifndef FREESTANDING
 	first_entry = (uint32_t)(fp->pos / (BlkSize * sec_entries));
 	sec_entry = (uint32_t)(fp->pos / BlkSize) % sec_entries;
 	off = (uint32_t)(fp->pos % BlkSize); 
+#endif
 
 	BlkNum = iNode.blkloc[first_entry];
 	read_ramdisk(BlkNum, temp);
@@ -144,7 +146,7 @@ uint32_t write(struct file *fp, uint32_t _n, char * _buf)
 	struct inode iNode;
 	uint32_t BlkSize = DATA_BLK_SIZE;
 
-	sec_entries = (uint32_t)(DATA_BLK_SIZE / sizeof(uint32_t)); /* must be 128 */
+	sec_entries = (uint32_t)(DATA_BLK_SIZE >> 2); /* must be 128 */
 
 	/* read inode
 	 * since there is not a root directory, fd is the index
@@ -157,10 +159,11 @@ uint32_t write(struct file *fp, uint32_t _n, char * _buf)
 	if (iNode.file_size + _n >= INODEBLKMAX * sec_entries * DATA_BLK_SIZE) {
 		return 0;
 	}
-
+#ifndef FREESTANDING
 	first_entry = (uint32_t )(iNode.file_size / (BlkSize * sec_entries));
 	sec_entry = (uint32_t)(iNode.file_size / BlkSize) % sec_entries;
 	off = (uint32_t)(iNode.file_size % BlkSize); 
+#endif
 
 	BlkNum = iNode.blkloc[first_entry];
 	if (BlkNum == 0) {

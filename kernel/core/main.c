@@ -206,11 +206,12 @@ int start_kernel(void)
 	xil_printf("### init_kernmem done.\n");
 	init_gic();
 	init_idletask();
-
+#ifndef FREESTANDING
 	init_file_system();
 	mount_file_system();
 	format_file_system();
 	xil_printf("### mount slfs file system.\n");
+#endif
 
 	init_wq();
 	init_rq();

@@ -53,11 +53,6 @@ void init_jiffies(void)
 #endif
 }
 
-void set_priority(struct task_struct *pt, uint32_t pri)
-{
-	pt->se.priority = pri;
-}
-
 #include <inttypes.h>
 void print_task_stat(void *arg)
 {
@@ -145,8 +140,10 @@ void schedule(void)
 #endif
 }
 
-struct task_struct *forkyi(char *name, task_entry fn, TASKTYPE type)
+struct task_struct *forkyi(char *name, task_entry fn, TASKTYPE type, uint32_t pri)
 {
+	uint32_t i;
+	uint32_t pri_div_shift;
 	/* cpuidle is pid 0 */
 	uint32_t lr = 0, cpuid;
 #if _ENABLE_SMP_
@@ -159,6 +156,21 @@ struct task_struct *forkyi(char *name, task_entry fn, TASKTYPE type)
 	struct task_struct *this_last = NULL;
 	struct task_struct *this_current = NULL;
 	uint32_t *pthis_task_created_num = NULL;
+
+	/* CFS task priority should be one of 1 2 4 8 16 */
+	if (type == CFS_TASK) {
+		for (i = 0; i < CFS_PRI_NUM; i++) {
+			if (pri == (0x1 << i)) {
+				break;
+			}
+		}
+
+		if (i == CFS_PRI_NUM) {
+			return NULL;
+		} else {
+			pri_div_shift = i;
+		}
+	}
 
 #if _ENABLE_SMP_
 	this_first = __get_cpu_var(first);
@@ -182,6 +194,10 @@ struct task_struct *forkyi(char *name, task_entry fn, TASKTYPE type)
 	pt->type = type;
 	pt->missed_cnt = 0;
 	strcpy(pt->name,name);
+	if (type == CFS_TASK) {
+		pt->se.pri_div_shift = pri_div_shift;
+		pt->se.priority = pri;
+	}
 	/*pt->se.ticks_vruntime = 0LL;*/
 	pt->se.ticks_consumed = 0LL;
 	pt->se.jiffies_vruntime = 0L;
@@ -276,6 +292,7 @@ void switch_context(struct task_struct *prev, struct task_struct *next)
 
 void update_current(uint32_t elapsed)
 {
+	uint32_t mul;
 	struct task_struct *this_current = NULL;
 	struct cfs_rq *this_runq = NULL;
 #if _ENABLE_SMP_
@@ -297,8 +314,17 @@ void update_current(uint32_t elapsed)
 		/*current->se.ticks_vruntime = (current->se.ticks_consumed) *
 			(current->se.priority) / runq->priority_sum;
 			*/
+#ifdef FREESTANDING
+		mul = (this_current->se.jiffies_consumed) * (this_current->se.priority);
+		div_sf(&mul, &(this_runq->priority_sum), &(this_current->se.jiffies_vruntime));
+#else
+		this_current->se.jiffies_vruntime = (this_current->se.jiffies_consumed) *
+			(this_current->se.priority);
+		/*
 		this_current->se.jiffies_vruntime = (this_current->se.jiffies_consumed) *
 			(this_current->se.priority) / this_runq->priority_sum;
+		*/
+#endif
 	} else if (this_current->type == RT_TASK) {
 		this_current->se.ticks_consumed += (uint64_t)elapsed;
 	}
