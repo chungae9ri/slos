@@ -3,7 +3,7 @@
 #include <sched.h>
 #include <task.h>
 #include <odev.h>
-#include <xil_printf.h>
+#include <printk.h>
 #include <mailbox.h>
 
 void enable_sgi_irq(int vec, int (sgi_irq_handler)(void *arg))
@@ -18,7 +18,7 @@ int sgi_irq(void *arg)
 	struct sgi_data *pdat;
 
 	pdat = (struct sgi_data *)arg;
-	xil_printf("sgi intr %d from cpu: %d\n", pdat->num, pdat->cpuid);
+	printk("sgi intr 0x%x from cpu: 0x%x\n", pdat->num, pdat->cpuid);
 #endif
 
 	enum letter_type letter = pull_mail();

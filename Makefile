@@ -30,7 +30,7 @@ export RAMDISKOUT := $(TOPOUT)/ramdisk
 
 #MAKEFILES = $(shell find . -maxdepth 2 -type f -name Makefile)
 #SUBDIRS   = $(filter-out ./,$(dir $(MAKEFILES)))
-SUBDIRS := libxil kernel libslos mkfs apps
+SUBDIRS := kernel libslos mkfs apps
 
 all:
 	mkdir -p $(TOPOUT)

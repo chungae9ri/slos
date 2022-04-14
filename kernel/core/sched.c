@@ -21,7 +21,7 @@
 #include <timer.h>
 #include <ktimer.h>
 #include <runq.h>
-#include <xil_printf.h>
+#include <printk.h>
 #include <percpu.h>
 
 extern uint32_t smp_processor_id(void);
@@ -69,7 +69,7 @@ void print_task_stat(void *arg)
 	this_first = first;
 #endif
 	cpuid = smp_processor_id();
-	xil_printf("**** cpu:%d taskstat ****\n", cpuid);
+	printk("**** cpu: 0x%x taskstat ****\n", cpuid);
 	next_lh = &this_first->task;
 	pcur = (struct task_struct *)to_task_from_listhead(next_lh);
 	/*for (i = 0; i < runq->cfs_task_num; i++) {*/
@@ -80,19 +80,19 @@ void print_task_stat(void *arg)
 		for (i = 0; i < 256; i++) buff[i] = '\0';
 		if (pcur->type == CFS_TASK) {
 			num += sprintf(&buff[num],"cfs task:%s\n", pcur->name);
-			num += sprintf(&buff[num], "pid: %lu\n", pcur->pid);
-			num += sprintf(&buff[num], "state: %lu\n", (uint32_t)pcur->state);
-			num += sprintf(&buff[num], "priority: %lu\n", pcur->se.priority);
-			num += sprintf(&buff[num], "jiffies_vruntime: %lu\n", pcur->se.jiffies_vruntime);
-			num = sprintf(&buff[num], "jiffies_consumed: %lu\n", pcur->se.jiffies_consumed);
-			xil_printf("%s\n", buff);
+			num += sprintf(&buff[num], "pid: 0x%x\n", pcur->pid);
+			num += sprintf(&buff[num], "state: 0x%x\n", (uint32_t)pcur->state);
+			num += sprintf(&buff[num], "priority: 0x%x\n", pcur->se.priority);
+			num += sprintf(&buff[num], "jiffies_vruntime: 0x%x\n", pcur->se.jiffies_vruntime);
+			num = sprintf(&buff[num], "jiffies_consumed: 0x%x\n", pcur->se.jiffies_consumed);
+			printk("%s\n", buff);
 		} else if (pcur->type == RT_TASK) {
 			num += sprintf(&buff[num],"rt task:%s\n", pcur->name);
-			num += sprintf(&buff[num], "pid: %lu\n", pcur->pid);
-			num += sprintf(&buff[num], "state: %lu\n", (uint32_t)pcur->state);
-			num += sprintf(&buff[num], "time interval: %lu msec\n", pcur->timeinterval);
-			num += sprintf(&buff[num], "deadline %lu times missed\n", pcur->missed_cnt);
-			xil_printf("%s\n", buff);
+			num += sprintf(&buff[num], "pid: 0x%x\n", pcur->pid);
+			num += sprintf(&buff[num], "state: 0x%x\n", (uint32_t)pcur->state);
+			num += sprintf(&buff[num], "time interval: 0x%x msec\n", pcur->timeinterval);
+			num += sprintf(&buff[num], "deadline 0x%x times missed\n", pcur->missed_cnt);
+			printk("%s\n", buff);
 		}
 
 		next_lh = next_lh->next;
@@ -292,7 +292,6 @@ void switch_context(struct task_struct *prev, struct task_struct *next)
 
 void update_current(uint32_t elapsed)
 {
-	uint32_t mul;
 	struct task_struct *this_current = NULL;
 	struct cfs_rq *this_runq = NULL;
 #if _ENABLE_SMP_

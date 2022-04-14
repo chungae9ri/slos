@@ -26,7 +26,7 @@
 #include <runq.h>
 #include <defs.h>
 #include <ktimer.h>
-#include <xil_printf.h>
+#include <printk.h>
 #include <file.h>
 #include <loader.h>
 #include <slos_error.h>
@@ -34,6 +34,7 @@
 #include <percpu.h>
 #include <mailbox.h>
 #include <timer.h>
+#include <rwbyte.h>
 
 #define SVCSPSR 0x13 
 #define COPROC_SRC_ADDR		0x20000000
@@ -42,7 +43,6 @@
 #define ICDSGIR			0xF8F01F00
 
 uint32_t show_stat = 0;
-extern char inbyte(void);
 extern struct task_struct *upt[MAX_USR_TASK];
 extern void enable_interrupt(void);
 extern void disable_interrupt(void);
@@ -131,7 +131,7 @@ uint32_t rt_worker2(void)
 		/* do some real time work here */
 		this_current->done = 0;
 		if (show_stat) {
-			xil_printf("I am rt worker2 j: %d\n", j);
+			printk("I am rt worker2 j: 0x%x\n", j);
 		}
 		for (i = 0; i < 500; i++) {
 			j++;
@@ -159,7 +159,7 @@ uint32_t rt_worker1(void)
 		/* do some real time work here */
 		this_current->done = 0;
 		if (show_stat) {
-			xil_printf("I am rt worker1 j: %d\n", j);	
+			printk("I am rt worker1 j: 0x%x\n", j);	
 		}
 		for (i = 0; i < 1000; i++) {
 			j++;
@@ -192,7 +192,7 @@ uint32_t oneshot_worker(void)
 		}
 		j = 0;
 
-		xil_printf("I am oneshot_worker\n");
+		printk("I am oneshot_worker\n");
 
 		/* should yield after finish current work */
 		yield();
@@ -211,7 +211,7 @@ uint32_t cfs_dummy(void )
 		cnt++;
 		if (cnt > 1000000)
 			cnt = 0;
-		xil_printf("dummy cfs worker cnt: %d\n", cnt);
+		printk("dummy cfs worker cnt: 0x%x\n", cnt);
 		msleep(1000);
 	}
 }
@@ -223,12 +223,12 @@ uint32_t cfs_worker1(void )
 	uint8_t t;
 	int i;
 
-	xil_printf("I am cfs_worker1....\n");
+	printk("I am cfs_worker1....\n");
 
 	pc = NULL;
 	while (1) {
 		if (show_stat) {
-			xil_printf("cfs_worker1 is running....\n");
+			printk("cfs_worker1 is running....\n");
 		}
 
 		pc = (uint8_t *)kmalloc(sizeof(uint8_t) * TEST_KMALLOC_SZ);
@@ -254,7 +254,7 @@ uint32_t cfs_worker2(void)
 	int i;
 	struct file *fp;
 
-	xil_printf("I am cfs_worker2....\n");
+	printk("I am cfs_worker2....\n");
 
 	/*
 	buf = (char *)kmalloc(sizeof(char) * FILE_TEST_LEN);
@@ -267,17 +267,17 @@ uint32_t cfs_worker2(void)
 	write(fp, FILE_TEST_LEN, buf);
 	reset(fp);
 	read(fp, FILE_TEST_LEN, temp);
-	xil_printf("file test : ");
+	printk("file test : ");
 	for (i = 0; i < FILE_TEST_LEN; i++) {
 		if (buf[i] != temp[i]) {
-			xil_printf("fail!!\n");
+			printk("fail!!\n");
 			break;
 		}
 	}
 	if (i == FILE_TEST_LEN) {
-		xil_printf("pass!!\n");
+		printk("pass!!\n");
 	} else {
-		xil_printf("fail!! i: %d\n", i);
+		printk("fail!! i: %x\n", i);
 	}
 
 	close_file(fp);
@@ -285,7 +285,7 @@ uint32_t cfs_worker2(void)
 
 	while (1) {
 		if (show_stat) {
-			xil_printf("cfs_worker2 running....\n");
+			printk("cfs_worker2 running....\n");
 		}
 	}
 	return ERR_NO;
@@ -298,7 +298,7 @@ uint32_t cfs_worker3(void )
 	uint8_t *psrc;
 	int i, j;
 
-	xil_printf("I am cfs_worker3....\n");
+	printk("I am cfs_worker3....\n");
 
 	i = 0;
 	while (1) {
@@ -308,7 +308,7 @@ uint32_t cfs_worker3(void )
 		}
 
 		if (show_stat) {
-			xil_printf("cfs_worker3 is running....\n");
+			printk("cfs_worker3 is running....\n");
 		}
 
 		if (i == 0) {
@@ -343,7 +343,7 @@ uint32_t workq_worker(void)
 		/* Woken up */
 		enq_idx = this_qworker->enq_idx;
 		deq_idx = this_qworker->deq_idx;
-		xil_printf("cpu%d qworker enq_idx: %d, deq_idx: %d\n", cpuid, enq_idx, deq_idx);
+		printk("cpu 0x%x qworker enq_idx: 0x%x, deq_idx: 0x%x\n", cpuid, enq_idx, deq_idx);
 		
 		/* enq_idx is wrapped around */
 		if (enq_idx < deq_idx)
@@ -463,11 +463,11 @@ void shell(void)
 
 	show_stat = 0;
 
-	xil_printf("I am shell\n");
+	printk("I am shell\n");
 
 	while (1) {
 		i = 0;
-		xil_printf("shell > ");
+		printk("shell > ");
 
 		do {
 			byte = inbyte();
@@ -478,12 +478,12 @@ void shell(void)
 
 		cmdline[--i] = '\0';
 
-		xil_printf("\n");
+		printk("\n");
 		if (cmdline[0] == '\0' || !strcmp(cmdline, "help")) {
-			xil_printf("taskstat, whoami, hide whoami\n");
-			xil_printf("cfs task, rt task, oneshot task\n");
-			xil_printf("sleep, run, start dma \n");
-			xil_printf("apprun, start cs, set cs\n");
+			printk("taskstat, whoami, hide whoami\n");
+			printk("cfs task, rt task, oneshot task\n");
+			printk("sleep, run, start dma \n");
+			printk("apprun, start cs, set cs\n");
 		} else if (!strcmp(cmdline, "taskstat")) {
 			print_task_stat(NULL);
 #if _ENABLE_SMP_
@@ -506,16 +506,16 @@ void shell(void)
 		} else if (!strcmp(cmdline, "hide whoami")) {
 			show_stat = 0;
 		} else if (!strcmp(cmdline, "cfs task")) {
-			xil_printf("add cfs task \n");
+			printk("add cfs task \n");
 			create_cfs_workers();
 		} else if (!strcmp(cmdline, "rt task")) {
-			xil_printf("add rt task \n");
+			printk("add rt task \n");
 			create_rt_workers();
 		} else if (!strcmp(cmdline, "oneshot task")) {
-			xil_printf("add oneshottask \n");
+			printk("add oneshottask \n");
 			create_oneshot_task("oneshot_task", oneshot_worker, 1000);
 		} else if (!strcmp(cmdline, "sleep")) {
-			xil_printf("input task pid: ");
+			printk("input task pid: ");
 			byte = inbyte();
 			outbyte(byte);
 			outbyte('\n');
@@ -533,11 +533,11 @@ void shell(void)
 			if (j < this_runq->cfs_task_num && pwait_task->state == TASK_RUNNING) {
 				dequeue_se_to_wq(&pwait_task->se);
 			} else {
-				xil_printf("task %d is not in runq\n", pid);
+				printk("task 0x%x is not in runq\n", pid);
 			}
 
 		} else if (!strcmp(cmdline, "run")) {
-			xil_printf("input task pid: ");
+			printk("input task pid: ");
 			byte = inbyte();
 			outbyte(byte);
 			outbyte('\n');
@@ -556,7 +556,7 @@ void shell(void)
 			if (j < this_runq->cfs_task_num && pwait_task->state == TASK_WAITING) {
 				enqueue_se_to_runq(&pwait_task->se);
 			} else {
-				xil_printf("task %d is not in runq\n", pid);
+				printk("task 0x%x is not in runq\n", pid);
 			}
 		} else if (!strcmp(cmdline, "apprun")) {
 			load_ramdisk_app(0);
@@ -582,7 +582,7 @@ void shell(void)
 		}
 #endif
 		else {
-			xil_printf("I don't know.... ^^;\n");
+			printk("I don't know.... ^^;\n");
 		}
 	}
 }

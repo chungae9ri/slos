@@ -4,7 +4,7 @@
 #include <regops.h>
 #include <mem_layout.h>
 #include <gic.h>
-#include <xil_printf.h>
+#include <printk.h>
 #include <task.h>
 #include <timer.h>
 
@@ -83,7 +83,7 @@ int32_t put_to_itab(uint32_t sAddr, uint32_t sLen)
 	while (1) {
 		status = readl(ODEV_REG_STATUS);
 		if((status & STAT_TRANSFER_DONE_MASK) == STAT_TRANSFER_DONE_MASK) {
-			xil_printf("status after: 0x%x\n", status);
+			printk("status after: 0x%x\n", status);
 			break;
 		}
 		ctrl = readl(ODEV_REG_CTRL);
@@ -105,7 +105,7 @@ int32_t put_to_itab(uint32_t sAddr, uint32_t sLen)
 	ctrl = readl(ODEV_REG_CTRL);
 	ctrl &= ~CTRL_IN_TRANS_MASK;
 	writel(ctrl, ODEV_REG_CTRL);
-	/*xil_printf("ctrl after: 0x%x\n", ctrl);*/
+	/*printk("ctrl after: 0x%x\n", ctrl);*/
 
 	return ERR_NO;
 }
@@ -124,7 +124,7 @@ int odev_irq(void *arg)
 	cntl = readl(ODEV_REG_CTRL);
 	cntl |= CTRL_INTR_DONE_MASK;
 	writel(cntl, ODEV_REG_CTRL);
-	xil_printf("odev irq done from cpu: %d!\n", cpuid);
+	printk("odev irq done from cpu: 0x%x!\n", cpuid);
 
 	return ERR_NO;
 }
@@ -140,7 +140,7 @@ int32_t start_consumer(void)
 {
 	uint32_t cntl;
 
-	xil_printf("odev consumer starts!\n");
+	printk("odev consumer starts!\n");
 	cntl = readl(ODEV_REG_CTRL);
 	cntl |= CTRL_CONSUMER_START_MASK;
 	writel(cntl, ODEV_REG_CTRL);
@@ -153,12 +153,12 @@ int32_t stop_consumer(void)
 	uint32_t cntl, status;
 
 	status = readl(ODEV_REG_STATUS);
-	xil_printf("odev status: 0x%x!\n", status);
+	printk("odev status: 0x%x!\n", status);
 
 	cntl = readl(ODEV_REG_CTRL);
 	cntl &= ~CTRL_CONSUMER_START_MASK;
 	writel(cntl, ODEV_REG_CTRL);
-	xil_printf("odev consumer stops!\n");
+	printk("odev consumer stops!\n");
 
 	return ERR_NO;
 
@@ -183,7 +183,7 @@ uint32_t run_odev_task(void)
 		((uint32_t *)((uint32_t)psrc + O_STREAM_BURST_SZ * i))[0] = i + 1;
 	}
 	// 
-	/*xil_printf("start odev \n");*/
+	/*printk("start odev \n");*/
 	set_consume_latency(10000);
 
 	start_odev_stream();
@@ -193,7 +193,7 @@ uint32_t run_odev_task(void)
 	for (;;) {
 		/*((uint32_t *)((uint32_t)psrc + O_STREAM_STEP * i))[0] = k++;*/
 		if (!put_to_itab(O_STREAM_START + O_STREAM_STEP * i, O_STREAM_STEP)) {
-			xil_printf("put_to_itab: %d\n", i);
+			printk("put_to_itab: 0x%x\n", i);
 			/* spin for a while */
 			msleep(10);
 			i++;
@@ -208,7 +208,7 @@ uint32_t run_odev_task(void)
 		} else {
 			msleep(100);
 		}
-		/*xil_printf("i: %d\n", i);*/
+		/*printk("i: 0x%x\n", i);*/
 	}
 
 	stop_consumer();

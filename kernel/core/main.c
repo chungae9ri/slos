@@ -16,7 +16,7 @@
   along with this program; if not, see <http://www.gnu.org/licenses/>
 */
 
-#include <xil_printf.h>
+#include <printk.h>
 #include <gic.h>
 #include <ktimer.h>
 #include <timer.h>
@@ -82,17 +82,17 @@ static void init_uart(void)
 static void init_platform(void)
 {
 	init_uart();
-	xil_printf("vPlatformInit\n");
+	printk("vPlatformInit\n");
 }
 
 static void cpuidle_secondary(void)
 {
 	uint32_t i = 0;
-	xil_printf("I am cpuidle_secondary.....\n");
+	printk("I am cpuidle_secondary.....\n");
 
 	while (1) {
 		if (show_stat) {
-			xil_printf("cpuidle_secondary is running....\n");
+			printk("cpuidle_secondary is running....\n");
 		}
 
 		/* cpuidle can't go to waitq.
@@ -109,11 +109,11 @@ static void cpuidle_secondary(void)
 static void cpuidle(void)
 {
 	uint32_t i = 0;
-	xil_printf("I am cpuidle.....\n");
+	printk("I am cpuidle.....\n");
 
 	while (1) {
 		if (show_stat) {
-			xil_printf("cpuidle is running....\n");
+			printk("cpuidle is running....\n");
 		}
 		/* cpuidle can't go to waitq.
 		 * arch-dependent power saving routine here.
@@ -162,9 +162,9 @@ int secondary_start_kernel(void)
 	uint32_t scr = 0xFFFFFFFF;
 
 	cpuid = smp_processor_id();
-	xil_printf("I am cpu%d!\n", cpuid);
+	printk("I am cpu 0x%x!\n", cpuid);
 	scr = read_scr();
-	xil_printf("cpu%d scr: 0x%x\n", cpuid, scr);
+	printk("cpu 0x%x scr: 0x%x\n", cpuid, scr);
 
 	init_gic_secondary();
 	init_idletask();
@@ -200,17 +200,17 @@ int start_kernel(void)
 
 	cpuid = smp_processor_id();
 	scr = read_scr();
-	xil_printf("cpu%d scr: 0x%x\n", cpuid, scr);
+	printk("cpu 0x%x scr: 0x%x\n", cpuid, scr);
 
 	init_kernmem(&framepool, &pgt, &kheap);
-	xil_printf("### init_kernmem done.\n");
+	printk("### init_kernmem done.\n");
 	init_gic();
 	init_idletask();
 #ifndef FREESTANDING
 	init_file_system();
 	mount_file_system();
 	format_file_system();
-	xil_printf("### mount slfs file system.\n");
+	printk("### mount slfs file system.\n");
 #endif
 
 	init_wq();
@@ -225,12 +225,12 @@ int start_kernel(void)
 	timer_enable();
 
 	create_ramdisk_fs();
-	xil_printf("### load user app to slfs.\n");
+	printk("### load user app to slfs.\n");
 	/*init_dma();*/
 	create_workq_worker();
 
 #if _ENABLE_SMP_
-	xil_printf("### start secondary cpu.\n");
+	printk("### start secondary cpu.\n");
 	start_cpu1();
 #endif
 	cpuidle();

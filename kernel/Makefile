@@ -13,7 +13,7 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program; if not, see <http://www.gnu.org/licenses/>
 
-KERNMODULES := core arm drivers/xil_standalone drivers/dma drivers/odev
+KERNMODULES := core arm drivers/uart drivers/dma drivers/odev 
 KERNOUTDIR := $(addprefix ../out/kernel/,$(KERNMODULES)) 
 
 KERNCSRC := $(foreach sdir,$(KERNMODULES),$(wildcard $(sdir)/*.c))
@@ -39,7 +39,7 @@ $(foreach bdir, $(KERNOUTDIR),$(eval $(call make-obj,$(bdir))))
 
 kernel: $(KERNOUTDIR) $(KERNCOBJ) $(KERNASMOBJ)
 #$(LD) -T $(LDS) -o $(TOPOUT)/kernel/kernel.elf $(KERNCOBJ) $(KERNASMOBJ) -Map=$(TOPOUT)/kernel/kernel.map -L$(TOPOUT)/libxil -lxil -nostdlib
-	$(LD) -T $(LDS) -o $(TOPOUT)/kernel/kernel.elf $(KERNCOBJ) $(KERNASMOBJ) -Map=$(TOPOUT)/kernel/kernel.map -L$(TOPOUT)/libxil -L$(LIBS) -L$(LIBS2) -lxil -lc -lgcc
+	$(LD) -T $(LDS) -o $(TOPOUT)/kernel/kernel.elf $(KERNCOBJ) $(KERNASMOBJ) -Map=$(TOPOUT)/kernel/kernel.map -L$(LIBS) -L$(LIBS2) -lc -lgcc
 
 $(KERNOUTDIR):
 	mkdir -p $@

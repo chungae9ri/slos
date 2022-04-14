@@ -18,9 +18,11 @@
 
 #include <vm_pool.h>
 #include <page_table.h>
-#include <xil_printf.h>
+#include <printk.h>
 
-#define PAGE_SIZE	(4 * 1024)
+#define PAGE_SIZE		(4 * 1024)
+#define PAGE_SIZE_SHIFT		(12)
+#define PAGE_SIZE_MASK		(0x00000FFF)
 
 void init_vmpool(struct vmpool *pvmpool,
 		struct pagetable *_pagetable,
@@ -51,7 +53,7 @@ void init_vmpool(struct vmpool *pvmpool,
 
 	region_num_supported = (int)(PAGE_SIZE / sizeof(struct vmpool));
 
-	xil_printf("Total %d number of kmalloc calls(vm region desc) supported!\n", region_num_supported);
+	printk("Total 0x%x number of kmalloc calls(vm region desc) supported!\n", region_num_supported);
 }
 
 /* lazy allocator */
@@ -60,7 +62,7 @@ unsigned int allocate(struct vmpool *pvmpool, unsigned int _size)
 	unsigned int pgnum;
 
 	/* allocate multiple of pages, internal fragmentation allowed */
-	pgnum = (int)(_size / PAGE_SIZE) + (_size % PAGE_SIZE ? 1 : 0);
+	pgnum = (int)(_size >> PAGE_SIZE_SHIFT) + ((_size & PAGE_SIZE_MASK) ? 1 : 0);
 
 	if (!pvmpool->plast_region) {
 		pvmpool->plast_region = (struct region_desc *)(pvmpool->base_address);
@@ -95,7 +97,7 @@ void release(struct vmpool *pvmpool, unsigned int _start_address)
 			if (pcur->next) 
 				pcur->next->prev = pcur->prev;
 			region_size = pcur->size;
-			pgnum = (int)(region_size / PAGE_SIZE) + (region_size % PAGE_SIZE ? 1 : 0);
+			pgnum = (int)(region_size >>  PAGE_SIZE_SHIFT) + ((region_size & PAGE_SIZE_MASK) ? 1 : 0);
 			for (i = 0; i < pgnum; i++) {
 				free_page((unsigned int)(_start_address + (PAGE_SIZE * i)));
 			}

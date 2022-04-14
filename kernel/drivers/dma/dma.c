@@ -15,12 +15,12 @@
   You should have received a copy of the GNU General Public License
   along with this program; if not, see <http://www.gnu.org/licenses/>
 */
-
+#include <stdio.h>
 #include <dma.h>
 #include <regops.h>
 #include <gic.h>
 #include <mm.h>
-#include <xil_printf.h>
+#include <printk.h>
 
 #define MODCORE_DMA_BURST_LEN	0x1000
 
@@ -104,7 +104,7 @@ void start_dma(void *arg)
 	src = p_dma_work_order->src;
 	dst = p_dma_work_order->dst;
 	len = p_dma_work_order->len;
-	xil_printf("dma start: 0x%x, 0x%x, 0x%x\n", src, dst, len);
+	printk("dma start: 0x%x, 0x%x, 0x%x\n", src, dst, len);
 
 	writel(src, MODCORE_DMA_REG_SRC_ADDR);
 	writel(dst, MODCORE_DMA_REG_DST_ADDR);
@@ -128,7 +128,7 @@ int dma_irq (void *arg)
 		cntl = readl(MODCORE_DMA_REG_CNTL);
 		cntl &= ~MODCORE_DMA_START;
 		writel(cntl, MODCORE_DMA_REG_CNTL);
-		/*xil_printf("dma done!\n");*/
+		/*printk("dma done!\n");*/
 	}
 
 	cntl = readl(MODCORE_DMA_REG_CNTL);

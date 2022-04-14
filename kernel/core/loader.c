@@ -26,7 +26,7 @@
 #include <mem_layout.h>
 #include <file_system.h>
 #include <file.h>
-#include <xil_printf.h>
+#include <printk.h>
 
 int32_t create_ramdisk_fs(void)
 {
@@ -80,7 +80,7 @@ void load_ramdisk_app(uint32_t appIdx)
 	struct file *fp;
 
 	if (appIdx >= MAX_USR_TASK) {
-		xil_printf("err: user task idx overflow\n");
+		printk("err: user task idx overflow\n");
 		return;
 	}
 
@@ -138,7 +138,7 @@ task_entry load_elf(char *elf_start, uint32_t idx)
 			continue;
 		}
 		if (phdr[i].p_filesz > phdr[i].p_memsz) {
-			xil_printf("load_elf:: p_filesz > p_memsz\n");
+			printk("load_elf:: p_filesz > p_memsz\n");
 			return 0;
 		}
 		if (!phdr[i].p_filesz) {

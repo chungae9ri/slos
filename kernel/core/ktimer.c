@@ -21,15 +21,14 @@
 #include <timer.h>
 #include <defs.h>
 #include <mm.h>
-#include <xil_printf.h>
 #include <regops.h>
 #include <sched.h>
 #include <runq.h>
 #include <percpu.h>
 
 #define MAX_ONESHOT_TIMER_NUM		32
-#define MIN_TIME_INT 	(get_ticks_per_sec() / 1000)
-#define MSEC_MARGIN	(get_ticks_per_sec() / 1000)
+#define MIN_TIME_INT 	(get_ticks_per_sec() >> 10)
+#define MSEC_MARGIN	(get_ticks_per_sec() >> 10)
 
 void init_timertree(void)
 {

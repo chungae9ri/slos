@@ -108,7 +108,6 @@ void dequeue_se(struct sched_entity *se)
 
 void update_vruntime_runq(struct sched_entity *se)
 {
-	uint32_t mul;
 	struct cfs_rq *this_runq = NULL;
 	struct sched_entity *cur_se, *se_leftmost;
 	struct rb_node *cur_rb_node;

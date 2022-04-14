@@ -22,7 +22,6 @@
 #include <gic.h>
 #include <xparameters_ps.h>
 #include <regops.h>
-#include <xil_printf.h>
 #include <rbtree.h>
 #include <ktimer.h>
 #include <defs.h>

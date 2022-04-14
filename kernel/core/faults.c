@@ -17,7 +17,6 @@
 */
 
 #include <mem_layout.h>
-#include <xil_printf.h>
 #include <page_table.h>
 
 #define ALIGNMENT_FLT 		0x1
@@ -42,7 +41,7 @@
 
 void platform_undefined_handler(void)
 {
-	xil_printf("undefined cmd exception!!\n");
+	printk("undefined cmd exception!!\n");
 	for(;;);
 }
 
@@ -62,7 +61,7 @@ int platform_syscall_handler(char *msg, int idx, int sys_num)
 		/* syscal write */
 		case SYS_WRITE: 
 			msg = msg + (USER_APP_BASE + USER_APP_GAP * idx);
-			xil_printf(msg);
+			printk(msg);
 			break;
 		/* syscal read */
 		case SYS_READ:
@@ -80,13 +79,13 @@ int platform_syscall_handler(char *msg, int idx, int sys_num)
 
 void platform_prefetch_abort_handler(void)
 {
-	xil_printf("prefetch abort exception!!\n");
+	printk("prefetch abort exception!!\n");
 	for(;;);
 }
 
 void abort()
 {
-	xil_printf("data abort exception!!\n");
+	printk("data abort exception!!\n");
 	for(;;);
 }
 
