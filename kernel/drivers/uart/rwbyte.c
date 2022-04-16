@@ -17,7 +17,7 @@
 	  (uint32_t)XUARTPS_SR_TXFULL) == (uint32_t)XUARTPS_SR_TXFULL)
 
 #define XUartPs_WriteReg(BaseAddress, RegOffset, RegisterValue) \
-	Xil_Out32((BaseAddress) + (uint32_t)(RegOffset), (uint32_t)(RegisterValue))
+	Xil_Out32((uint32_t *)((BaseAddress) + (uint32_t)(RegOffset)), (uint32_t)(RegisterValue))
 
 
 static inline void Xil_Out32(uint32_t *Addr, uint32_t Value)
