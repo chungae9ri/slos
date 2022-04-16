@@ -15,8 +15,6 @@
   You should have received a copy of the GNU General Public License
   along with this program; if not, see <http://www.gnu.org/licenses/>
 */
-#include <stdio.h>
-#include <stdlib.h>
 #include <sched.h>
 #include <timer.h>
 #include <ktimer.h>
@@ -56,8 +54,6 @@ void init_jiffies(void)
 #include <inttypes.h>
 void print_task_stat(void *arg)
 {
-	char buff[256];
-	int i, num = 0;
 	uint32_t cpuid;
 	struct task_struct *pcur = NULL;
 	struct list_head *next_lh = NULL;
@@ -76,23 +72,19 @@ void print_task_stat(void *arg)
 	do {
 		if (!pcur) break;
 
-		num = 0;
-		for (i = 0; i < 256; i++) buff[i] = '\0';
 		if (pcur->type == CFS_TASK) {
-			num += sprintf(&buff[num],"cfs task:%s\n", pcur->name);
-			num += sprintf(&buff[num], "pid: 0x%x\n", pcur->pid);
-			num += sprintf(&buff[num], "state: 0x%x\n", (uint32_t)pcur->state);
-			num += sprintf(&buff[num], "priority: 0x%x\n", pcur->se.priority);
-			num += sprintf(&buff[num], "jiffies_vruntime: 0x%x\n", pcur->se.jiffies_vruntime);
-			num = sprintf(&buff[num], "jiffies_consumed: 0x%x\n", pcur->se.jiffies_consumed);
-			printk("%s\n", buff);
+			printk("cfs task:%s\n", pcur->name);
+			printk("pid: 0x%x\n", pcur->pid);
+			printk("state: 0x%x\n", (uint32_t)pcur->state);
+			printk("priority: 0x%x\n", pcur->se.priority);
+			printk("jiffies_vruntime: 0x%x\n", pcur->se.jiffies_vruntime);
+			printk("jiffies_consumed: 0x%x\n", pcur->se.jiffies_consumed);
 		} else if (pcur->type == RT_TASK) {
-			num += sprintf(&buff[num],"rt task:%s\n", pcur->name);
-			num += sprintf(&buff[num], "pid: 0x%x\n", pcur->pid);
-			num += sprintf(&buff[num], "state: 0x%x\n", (uint32_t)pcur->state);
-			num += sprintf(&buff[num], "time interval: 0x%x msec\n", pcur->timeinterval);
-			num += sprintf(&buff[num], "deadline 0x%x times missed\n", pcur->missed_cnt);
-			printk("%s\n", buff);
+			printk("rt task:%s\n", pcur->name);
+			printk("pid: 0x%x\n", pcur->pid);
+			printk("state: 0x%x\n", (uint32_t)pcur->state);
+			printk("time interval: 0x%x msec\n", pcur->timeinterval);
+			printk("deadline 0x%x times missed\n", pcur->missed_cnt);
 		}
 
 		next_lh = next_lh->next;
@@ -193,7 +185,13 @@ struct task_struct *forkyi(char *name, task_entry fn, TASKTYPE type, uint32_t pr
 	pt->entry = fn;
 	pt->type = type;
 	pt->missed_cnt = 0;
-	strcpy(pt->name,name);
+	i = 0;
+	while (name[i] != '\0') {
+		pt->name[i] = name[i];
+		i++;
+	}
+	pt->name[i] = '\0';
+
 	if (type == CFS_TASK) {
 		pt->se.pri_div_shift = pri_div_shift;
 		pt->se.priority = pri;
@@ -293,13 +291,10 @@ void switch_context(struct task_struct *prev, struct task_struct *next)
 void update_current(uint32_t elapsed)
 {
 	struct task_struct *this_current = NULL;
-	struct cfs_rq *this_runq = NULL;
 #if _ENABLE_SMP_
 	this_current = __get_cpu_var(current);
-	this_runq = __get_cpu_var(runq);
 #else
 	this_current = current;
-	this_runq = runq;
 #endif
 
 	if (this_current->type == CFS_TASK) {
@@ -310,20 +305,8 @@ void update_current(uint32_t elapsed)
 #endif
 		this_current->se.jiffies_consumed++;
 		this_current->se.ticks_consumed += (uint64_t) elapsed;
-		/*current->se.ticks_vruntime = (current->se.ticks_consumed) *
-			(current->se.priority) / runq->priority_sum;
-			*/
-#ifdef FREESTANDING
-		mul = (this_current->se.jiffies_consumed) * (this_current->se.priority);
-		div_sf(&mul, &(this_runq->priority_sum), &(this_current->se.jiffies_vruntime));
-#else
 		this_current->se.jiffies_vruntime = (this_current->se.jiffies_consumed) *
 			(this_current->se.priority);
-		/*
-		this_current->se.jiffies_vruntime = (this_current->se.jiffies_consumed) *
-			(this_current->se.priority) / this_runq->priority_sum;
-		*/
-#endif
 	} else if (this_current->type == RT_TASK) {
 		this_current->se.ticks_consumed += (uint64_t)elapsed;
 	}

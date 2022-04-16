@@ -16,10 +16,7 @@
   along with this program; if not, see <http://www.gnu.org/licenses/>
 */
 
-#include <stdio.h>
-#include <string.h>
 #include <stdint-gcc.h>
-#include <stdbool.h>
 #include <elf.h>
 #include <loader.h>
 #include <task.h>
@@ -27,6 +24,7 @@
 #include <file_system.h>
 #include <file.h>
 #include <printk.h>
+#include <string.h>
 
 int32_t create_ramdisk_fs(void)
 {
@@ -43,7 +41,7 @@ int32_t create_ramdisk_fs(void)
 		szApp = *((volatile uint32_t *)(SCRATCH_BASE + offset));
 		offset += 4;
 		psrc = (char *)(SCRATCH_BASE + offset);
-		sprintf(fname, "App_%u", (unsigned int)i);
+		sprintk(fname, "App_%u", (unsigned int)i);
 		fp = open_file(fname);
 		if (fp) {
 			write(fp, szApp, psrc);
@@ -89,7 +87,7 @@ void load_ramdisk_app(uint32_t appIdx)
 			APP_LOAD_OFFSET + 
 			USER_APP_GAP * appIdx);
 
-	sprintf(temp,"App_%u", (unsigned int)appIdx);
+	sprintk(temp,"App_%u", (unsigned int)appIdx);
 	fp = find_file_by_name(temp);
 	if (fp) {
 		read(fp, fp->fsz, app_load_addr);
@@ -166,7 +164,7 @@ task_entry load_elf(char *elf_start, uint32_t idx)
 	 * For now, share the kernel page table.
 	 */
 
-	sprintf(buff,"user_%u",(unsigned int)idx);
+	sprintk(buff,"user_%u",(unsigned int)idx);
 	create_usr_cfs_task(buff, (task_entry)entry, 4, idx);
 
 	return entry;

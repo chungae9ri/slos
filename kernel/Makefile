@@ -29,17 +29,16 @@ vpath %.S $(KERNMODULES)
 
 define make-obj
 $1/%.o: %.c
-	$(CC) $(CFLAGS) $(INC) -o $$@ -c $$< -g -D_ENABLE_SMP_ -mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=softfp -Wall -fno-omit-frame-pointer
+	$(CC) $(CFLAGS) $(INC) -o $$@ -c $$< -g -D_ENABLE_SMP_ -mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=softfp -Wall -fno-omit-frame-pointer -ffreestanding
 
 $1/%.o: %.S
-	$(CC) $(INC) -o $$@ -c $$< -g -D_ENABLE_SMP_ -mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=softfp -Wall -fno-omit-frame-pointer
+	$(CC) $(INC) -o $$@ -c $$< -g -D_ENABLE_SMP_ -mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=softfp -Wall -fno-omit-frame-pointer -ffreestanding
 endef
 
 $(foreach bdir, $(KERNOUTDIR),$(eval $(call make-obj,$(bdir))))
 
 kernel: $(KERNOUTDIR) $(KERNCOBJ) $(KERNASMOBJ)
-#$(LD) -T $(LDS) -o $(TOPOUT)/kernel/kernel.elf $(KERNCOBJ) $(KERNASMOBJ) -Map=$(TOPOUT)/kernel/kernel.map -L$(TOPOUT)/libxil -lxil -nostdlib
-	$(LD) -T $(LDS) -o $(TOPOUT)/kernel/kernel.elf $(KERNCOBJ) $(KERNASMOBJ) -Map=$(TOPOUT)/kernel/kernel.map -L$(LIBS) -L$(LIBS2) -lc -lgcc
+	$(LD) -T $(LDS) -o $(TOPOUT)/kernel/kernel.elf $(KERNCOBJ) $(KERNASMOBJ) -Map=$(TOPOUT)/kernel/kernel.map -nostdlib
 
 $(KERNOUTDIR):
 	mkdir -p $@

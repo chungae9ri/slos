@@ -16,11 +16,11 @@
   along with this program; if not, see <http://www.gnu.org/licenses/>
 */
 
-#include <stdio.h>
-#include <string.h>
+#include <stddef.h>
 #include <ramdisk_io.h>
 #include <file_system.h>
 #include <mm.h>
+#include <string.h>
 
 struct file_system *pfs;
 
@@ -60,7 +60,7 @@ void mount_file_system(void)
 int32_t format_file_system(void)
 {
 	int i;
-	unsigned char zeroBlk[DATA_BLK_SIZE] = {0,};
+	unsigned char zeroBlk[DATA_BLK_SIZE];
 
 	/*
 	 * clear the super block
@@ -114,7 +114,7 @@ int32_t file_system_create_file(struct file *fp)
 {
 	int i, blk_off, byte, bit, inodeIdx;
 	struct inode *pinodeDat;
-	char blk_data[DATA_BLK_SIZE] = {0,};
+	char blk_data[DATA_BLK_SIZE];
 
 	inodeIdx = fp->fd;
 
@@ -134,7 +134,7 @@ int32_t file_system_create_file(struct file *fp)
 	 * But our max file_id is 7, the quotient is 
 	 * always 0. 
 	 */
-#ifndef FREESTANDING
+#if 0
 	blk_off = (int)((inodeIdx >> 3) / pfs->BlkSize);
 	byte = (inodeIdx >> 3) % pfs->BlkSize;
 #endif

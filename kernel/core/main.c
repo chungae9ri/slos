@@ -206,7 +206,7 @@ int start_kernel(void)
 	printk("### init_kernmem done.\n");
 	init_gic();
 	init_idletask();
-#ifndef FREESTANDING
+#if 0
 	init_file_system();
 	mount_file_system();
 	format_file_system();

@@ -16,11 +16,12 @@
   along with this program; if not, see <http://www.gnu.org/licenses/>
 */
 
+#include <stddef.h>
 #include <file.h>
 #include <file_system.h>
 #include <mm.h>
-#include <string.h>
 #include <ramdisk_io.h>
+#include <string.h>
 
 extern struct file_system *pfs;
 
@@ -88,7 +89,7 @@ uint32_t read(struct file *fp, uint32_t _n, char *_buf)
 
 	if (iNode.file_size <= _n + fp->pos) _n = iNode.file_size - fp->pos;
 
-#ifndef FREESTANDING
+#if 0
 	first_entry = (uint32_t)(fp->pos / (BlkSize * sec_entries));
 	sec_entry = (uint32_t)(fp->pos / BlkSize) % sec_entries;
 	off = (uint32_t)(fp->pos % BlkSize); 
@@ -159,7 +160,7 @@ uint32_t write(struct file *fp, uint32_t _n, char * _buf)
 	if (iNode.file_size + _n >= INODEBLKMAX * sec_entries * DATA_BLK_SIZE) {
 		return 0;
 	}
-#ifndef FREESTANDING
+#if 0
 	first_entry = (uint32_t )(iNode.file_size / (BlkSize * sec_entries));
 	sec_entry = (uint32_t)(iNode.file_size / BlkSize) % sec_entries;
 	off = (uint32_t)(iNode.file_size % BlkSize); 

@@ -124,34 +124,12 @@ void update_vruntime_runq(struct sched_entity *se)
 	se_leftmost = container_of(cur_rb_node, struct sched_entity, run_node);
 	cur_se = se_leftmost;
 
-#ifdef FREESTANDING
-	mul = (uint32_t)(se_leftmost->jiffies_vruntime * this_runq->priority_sum);
-	div_sf(&mul, &(se->priority), &(se->jiffies_consumed));
-	mul = (uint32_t)(se->jiffies_consumed * se->priority);
-	div_sf(&mul, &(this_runq->priority_sum), &(se->jiffies_vruntime));
-#else
 	se->jiffies_consumed = (se_leftmost->jiffies_vruntime) >> (se->pri_div_shift);
 	se->jiffies_vruntime = se->jiffies_consumed * se->priority;
-	/*
-	se->jiffies_consumed = se_leftmost->jiffies_vruntime * this_runq->priority_sum / se->priority;
-	se->jiffies_vruntime = se->jiffies_consumed * se->priority / this_runq->priority_sum;
-	*/
-#endif
 
 	while (cur_se) {
-#ifdef FREESTANDING
-		mul = (uint32_t)(se_leftmost->jiffies_vruntime * this_runq->priority_sum);
-		div_sf(&mul, &(cur_se->priority), &(cur_se->jiffies_consumed));
-		mul = (uint32_t)(cur_se->jiffies_consumed * cur_se->priority);
-		div_sf(&mul, &(this_runq->priority_sum), &(cur_se->jiffies_vruntime));
-#else
 		cur_se->jiffies_consumed = (se_leftmost->jiffies_vruntime) >> (cur_se->pri_div_shift);
 		cur_se->jiffies_vruntime = cur_se->jiffies_consumed * cur_se->priority;
-		/*
-		cur_se->jiffies_consumed = se_leftmost->jiffies_vruntime * this_runq->priority_sum / cur_se->priority;
-		cur_se->jiffies_vruntime = cur_se->jiffies_consumed * cur_se->priority / this_runq->priority_sum;
-		*/
-#endif
 
 		cur_rb_node = rb_next(&cur_se->run_node);
 		if (cur_rb_node)

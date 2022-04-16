@@ -52,3 +52,52 @@ void printk(const char *fmt, ...)
 
 	va_end(argp);
 }
+
+void sprintk(uint8_t *buf, const char *fmt, ...)
+{
+	uint8_t *pch, *pstr;
+	uint32_t u_int, i, j, u_hex, str_len;
+	uint8_t num_str[NUM_STR_MAX] = {0};
+	va_list argp;
+
+	va_start(argp, fmt); 
+	for (pch = (uint8_t *)fmt, i = 0; *pch; pch++) {
+		if (*pch != '%') {
+			buf[i++] = *pch;
+			continue;
+		}
+		switch (*++pch) {
+		case 'x':
+			u_int = va_arg(argp, uint32_t);
+			j = 0;
+			do {
+				u_hex = (u_int & 0xF);
+				if (u_hex < 10) {
+					num_str[j++] = u_hex + '0';
+				} else {
+					num_str[j++] = (u_hex - 10) + 'A';
+				}
+				u_int >>= 4;
+			} while (u_int > 0);
+
+			str_len = j;
+			num_str[j] = '\0';
+			for (j = 0; j < str_len; j++) {
+				buf[i++] = num_str[str_len - 1 - j];
+			}
+			break;
+
+		case 's':
+			pstr = va_arg(argp, uint8_t *);
+			while (*pstr != '\0') {
+				buf[i++] = *pstr++;
+			}
+			buf[i] = '\0';
+			break;
+		default:
+			break;
+		}
+	}
+
+	va_end(argp);
+}

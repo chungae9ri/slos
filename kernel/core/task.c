@@ -16,12 +16,9 @@
   along with this program; if not, see <http://www.gnu.org/licenses/>
 */
 
-#include <stdio.h>
-#include <string.h>
 #include <stdint-gcc.h>
 #include <mem_layout.h>
 #include <task.h>
-#include <stdlib.h>
 #include <waitq.h>
 #include <runq.h>
 #include <defs.h>
@@ -35,6 +32,7 @@
 #include <mailbox.h>
 #include <timer.h>
 #include <rwbyte.h>
+#include <string.h>
 
 #define SVCSPSR 0x13 
 #define COPROC_SRC_ADDR		0x20000000
@@ -418,7 +416,7 @@ void create_workq_worker(void)
 	this_qworker->deq_idx = 0;
 
 	cpuid = smp_processor_id();
-	sprintf(worker_name, "workq_worker:%d", (int)cpuid); 
+	sprintk(worker_name, "workq_worker:%d", (int)cpuid); 
 	this_qworker->task = create_cfs_task(worker_name, workq_worker, 4);
 }
 

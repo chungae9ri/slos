@@ -18,7 +18,6 @@
 
 #include <task.h>
 #include <waitq.h>
-#include <stdbool.h>
 #include <defs.h>
 #include <runq.h>
 #include <percpu.h>

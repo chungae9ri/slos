@@ -18,6 +18,7 @@
 
 #include <mem_layout.h>
 #include <page_table.h>
+#include <printk.h>
 
 #define ALIGNMENT_FLT 		0x1
 #define BUS_ERR_TRN_LVL1		0xc
