@@ -16,7 +16,7 @@
   along with this program; if not, see <http://www.gnu.org/licenses/>
 */
 
-#include <stdint-gcc.h>
+#include <stdint.h>
 #include <timer.h>
 #include <gic.h>
 #include <xparameters_ps.h>

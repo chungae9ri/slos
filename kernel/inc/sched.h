@@ -18,7 +18,7 @@
 
 #ifndef __SCHED_H__
 #define __SCHED_H__
-#include <stdint-gcc.h>
+#include <stdint.h>
 #include <mem_layout.h>
 #include <defs.h>
 #include <rbtree.h>

@@ -19,7 +19,7 @@
 #ifndef _FILE_SYSTEM_
 #define _FILE_SYSTEM_
 #include <file.h>
-#include <stdint-gcc.h>
+#include <stdint.h>
 
 /* inode entry number in iNode table */
 #define INODE_NUM 			8 /* 8 = 4KB / 512B*/	

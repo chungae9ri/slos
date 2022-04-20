@@ -18,7 +18,7 @@
 
 #ifndef __MM_H__
 #define __MM_H__
-#include <stdint-gcc.h>
+#include <stdint.h>
 #include <frame_pool.h>
 #include <page_table.h>
 #include <vm_pool.h>

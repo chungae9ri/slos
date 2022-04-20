@@ -19,7 +19,7 @@
 #ifndef __TASK_H__
 #define __TASK_H__
 
-#include <stdint-gcc.h>
+#include <stdint.h>
 #include <stddef.h>
 #include <mem_layout.h>
 #include <sched.h>

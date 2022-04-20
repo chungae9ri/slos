@@ -16,7 +16,7 @@
   along with this program; if not, see <http://www.gnu.org/licenses/>
 */
 
-#include <stdint-gcc.h>
+#include <stdint.h>
 
 #define GIC_ICCICR	XPS_SCU_PERIPH_BASE + 0x100
 #define GIC_ICCPMR	XPS_SCU_PERIPH_BASE + 0x104

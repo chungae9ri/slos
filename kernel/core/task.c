@@ -16,7 +16,7 @@
   along with this program; if not, see <http://www.gnu.org/licenses/>
 */
 
-#include <stdint-gcc.h>
+#include <stdint.h>
 #include <mem_layout.h>
 #include <task.h>
 #include <waitq.h>

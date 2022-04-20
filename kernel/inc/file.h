@@ -18,7 +18,7 @@
 
 #ifndef _FILE_
 #define _FILE_
-#include <stdint-gcc.h>
+#include <stdint.h>
 
 struct file {
 	struct file_system *pfs;

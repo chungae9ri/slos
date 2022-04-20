@@ -1,6 +1,6 @@
 #ifndef _SGI_H_
 #define _SGI_H_
-#include <stdint-gcc.h>
+#include <stdint.h>
 
 struct sgi_data {
 	uint32_t num;

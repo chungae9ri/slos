@@ -18,7 +18,7 @@
 
 #ifndef __RUNQ_H__
 #define __RUNQ_H__
-#include <stdint-gcc.h>
+#include <stdint.h>
 #include <defs.h>
 #include <sched.h>
 

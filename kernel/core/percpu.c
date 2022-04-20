@@ -1,4 +1,4 @@
-#include <stdint-gcc.h>
+#include <stdint.h>
 #include <percpudef.h>
 #include <ktimer.h>
 #include <waitq.h>

@@ -20,7 +20,7 @@
 #define _KTIMER_H_
 
 #include <rbtree.h>
-#include <stdint-gcc.h>
+#include <stdint.h>
 #include <task.h>
 
 typedef void (*timer_handler)(uint32_t el);
