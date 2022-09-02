@@ -44,3 +44,5 @@ Implementation list
    - Mailbox for communication between CPU 0 and CPU 1 
 
 Refer A little book on custom OS developement from scratch.pdf for more information.
+
+Notes: To petalinux-package for cora z7, petalinux v2019.2 is used and verified

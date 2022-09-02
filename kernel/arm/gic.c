@@ -25,6 +25,7 @@
 #define SGI_IRQ_NUM	16
 
 uint32_t smp_processor_id();
+struct ihandler handler[NUM_IRQS];
 
 void init_gic_dist(void)
 {

@@ -13,10 +13,10 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program; if not, see <http://www.gnu.org/licenses/>
 
-export PATH:=$(HOME)/bin/arm-2017q1/bin:$(PATH)
+export PATH:=$(HOME)/bin/gcc-arm-none-eabi-10.3-2021.10/bin:$(PATH)
 
-export LIBS := $(HOME)/bin/arm-2017q1/arm-none-eabi/lib
-export LIBS2 :=$(HOME)/bin/arm-2017q1/lib/gcc/arm-none-eabi/6.3.1
+export LIBS := $(HOME)/bin/gcc-arm-none-eabi-10.3-2021.10/arm-none-eabi/lib
+export LIBS2 :=$(HOME)/bin/gcc-arm-none-eabi-10.3-2021.10/lib/gcc/arm-none-eabi/10.3.1
 export CC := arm-none-eabi-gcc
 export ASM := arm-none-eabi-as
 export LD := arm-none-eabi-ld
