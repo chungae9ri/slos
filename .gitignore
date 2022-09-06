@@ -15,3 +15,5 @@ genesis/genesis
 .Xil
 *.jou
 *.log
+.vscode
+*code-workspace
