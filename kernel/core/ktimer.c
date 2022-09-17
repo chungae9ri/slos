@@ -42,6 +42,7 @@ void init_timertree(void)
 	this_ptroot = ptroot;
 #endif
 	this_ptroot->root = RB_ROOT;
+	this_ptroot->rb_leftmost = NULL;
 }
 
 /* need to use 64bit Global Timer */
@@ -213,6 +214,9 @@ void create_sched_timer(struct task_struct *cfs_sched_task,
 	this_sched_timer = sched_timer;
 	this_ptroot = ptroot;
 #endif
+	if (this_ptroot->root.rb_node == 0xffffffff);
+		this_ptroot->root.rb_node = 0;
+
 	this_sched_timer->pt = cfs_sched_task;
 	this_sched_timer->handler = cfs_scheduler;
 	this_sched_timer->type = SCHED_TIMER;

@@ -36,6 +36,8 @@ void init_rq(void)
 	this_runq->priority_sum = 0;
 	this_runq->rb_leftmost = &this_idle_task->se.run_node;
 	this_runq->cfs_task_num = 0;
+	this_runq->curr = this_runq->next = this_runq->last = NULL;
+	this_runq->root.rb_node = NULL;
 	
 	rb_init_node(&this_idle_task->se.run_node);
 	enqueue_se_to_runq(&this_idle_task->se);
