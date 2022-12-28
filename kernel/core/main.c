@@ -224,9 +224,12 @@ int start_kernel(void)
 	update_csd();
 	timer_enable();
 
+	/*
 	create_ramdisk_fs();
 	printk("### load user app to slfs.\n");
-	/*init_dma();*/
+	init_dma();
+	 */
+
 	create_workq_worker();
 
 #if _ENABLE_SMP_
