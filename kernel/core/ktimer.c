@@ -214,7 +214,7 @@ void create_sched_timer(struct task_struct *cfs_sched_task,
 	this_sched_timer = sched_timer;
 	this_ptroot = ptroot;
 #endif
-	if (this_ptroot->root.rb_node == 0xffffffff);
+	if (this_ptroot->root.rb_node == (struct rb_node *)0xffffffff)
 		this_ptroot->root.rb_node = 0;
 
 	this_sched_timer->pt = cfs_sched_task;
