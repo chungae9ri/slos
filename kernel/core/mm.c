@@ -43,7 +43,7 @@ void init_pgt(void)
 	 * each entry of page directory has 1MB memory addressing.
 	 * 4G VM address range = 4K Entries * 1MB.
 	 * There are 4 4KB frames for page directory.
-	 * initialize page directory entry as 0. 
+	 * initialize all page directory entries with 0.
 	 */
 	for (i = 0; i < 4; i++) {
 		for (j = 0; j < 1024; j++) {
@@ -51,8 +51,8 @@ void init_pgt(void)
 		}
 	}
 
-	/* 
-	 * 6MB directly mapped memory for kernel
+	/* set pgd entries with corresponding pgt base address.
+	 * 16MB directly mapped memory for kernel
 	 * 0 ~ 1MB: system reserved
 	 * 1 ~ 2MB: kernel text, data, 
 	 * 2 ~ 215000KB: stacks
@@ -70,7 +70,7 @@ void init_pgt(void)
 			 * 0x1E1 is
 			 * Bit[1:0] = 2'b01 : 00:fualt, 01:page, 10:section, 11 : reserved
 			 * Bit[2] = 1'b0 : PXN (Privilege eXectuion Never)
-			 * Bit[3] = 1'b0 : NS (Non-Secure)
+			 * Bit[3] = 1'b1 : NS (Non-Secure)
 			 * Bit[4] = 1'b0 : SBZ (Shoulb Be Zero)
 			 * Bit[8:5] = 4'b1111 : Domain 0xF
 			 * Bit[9] = 0 : don't care
@@ -79,7 +79,7 @@ void init_pgt(void)
 			 * 4K * 4 : offset between the start addr of PGD and PGT
 			 */
 			ppage_dir[i * 1024 + j] = 
-				((unsigned int)pcur + (i * 1024 + j) * 1024) | 0x1E1;
+				((unsigned int)pcur + (i * 1024 + j) * 1024) | 0x1E9;
 		}
 	}
 
@@ -102,7 +102,7 @@ void init_pgt(void)
 	 * each entry of page directory has 1MB memory addressing.
 	 * 4G VM address range = 4K Entries * 1MB.
 	 * There are 4 4KB frames for page directory.
-	 * initialize page directory entry as 0. 
+	 * initialize all page table entries with 0.
 	 */
 	for (i = 0; i < 1024 * 4; i++) {
 		for (j = 0; j < 256; j++) {
@@ -214,18 +214,18 @@ void init_pgt(void)
 	 */
 	for (i = (0xE10 * 256), j = 0; i < (0xE10 * 256) + 0x1F000; i++, j++) {
 		/* 
-			 *  0x432 is
-	 		 * Bit[0] = 1'b0 : XN(eXecution Never)
-	 		 * Bit[1] = 1'b1 : 0: Large page, 1: Small page
-	 		 * Bit[2] = 1'b0 : Bufferable, 0 for Device or Strongly-ordered memory
-	 		 * Bit[3] = 1'b0 : Cacheable, 0 for Device or Strongly-ordered memory
-	 		 * Bit[5:4] = 2'b11: AP[1:0] R/W full access with AP[2]=1'b0
-	 		 * Bit[8:6] = 3'b000: TEX[2:0] should be 000 for Device or Strongly-ordered memory
-	 		 * Bit[9] = 1'b0: AP[2] should be 0 for full access
-	 		 * Bit[10] = 1'b1: S: shareable
-	 		 * Bit[11] = 1'b0: nG(non-Global) bit. 0 for global
-	 		 */
-			ppage_tbl[i] = (0xE1000000 + (j * 4096)) | 0x432;
+		 *  0x432 is
+		 * Bit[0] = 1'b0 : XN(eXecution Never)
+		 * Bit[1] = 1'b1 : 0: Large page, 1: Small page
+		 * Bit[2] = 1'b0 : Bufferable, 0 for Device or Strongly-ordered memory
+		 * Bit[3] = 1'b0 : Cacheable, 0 for Device or Strongly-ordered memory
+		 * Bit[5:4] = 2'b11: AP[1:0] R/W full access with AP[2]=1'b0
+		 * Bit[8:6] = 3'b000: TEX[2:0] should be 000 for Device or Strongly-ordered memory
+		 * Bit[9] = 1'b0: AP[2] should be 0 for full access
+		 * Bit[10] = 1'b1: S: shareable
+		 * Bit[11] = 1'b0: nG(non-Global) bit. 0 for global
+		 */
+		ppage_tbl[i] = (0xE1000000 + (j * 4096)) | 0x432;
 	}
 
 	/* 

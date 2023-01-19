@@ -110,7 +110,7 @@ sec_irq_handler:
 	stmfa	r12!, {r0-r11}
 	sub 	r0, lr, #4
 	msr	cpsr_c, #MODE_SVC | I_BIT | F_BIT  /* irq,fiq disabled */
-	mov	r12, #0x602C
+	mov	r12, #0x422C
 	stmfa	r12!, {sp, lr}
 	/* r0 should be saved after storing sp, lr 
 	 * stmfa r12!, {sp, lr, r0} doesn't work.

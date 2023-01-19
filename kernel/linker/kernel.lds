@@ -38,6 +38,13 @@ SECTIONS
 	}
 
 	. = 0xC0101000;
+/*
+	. = 0xC0102000;
+	.mon : AT(ADDR(.mon) - 0xC0000000) {
+		*(MONITOR);
+	}
+*/
+	/*. = 0xC0103000;*/
 	.text : AT(ADDR(.text) - 0xC0000000) {
 		*(EXCEPTIONS);
 		*(.text);
@@ -58,6 +65,14 @@ SECTIONS
 	}
 
 	. = 0xC0201000;
+	/*
+	. = 0xC0202000;
+	.mon.sec : AT(ADDR(.mon.sec) - 0xC0000000) {
+		*(SEC_MONITOR);
+	}
+
+	. = 0xC0203000;
+	*/
 	.secexceptions : AT(ADDR(.secexceptions) - 0xC0000000) {
 		*(SECONDARY_EXCEPTIONS);
 	}

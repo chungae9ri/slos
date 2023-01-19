@@ -53,7 +53,8 @@ struct sched_entity {
 
 /* do not change the order */
 struct task_context_struct {
-	uint32_t r[12];
+	/* TODO: task ctx has r0-r11, r12 isn't included */
+	uint32_t r[12];	
 	uint32_t sp;
 	uint32_t lr;
 	uint32_t pc;

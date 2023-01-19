@@ -21,6 +21,7 @@
 .set MASK_DCACHE,		0x00000004
 .set MASK_ICACHE,		0x00001000
 .set MASK_AFE,			0x20000000
+.set MASK_SCR_NS,		0x00000001
 
 .section SSBL
 .arm
@@ -94,8 +95,10 @@ ssbl:
 	 * Bit[5]: 1'b1: NOS, Inner shareable
 	 * Bit[6]: 1'b0: IRGN[0]:0
 	 */
-	/* set TTBR0 as 0x0 */
+	/* set TTBR0 with pgd start address, 16KiB(14bit) aligned */
 	ldr	r0, =KERN_PGD_START_BASE
+	/* set TTBR0 Bit[6:0] zero */
+	/*orr	r0, r0, #0x22*/
 	/* Outer-cacheable, WB */
 	/*orr	r0, r0, #0x5B	*/
 	mcr	p15, 0, r0, c2, c0, 0
@@ -110,6 +113,7 @@ ssbl:
 	orr 	r0, r0, #0x100 			/* set bits for D */
 	orr 	r0, r0, #0x1			/* set bits for MMU  */
 	mcr	p15, 0, r0, c1, c0, 0		/* write value back */
+	/*isb*/
 	/* Write to ACTLR */
 	mrc	p15, 0, r0, c1, c0, 1		/* Read ACTLR*/
 	orr	r0, r0, #(0x01 << 6)		/* set SMP bit */

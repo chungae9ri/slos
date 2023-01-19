@@ -33,6 +33,7 @@
 .global exceptions
 .global reset_handler
 .set KERNEL_EXCEPTION_START, 0xC0101000			
+.set MASK_SCR_NS,		0x00000001
 
 exceptions:
 	b reset_handler		
@@ -45,16 +46,14 @@ exceptions:
 	b fiq_handler
 
 reset_handler:
-	/* read scr */
-	mrc 	p15, 0, r0, c1, c1, 0
-	 /*set VBAR (banked) with 0x100000 */
+	/*set VBAR (banked) with 0x100000 */
 	ldr	r0, =KERNEL_EXCEPTION_START
 	mcr	p15,0,r0,c12,c0,0 
 
 	 /*change to supervisor*/
 	msr	CPSR_c, #MODE_SVC | I_BIT | F_BIT
 	
-	/*; setup svc stack*/
+	/* setup svc stack*/
 	ldr	r0,=SVC_STACK_BASE
 	mov	r13, r0
 
@@ -63,27 +62,71 @@ reset_handler:
 	ldr 	r0,=UNDEF_STACK_BASE
 	mov     r13, r0
 
-	/*; Switch to abort mode and setup the abort mode stack*/
+	/* Switch to abort mode and setup the abort mode stack*/
 	msr     CPSR_c, #MODE_ABT | I_BIT | F_BIT
 	ldr	r0,=ABT_STACK_BASE
 	mov     r13, r0
 
-	/*; Switch to SYS mode and setup the SYS mode stack*/
+	/* Switch to SYS mode and setup the SYS mode stack*/
 	msr     CPSR_c, #MODE_SYS | I_BIT | F_BIT
 	ldr	r0,=SYS_STACK_BASE
 	mov     r13, r0
 
-	/*; Switch to IRQ mode and setup the IRQ mode stack*/
+	/* Switch to IRQ mode and setup the IRQ mode stack*/
 	msr     CPSR_c, #MODE_IRQ | I_BIT | F_BIT
 	ldr	r0,=IRQ_STACK_BASE
 	mov     r13, r0
 
-	/*; Switch to FIQ mode and setup the FIQ mode stack*/
+	/* Switch to FIQ mode and setup the FIQ mode stack*/
 	msr     CPSR_c, #MODE_FIQ | I_BIT | F_BIT
 	ldr	r0,=FIQ_STACK_BASE
 	mov     r13, r0
+#if 1
+	/* monitor mode imple: 
+	 * 1. save current secure ctx into SECURE_CONTEXT_MEM.
+	 *    This should include the cpsr saved to the secure ctx mem.
+	 * 2. change current mode to monitor mode (e.g. cps #MODE_MON)    
+	 * 3. set mon mode mvbar (Monitor Vector Base Address Register).
+	 * 4. set stacks in monitor mode 
+	 * 5. read scr (secure configuration register) register and 
+	 *    set the NS bit. (changed to non-secure world)
+	 * 6. set non-secure OS memory management (init page table).
+	 * 7. jump to reset handler of non-secure OS
+	 */
+	/* 1. save current secure ctx into SECURE_CONTEXT_MEM */
+	ldr 	r12, =SECURE_CONTEXT_MEM
+	stmea	r12!, {r0-r11, sp, lr, pc}
+	/* 2. set current mode to mon */
+	cps	#MODE_MON
+	/*msr	CPSR_c, #MODE_MON | I_BIT | F_BIT*/
+	/* 3. set mvbar */
+	ldr	r0, =MON_VBAR
+	mcr 	p15, 0, r0, c12, c0, 1
+	/* 4. set the mon stack for monitor mode */
+	ldr	r0, =MON_SMC_STACK_BASE
+	mov	r13, r0
+	/* 5. set the NS bit */
+	mrc 	p15, 0, r0, c1, c1, 0		/* read scr */
+	orr	r0, r0, #MASK_SCR_NS		/* set scr non-secure bit */
+	mcr 	p15, 0, r0, c1, c1, 0    	/* write CP15 scr with nonsecure bit enabled */
+	/* 6. set non-secure world page tables */
+	/* 6-1. set the TTBCR as 0 which means 
+	 *      enable page table walk with TTBR0
+	 */
+	ldr	r0, =0x00000000		
+	mcr 	p15, 0, r0, c2, c0, 2
+	/* 6-2. set TTBR0 with pgd start address */
+	ldr	r0, =KERN_PGD_START_BASE
+	mcr	p15, 0, r0, c2, c0, 0
+	isb
+#endif
+#if 0
+	/* read scr for test */
+	mrc 	p15, 0, r0, c1, c1, 0
+#endif
 
-	/*; Return to supervisor mode*/
+	/**/
+	/* set supervisor mode in non-secure world */
 	msr     CPSR_c, #MODE_SVC
 	b	start_kernel
 ;
