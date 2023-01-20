@@ -17,29 +17,43 @@
 */
 
 #ifdef __ASSEMBLY__
+/* memory map */
+.set KERNEL_FRAME_BITMAP,			0xC000 
+.set CONTEXT_MEM, 				0x00004000 /* cpu0 secure mode context memory address */
+.set CONTEXT_MEM_SP,				0x402C
+.set CONTEXT_MEM_END, 				0x00004038
+.set SEC_CONTEXT_MEM, 				0x00004200 /* cpu1 secure mode context memory address */
+.set SEC_CONTEXT_MEM_SP,			0x422C
+.set SEC_CONTEXT_MEM_END, 			0x00004238
+/* kernel*/
 .set KERNEL_CODE_BASE, 				0x100000
-.set USER_APP_BASE, 				0x1000000 /* user app base */
-.set USER_APP_GAP, 				0x100000  /* 1MB user app gap */
 .set KERNEL_END, 				0x300000
-.set SVC_STACK_BASE, 				0x314FFC /* 3M + 4KB*16 support 16 kernel threads */
-.set SYS_STACK_BASE, 				0x304FFC /* 3M + 4KB*5 */
-.set IRQ_STACK_BASE, 				0x303FFC /* 3M + 4KB*4 */
-.set FIQ_STACK_BASE, 				0x302FFC /* 3M + 4KB*3 */
-.set ABT_STACK_BASE, 				0x301FFC /* 3M + 4KB*2 */
-.set UNDEF_STACK_BASE, 				0x300FFC /* 3M + 4KB */
-.set SEC_SVC_STACK_BASE,			0x414FFC /* 4M + 4KB*16 support 16 kernel threads */
-.set SEC_SYS_STACK_BASE, 			0x404FFC /* 4M + 4KB*5 */
-.set SEC_IRQ_STACK_BASE, 			0x403FFC /* 4M + 4KB*4 */
-.set SEC_FIQ_STACK_BASE, 			0x402FFC /* 4M + 4KB*3 */
-.set SEC_ABT_STACK_BASE, 			0x401FFC /* 4M + 4KB*2 */
-.set SEC_UNDEF_STACK_BASE, 			0x400FFC /* 4M + 4KB */
-.set TASK_STACK_GAP, 				0x1000 /* 4k */
+/* CPU 0 secure mode stacks */
+.set SVC_STACK_BASE, 				0x314FFC /* 3M + 4KiB*21 support 16 kernel threads */
+.set SYS_STACK_BASE, 				0x304FFC /* 3M + 4KiB*5 */
+.set IRQ_STACK_BASE, 				0x303FFC /* 3M + 4KiB*4 */
+.set FIQ_STACK_BASE, 				0x302FFC /* 3M + 4KiB*3 */
+.set ABT_STACK_BASE, 				0x301FFC /* 3M + 4KiB*2 */
+.set UNDEF_STACK_BASE, 				0x300FFC /* 3M + 4KiB */
+/* blank for CPU 0 normal world stack */
+/* CPU 1 secure mode stacks */
+.set SEC_SVC_STACK_BASE,			0x354FFC
+.set SEC_SYS_STACK_BASE, 			0x344FFC
+.set SEC_IRQ_STACK_BASE, 			0x343FFC 
+.set SEC_FIQ_STACK_BASE, 			0x342FFC
+.set SEC_ABT_STACK_BASE, 			0x341FFC
+.set SEC_UNDEF_STACK_BASE, 			0x340FFC
+/* blank for CPU 1 normal world stack */
+.set KERN_PGD_START_BASE, 			0x400000 /* page directory base, size 16KiB aligned = 1 page directory * 4KEntries * 4B size */
+.set KERN_PGT_START_BASE, 			0x404000 /* page table base, size 4MiB = (1024 * 1024) entries * 4 */
+/* user app */
+.set USER_APP_BASE, 				0x1000000 /* user app base */
+/* ramdisk */
 .set RAMDISK_FS_BASE, 				0x3000000 /* 48M */
-.set KERN_PGT_START_BASE, 			0x41A000 /* page table base 4MB = 4K page tables * 256 entries * 4B size */
-.set KERN_PGD_START_BASE, 			0x00008000 /* page directory base at 16KB, size 16KB aligned = 1 page directory * 4KEntries * 4B size */
-.set KERNEL_FRAME_BITMAP,			0x415000 /* need 1 bitmap for 4MB kernel memory */
-.set KENEL_END,					0x800000
-.set USERTASK_START,				0x800000
+/* end of memory map */
+/* misc definitions */
+.set USER_APP_GAP, 				0x100000  /* 1MB user app gap */
+.set TASK_STACK_GAP, 				0x1000 /* 4k */
 .set MODE_SVC, 					0x13
 .set MODE_ABT, 					0x17
 .set MODE_UND, 					0x1b
@@ -49,50 +63,61 @@
 .set I_BIT, 					0x80
 .set F_BIT, 					0x40
 .set IF_BIT, 					0xC0
-.set CONTEXT_MEM, 				0x00004000
-.set CONTEXT_MEM_END, 				0x00004038
-.set SEC_CONTEXT_MEM, 				0x00006000
-.set SEC_CONTEXT_MEM_END, 			0x00006038
 .set CONTEXT_MEM_LEN, 				0xF
-/*.set SP_MEM, 0x4100*/
 #else
+/* memory map */
+#define KERNEL_FRAME_BITMAP			0xC000 
+#define CONTEXT_MEM 				0x00004000 /* cpu0 secure mode context memory address */
+#define CONTEXT_MEM_SP				0x402C
+#define CONTEXT_MEM_END				0x00004038
+#define SEC_CONTEXT_MEM				0x00004200 /* cpu1 secure mode context memory address */
+#define SEC_CONTEXT_MEM_SP			0x422C
+#define SEC_CONTEXT_MEM_END 			0x00004238
+/* kernel*/
+#define KERNEL_CODE_BASE			0x100000
+#define KERNEL_END 				0x300000
+/* CPU 0 secure mode stacks */
+#define SVC_STACK_BASE 				0x314FFC /* 3M + 4KiB*21 support 16 kernel threads */
+#define SYS_STACK_BASE 				0x304FFC /* 3M + 4KiB*5 */
+#define IRQ_STACK_BASE 				0x303FFC /* 3M + 4KiB*4 */
+#define FIQ_STACK_BASE 				0x302FFC /* 3M + 4KiB*3 */
+#define ABT_STACK_BASE 				0x301FFC /* 3M + 4KiB*2 */
+#define UNDEF_STACK_BASE			0x300FFC /* 3M + 4KiB */
+/* blank for CPU 0 normal world stack */
+/* CPU 1 secure mode stacks */
+#define SEC_SVC_STACK_BASE			0x354FFC
+#define SEC_SYS_STACK_BASE			0x344FFC
+#define SEC_IRQ_STACK_BASE 			0x343FFC 
+#define SEC_FIQ_STACK_BASE 			0x342FFC
+#define SEC_ABT_STACK_BASE 			0x341FFC
+#define SEC_UNDEF_STACK_BASE 			0x340FFC
+/* blank for CPU 1 normal world stack */
+#define KERN_PGD_START_BASE 			0x400000 /* page directory base, size 16KiB aligned = 1 page directory * 4KEntries * 4B size */
+#define KERN_PGT_START_BASE 			0x404000 /* page table base, size 4MiB = (1024 * 1024) entries * 4 */
+/* user app */
+#define USER_APP_BASE 				0x1000000 /* user app base */
+/* ramdisk */
+#define SCRATCH_BASE				0x02000000 /* 32M */
+#define RAMDISK_FS_BASE 			0x3000000 /* 48M */
+/* peripheral reg address */
+/* outstream device regs */
 #define ODEV_REG_CTRL				0x43c00000
 #define ODEV_REG_STATUS				0x43c00004
 #define ODEV_REG_ADDR				0x43c00008
 #define ODEV_REG_LEN				0x43c0000c
 #define ODEV_REG_LATENCY			0x43c00010
+/* modecore device regs */
 #define MODCORE_DMA_REG_CNTL			0x43c10000
 #define MODCORE_DMA_REG_STATUS			0x43c10004
 #define MODCORE_DMA_REG_SRC_ADDR		0x43c10008
 #define MODCORE_DMA_REG_LEN			0x43c1000c
 #define MODCORE_DMA_REG_DST_ADDR		0x43c10010
-//
-#define KERNEL_CODE_BASE			0x100000
-#define USER_APP_BASE 				0x1000000 /* user app base */
-#define USER_APP_GAP 				0x100000  /* 1MB user app gap */
-#define KERNEL_END 				0x300000
-#define SVC_STACK_BASE 				0x314FFC /* 3M + 4KB*16 support 16 kernel threads */
-#define SYS_STACK_BASE 				0x304FFC /* 3M + 4KB*5 */
-#define IRQ_STACK_BASE 				0x303FFC /* 3M + 4KB*4 */
-#define FIQ_STACK_BASE 				0x302FFC /* 3M + 4KB*3 */
-#define ABT_STACK_BASE 				0x301FFC /* 3M + 4KB*2 */
-#define UNDEF_STACK_BASE			0x300FFC /* 3M + 4KB */
-#define SEC_SVC_STACK_BASE 			0x414FFC /* 4M + 4KB*16 support 16 kernel threads */
-#define SEC_SYS_STACK_BASE 			0x404FFC /* 4M + 4KB*5 */
-#define SEC_IRQ_STACK_BASE 			0x403FFC /* 4M + 4KB*4 */
-#define SEC_FIQ_STACK_BASE 			0x402FFC /* 4M + 4KB*3 */
-#define SEC_ABT_STACK_BASE 			0x401FFC /* 4M + 4KB*2 */
-#define SEC_UNDEF_STACK_BASE			0x400FFC /* 4M + 4KB */
-#define TASK_STACK_GAP 				0x1000 /* 4k */
-#define RAMDISK_FS_BASE				0x03000000 /* 48M */
-#define SCRATCH_BASE				0x02000000 /* 32M */
-#define CONTEXT_MEM 				0x00004000
-#define SEC_CONTEXT_MEM 			0x00006000
-#define KERN_PGT_START_BASE 			0x41A000 /* page table base 4MB = 4K page tables * 256 entries * 4B size */
-#define KERN_PGD_START_BASE			0x00008000 /* page directory base16KB = 1 page directory * 4KEntries * 4B size */
-#define KERNEL_FRAME_BITMAP			0x315000 /* need 1 bitmap for 4MB kernel memory */
+/* end of memory map */
 
-#define USERTASK_START				0x800000
+/* misc definitions */
+#define TASK_STACK_GAP 				0x1000 /* 4k */
+#define USER_APP_GAP 				0x100000  /* 1MB user app gap */
+
 #define GB * (0x1 << 30)
 #define MB * (0x1 << 20)
 #define KB * (0x1 << 10)

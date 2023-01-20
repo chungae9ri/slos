@@ -45,16 +45,14 @@ exceptions:
 	b fiq_handler
 
 reset_handler:
-	/* read scr */
-	mrc 	p15, 0, r0, c1, c1, 0
-	 /*set VBAR (banked) with 0x100000 */
+	/*set VBAR (banked) with 0x100000 */
 	ldr	r0, =KERNEL_EXCEPTION_START
 	mcr	p15,0,r0,c12,c0,0 
 
 	 /*change to supervisor*/
 	msr	CPSR_c, #MODE_SVC | I_BIT | F_BIT
 	
-	/*; setup svc stack*/
+	/* setup svc stack*/
 	ldr	r0,=SVC_STACK_BASE
 	mov	r13, r0
 
@@ -63,27 +61,27 @@ reset_handler:
 	ldr 	r0,=UNDEF_STACK_BASE
 	mov     r13, r0
 
-	/*; Switch to abort mode and setup the abort mode stack*/
+	/* Switch to abort mode and setup the abort mode stack*/
 	msr     CPSR_c, #MODE_ABT | I_BIT | F_BIT
 	ldr	r0,=ABT_STACK_BASE
 	mov     r13, r0
 
-	/*; Switch to SYS mode and setup the SYS mode stack*/
+	/* Switch to SYS mode and setup the SYS mode stack*/
 	msr     CPSR_c, #MODE_SYS | I_BIT | F_BIT
 	ldr	r0,=SYS_STACK_BASE
 	mov     r13, r0
 
-	/*; Switch to IRQ mode and setup the IRQ mode stack*/
+	/* Switch to IRQ mode and setup the IRQ mode stack*/
 	msr     CPSR_c, #MODE_IRQ | I_BIT | F_BIT
 	ldr	r0,=IRQ_STACK_BASE
 	mov     r13, r0
 
-	/*; Switch to FIQ mode and setup the FIQ mode stack*/
+	/* Switch to FIQ mode and setup the FIQ mode stack*/
 	msr     CPSR_c, #MODE_FIQ | I_BIT | F_BIT
 	ldr	r0,=FIQ_STACK_BASE
 	mov     r13, r0
 
-	/*; Return to supervisor mode*/
+	/* Return to supervisor mode*/
 	msr     CPSR_c, #MODE_SVC
 	b	start_kernel
 ;
@@ -137,7 +135,7 @@ irq_handler:
 	stmfa	r12!, {r0-r11}
 	sub 	r0, lr, #4
 	msr	cpsr_c, #MODE_SVC | I_BIT | F_BIT  /* irq,fiq disabled */
-	mov	r12, #0x402C
+	mov	r12, #CONTEXT_MEM_SP
 	stmfa	r12!, {sp, lr}
 	/* r0 should be saved after storing sp, lr 
 	 * stmfa r12!, {sp, lr, r0} doesn't work.
