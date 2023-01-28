@@ -1,7 +1,7 @@
 # slos
 SLOS represents Simple Light OS. 
 This repository is for the source code of SLOS running in ARM processor. 
-It is tested in Cortex-A9 in Xilinx Zynq7000 chipset but seems to be expanded to other products.
+It is tested in Cortex-A9 in Xilinx Zynq7000 chipset (currently tested in coraz7 board) but seems to be expanded to other products.
 
 Implementation list 
 1. Process Management
