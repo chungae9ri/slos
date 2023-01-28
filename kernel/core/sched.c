@@ -151,23 +151,20 @@ struct task_struct *forkyi(char *name, task_entry fn, TASKTYPE type, uint32_t pr
 
 	/* CFS task priority should be one of 1 2 4 8 16 */
 	if (type == CFS_TASK) {
-		for (i = 0; i < CFS_PRI_NUM; i++) {
-			if (pri == (0x1 << i)) {
+		for (i = 0; i < CFS_PRI_NUM; i++)
+			if (pri == (0x1 << i))
 				break;
-			}
-		}
 
-		if (i == CFS_PRI_NUM) {
+		if (i == CFS_PRI_NUM)
 			return NULL;
-		} else {
+		else
 			pri_div_shift = i;
-		}
 	}
 
 #if _ENABLE_SMP_
 	this_first = __get_cpu_var(first);
 	this_last = __get_cpu_var(last);
-	pthis_task_created_num =(uint32_t *) __get_cpu_var_addr(task_created_num);
+	pthis_task_created_num = (uint32_t *) __get_cpu_var_addr(task_created_num);
 	this_current = __get_cpu_var(current);
 #else
 	this_first = first;
@@ -210,7 +207,7 @@ struct task_struct *forkyi(char *name, task_entry fn, TASKTYPE type, uint32_t pr
 	else 
 		pt->ct.sp = (uint32_t)(SEC_SVC_STACK_BASE - TASK_STACK_GAP * (*pthis_task_created_num));
 
-	asm ("mov %0, r14" : "+r" (lr) : : );
+	__asm __volatile("mov %[lr], r14" :[lr] "+r" (lr)::);
 	pt->ct.lr = (uint32_t)lr;
 	pt->ct.pc = (uint32_t)pt->entry;
 

@@ -117,8 +117,7 @@ void cfs_scheduler(uint32_t elapsed)
 	schedule();
 }
 
-void create_rt_timer(struct task_struct *rt_task, 
-		uint32_t msec, void *arg)
+void create_rt_timer(struct task_struct *rt_task, uint32_t msec, void *arg)
 {
 	struct timer_root *this_ptroot;
 	struct timer_struct *rt_timer = (struct timer_struct *)kmalloc(sizeof(struct timer_struct));
@@ -166,7 +165,8 @@ void init_oneshot_timers(void)
 }
 
 void create_oneshot_timer(struct task_struct *oneshot_task, 
-		uint32_t tc, void *arg)
+			  uint32_t tc, 
+			  void *arg)
 {
 	uint32_t *pthis_oneshot_timer_idx;
 	struct timer_root *this_ptroot;
@@ -191,12 +191,11 @@ void create_oneshot_timer(struct task_struct *oneshot_task,
 	 * not used in oneshot timer. 
 	 */
 	this_oneshot_timer[*pthis_oneshot_timer_idx].arg = arg;
-	insert_timer(this_ptroot, this_oneshot_timer);
+	insert_timer(this_ptroot, &this_oneshot_timer[*pthis_oneshot_timer_idx]);
 
 	(*pthis_oneshot_timer_idx)++;
-	if (*pthis_oneshot_timer_idx == MAX_ONESHOT_TIMER_NUM) {
+	if (*pthis_oneshot_timer_idx == MAX_ONESHOT_TIMER_NUM)
 		*pthis_oneshot_timer_idx = 0;
-	}
 }
 
 void create_sched_timer(struct task_struct *cfs_sched_task, 

@@ -71,8 +71,6 @@ struct task_struct* create_cfs_task(char *name, task_entry cfs_task, uint32_t pr
 	struct task_struct *task = NULL;
 	struct cfs_rq *this_runq = NULL;
 
-
-
 #if _ENABLE_SMP_
 	this_runq = __get_cpu_var(runq);
 #else
@@ -199,7 +197,6 @@ uint32_t oneshot_worker(void)
 	return ERR_NO;
 }
 
-
 uint32_t cfs_dummy(void )
 {
 	uint32_t cnt;
@@ -210,6 +207,20 @@ uint32_t cfs_dummy(void )
 		if (cnt > 1000000)
 			cnt = 0;
 		printk("dummy cfs worker cnt: 0x%x\n", cnt);
+		msleep(1000);
+	}
+}
+
+uint32_t cfs_dummy2(void )
+{
+	uint32_t cnt;
+
+	cnt = 0;
+	while (1) {
+		cnt++;
+		if (cnt > 1000000)
+			cnt = 0;
+		printk("dummy 2 cfs worker cnt: 0x%x\n", cnt);
 		msleep(1000);
 	}
 }
@@ -416,23 +427,17 @@ void create_workq_worker(void)
 	this_qworker->deq_idx = 0;
 
 	cpuid = smp_processor_id();
-	sprintk(worker_name, "workq_worker:%d", (int)cpuid); 
+	sprintk(worker_name, "workq_worker:%x", (int)cpuid); 
 	this_qworker->task = create_cfs_task(worker_name, workq_worker, 4);
 }
 
 void create_cfs_workers(void)
 {
-#if 1
-	/*create_cfs_task("cfs_worker1", cfs_dummy, 8);*/
-	/*create_cfs_task("cfs_worker2", cfs_dummy, 4);*/
+	create_cfs_task("cfs_worker1", cfs_dummy, 8);
+	create_cfs_task("cfs_worker2", cfs_dummy2, 4);
+	create_cfs_task("cfs_worker3", cfs_dummy, 4);
 	/*create_cfs_task("cfs_worker3", cfs_worker3, 8);*/
 	/*create_cfs_task("cfs_worker4", cfs_worker4, 4);*/
-#else
-	/*create_cfs_task("cfs_worker1", cfs_worker1, 8);*/
-	create_cfs_task("cfs_worker2", cfs_worker2, 4);
-	create_cfs_task("cfs_worker3", cfs_worker3, 8);
-	/*create_cfs_task("cfs_worker4", cfs_worker4, 4);*/
-#endif
 }
 
 void create_rt_workers(void)
