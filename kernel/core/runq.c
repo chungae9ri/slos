@@ -20,32 +20,8 @@
 
 extern void remove_from_wq(struct task_struct *p);
 
-void init_rq(void)
-{
-	struct task_struct *this_idle_task = NULL;
-	struct cfs_rq *this_runq = NULL;
-#if _ENABLE_SMP_
-	this_idle_task = __get_cpu_var(idle_task);
-	__get_cpu_var(runq) = (struct cfs_rq *)kmalloc(sizeof(struct cfs_rq));
-	this_runq = __get_cpu_var(runq);
-#else
-	this_idle_task = idle_task;
-	runq = this_runq = (struct cfs_rq *)kmalloc(sizeof(struct cfs_rq));
-#endif
-	this_runq->root = RB_ROOT;
-	this_runq->priority_sum = 0;
-	this_runq->rb_leftmost = &this_idle_task->se.run_node;
-	this_runq->cfs_task_num = 0;
-	this_runq->curr = this_runq->next = this_runq->last = NULL;
-	this_runq->root.rb_node = NULL;
-	
-	rb_init_node(&this_idle_task->se.run_node);
-	enqueue_se_to_runq(&this_idle_task->se);
-	this_runq->cfs_task_num++;
-}
-
 /* from lwn.net/Articles/184495 */
-void enqueue_se(struct sched_entity *se)
+static void enqueue_se(struct sched_entity *se)
 {
 	struct cfs_rq *this_runq = NULL;
 	struct rb_node **link, *parent=NULL;
@@ -88,6 +64,31 @@ void enqueue_se(struct sched_entity *se)
 	/* Put the new node there */
 	rb_link_node(&se->run_node, parent, link);
 	rb_insert_color(&se->run_node, &this_runq->root);
+}
+
+
+void init_rq(void)
+{
+	struct task_struct *this_idle_task = NULL;
+	struct cfs_rq *this_runq = NULL;
+#if _ENABLE_SMP_
+	this_idle_task = __get_cpu_var(idle_task);
+	__get_cpu_var(runq) = (struct cfs_rq *)kmalloc(sizeof(struct cfs_rq));
+	this_runq = __get_cpu_var(runq);
+#else
+	this_idle_task = idle_task;
+	runq = this_runq = (struct cfs_rq *)kmalloc(sizeof(struct cfs_rq));
+#endif
+	this_runq->root = RB_ROOT;
+	this_runq->priority_sum = 0;
+	this_runq->rb_leftmost = &this_idle_task->se.run_node;
+	this_runq->cfs_task_num = 0;
+	this_runq->curr = this_runq->next = this_runq->last = NULL;
+	this_runq->root.rb_node = NULL;
+	
+	rb_init_node(&this_idle_task->se.run_node);
+	enqueue_se_to_runq(&this_idle_task->se);
+	this_runq->cfs_task_num++;
 }
 
 void dequeue_se(struct sched_entity *se)
@@ -202,4 +203,3 @@ void update_se(uint32_t elapsed)
 	}
 #endif
 }
-

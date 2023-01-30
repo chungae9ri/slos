@@ -29,6 +29,38 @@
 #define MIN_TIME_INT 	(get_ticks_per_sec() >> 10)
 #define MSEC_MARGIN	(get_ticks_per_sec() >> 10)
 
+static void cfs_scheduler(uint32_t elapsed)
+{
+	update_se(elapsed);
+	schedule();
+}
+
+static void insert_timer(struct timer_root *ptr, struct timer_struct *pts)
+{
+	struct rb_node **link = &ptr->root.rb_node, *parent = NULL;
+	uint64_t value = pts->tc;
+	int leftmost = 1;
+
+	/* Go to the bottom of the tree */
+	while (*link) {
+		parent = *link;
+		struct timer_struct *entry = rb_entry(parent, struct timer_struct, run_node);
+		if (entry->tc > value)
+			link = &(*link)->rb_left;
+		else /* if (entry->tc<= value)*/ {
+			link = &(*link)->rb_right;
+			leftmost = 0;
+		}
+	}
+	/* Maintain a cache of leftmost tree entries */
+
+	if (leftmost)
+		ptr->rb_leftmost = &pts->run_node;
+	/* put the new node there */
+	rb_link_node(&pts->run_node, parent, link);
+	rb_insert_color(&pts->run_node, &ptr->root);
+}
+
 void init_timertree(void)
 {
 	struct timer_root *this_ptroot;
@@ -111,12 +143,6 @@ void update_timer_tree(uint32_t elapsed)
 	insert_timer(this_ptroot, pct);
 }
 
-void cfs_scheduler(uint32_t elapsed)
-{
-	update_se(elapsed);
-	schedule();
-}
-
 void create_rt_timer(struct task_struct *rt_task, uint32_t msec, void *arg)
 {
 	struct timer_root *this_ptroot;
@@ -164,9 +190,7 @@ void init_oneshot_timers(void)
 	}
 }
 
-void create_oneshot_timer(struct task_struct *oneshot_task, 
-			  uint32_t tc, 
-			  void *arg)
+void create_oneshot_timer(struct task_struct *oneshot_task, uint32_t tc, void *arg)
 {
 	uint32_t *pthis_oneshot_timer_idx;
 	struct timer_root *this_ptroot;
@@ -198,8 +222,7 @@ void create_oneshot_timer(struct task_struct *oneshot_task,
 		*pthis_oneshot_timer_idx = 0;
 }
 
-void create_sched_timer(struct task_struct *cfs_sched_task, 
-		uint32_t msec, void *arg)
+void create_sched_timer(struct task_struct *cfs_sched_task, uint32_t msec, void *arg)
 {
 	struct timer_struct *this_sched_timer = NULL;
 	struct timer_root *this_ptroot = NULL;
@@ -225,32 +248,6 @@ void create_sched_timer(struct task_struct *cfs_sched_task,
 	this_sched_timer->arg = arg;
 
 	insert_timer(this_ptroot, this_sched_timer);
-}
-
-void insert_timer(struct timer_root *ptr, struct timer_struct *pts)
-{
-	struct rb_node **link = &ptr->root.rb_node, *parent = NULL;
-	uint64_t value = pts->tc;
-	int leftmost = 1;
-
-	/* Go to the bottom of the tree */
-	while (*link) {
-		parent = *link;
-		struct timer_struct *entry = rb_entry(parent, struct timer_struct, run_node);
-		if (entry->tc > value)
-			link = &(*link)->rb_left;
-		else /* if (entry->tc<= value)*/ {
-			link = &(*link)->rb_right;
-			leftmost = 0;
-		}
-	}
-	/* Maintain a cache of leftmost tree entries */
-
-	if (leftmost)
-		ptr->rb_leftmost = &pts->run_node;
-	/* put the new node there */
-	rb_link_node(&pts->run_node, parent, link);
-	rb_insert_color(&pts->run_node, &ptr->root);
 }
 
 void del_timer(struct timer_root *ptr, struct timer_struct *pts)

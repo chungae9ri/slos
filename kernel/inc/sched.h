@@ -100,7 +100,6 @@ static inline struct task_struct *to_task_from_se(struct sched_entity *s)
 extern void do_switch_context(struct task_struct *, struct task_struct *);
 extern void switch_context_yield(struct task_struct *, struct task_struct *);
 void init_cfs_scheduler(void);
-void init_jiffies(void);
 struct task_struct *forkyi(char *name, task_entry fn, TASKTYPE type, uint32_t pri);
 void switch_context(struct task_struct *prev, struct task_struct *next);
 void schedule(void);

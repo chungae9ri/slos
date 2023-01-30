@@ -23,6 +23,15 @@
 #include <percpu.h>
 
 extern uint32_t smp_processor_id(void);
+static void init_jiffies(void)
+{
+#if _ENABLE_SMP_
+	__get_cpu_var(jiffies) = 0;
+#else
+	jiffies = 0;
+#endif
+}
+
 
 void init_cfs_scheduler(void)
 {
@@ -40,15 +49,6 @@ void init_cfs_scheduler(void)
 
 	create_sched_timer(this_current, 10, NULL);
 	init_jiffies();
-}
-
-void init_jiffies(void)
-{
-#if _ENABLE_SMP_
-	__get_cpu_var(jiffies) = 0;
-#else
-	jiffies = 0;
-#endif
 }
 
 #include <inttypes.h>

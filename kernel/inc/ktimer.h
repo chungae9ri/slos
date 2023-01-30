@@ -56,7 +56,6 @@ void create_rt_timer(struct task_struct *rt_task, uint32_t msec, void *arg);
 void create_oneshot_timer(struct task_struct *oneshot_task, uint32_t msec, void *arg);
 void init_timertree(void);
 void update_csd(void);
-void insert_timer(struct timer_root *ptr, struct timer_struct *pts);
 void del_timer(struct timer_root *ptr, struct timer_struct *pts);
 void sched_timer_handler(uint32_t elapsed);
 void update_timer_tree(uint32_t elapsed);

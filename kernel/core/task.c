@@ -33,6 +33,7 @@
 #include <timer.h>
 #include <rwbyte.h>
 #include <string.h>
+#include <dma.h>
 
 #define SVCSPSR 0x13 
 #define COPROC_SRC_ADDR		0x20000000
@@ -45,103 +46,33 @@ extern struct task_struct *upt[MAX_USR_TASK];
 extern void enable_interrupt(void);
 extern void disable_interrupt(void);
 
-struct task_struct* create_usr_cfs_task(char *name, 
-		task_entry cfs_task, 
-		uint32_t pri, 
-		uint32_t appIdx)
-{
-	struct cfs_rq *this_runq = NULL;
-
-#if _ENABLE_SMP_
-	this_runq = __get_cpu_var(runq);
-#else
-	this_runq = runq;
-#endif
-
-	upt[appIdx] = forkyi(name, (task_entry)cfs_task, CFS_TASK, pri);
-	rb_init_node(&(upt[appIdx]->se).run_node);
-	enqueue_se_to_runq(&(upt[appIdx]->se));
-	this_runq->cfs_task_num++;
-
-	return upt[appIdx];
-}
-
-struct task_struct* create_cfs_task(char *name, task_entry cfs_task, uint32_t pri)
-{
-	struct task_struct *task = NULL;
-	struct cfs_rq *this_runq = NULL;
-
-#if _ENABLE_SMP_
-	this_runq = __get_cpu_var(runq);
-#else
-	this_runq = runq;
-#endif
-
-	task = forkyi(name, (task_entry)cfs_task, CFS_TASK, pri);
-	rb_init_node(&task->se.run_node);
-	enqueue_se_to_runq(&task->se);
-	this_runq->cfs_task_num++;
-
-	return task;
-}
-
-struct task_struct* create_rt_task(char *name, task_entry handler, uint32_t msec)
-{
-	struct task_struct *task;
-
-	task= forkyi(name, (task_entry)handler, RT_TASK, 0);
-	task->timeinterval = msec;
-	task->state = TASK_RUNNING;
-
-	disable_interrupt();
-	create_rt_timer(task, msec, NULL);
-	enable_interrupt();
-
-	return task;
-}
-
-struct task_struct* create_oneshot_task(char *name, task_entry handler, uint32_t msec)
-{
-	struct task_struct *task= NULL;
-	uint32_t tc = 0;
-
-	task= forkyi(name, (task_entry)handler, ONESHOT_TASK, 0);
-	task->timeinterval = msec;
-	task->state = TASK_RUNNING;
-	tc = get_ticks_per_sec() / 1000 * msec;
-	create_oneshot_timer(task, tc, NULL);
-
-	return task;
-}
-
-uint32_t rt_worker2(void)
+static uint32_t oneshot_worker(void)
 {
 	int i, j = 0;
-	struct task_struct *this_current = NULL;
-#if _ENABLE_SMP_
-	this_current = __get_cpu_var(current);
-#else
-	this_current = current;
-#endif
 	while (1) {
-		/* do some real time work here */
-		this_current->done = 0;
-		if (show_stat) {
-			printk("I am rt worker2 j: 0x%x\n", j);
+		/* do some one time work here */
+#if 0
+		if (i == 0) {
+			set_dma_work(0x20000000, 0x30000000, 0x1000);
+			start_dma();
 		}
-		for (i = 0; i < 500; i++) {
+#endif
+
+		for (i = 0; i < 1000; i++) {
 			j++;
 		}
-
 		j = 0;
-		this_current->done = 1;
+
+		printk("I am oneshot_worker\n");
+
 		/* should yield after finish current work */
 		yield();
 	}
+
 	return ERR_NO;
 }
 
-uint32_t rt_worker1(void)
+static uint32_t rt_worker1(void)
 {
 	int i, j = 0;
 	struct task_struct *this_current = NULL;
@@ -169,35 +100,34 @@ uint32_t rt_worker1(void)
 	return ERR_NO;
 }
 
-#include <dma.h>
-
-uint32_t oneshot_worker(void)
+static uint32_t rt_worker2(void)
 {
 	int i, j = 0;
-	while (1) {
-		/* do some one time work here */
-#if 0
-		if (i == 0) {
-			set_dma_work(0x20000000, 0x30000000, 0x1000);
-			start_dma();
-		}
+	struct task_struct *this_current = NULL;
+#if _ENABLE_SMP_
+	this_current = __get_cpu_var(current);
+#else
+	this_current = current;
 #endif
-
-		for (i = 0; i < 1000; i++) {
+	while (1) {
+		/* do some real time work here */
+		this_current->done = 0;
+		if (show_stat) {
+			printk("I am rt worker2 j: 0x%x\n", j);
+		}
+		for (i = 0; i < 500; i++) {
 			j++;
 		}
+
 		j = 0;
-
-		printk("I am oneshot_worker\n");
-
+		this_current->done = 1;
 		/* should yield after finish current work */
 		yield();
 	}
-
 	return ERR_NO;
 }
 
-uint32_t cfs_dummy(void )
+static uint32_t cfs_dummy(void )
 {
 	uint32_t cnt;
 
@@ -211,7 +141,7 @@ uint32_t cfs_dummy(void )
 	}
 }
 
-uint32_t cfs_dummy2(void )
+static uint32_t cfs_dummy2(void )
 {
 	uint32_t cnt;
 
@@ -226,7 +156,7 @@ uint32_t cfs_dummy2(void )
 }
 
 #define TEST_KMALLOC_SZ 	1024 * 1024	
-uint32_t cfs_worker1(void )
+static uint32_t cfs_worker1(void )
 {
 	uint8_t *pc;
 	uint8_t t;
@@ -256,7 +186,7 @@ uint32_t cfs_worker1(void )
 
 #define FILE_TEST_LEN 1024	
 
-uint32_t cfs_worker2(void)
+static uint32_t cfs_worker2(void)
 {
 	char buf[FILE_TEST_LEN];
 	char temp[FILE_TEST_LEN];
@@ -331,7 +261,7 @@ uint32_t cfs_worker3(void )
 }
 #endif
 
-uint32_t workq_worker(void)
+static uint32_t workq_worker(void)
 {
 	uint32_t cpuid;
 	int i, j, enq_idx, deq_idx;
@@ -374,6 +304,89 @@ uint32_t workq_worker(void)
 	}
 
 	return ERR_NO;
+}
+
+static void create_cfs_workers(void)
+{
+	create_cfs_task("cfs_worker1", cfs_dummy, 8);
+	create_cfs_task("cfs_worker2", cfs_dummy2, 4);
+	create_cfs_task("cfs_worker3", cfs_dummy, 4);
+}
+
+static void create_rt_workers(void)
+{
+	create_rt_task("rt_worker1", rt_worker1, 120);
+	create_rt_task("rt_worker2", rt_worker2, 125);
+}
+
+struct task_struct* create_oneshot_task(char *name, task_entry handler, uint32_t msec)
+{
+	struct task_struct *task= NULL;
+	uint32_t tc = 0;
+
+	task= forkyi(name, (task_entry)handler, ONESHOT_TASK, 0);
+	task->timeinterval = msec;
+	task->state = TASK_RUNNING;
+	tc = get_ticks_per_sec() / 1000 * msec;
+	create_oneshot_timer(task, tc, NULL);
+
+	return task;
+}
+
+
+struct task_struct* create_usr_cfs_task(char *name, 
+		task_entry cfs_task, 
+		uint32_t pri, 
+		uint32_t appIdx)
+{
+	struct cfs_rq *this_runq = NULL;
+
+#if _ENABLE_SMP_
+	this_runq = __get_cpu_var(runq);
+#else
+	this_runq = runq;
+#endif
+
+	upt[appIdx] = forkyi(name, (task_entry)cfs_task, CFS_TASK, pri);
+	rb_init_node(&(upt[appIdx]->se).run_node);
+	enqueue_se_to_runq(&(upt[appIdx]->se));
+	this_runq->cfs_task_num++;
+
+	return upt[appIdx];
+}
+
+struct task_struct* create_cfs_task(char *name, task_entry cfs_task, uint32_t pri)
+{
+	struct task_struct *task = NULL;
+	struct cfs_rq *this_runq = NULL;
+
+#if _ENABLE_SMP_
+	this_runq = __get_cpu_var(runq);
+#else
+	this_runq = runq;
+#endif
+
+	task = forkyi(name, (task_entry)cfs_task, CFS_TASK, pri);
+	rb_init_node(&task->se.run_node);
+	enqueue_se_to_runq(&task->se);
+	this_runq->cfs_task_num++;
+
+	return task;
+}
+
+struct task_struct* create_rt_task(char *name, task_entry handler, uint32_t msec)
+{
+	struct task_struct *task;
+
+	task= forkyi(name, (task_entry)handler, RT_TASK, 0);
+	task->timeinterval = msec;
+	task->state = TASK_RUNNING;
+
+	disable_interrupt();
+	create_rt_timer(task, msec, NULL);
+	enable_interrupt();
+
+	return task;
 }
 
 void wakeup_workq_worker(void)
@@ -431,20 +444,7 @@ void create_workq_worker(void)
 	this_qworker->task = create_cfs_task(worker_name, workq_worker, 4);
 }
 
-void create_cfs_workers(void)
-{
-	create_cfs_task("cfs_worker1", cfs_dummy, 8);
-	create_cfs_task("cfs_worker2", cfs_dummy2, 4);
-	create_cfs_task("cfs_worker3", cfs_dummy, 4);
-	/*create_cfs_task("cfs_worker3", cfs_worker3, 8);*/
-	/*create_cfs_task("cfs_worker4", cfs_worker4, 4);*/
-}
 
-void create_rt_workers(void)
-{
-	create_rt_task("rt_worker1", rt_worker1, 120);
-	create_rt_task("rt_worker2", rt_worker2, 125);
-}
 #define CMD_LEN		32	
 
 

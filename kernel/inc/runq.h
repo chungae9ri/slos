@@ -35,7 +35,6 @@ extern void spin_lock_acquire(volatile uint32_t *pl);
 extern void spin_lock_release(volatile uint32_t *pl);
 
 void init_rq(void);
-void enqueue_se(struct sched_entity *se);
 void dequeue_se(struct sched_entity *se);
 void update_vruntime_runq(struct sched_entity *se);
 void update_se(uint32_t elapsed);
