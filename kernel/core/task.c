@@ -40,6 +40,7 @@
 #define COPROC_DST_ADDR		0x30000000
 #define COPROC_DAT_LEN		0x10000
 #define ICDSGIR			0xF8F01F00
+#define CMD_LEN			32	
 
 uint32_t show_stat = 0;
 extern struct task_struct *upt[MAX_USR_TASK];
@@ -155,29 +156,41 @@ static uint32_t cfs_dummy2(void )
 	}
 }
 
-#define TEST_KMALLOC_SZ 	1024 * 1024	
-static uint32_t cfs_worker1(void )
+#define TEST_KMALLOC_SZ 	4096 * 1024
+static uint32_t test_mem(void)
 {
 	uint8_t *pc;
-	uint8_t t;
 	int i;
 
-	printk("I am cfs_worker1....\n");
+	printk("I am %s worker\n", __func__);
 
 	pc = NULL;
 	while (1) {
-		if (show_stat) {
-			printk("cfs_worker1 is running....\n");
-		}
+		if (show_stat)
+			printk("%s is running....\n", __func__);
 
+		/* demanding pages */
 		pc = (uint8_t *)kmalloc(sizeof(uint8_t) * TEST_KMALLOC_SZ);
 		if (pc != NULL) {
-			for (i = 0; i < TEST_KMALLOC_SZ; i++) {
-				t = (uint8_t)(i % 256);
-				pc[i] = t;
-			}
+			/* write pattern */
+			for (i = 0; i < TEST_KMALLOC_SZ; i++)
+				pc[i] = (uint8_t)(i % 256);
+
+			/* check pattern */
+			for (i = 0; i < TEST_KMALLOC_SZ; i++)
+				if (pc[i] != (uint8_t)(i % 256)) {
+					printk("demaning page test fail, value: 0x%x at 0x%x\n", pc[i], i);
+					while (1);
+				}
+
+			/* reset memory */
+			printk("test mem pass\n");
+			for (i = 0; i < TEST_KMALLOC_SZ; i++)
+				pc[i] = 0x00;
+
+			/* free memory */
+			kfree((uint32_t)pc);
 		} 
-		kfree((uint32_t)pc);
 		pc = NULL;
 	}
 
@@ -445,8 +458,6 @@ void create_workq_worker(void)
 }
 
 
-#define CMD_LEN		32	
-
 
 void shell(void)
 {
@@ -483,10 +494,18 @@ void shell(void)
 
 		printk("\n");
 		if (cmdline[0] == '\0' || !strcmp(cmdline, "help")) {
-			printk("taskstat, whoami, hide whoami\n");
-			printk("cfs task, rt task, oneshot task\n");
-			printk("sleep, run, start dma \n");
-			printk("apprun, start cs, set cs\n");
+			printk("apprun             : run user application in the ramdisk\n");
+			printk("cfs task           : create and run test cfs tasks\n");
+			printk("oneshot task       : create and run test oneshot task\n");
+			printk("rt task            : create and run test rt tasks\n");
+			printk("run                : wakeup and run a task with pid\n");
+			printk("sgi                : generate sgi interrupt to cpu1\n");
+			printk("sleep              : sleep a task with pid\n");
+			printk("start cs           : start outstream consumer hw\n");
+			printk("start dma          : start dma task\n");
+			printk("taskstat           : show task statistics\n");
+			printk("test mem           : run memory test task\n");
+			printk("whoami, hide whoami: show or hide printing current task name\n");
 		} else if (!strcmp(cmdline, "taskstat")) {
 			print_task_stat(NULL);
 #if _ENABLE_SMP_
@@ -517,10 +536,10 @@ void shell(void)
 		} else if (!strcmp(cmdline, "oneshot task")) {
 			printk("add oneshottask \n");
 			create_oneshot_task("oneshot_task", oneshot_worker, 1000);
-		} else if (!strcmp(cmdline, "sleep")) {
-			printk("input task pid: ");
-			byte = inbyte();
-			outbyte(byte);
+		} else if (!strcmp(cmdline, "sleep")) { 
+			printk("input task pid: "); 
+			byte = inbyte(); 
+			outbyte(byte); 
 			outbyte('\n');
 			pid = byte - '0';
 #if _ENABLE_SMP_
@@ -584,6 +603,9 @@ void shell(void)
 			*(uint32_t *)(ICDSGIR) = sgir;
 		}
 #endif
+		else if (!strcmp(cmdline,"test mem")) {
+			create_cfs_task("test_mem", test_mem, 4);
+		}
 		else {
 			printk("I don't know.... ^^;\n");
 		}
