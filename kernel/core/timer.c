@@ -44,6 +44,7 @@ static void delay(uint32_t ticks)
 	this_idle_task = idle_task;
 #endif
 
+	dequeue_se_to_wq(&this_current->se);
 	create_oneshot_timer(this_current, ticks, NULL);
 	if (this_current->yield_task->state == TASK_WAITING)
 		this_current->yield_task = this_idle_task;
