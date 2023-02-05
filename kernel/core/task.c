@@ -128,7 +128,7 @@ static uint32_t rt_worker2(void)
 	return ERR_NO;
 }
 
-static uint32_t cfs_dummy(void )
+static uint32_t cfs_dummy1(void )
 {
 	uint32_t cnt;
 
@@ -137,7 +137,7 @@ static uint32_t cfs_dummy(void )
 		cnt++;
 		if (cnt > 1000000)
 			cnt = 0;
-		printk("dummy cfs worker cnt: 0x%x\n", cnt);
+		printk("dummy1 cfs worker cnt: 0x%x\n", cnt);
 		msleep(1000);
 	}
 }
@@ -152,6 +152,20 @@ static uint32_t cfs_dummy2(void )
 		if (cnt > 1000000)
 			cnt = 0;
 		printk("dummy 2 cfs worker cnt: 0x%x\n", cnt);
+		msleep(1000);
+	}
+}
+
+static uint32_t cfs_dummy3(void )
+{
+	uint32_t cnt;
+
+	cnt = 0;
+	while (1) {
+		cnt++;
+		if (cnt > 1000000)
+			cnt = 0;
+		printk("dummy 3 cfs worker cnt: 0x%x\n", cnt);
 		msleep(1000);
 	}
 }
@@ -321,9 +335,18 @@ static uint32_t workq_worker(void)
 
 static void create_cfs_workers(void)
 {
-	create_cfs_task("cfs_worker1", cfs_dummy, 8);
-	create_cfs_task("cfs_worker2", cfs_dummy2, 4);
-	create_cfs_task("cfs_worker3", cfs_dummy, 4);
+	static cfs_worker_num = 0;
+
+	if (cfs_worker_num == 0)
+		create_cfs_task("cfs_worker1", cfs_dummy1, 8);
+	else if (cfs_worker_num == 1)
+		create_cfs_task("cfs_worker2", cfs_dummy2, 4);
+	else if (cfs_worker_num == 2)
+		create_cfs_task("cfs_worker3", cfs_dummy3, 4);
+	else 
+		printk("cfs worker number limit\n");
+
+	cfs_worker_num++;
 }
 
 static void create_rt_workers(void)
