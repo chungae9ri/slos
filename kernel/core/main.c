@@ -25,7 +25,6 @@
 #include <runq.h>
 #include <waitq.h>
 #include <mm.h>
-#include <file_system.h>
 #include <loader.h>
 #include <dma.h>
 #include <odev.h>

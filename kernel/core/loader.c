@@ -15,14 +15,13 @@
   You should have received a copy of the GNU General Public License
   along with this program; if not, see <http://www.gnu.org/licenses/>
 */
-
+#if 0
 #include <stdint.h>
 #include <elf.h>
 #include <loader.h>
 #include <task.h>
 #include <mem_layout.h>
-#include <file_system.h>
-#include <file.h>
+#include <slfs.h>
 #include <printk.h>
 #include <string.h>
 
@@ -42,10 +41,10 @@ int32_t create_ramdisk_fs(void)
 		offset += 4;
 		psrc = (char *)(SCRATCH_BASE + offset);
 		sprintk(fname, "App_%u", (unsigned int)i);
-		fp = open_file(fname);
+		fp = get_slfs()->open(fname);
 		if (fp) {
-			write(fp, szApp, psrc);
-			close_file(fp);
+			get_slfs()->write(fp, szApp, psrc);
+			get_slfs()->close(fp);
 			fp = NULL;
 		} else {
 			return 1;
@@ -169,3 +168,4 @@ task_entry load_elf(char *elf_start, uint32_t idx)
 
 	return entry;
 }
+#endif

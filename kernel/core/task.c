@@ -24,7 +24,6 @@
 #include <defs.h>
 #include <ktimer.h>
 #include <printk.h>
-#include <file.h>
 #include <loader.h>
 #include <slos_error.h>
 #include <odev.h>
@@ -43,7 +42,9 @@
 #define CMD_LEN			32	
 
 uint32_t show_stat = 0;
+#ifdef FILE_SYSTEM
 extern struct task_struct *upt[MAX_USR_TASK];
+#endif
 extern void enable_interrupt(void);
 extern void disable_interrupt(void);
 
@@ -140,6 +141,8 @@ static uint32_t cfs_dummy1(void )
 		printk("dummy1 cfs worker cnt: 0x%x\n", cnt);
 		msleep(1000);
 	}
+
+	return 0;
 }
 
 static uint32_t cfs_dummy2(void )
@@ -154,6 +157,8 @@ static uint32_t cfs_dummy2(void )
 		printk("dummy 2 cfs worker cnt: 0x%x\n", cnt);
 		msleep(1000);
 	}
+
+	return 0;
 }
 
 static uint32_t cfs_dummy3(void )
@@ -168,6 +173,8 @@ static uint32_t cfs_dummy3(void )
 		printk("dummy 3 cfs worker cnt: 0x%x\n", cnt);
 		msleep(1000);
 	}
+
+	return 0;
 }
 
 #define TEST_KMALLOC_SZ 	4096 * 1024
@@ -211,6 +218,7 @@ static uint32_t test_mem(void)
 	return ERR_NO;
 }
 
+#ifdef FILE_SYSTEM
 #define FILE_TEST_LEN 1024	
 
 static uint32_t cfs_worker2(void)
@@ -256,6 +264,7 @@ static uint32_t cfs_worker2(void)
 	}
 	return ERR_NO;
 }
+#endif
 
 /* not used. shell cmd start dma does this. deprecated.*/
 #if 0 
@@ -335,7 +344,7 @@ static uint32_t workq_worker(void)
 
 static void create_cfs_workers(void)
 {
-	static cfs_worker_num = 0;
+	static int cfs_worker_num = 0;
 
 	if (cfs_worker_num == 0)
 		create_cfs_task("cfs_worker1", cfs_dummy1, 8);
@@ -369,7 +378,7 @@ struct task_struct* create_oneshot_task(char *name, task_entry handler, uint32_t
 	return task;
 }
 
-
+#ifdef FILE_SYSTEM
 struct task_struct* create_usr_cfs_task(char *name, 
 		task_entry cfs_task, 
 		uint32_t pri, 
@@ -390,6 +399,7 @@ struct task_struct* create_usr_cfs_task(char *name,
 
 	return upt[appIdx];
 }
+#endif
 
 struct task_struct* create_cfs_task(char *name, task_entry cfs_task, uint32_t pri)
 {
@@ -604,7 +614,7 @@ void shell(void)
 				printk("task 0x%x is not in runq\n", pid);
 			}
 		} else if (!strcmp(cmdline, "apprun")) {
-			load_ramdisk_app(0);
+			/*load_ramdisk_app(0);*/
 		} else if (!strcmp(cmdline,"start cs")) {
 			start_consumer();
 		} else if (!strcmp(cmdline, "stop cs")) {

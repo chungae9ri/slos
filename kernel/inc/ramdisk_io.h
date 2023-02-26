@@ -16,15 +16,27 @@
   along with this program; if not, see <http://www.gnu.org/licenses/>
 */
 
-#ifndef _RAMDISK_IO_
-#define _RAMDISK_IO_
+#ifndef _RAMDISK_IO_H_
+#define _RAMDISK_IO_H_
 
-#include <file_system.h>
+#include <stdint.h>
 
-#define RAMDISK_START		0x03000000  /* 48MB */
-#define RAMDISK_SIZE		0x400000 /* 4MB */
-#define TOTAL_BLK_NUM		(RAMDISK_SIZE / DATA_BLK_SIZE)
+#define RAMDISK_START		(0x03000000)  	/* 48MiB */
+#define RAMDISK_SIZE		(0x400000) 	/* 4MiB */
+#define RAMDISK_BLK_SIZE	(0x200)		/* 512B */
+#define RAMDISK_SECT_SIZE	(0x1000)	/* 4KiB */
+#define TOTAL_BLK_NUM		(RAMDISK_SIZE / RAMDISK_BLK_SIZE)
+#define TOTAL_SECT_NUM		(RAMDISK_SIZE / RAMDISK_SECT_SIZE)
 
-void write_ramdisk(int mem_blk_num, char *buf);
-void read_ramdisk(int mem_blk_num, char *buf);
+typedef bool (*flash_erase_chip)(void);
+typedef bool (*flash_erase_sector)(uint32_t sect);
+typedef bool (*flash_write_blk)(uint32_t blk, uint8_t *buf);
+typedef bool (*flash_read_blk)(uint32_t blk, uint8_t *buf);
+
+struct ramdisk_inf {
+	flash_erase_chip erase_chip;
+	flash_erase_sector erase_sector;
+	flash_write_blk write_blk;
+	flash_read_blk read_blk;
+};
 #endif
