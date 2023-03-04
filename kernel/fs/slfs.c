@@ -1,16 +1,81 @@
 #include <slfs.h>
 
-static bool slfs_load_superblock(void)
+#define SLFS_SUPER_BLK_START	RAMDISK_START
+#define SLFS_SUPER_BLK_SIZE	RAMDISK_SECT_SIZE
+
+#define SLFS_MAGIC_STR_LEN	16
+#define FNAME_LEN		32
+
+typedef struct {
+	uint32_t inode_idx;
+	uint32_t update_cnt;
+	uint32_t file_size;
+	uint32_t datablk_addr;
+	uint32_t file_id;
+	uint32_t reserved;
+	char name[FNAME_LEN];
+} slfs_inode_t;
+
+typedef struct {
+	char magic_string[SLFS_MAGIC_STR_LEN];
+	uint32_t superblk_start;
+	uint32_t inode_table_bmp_start;
+	uint32_t datablk_bmp_start;
+	uint32_t inode_table_start;
+	uint32_t datablk_start;
+	uint32_t storage_size;
+	uint32_t free_size;
+	uint32_t file_cnt;
+	uint32_t blk_size;
+	bool bmounted;
+} slfs_filesystem_t;
+
+static slfs_filesystem_t slfs_inst;
+static uint8_t superblk[SLFS_SUPER_BLK_SIZE];
+static const char magic_string[SLFS_MAGIC_STR_LEN] = "slfs filesystem";
+
+static bool load_superblock(void)
+{
+	uint32_t i = 0U;
+	uint32_t *pos = NULL;
+
+	pRxDesc->addr = SLFS_SUPER_BLK_START;
+	pRxDesc->len = SLFS_SUPER_BLK_SIZE;
+	pRxDesc->pdata = superblk;
+	Ret = read_ramdisk_blk();
+
+	for (i = 0; i < RAMDISK_SECT_SIZE / RAMDISK_BLK_SIZE; i++)
+		if (!read_ramdisk_blk(i, &superblk[i * RAMDISK_BLK_SIZE]))
+			return false;
+
+	for (i = 0; i < SLFS_MAGIC_STR_LEN; i++) {
+		if (superblk[i] != magic_str[i])
+			return false;
+
+		slfs_inst.magic_string[i] = superblk[i];
+	}
+
+	pPos = (uint32_t *)&superblk[MAGIC_STR_LEN];
+	slfs_inst.superblk_start = *pPos++;
+	slfs_inst.inode_table_bmp_start = *pPos++;
+	slfs_inst.datablk_bmp_start = *pPos++;
+	slfs_inst.inode_table_start = *pPos++;
+	slfs_inst.datablk_start = *pPos++;
+	slfs_inst.storage_size = *pPos++;
+	slfs_inst.free_size = *pPos++;
+	slfs_inst.file_cnt = *pPos++;
+	slfs_inst.blk_size = RAMDISK_BLK_SIZE;
+	slfs_inst.bmounted = true;
+
+	return true;
+}
+
+static bool init_metadata(void)
 {
 	return true;
 }
 
-static bool slfs_init_metadata(void)
-{
-	return true;
-}
-
-static bool slfs_update_fp(slfs_file_t *pf)
+static bool update_fp(slfs_file_t *pf)
 {
 	/* 1. load the metadata page */
 
@@ -26,7 +91,7 @@ static bool slfs_update_fp(slfs_file_t *pf)
 	return true;
 }
 
-static bool slfs_alloc_datablk(slfs_file_t *pf, uint32_t BytesWrite)
+static bool alloc_datablk(slfs_file_t *pf, uint32_t BytesWrite)
 {
 	/* 1. calculate blk needed based on fp->pos and BytesWrite.
 	 * 2. for all datablks check the tail 8bytes of current datablk, 
@@ -37,7 +102,7 @@ static bool slfs_alloc_datablk(slfs_file_t *pf, uint32_t BytesWrite)
 	return true;
 }
 
-static uint32_t slfs_traverse_datablk_list(slfs_file_t *pf,
+static uint32_t traverse_datablk_list(slfs_file_t *pf,
 		uint32_t DataBlkIdx,
 		uint32_t *pNewDataBlkIdx)
 {
@@ -55,7 +120,7 @@ static bool copy_flash_to_flash(uint32_t SrcAddr, uint32_t DstAddr, uint32_t Len
 	return true;
 }
 
-static bool slfs_delete_datablks(slfs_inode_t *piNode)
+static bool delete_datablks(slfs_inode_t *piNode)
 {
 	/* 1. go to the last datablk  
 	 * 2. traverse the datablk list from the last datablk,
@@ -64,7 +129,7 @@ static bool slfs_delete_datablks(slfs_inode_t *piNode)
 	return true;
 }
 
-static bool slfs_rw_page(uint32_t PageIdx, bool bWrite)
+static bool rw_page(uint32_t PageIdx, bool bWrite)
 {
 	/* 1. erase the temp page 
 	 * 2. write back current page to the temp page 
@@ -84,7 +149,7 @@ static bool slfs_rw_page(uint32_t PageIdx, bool bWrite)
 	return true;
 }
 
-static bool slfs_recover_page(uint32_t PageIdx)
+static bool recover_page(uint32_t PageIdx)
 {
 
 	/* 1. copy temp page into target page
@@ -95,17 +160,17 @@ static bool slfs_recover_page(uint32_t PageIdx)
 	return true;
 }
 
-static bool slfs_io_read(uint32_t Addr, uint32_t pData, uint32_t Len)
+static bool io_read(uint32_t Addr, uint32_t pData, uint32_t Len)
 {
 	return true;
 }
 
-static bool slfs_io_write(uint32_t Addr, uint32_t pData, uint32_t Len)
+static bool io_write(uint32_t Addr, uint32_t pData, uint32_t Len)
 {
 	return true;
 }
 
-static bool slfs_memcpy(void *pDst, void *pSrc, uint32_t Len)
+static bool memcpy(void *pDst, void *pSrc, uint32_t Len)
 {
 	return true;
 }
@@ -264,20 +329,4 @@ bool slfs_get_next_file(slfs_file_t *pf, uint32_t *piNodeLoc)
 bool slfs_close(slfs_file_t *pf)
 {
 	return true;
-}
-static slfs_ops_t slfs_inst = {
-	.mount = slfs_mount,
-	.umount = slfs_umount,
-	.format = slfs_format,
-	.open = slfs_open,
-	.seek = slfs_seek,
-	.write = slfs_write,
-	.read = slfs_read,
-	.close = slfs_close,
-	.delete = slfs_delete,
-	.get_next_file = slfs_get_next_file,
-};
-
-slfs_ops_t *get_slfs(void) {
-	return &slfs_inst;
 }

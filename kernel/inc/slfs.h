@@ -24,19 +24,15 @@ typedef enum {
 	SLFS_SEEK_END,
 } slfs_fseek_t;
 
-typedef struct {
-	void (*mount)(uint8_t *pdata);
-	void (*umount)(void);
-	void (*format)(void);
-	void (*open)(const uint8_t *name, slfs_file_t *pf);
-	void (*seek)(slfs_file_t *pf, uint32_t Offset, slfs_fseek_t whence);
-	void (*write)(slfs_file_t *pf, uint8_t *pbuf, uint32_t len);
-	void (*read)(slfs_file_t *pf, uint8_t *pbuf, uint32_t len); 
-	void (*close)(slfs_file_t *pf);
-	void (*delete)(slfs_file_t *pf);
-	void (*get_next_file)(slfs_file_t *pf, uint32_t *pinode_loc);
-} slfs_ops_t;
-
-slfs_ops_t *get_slfs(void);
+void slfs_mount(uint8_t *pdata);
+void slfs_umount(void);
+void slfs_format(void);
+void slfs_open(const uint8_t *name, slfs_file_t *pf);
+void slfs_seek(slfs_file_t *pf, uint32_t Offset, slfs_fseek_t whence);
+void slfs_write(slfs_file_t *pf, uint8_t *pbuf, uint32_t len);
+void slfs_read(slfs_file_t *pf, uint8_t *pbuf, uint32_t len); 
+void slfs_close(slfs_file_t *pf);
+void slfs_delete(slfs_file_t *pf);
+void slfs_get_next_file(slfs_file_t *pf, uint32_t *pinode_loc);
 
 #endif
