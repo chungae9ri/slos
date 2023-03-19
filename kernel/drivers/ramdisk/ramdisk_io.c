@@ -35,12 +35,12 @@ static bool erase_ramdisk_chip(void)
 	return true;
 }
 
-static bool erase_ramdisk_sector(uint32_t sect)
+static bool erase_ramdisk_sector(uint32_t sector)
 {
 	int i;
 
-	for (i = 0; i < RAMDISK_SECT_SIZE; i++)
-		((uint8_t *)(RAMDISK_START + sect * RAMDISK_SECT_SIZE))[i] = 0xFF; 
+	for (i = 0; i < RAMDISK_SECTOR_SIZE; i++)
+		((uint8_t *)(RAMDISK_START + sector * RAMDISK_SECTOR_SIZE))[i] = 0xFF; 
 
 	return true;
 }

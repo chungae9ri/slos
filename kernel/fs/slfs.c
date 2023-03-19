@@ -1,10 +1,31 @@
+/* COW (Copy On Write)
+ * open event flag: file size, datablk_addr
+ * close evet flag: inode_idx, update_cnt
+ */
+#include <ramdisk_io.h>
 #include <slfs.h>
 
 #define SLFS_SUPER_BLK_START	RAMDISK_START
-#define SLFS_SUPER_BLK_SIZE	RAMDISK_SECT_SIZE
 
 #define SLFS_MAGIC_STR_LEN	16
 #define FNAME_LEN		32
+#define MINUS_ONE		(0xFFFFFFFF)
+#define OFFSET_OF(st, m)	(uint32_t)(&(((st *)0)->m))
+
+#define SLFS_METADATA_SECTOR_IDX	0
+#define SLFS_DATABLK_TAIL_SIZE		8
+#define SLFS_DATABLK_PAYLOAD_SIZE	(RAMDISK_BLK_SIZE - SLFS_DATABLK_TAIL_SIZE)
+#define SLFS_DATABLK_TAIL_HI		(SLFS_DATABLK_PAYLOAD_SIZE)
+#define SLFS_DATABLK_TAIL_LOW		(SLFS_DATABLK_PAYLOAD_SIZE + 4)
+#define SLFS_DATABLK_SIZE	RAMDISK_BLK_SIZE
+#define SLFS_DATABLK_START	RAMDISK_SECTOR_SIZE
+#define SLFS_DATABLK_MAX_CNT	((RAMDISK_SIZE - RAMDISK_SECTOR_SIZE) >> 9)
+
+/* ramdisk layout */
+#define METADATA_SIZE		RAMDISK_SECTOR_SIZE
+
+
+static uint8_t page_load_data[RAMDISK_SECTOR_SIZE];
 
 typedef struct {
 	uint32_t inode_idx;
@@ -31,22 +52,16 @@ typedef struct {
 } slfs_filesystem_t;
 
 static slfs_filesystem_t slfs_inst;
-static uint8_t superblk[SLFS_SUPER_BLK_SIZE];
+static uint8_t superblk[SLFS_DATABLK_SIZE];
 static const char magic_string[SLFS_MAGIC_STR_LEN] = "slfs filesystem";
 
 static bool load_superblock(void)
 {
-	uint32_t i = 0U;
+	uint32_t i;
 	uint32_t *pos = NULL;
 
-	pRxDesc->addr = SLFS_SUPER_BLK_START;
-	pRxDesc->len = SLFS_SUPER_BLK_SIZE;
-	pRxDesc->pdata = superblk;
-	Ret = read_ramdisk_blk();
-
-	for (i = 0; i < RAMDISK_SECT_SIZE / RAMDISK_BLK_SIZE; i++)
-		if (!read_ramdisk_blk(i, &superblk[i * RAMDISK_BLK_SIZE]))
-			return false;
+	if (!read_ramdisk_blk(0, superblk))
+		return false;
 
 	for (i = 0; i < SLFS_MAGIC_STR_LEN; i++) {
 		if (superblk[i] != magic_str[i])
@@ -70,15 +85,49 @@ static bool load_superblock(void)
 	return true;
 }
 
-static bool init_metadata(void)
+static bool init_slfs_metadata(void)
 {
+	uint8_t *pos;
+	/* let's reuse superblk */
+	pos = superblk;
+	for (i = 0; i < SLFS_MAGIC_STR_LEN; i++) {
+		pos[i] = magic_string[i];
+	}
+
+	/* Superblock start address */
+	pos = (uint32_t *)(&superblk[MAGIC_STR_LEN]);
+	*pos++ = SLFS_SUPER_BLK_START;
+	/* iNode bitmap start address */
+	*pos++ = SLFS_INODE_BITMAP_START;
+	/* Datablock bitmap start address */
+	*pos++ = SLFS_DATABLK_BITMAP_START;
+	/* iNode table start address */
+	*pos++ = SLFS_INODE_TAB_START;
+	/* Datablock start address */
+	*pos++ = SLFS_DATA_START;
+	/* Data storage total size in bytes */
+	*pos++ = SLFS_DATABLK_PAYLOAD_SIZE * SLFS_DATABLK_MAX_CNT;
+	/* Data storage free size in bytes */
+	*pos++ = SLFS_DATABLK_PAYLOAD_SIZE * SLFS_DATABLK_MAX_CNT;
+	/* File count */
+	*pos = 0U;
+
+	for (i = 0; i < RAMDISK_SECT_SIZE / RAMDISK_BLK_SIZE; i++)
+		if (!write_ramdisk_blk(i, &superblk[i * RAMDISK_BLK_SIZE]))
+			return false;
 	return true;
 }
 
 static bool update_fp(slfs_file_t *pf)
 {
-	/* 1. load the metadata page */
+	uint32_t i;
+	slfs_inode_t *pinode;
 
+	/* 1. load the metadata page */
+	if (!rw_sector(SLFS_METADATA_SECTOR_IDX, false))
+		return false;
+
+	pinode = (slfs_inode_t *)(&page_load_data[SLFS_INODE_TAB_OFFSET]);
 	/* 2. for all inode in the metadata, if it is 
 	 *    a free file index, do allocate it to the 
 	 *    new file descriptor 
@@ -88,18 +137,122 @@ static bool update_fp(slfs_file_t *pf)
 	 *    dangled file, oudated file, deleted file or
 	 *    a valid file. 
 	 */
+	for (i = 0; i < SLFS_INODE_MAX_CNT; i++) {
+		if (pinode->datablk_addr == MINUS_ONE) {
+			pf->inode_idx = i;
+			pf->update_cnt++;
+			/* if pf->fd isn't MINUS_ONE, then current fd is 
+			 * kept through all subsequent allocation
+			 */
+			if (pf->fd == MINUS_ONE)
+				pf->fd = i;
+			break;
+		}
+		pinode++;
+	}
+
+	if (i == SLFS_INODE_MAX_CNT)
+		return false;
+
 	return true;
 }
 
-static bool alloc_datablk(slfs_file_t *pf, uint32_t BytesWrite)
+static bool alloc_datablk(slfs_file_t *pf, uint32_t len)
 {
-	/* 1. calculate blk needed based on fp->pos and BytesWrite.
+	/* 1. calculate blks needed based on fp->pos and BytesWrite.
 	 * 2. for all datablks check the tail 8bytes of current datablk, 
 	 *    if it shows a free blk (0xFFFFFFFF 0xFFFFFFFF), update the
 	 *    datablk linked list (prev, next) until the allocated
 	 *    datablk reached blk required
 	 */
+	uint32_t i;
+	uint32_t blks_needed;
+	uint32_t blks_alloced;
+	uint32_t datablk_addr;
+	uint32_t prev_datablk_addr;
+	uint32_t prev_prev_datablk_addr;
+	uint32_t next_datablk_addr;
+	uint32_t offset;
+	uint32_t addr;
+
+	if ((pf->pos + len) > pf->file_size) {
+		pf->file_size = pf->pos + len;
+	}
+	len = pf->file_size;
+	blks_needed = 0U;
+
+	while (0U < len) {
+		blks_needed++;
+		if (SLFS_DATABLK_PAYLOAD_SIZE < len)
+			len -= SLFS_DATABLK_PAYLOAD_SIZE;
+		else
+			break;
+	}
+
+	datablk_addr = SLFS_DATABLK_START;
+	blks_alloced = 0;
+	for (i = 0; i < SLFS_DATABLK_MAX_CNT; i++) {
+		if (!read_ramdisk(datablk_addr + SLFS_DATABLK_TAIL_HI, sizeof(uint32_t), &prev_datablk_addr))
+			goto DATABLK_ALLOC_FAIL;
+
+		if (!read_ramdisk(datablk_addr + SLFS_DATABLK_TAIL_LOW, sizeof(uint32_t), &next_datablk_addr))
+			goto DATABLK_ALLOC_FAIL;
+
+		if ((MINUS_ONE == prev_datablk_addr) && (MINUS_ONE == next_datablk_addr)) {
+			/* writing the file size and the first datablk addr into the inode
+			 * this ia an OPEN event of COW.
+			 */
+			if (blks_alloced == 0U) {
+				pf->datablk_addr = datablk_addr;
+				offset = OFFSET_OF(slfs_inode_t, file_size);
+				addr = SLFS_INODE_TAB_START + (pf->inode_idx * SLFS_INODE_SIZE) + offset;
+				if (!write_ramdisk(addr, sizeof(uint32_t), &pf->file_size))
+					goto DATABLK_ALLOC_FAIL;
+
+				offset = OFFSET_OF(slfs_inode_t, datablk_addr);
+				addr = SLFS_INODE_TAB_START + (pf->inode_idx * SLFS_INODE_SIZE) + offset;
+				if (!write_ramdisk(addr, sizeof(uint32_t), &datablk_addr))
+					goto DATABLK_ALLOC_FAIL;
+
+				prev_prev_datablk_addr = SLFS_INODE_TAB_START + (pf->inode_idx * sizeof(struct slfs_inode_t));
+				prev_datablk_addr = datablk_addr;
+			} else {
+				/* update prev datablk addr ptr */
+				addr = prev_datablk_addr + SLFS_DATABLK_TAIL_HI;
+				if (!write_ramdisk(addr, sizeof(uint32_t), &prev_prev_datablk_addr))
+					goto DATABLK_ALLOC_FAIL;
+
+				addr = prev_datablk_addr + SLFS_DATABLK_TAIL_LOW;
+				if (!write_ramdisk(addr, sizeof(uint32_t), &datablk_addr))
+					goto DATABLK_ALLOC_FAIL;
+
+				prev_prev_datablk_addr = prev_datablk_addr;
+				prev_datablk_addr = datablk_addr;
+			}
+			blks_alloced++;
+		}
+		if (blks_alloced == blks_needed) {
+			pf->alloced_blk_num = blks_alloced;
+			/* update the last datablk addr ptrs */
+			addr = datablk_addr + SLFS_DATABLK_TAIL_HI;
+			if (!write_ramdisk(addr, sizeof(uint32_t), &prev_prev_datablk_addr))
+					goto DATABLK_ALLOC_FAIL;
+
+			addr = datablk_addr + SLFS_DATABLK_TAIL_LOW;
+			prev_datablk_addr = 0;
+			if (!write_ramdisk(addr, sizeof(uint32_t), &prev_datablk_addr))
+					goto DATABLK_ALLOC_FAIL;
+		}
+		datablk_addr += SLFS_DATABLK_SIZE;
+	}
+
+	if ((i == SLFS_DATABLK_MAX_CNT) && (blks_alloced != blks_needed))
+		goto DATABLK_ALLOC_FAIL;
+
 	return true;
+
+DATABLK_ALLOC_FAIL:
+	return false;
 }
 
 static uint32_t traverse_datablk_list(slfs_file_t *pf,
@@ -129,7 +282,7 @@ static bool delete_datablks(slfs_inode_t *piNode)
 	return true;
 }
 
-static bool rw_page(uint32_t PageIdx, bool bWrite)
+static bool rw_sector(uint32_t sector_idx, bool bwrite)
 {
 	/* 1. erase the temp page 
 	 * 2. write back current page to the temp page 
