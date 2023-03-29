@@ -35,12 +35,12 @@ static bool erase_ramdisk_chip(void)
 	return true;
 }
 
-static bool erase_ramdisk_sector(uint32_t sector)
+static bool erase_ramdisk_page(uint32_t page)
 {
 	int i;
 
-	for (i = 0; i < RAMDISK_SECTOR_SIZE; i++)
-		((uint8_t *)(RAMDISK_START + sector * RAMDISK_SECTOR_SIZE))[i] = 0xFF; 
+	for (i = 0; i < RAMDISK_PAGE_SIZE; i++)
+		((uint8_t *)(RAMDISK_START + page * RAMDISK_PAGE_SIZE))[i] = 0xFF; 
 
 	return true;
 }
@@ -68,13 +68,10 @@ static bool write_ramdisk_blk(uint32_t blk, uint8_t *buf)
 static bool write_ramdisk(uint32_t addr, uint32_t len, uint8_t *buf)
 {
 	uint32_t i;
-	uint32_t offset;
+	uint32_t offset = addr;
 
-	if ((addr < RAMDISK_START) ||
-			((addr + len) > (RAMDISK_START + RAMDISK_SIZE))) 
+	if ((addr + len) > (RAMDISK_SIZE))
 		return false;
-
-	offset = addr - RAMDISK_START;
 
 	for (i = 0; i < len; i++)
 		((uint8_t *)(RAMDISK_START + offset))[i] = buf[i];
@@ -85,10 +82,9 @@ static bool write_ramdisk(uint32_t addr, uint32_t len, uint8_t *buf)
 static bool read_ramdisk(uint32_t addr, uint32_t len, uint8_t *buf)
 {
 	uint32_t i;
-	uint32_t offset;
+	uint32_t offset = addr;
 
-	if ((addr < RAMDISK_START) || 
-			((addr + len) > (RAMDISK_START + RAMDISK_SIZE))) 
+	if ((offset + len) > (RAMDISK_SIZE))
 		return false;
 
 	for (i = 0; i < len; i++)
@@ -99,7 +95,7 @@ static bool read_ramdisk(uint32_t addr, uint32_t len, uint8_t *buf)
 
 static const ramdisk_inf ramdisk_inf_inst = {
 	.erase_chip = erase_ramdisk_chip,
-	.erase_sector = erase_ramdisk_sector,
+	.erase_page = erase_ramdisk_page,
 	.write = write_ramdisk,
 	.read = read_ramdisk,
 	.write_blk = write_ramdisk_blk,

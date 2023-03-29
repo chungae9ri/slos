@@ -21,21 +21,23 @@
 
 #include <stdint.h>
 
-#define RAMDISK_START		(0x03000000)  	/* 48MiB */
-#define RAMDISK_SIZE		(0x400000) 	/* 4MiB */
-#define RAMDISK_BLK_SIZE	(0x200)		/* 512B */
-#define RAMDISK_SECTOR_SIZE	(0x1000)	/* 4KiB */
-#define TOTAL_BLK_NUM		(RAMDISK_SIZE / RAMDISK_BLK_SIZE)
-#define TOTAL_SECTOR_NUM	(RAMDISK_SIZE / RAMDISK_SECTOR_SIZE)
+#define RAMDISK_START			(0x03000000)  	/* 48MiB */
+#define RAMDISK_SIZE			(0x400000) 	/* 4MiB */
+#define RAMDISK_BLK_SIZE		(0x200)		/* 512B */
+#define RAMDISK_BLK_SIZE_SHIFT		(9)
+#define RAMDISK_PAGE_SIZE		(0x1000)	/* 4KiB */
+#define RAMDISK_PAGE_SIZE_SHIFT		(12)
+#define RAMDISK_BLK_NUM			(RAMDISK_SIZE / RAMDISK_BLK_SIZE)
+#define RAMDISK_PAGE_NUM		(RAMDISK_SIZE / RAMDISK_PAGE_SIZE)
 
 typedef bool (*flash_erase_chip)(void);
-typedef bool (*flash_erase_sector)(uint32_t sector);
+typedef bool (*flash_erase_page)(uint32_t page);
 typedef bool (*flash_write_blk)(uint32_t blk, uint8_t *buf);
 typedef bool (*flash_read_blk)(uint32_t blk, uint8_t *buf);
 
 struct ramdisk_inf {
 	flash_erase_chip erase_chip;
-	flash_erase_sector erase_sector;
+	flash_erase_page erase_page;
 	flash_write_blk write_blk;
 	flash_read_blk read_blk;
 };
