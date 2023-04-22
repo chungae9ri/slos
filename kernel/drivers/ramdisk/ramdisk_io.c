@@ -25,84 +25,80 @@
 
 #include <ramdisk_io.h>
 
-static bool erase_ramdisk_chip(void)
+static int erase_ramdisk_chip(void)
 {
 	int i;
 
 	for (i = 0; i < RAMDISK_SIZE; i++)
-		((uint8_t *)(RAMDISK_START)[i]) = 0xFF;
+		((uint8_t *)(RAMDISK_START))[i] = 0xFF;
 
-	return true;
+	return 0;
 }
 
-static bool erase_ramdisk_page(uint32_t page)
+static int erase_ramdisk_page(uint32_t page)
 {
 	int i;
 
 	for (i = 0; i < RAMDISK_PAGE_SIZE; i++)
 		((uint8_t *)(RAMDISK_START + page * RAMDISK_PAGE_SIZE))[i] = 0xFF; 
 
-	return true;
+	return 0;
 }
 
-static bool read_ramdisk_blk(uint32_t blk, uint8_t *buf)
+static int read_ramdisk_blk(uint32_t blk, uint8_t *buf)
 {
 	int i;
 
 	for (i = 0; i < RAMDISK_BLK_SIZE; i++)
 		buf[i] = ((uint8_t *)(RAMDISK_START + blk * RAMDISK_BLK_SIZE))[i];
 
-	return true;
+	return 0;
 }
 
-static bool write_ramdisk_blk(uint32_t blk, uint8_t *buf)
+static int write_ramdisk_blk(uint32_t blk, uint8_t *buf)
 {
 	int i;
 
 	for (i = 0; i < RAMDISK_BLK_SIZE; i++)
 		((uint8_t *)(RAMDISK_START + blk * RAMDISK_BLK_SIZE))[i] = buf[i];
 
-	return true;
+	return 0;
 }
 
-static bool write_ramdisk(uint32_t addr, uint32_t len, uint8_t *buf)
+static int write_ramdisk(uint32_t addr, uint32_t len, uint8_t *buf)
 {
 	uint32_t i;
 	uint32_t offset = addr;
 
 	if ((addr + len) > (RAMDISK_SIZE))
-		return false;
+		return -1;
 
 	for (i = 0; i < len; i++)
 		((uint8_t *)(RAMDISK_START + offset))[i] = buf[i];
 
-	return true;
+	return 0;
 }
 
-static bool read_ramdisk(uint32_t addr, uint32_t len, uint8_t *buf)
+static int read_ramdisk(uint32_t addr, uint32_t len, uint8_t *buf)
 {
 	uint32_t i;
 	uint32_t offset = addr;
 
 	if ((offset + len) > (RAMDISK_SIZE))
-		return false;
+		return -1;
 
 	for (i = 0; i < len; i++)
 		buf[i] = ((uint8_t *)(RAMDISK_START + offset))[i];
 
-	return true;
+	return 0;
 }
 
-static const ramdisk_inf ramdisk_inf_inst = {
+struct ramdisk_io_ops io_ops = {
 	.erase_chip = erase_ramdisk_chip,
 	.erase_page = erase_ramdisk_page,
 	.write = write_ramdisk,
 	.read = read_ramdisk,
 	.write_blk = write_ramdisk_blk,
-	.read_blk = read_ramdisk_blk
+	.read_blk = read_ramdisk_blk,
 };
 
-struct ramdisk_inf *get_ramdisk_inf(void)
-{
-	return &ramdisk_inf_inst;
-}

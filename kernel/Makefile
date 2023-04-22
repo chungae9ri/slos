@@ -13,7 +13,7 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program; if not, see <http://www.gnu.org/licenses/>
 
-KERNMODULES := core arm drivers/uart drivers/dma drivers/odev 
+KERNMODULES := core arm fs drivers/uart drivers/dma drivers/odev drivers/ramdisk
 KERNOUTDIR := $(addprefix ../out/kernel/,$(KERNMODULES)) 
 
 KERNCSRC := $(foreach sdir,$(KERNMODULES),$(wildcard $(sdir)/*.c))

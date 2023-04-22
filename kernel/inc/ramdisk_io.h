@@ -30,15 +30,21 @@
 #define RAMDISK_BLK_NUM			(RAMDISK_SIZE / RAMDISK_BLK_SIZE)
 #define RAMDISK_PAGE_NUM		(RAMDISK_SIZE / RAMDISK_PAGE_SIZE)
 
-typedef bool (*flash_erase_chip)(void);
-typedef bool (*flash_erase_page)(uint32_t page);
-typedef bool (*flash_write_blk)(uint32_t blk, uint8_t *buf);
-typedef bool (*flash_read_blk)(uint32_t blk, uint8_t *buf);
+typedef int (*flash_erase_chip)(void);
+typedef int (*flash_erase_page)(uint32_t page);
+typedef int (*flash_write)(uint32_t addr, uint32_t len, uint8_t *buf);
+typedef int (*flash_read)(uint32_t addr, uint32_t len, uint8_t *buf);
+typedef int (*flash_write_blk)(uint32_t blk, uint8_t *buf);
+typedef int (*flash_read_blk)(uint32_t blk, uint8_t *buf);
 
-struct ramdisk_inf {
+struct ramdisk_io_ops {
 	flash_erase_chip erase_chip;
 	flash_erase_page erase_page;
+	flash_write write;
+	flash_read read;
 	flash_write_blk write_blk;
 	flash_read_blk read_blk;
 };
+
+extern struct ramdisk_io_ops io_ops;
 #endif
