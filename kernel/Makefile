@@ -38,7 +38,7 @@ endef
 $(foreach bdir, $(KERNOUTDIR),$(eval $(call make-obj,$(bdir))))
 
 kernel: $(KERNOUTDIR) $(KERNCOBJ) $(KERNASMOBJ)
-	$(LD) -T $(LDS) -o $(TOPOUT)/kernel/kernel.elf $(KERNCOBJ) $(KERNASMOBJ) -Map=$(TOPOUT)/kernel/kernel.map -nostdlib
+	$(CC) -Wl,-T -Wl,$(LDS) -o $(TOPOUT)/kernel/kernel.elf $(KERNCOBJ) $(KERNASMOBJ) -Wl,-Map=$(TOPOUT)/kernel/kernel.map -nostdlib
 
 $(KERNOUTDIR):
 	mkdir -p $@
