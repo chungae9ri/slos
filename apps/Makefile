@@ -20,7 +20,7 @@ APPS := $(APPSOUT)/helloworld
 apps: mkdirs $(OBJS) 
 	$(LD) -o $(APPS) $(OBJS) -nostdlib -e main -L$(TOPOUT)/libslos -lslos -static
 	cp $(APPS) $(RAMDISKOUT)
-	$(RAMDISKOUT)/mkfs $(RAMDISKOUT)/ramdisk.img $(RAMDISKOUT)/apps
+	$(RAMDISKOUT)/mkfs $(RAMDISKOUT)/ramdisk.img $(RAMDISKOUT)/helloworld
 
 mkdirs:
 	mkdir -p $(APPSOUT)

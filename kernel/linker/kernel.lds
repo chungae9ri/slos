@@ -52,6 +52,12 @@ SECTIONS
 		*(.bss);
 	}
 
+	/* .rodata max size is 0x10000 (128KiB) */
+	. = 0xC0180000;
+	.rodata : AT(ADDR(.rodata) - 0xC0000000) {
+		*(.rodata);
+	}
+
 	. = 0xC01A0000;
 	.data.percpu : AT(ADDR(.data.percpu) - 0xC0000000) {
 		*(.data.percpu);
