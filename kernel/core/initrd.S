@@ -1,3 +1,3 @@
-	.section ".rodata", "a"
+	.section ".initrd", "a"
 
 	.incbin "../../out/ramdisk/ramdisk.img"

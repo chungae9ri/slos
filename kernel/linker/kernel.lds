@@ -52,10 +52,14 @@ SECTIONS
 		*(.bss);
 	}
 
-	/* .rodata max size is 0x10000 (128KiB) */
-	. = 0xC0180000;
 	.rodata : AT(ADDR(.rodata) - 0xC0000000) {
 		*(.rodata);
+	}
+
+	/* .initrd max size is 0x20000 (128KiB) */
+	. = 0xC0180000;
+	.initrd : AT(ADDR(.initrd) - 0xC0000000) {
+		*(.initrd);
 	}
 
 	. = 0xC01A0000;
