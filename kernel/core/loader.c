@@ -15,46 +15,53 @@
   You should have received a copy of the GNU General Public License
   along with this program; if not, see <http://www.gnu.org/licenses/>
 */
-#if 0
 #include <stdint.h>
+#include <printk.h>
+#include <slfs.h>
+#if 0
 #include <elf.h>
 #include <loader.h>
 #include <task.h>
 #include <mem_layout.h>
-#include <slfs.h>
-#include <printk.h>
 #include <string.h>
+#endif
+
+extern uint32_t RAMDISK_PHY_START;
 
 int32_t create_ramdisk_fs(void)
 {
-	char *psrc;
 	char fname[16];
-	uint32_t i, offset, appCnt, szApp;
-	struct file *fp;
+	uint32_t i; 
+	uint32_t offset;
+	uint32_t app_cnt;
+	uint32_t app_addr;
+	uint32_t app_len;
+	slfs_file_t fp;
+	int32_t ret;
 
 	offset = 0;
-	appCnt = *((uint32_t *)SCRATCH_BASE);
-	offset += 4;
+	app_cnt = *((uint32_t *)&RAMDISK_PHY_START);
+	offset += sizeof(uint32_t);
 
-	for (i = 0; i < appCnt; i++) {
-		szApp = *((volatile uint32_t *)(SCRATCH_BASE + offset));
-		offset += 4;
-		psrc = (char *)(SCRATCH_BASE + offset);
+	for (i = 0; i < app_cnt; i++) {
+		app_len = *((uint32_t *)((uint32_t)(&RAMDISK_PHY_START) + offset));
+		offset += sizeof(uint32_t);
+		app_addr = (uint32_t)(&RAMDISK_PHY_START) + offset;
+
 		sprintk(fname, "App_%u", (unsigned int)i);
-		fp = get_slfs()->open(fname);
-		if (fp) {
-			get_slfs()->write(fp, szApp, psrc);
-			get_slfs()->close(fp);
-			fp = NULL;
-		} else {
-			return 1;
-		}
-		offset += szApp;
+		ret = slfs_open((const uint8_t *)fname, &fp);
+		if (ret)
+			return ret;
+
+		slfs_write(&fp, (uint8_t *)app_addr, app_len);
+		slfs_close(&fp);
+		offset += app_len;
 	}
 
-	return 0;
+	return NO_ERR;
 }
 
+#if 0
 struct task_struct *upt[MAX_USR_TASK];
 char *exec = NULL;
 

@@ -31,6 +31,7 @@
 #include <percpu.h>
 #include <sgi.h>
 #include <mailbox.h>
+#include <slfs.h>
 
 extern uint32_t show_stat;
 extern void secondary_reset(void);
@@ -205,6 +206,11 @@ int start_kernel(void)
 	printk("### init_kernmem done.\n");
 	init_gic();
 	init_idletask();
+
+	/* let's first erase chip (initialize 0xFF) first */
+	io_ops.erase_chip();
+	slfs_mount();
+
 #if 0
 	init_file_system();
 	mount_file_system();
@@ -223,9 +229,9 @@ int start_kernel(void)
 	update_csd();
 	timer_enable();
 
-	/*
 	create_ramdisk_fs();
 	printk("### load user app to slfs.\n");
+	/*
 	init_dma();
 	 */
 

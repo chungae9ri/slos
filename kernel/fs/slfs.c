@@ -23,7 +23,9 @@ typedef struct {
 
 typedef struct {
 	char magic_string[SLFS_MAGIC_STR_LEN];
+	/* absolute address of ramdisk */
 	uint32_t superblk_start;
+	/* from this all offset address */
 	uint32_t inode_table_bmp_start;
 	uint32_t datablk_bmp_start;
 	uint32_t inode_table_start;
@@ -103,7 +105,7 @@ static int load_superblk(void)
 	uint32_t i;
 	uint8_t *pos = NULL;
 
-	if (!io_ops.read(SLFS_SUPER_BLK_START, SLFS_SUPERBLK_SIZE, (uint8_t*)&superblk))
+	if (!io_ops.read(SLFS_SUPER_BLK_START, sizeof(slfs_superblk_t), (uint8_t*)&superblk))
 		return -IO_ERR;
 
 	pos = (uint8_t *)&(superblk.magic_string[0]);
@@ -122,9 +124,9 @@ static int init_metadata(void)
 	uint32_t i;
 	uint32_t *pos;
 	uint8_t *str;
-	slfs_superblk_t loc_superblk;
+	slfs_superblk_t superblk;
 
-	str = (uint8_t *)(&loc_superblk);
+	str = (uint8_t *)(&superblk);
 	for (i = 0; i < SLFS_MAGIC_STR_LEN; i++) {
 		str[i] = magic_string[i];
 	}
@@ -147,7 +149,7 @@ static int init_metadata(void)
 	/* File count */
 	*pos = 0U;
 
-	if (!io_ops.write(SLFS_METADATA_START, SLFS_METADATA_SIZE, (uint8_t *)&loc_superblk))
+	if (!io_ops.write(SLFS_METADATA_START, sizeof(slfs_superblk_t), (uint8_t *)&superblk))
 		return -IO_ERR;
 
 	return NO_ERR;
@@ -685,13 +687,16 @@ int slfs_mount(void)
 	uint32_t i;
 	uint32_t garbage_page_idx;
 	uint32_t garbage_page_idx_prev;
+	uint32_t offset;
 	int ret;
 
-	/* 1. check the swap page tail 4bytes if there is a valid data in the swap page */
+	/* 1. recover broken page if any */
+	/* 1-1. check swap page tail */
 	if (io_ops.read(SLFS_SWAP_PAGE_TAIL_START, SLFS_SWAP_PAGE_TAIL_SIZE, tail_buf))
 		return -IO_ERR;
 
-	/* 1-1. if the tail 4bytes valid, metadata page update wasn't finished 
+	/* 1-2. first, check the metadata page validity.
+	 *      if swap page tail 4bytes are valid, metadata page update wasn't finished,
 	 *      try to recover it.
 	 */
 	if (((uint32_t *)tail_buf)[0] == SLFS_METADATA_PAGE_IDX) {
@@ -699,14 +704,19 @@ int slfs_mount(void)
 		if (ret)
 			return ret;
 	}
-	/* 1-2. check if there is any pending page update from garbage page 
+	/* 1-3. check if there is any pending page update from garbage page 
 	 * 	table in the metadata. only the last entry is the right page 
 	 * 	index that was stopped while being udpated. 
 	 */
 	else {
+		/* load the metadata page into the global page_load_data buffer */
+		if (rw_page(SLFS_METADATA_PAGE_IDX, false))
+			return -IO_ERR;
+
 		garbage_page_idx_prev = 0;
 		for (i = 0; i < SLFS_GARBAGE_PAGE_TAB_MAX_CNT; i++) {
-			garbage_page_idx = *((uint32_t *)(SLFS_GARBAGE_PAGE_TAB_START + (i * sizeof(uint32_t))));
+			offset = SLFS_GARBAGE_PAGE_TAB_START + (i * sizeof(uint32_t));
+			garbage_page_idx = ((uint32_t *)page_load_data)[offset >> 2];
 			if (MINUS_ONE == garbage_page_idx)
 				break;
 			else 
@@ -719,7 +729,10 @@ int slfs_mount(void)
 		}
 	}
 
-	/* 2. load the superblk */
+	/* 2. load superblk 
+	 * 2-1. load magic string to check there a valid slfs.
+	 */
+
 	if (io_ops.read(SLFS_SUPERBLK_START, SLFS_MAGIC_STR_LEN, magic_str_buf))
 		return -IO_ERR;
 
@@ -731,16 +744,16 @@ int slfs_mount(void)
 	 * signature string, it will be formatted. 
 	 */
 	if (i != SLFS_MAGIC_STR_LEN) {
-		/* 2-1. format if it doesn't have a magic string */
+		/* 2-2 format if it doesn't have a magic string */
 		ret = slfs_format();
 		if (ret)
 			return ret;
-		/* 2-2. init the metadata */
+		/* 2-3. init the metadata */
 		ret = init_metadata();
 		if (ret)
 			return ret;
 	}
-	/* 2-3. load superblk */
+	/* 2-4. load superblk */
 	ret = load_superblk();
 	if (ret)
 		return ret;
