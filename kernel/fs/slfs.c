@@ -785,12 +785,13 @@ int slfs_open(const uint8_t *pname, slfs_file_t *pf)
 	int32_t ret;
 	slfs_inode_t inode;
 	slfs_inode_t inode_last;
-	slfs_inode_t inode_first;
 
 	/* 1. check if there is already a file descriptor in the inode table,
 	 *    then record the first and latest inode having the same file name.
 	 *    the update_cnt can be considered as a timestamp of the inode
 	 */
+	bfirst_found = true;
+	inode_last.inode_idx = MINUS_ONE;
 	for (i = 0; i < SLFS_INODE_MAX_CNT; i++) {
 		if (io_ops.read(SLFS_INODE_TAB_START + i * sizeof(inode), sizeof(inode), (uint8_t *)&inode))
 			return -IO_ERR;
@@ -805,29 +806,20 @@ int slfs_open(const uint8_t *pname, slfs_file_t *pf)
 			}
 		}
 
-		bfirst_found = true;
 		if (bfound) {
 			if (bfirst_found) {
 				bfirst_found = false;
-				ret = slfs_memcpy(&inode_first, &inode, sizeof(inode));
-				if (ret)
-					return ret;
 				ret = slfs_memcpy(&inode_last, &inode, sizeof(inode));
 				if (ret)
 					return ret;
 			} else {
+				/* if current inode is newer than inode_last, update inode_last with current */
 				if (inode_last.update_cnt < inode.update_cnt) {
 					ret = slfs_memcpy(&inode_last, &inode, sizeof(inode));
 					if (ret)
 						return ret;
-				}
-				else {
-					ret = slfs_memcpy(&inode_first, &inode, sizeof(inode));
-					if (ret)
-						return ret;
-				}
+				} 
 			}
-			bfound = false;
 		}
 	}
 
@@ -835,7 +827,7 @@ int slfs_open(const uint8_t *pname, slfs_file_t *pf)
 	 *    copy the inode info to file descriptor
 	 */
 	if (inode_last.inode_idx != MINUS_ONE) {
-		pf->fd = inode_first.file_id;
+		pf->fd = inode_last.file_id;
 		pf->file_size = inode_last.file_size;
 		pf->pos = 0U;
 		pf->datablk_addr = inode_last.datablk_addr;
@@ -851,7 +843,7 @@ int slfs_open(const uint8_t *pname, slfs_file_t *pf)
 		if (ret)
 			return ret;
 	} else {
-		/* 3. if there is not a file created, lazy inode allocation. 
+		/* 3. if there is not a file created, do a lazy inode allocation. 
 		 *    if there is no inode entry, the inode is alloced only
 		 *    when the file write runs because of the COW implementation.
 		 */

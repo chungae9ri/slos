@@ -53,8 +53,13 @@ int32_t create_ramdisk_fs(void)
 		if (ret)
 			return ret;
 
-		slfs_write(&fp, (uint8_t *)app_addr, app_len);
-		slfs_close(&fp);
+		ret = slfs_write(&fp, (uint8_t *)app_addr, app_len);
+		if (ret)
+			return ret;
+
+		ret = slfs_close(&fp);
+		if (ret)
+			return ret;
 		offset += app_len;
 	}
 
