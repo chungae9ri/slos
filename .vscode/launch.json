@@ -1,0 +1,36 @@
+{
+    "configurations": [
+        {
+            "name": "C/C++: arm-none-eabi-gcc build and debug active file",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "/home/good4u/dotori/slos/out/kernel/kernel.elf",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "/home/good4u/dotori/slos",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable .gdbinit",
+                    "text": "-gdb-set startup-with-shell off",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Load .gdbinit",
+                    "text": "-environment-cd ${env:HOME}",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Execute .gdbinit",
+                    "text": "-interpreter-exec console \"source .gdbinit\"",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "Build",
+            "miDebuggerPath": "/home/good4u/bin/gcc-arm-none-eabi-10.3-2021.10/bin/arm-none-eabi-gdb"
+        }
+    ],
+    "version": "2.0.0"
+}
