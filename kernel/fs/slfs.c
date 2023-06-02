@@ -63,7 +63,7 @@ typedef struct {
 /* inode bitmap */
 #define SLFS_INODE_BITMAP_START		SLFS_SUPERBLK_SIZE
 #define SLFS_INODE_BITMAP_SIZE		(0x40U)
-/* datablk bitmap */
+/* datablk bitmap - is not used, deprecated */
 #define SLFS_DATABLK_BITMAP_START	(SLFS_INODE_BITMAP_START + SLFS_INODE_BITMAP_SIZE)
 #define SLFS_DATABLK_BITMAP_SIZE	(0x40U)
 /* inode table */
@@ -315,7 +315,8 @@ static int alloc_datablk(slfs_file_t *pf, uint32_t len)
 	uint32_t datablk_addr;
 	uint32_t prev_datablk_addr;
 	uint32_t prev_prev_datablk_addr;
-	uint32_t next_datablk_addr;
+	uint32_t next_datablk_addr_tail;
+	uint32_t prev_datablk_addr_tail;
 	uint32_t offset;
 	uint32_t addr;
 
@@ -347,14 +348,15 @@ static int alloc_datablk(slfs_file_t *pf, uint32_t len)
 	 */
 	datablk_addr = SLFS_DATABLK_START;
 	blks_alloced = 0;
+	/* TODO: change to use datablk bitmap */
 	for (i = 0; i < SLFS_DATABLK_MAX_CNT; i++) {
 		if (io_ops.read(datablk_addr + SLFS_DATABLK_TAIL_OFF_HI, SLFS_DATABLK_TAIL_SIZE, datablk_tail))
 			return -IO_ERR;
 
-		prev_datablk_addr = ((uint32_t *)datablk_tail)[0];
-		next_datablk_addr = ((uint32_t *)datablk_tail)[1];
+		prev_datablk_addr_tail = ((uint32_t *)datablk_tail)[0];
+		next_datablk_addr_tail = ((uint32_t *)datablk_tail)[1];
 
-		if ((MINUS_ONE == prev_datablk_addr) && (MINUS_ONE == next_datablk_addr)) {
+		if ((MINUS_ONE == prev_datablk_addr_tail) && (MINUS_ONE == next_datablk_addr_tail)) {
 			/* 3. if free datablk found, write the file size and the first datablk addr 
 			 *    into the inode. this ia an OPEN event of COW.
 			 */
@@ -907,13 +909,11 @@ int slfs_seek(slfs_file_t *pf, uint32_t offset, slfs_fseek_t whence)
 
 int slfs_write(slfs_file_t *pf, uint8_t *pbuf, uint32_t bytes_write)
 {
-
 	uint8_t data_buf[SLFS_DATABLK_SIZE];
 	uint32_t i;
 	uint32_t j;
 	uint32_t datablk_addr;
 	uint32_t buf_pos;
-	uint32_t padded_bytes_write;
 	uint32_t bytes_written;
 	uint32_t pos;
 	uint32_t datablk_addr_prev;
@@ -987,10 +987,10 @@ int slfs_write(slfs_file_t *pf, uint8_t *pbuf, uint32_t bytes_write)
 	inode.inode_idx = pf->inode_idx;
 	inode.file_id = pf->fd;
 	/* backup the file name */
-	slfs_memcpy(inode.name, pf->name, SLFS_FNAME_LEN);
+	slfs_memcpy(&inode.name, pf->name, SLFS_FNAME_LEN);
 	if (io_ops.write((SLFS_INODE_TAB_START + 
 			  pf->inode_idx * SLFS_INODE_SIZE),
-			  SLFS_FNAME_LEN,
+			  SLFS_INODE_SIZE,
 			  (uint8_t *)&inode))
 		return -IO_ERR;
 
@@ -1000,43 +1000,39 @@ int slfs_write(slfs_file_t *pf, uint8_t *pbuf, uint32_t bytes_write)
 	 *      the inode table
 	 */
 	if (file_size_prev == 0) {
-		/* 5-2. calc the padded byte data length */
-		padded_bytes_write = bytes_write;
-		if ((padded_bytes_write & ~DWD_MASK) != 0) {
-			padded_bytes_write &= DWD_MASK;
-			padded_bytes_write += SLFS_DATABLK_TAIL_SIZE;
-		}
 		datablk_addr = pf->datablk_addr;
 		buf_pos = 0;
-		while (padded_bytes_write > 0) {
-			/* 5-3. if current data size is still bigger than 
+		while (bytes_write > 0) {
+			/* 5-2. if current data size is still bigger than 
 			 *      one datablk size, flush one datablk size
 			 *      buffer data into the datablk
 			 */
-			if (padded_bytes_write > SLFS_DATABLK_PAYLOAD_SIZE) {
+			if (bytes_write > SLFS_DATABLK_PAYLOAD_SIZE) {
 				if (io_ops.write(datablk_addr,
-						 SLFS_DATABLK_PAYLOAD_SIZE,
-						 (uint8_t *)(&pbuf[buf_pos])))
+								 SLFS_DATABLK_PAYLOAD_SIZE,
+								 (uint8_t *)(&pbuf[buf_pos])))
 					return -IO_ERR;
 
-				padded_bytes_write -= SLFS_DATABLK_PAYLOAD_SIZE;
+				bytes_write -= SLFS_DATABLK_PAYLOAD_SIZE;
 				buf_pos += SLFS_DATABLK_PAYLOAD_SIZE;
 				/* update the ptr to next datablk in the linked list */
-				datablk_addr = *(uint32_t *)(datablk_addr + 
-						SLFS_DATABLK_TAIL_OFF_LOW);
+				if (io_ops.read(datablk_addr + SLFS_DATABLK_TAIL_OFF_LOW,
+								sizeof(uint32_t),
+								(uint8_t *)&datablk_addr))
+					return -IO_ERR;
 			}
-			/* 5-4. if current data size is less than one datablk size
+			/* 5-3. if current data size is less than one datablk size
 			 *      write it to the datablk with right handling of tail data
 			 */
 			else {
 				if (io_ops.write(datablk_addr,
-					         padded_bytes_write,
+					         bytes_write,
 						 (uint8_t *)(&pbuf[buf_pos])))
 					return -IO_ERR;
 
-				datablk_addr += padded_bytes_write;
-				buf_pos += padded_bytes_write;
-				padded_bytes_write = 0;
+				datablk_addr += bytes_write;
+				buf_pos += bytes_write;
+				bytes_write = 0;
 			}
 		}
 	}
@@ -1091,7 +1087,10 @@ int slfs_write(slfs_file_t *pf, uint8_t *pbuf, uint32_t bytes_write)
 			 *        file and current file
 			 */
 			datablk_addr_prev = *((uint32_t *)(datablk_addr_prev + SLFS_DATABLK_TAIL_OFF_LOW));
-			datablk_addr = *((uint32_t *)(datablk_addr + SLFS_DATABLK_TAIL_OFF_LOW));
+			if (io_ops.read(datablk_addr + SLFS_DATABLK_TAIL_OFF_LOW,
+							sizeof(uint32_t),
+							(uint8_t *)&datablk_addr))
+				return -IO_ERR;
 		}
 		/* 6-2. if there are still bytes to be written (file append) */
 		if (bytes_write > 0) {
@@ -1110,7 +1109,11 @@ int slfs_write(slfs_file_t *pf, uint8_t *pbuf, uint32_t bytes_write)
 				if (bytes_write == 0)
 					break;
 
-				datablk_addr = *((uint32_t *)(datablk_addr + SLFS_DATABLK_TAIL_OFF_LOW));
+				if (io_ops.read(datablk_addr + SLFS_DATABLK_TAIL_OFF_LOW,
+								sizeof(uint32_t),
+								(uint8_t *)&datablk_addr))
+					return -IO_ERR;
+
 				bytes_written += len;
 			}
 		}

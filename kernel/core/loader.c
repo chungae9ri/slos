@@ -48,7 +48,7 @@ int32_t create_ramdisk_fs(void)
 		offset += sizeof(uint32_t);
 		app_addr = (uint32_t)(&RAMDISK_PHY_START) + offset;
 
-		sprintk(fname, "App_%u", (unsigned int)i);
+		sprintk(fname, "App_%x", (unsigned int)i);
 		ret = slfs_open((const uint8_t *)fname, &fp);
 		if (ret)
 			return ret;
