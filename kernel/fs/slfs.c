@@ -2,6 +2,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <error.h>
 #include <ramdisk_io.h>
 #include <slfs.h>
 

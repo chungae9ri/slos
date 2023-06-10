@@ -211,13 +211,6 @@ int start_kernel(void)
 	io_ops.erase_chip();
 	slfs_mount();
 
-#if 0
-	init_file_system();
-	mount_file_system();
-	format_file_system();
-	printk("### mount slfs file system.\n");
-#endif
-
 	init_wq();
 	init_rq();
 	init_shell();

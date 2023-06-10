@@ -23,7 +23,6 @@
 #define MAX_USR_TASK	5
 
 int32_t create_ramdisk_fs(void);
-void load_ramdisk_app(uint32_t appIdx);
-task_entry load_elf (char *elf_start, uint32_t idx);
+int32_t load_ramdisk_app(uint32_t appIdx);
 void exit_elf(uint32_t idx);
 #endif

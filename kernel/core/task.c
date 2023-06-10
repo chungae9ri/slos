@@ -42,9 +42,7 @@
 #define CMD_LEN			32	
 
 uint32_t show_stat = 0;
-#ifdef FILE_SYSTEM
 extern struct task_struct *upt[MAX_USR_TASK];
-#endif
 extern void enable_interrupt(void);
 extern void disable_interrupt(void);
 
@@ -378,11 +376,10 @@ struct task_struct* create_oneshot_task(char *name, task_entry handler, uint32_t
 	return task;
 }
 
-#ifdef FILE_SYSTEM
-struct task_struct* create_usr_cfs_task(char *name, 
-		task_entry cfs_task, 
-		uint32_t pri, 
-		uint32_t appIdx)
+struct task_struct *create_usr_cfs_task(char *name,
+										task_entry cfs_task,
+										uint32_t pri,
+										uint32_t appIdx)
 {
 	struct cfs_rq *this_runq = NULL;
 
@@ -399,7 +396,6 @@ struct task_struct* create_usr_cfs_task(char *name,
 
 	return upt[appIdx];
 }
-#endif
 
 struct task_struct* create_cfs_task(char *name, task_entry cfs_task, uint32_t pri)
 {
