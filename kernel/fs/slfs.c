@@ -432,7 +432,7 @@ static int32_t get_datablk_num(slfs_file_t *pf, uint32_t *pdatablk_num)
 	datablk_num = 0;
 	cur_datablk_addr = pf->datablk_addr;
 	while (MINUS_ONE != cur_datablk_addr) {
-		if (!io_ops.read(cur_datablk_addr + SLFS_DATABLK_TAIL_OFF_LOW,
+		if (io_ops.read(cur_datablk_addr + SLFS_DATABLK_TAIL_OFF_LOW,
 				 sizeof(uint32_t),
 				 (uint8_t *)&cur_datablk_addr))
 			return -IO_ERR;
@@ -845,6 +845,7 @@ int slfs_open(const uint8_t *pname, slfs_file_t *pf)
 		ret = get_datablk_num(pf, &datablk_num);
 		if (ret)
 			return ret;
+		pf->allocedblk_num = datablk_num;
 	} else {
 		/* 3. if there is not a file created, do a lazy inode allocation. 
 		 *    if there is no inode entry, the inode is alloced only
@@ -982,11 +983,24 @@ int slfs_write(slfs_file_t *pf, uint8_t *pbuf, uint32_t bytes_write)
 		if (ret)
 			return ret;
 	}
+
 	/* 4. if there is enough space to alloc inode and datablks,
-	 *    write back the fp->name, inode_idx, file_id to the new alloc-ed inode
+	 *    write back the file_size (Open evt), fp->name, inode_idx, 
+	 *    file_id to the new alloc-ed inode
 	 */
+	/* 4-1. Open evt for fwrite */
+	inode.file_size = pf->file_size;
+	if (io_ops.write((SLFS_INODE_TAB_START + 
+			  pf->inode_idx * SLFS_INODE_SIZE),
+			  SLFS_INODE_SIZE,
+			  (uint8_t *)&inode))
+		return -IO_ERR;
+
+
+	/* 4-2. write other inode info */
 	inode.inode_idx = pf->inode_idx;
 	inode.file_id = pf->fd;
+	inode.datablk_addr = pf->datablk_addr;
 	/* backup the file name */
 	slfs_memcpy(&inode.name, pf->name, SLFS_FNAME_LEN);
 	if (io_ops.write((SLFS_INODE_TAB_START + 

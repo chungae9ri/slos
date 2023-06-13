@@ -159,12 +159,12 @@ int32_t load_ramdisk_app(uint32_t app_idx)
 			ret = slfs_read(&fp, (uint8_t *)&str_shdr, ehdr.e_shentsize);
 			if (ret)
 				return ret;
-			
+
 			string_tab = (uint8_t *)kmalloc(str_shdr.sh_size);
 			ret = slfs_seek(&fp, str_shdr.sh_offset, SLFS_SEEK_SET);
 			if (ret)
 				return ret;
-			
+
 			ret = slfs_read(&fp, string_tab, str_shdr.sh_size);
 			if (ret)
 				return ret;
@@ -184,7 +184,6 @@ int32_t load_ramdisk_app(uint32_t app_idx)
 					entry = (Elf32_Addr)(base_addr + syms[j].st_value);
 					break;
 				}
-
 			}
 			break;
 		}

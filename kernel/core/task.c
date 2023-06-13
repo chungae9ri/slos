@@ -379,7 +379,7 @@ struct task_struct* create_oneshot_task(char *name, task_entry handler, uint32_t
 struct task_struct *create_usr_cfs_task(char *name,
 										task_entry cfs_task,
 										uint32_t pri,
-										uint32_t appIdx)
+										uint32_t app_idx)
 {
 	struct cfs_rq *this_runq = NULL;
 
@@ -389,12 +389,12 @@ struct task_struct *create_usr_cfs_task(char *name,
 	this_runq = runq;
 #endif
 
-	upt[appIdx] = forkyi(name, (task_entry)cfs_task, CFS_TASK, pri);
-	rb_init_node(&(upt[appIdx]->se).run_node);
-	enqueue_se_to_runq(&(upt[appIdx]->se));
+	upt[app_idx] = forkyi(name, (task_entry)cfs_task, CFS_TASK, pri);
+	rb_init_node(&(upt[app_idx]->se).run_node);
+	enqueue_se_to_runq(&(upt[app_idx]->se));
 	this_runq->cfs_task_num++;
 
-	return upt[appIdx];
+	return upt[app_idx];
 }
 
 struct task_struct* create_cfs_task(char *name, task_entry cfs_task, uint32_t pri)
@@ -485,8 +485,6 @@ void create_workq_worker(void)
 	sprintk(worker_name, "workq_worker:%x", (int)cpuid); 
 	this_qworker->task = create_cfs_task(worker_name, workq_worker, 4);
 }
-
-
 
 void shell(void)
 {
@@ -610,7 +608,7 @@ void shell(void)
 				printk("task 0x%x is not in runq\n", pid);
 			}
 		} else if (!strcmp(cmdline, "apprun")) {
-			/*load_ramdisk_app(0);*/
+			load_ramdisk_app(0);
 		} else if (!strcmp(cmdline,"start cs")) {
 			start_consumer();
 		} else if (!strcmp(cmdline, "stop cs")) {
