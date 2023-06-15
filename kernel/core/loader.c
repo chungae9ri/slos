@@ -144,7 +144,7 @@ int32_t load_ramdisk_app(uint32_t app_idx)
 		ret = slfs_seek(&fp, offset, SLFS_SEEK_SET);
 		if (ret)
 			return ret;
-		
+
 		ret = slfs_read(&fp, (uint8_t *)&shdr, ehdr.e_shentsize);
 		if (ret)
 			return ret;

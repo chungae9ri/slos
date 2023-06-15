@@ -463,7 +463,7 @@ static int32_t get_datablk_addr(slfs_file_t *pf,
 
 	cur_datablk_addr = pf->datablk_addr;
 	while ((0U != datablk_idx) && (MINUS_ONE != cur_datablk_addr)) {
-		if (!io_ops.read(cur_datablk_addr + SLFS_DATABLK_TAIL_OFF_LOW,
+		if (io_ops.read(cur_datablk_addr + SLFS_DATABLK_TAIL_OFF_LOW,
 				 sizeof(uint32_t),
 				 (uint8_t *)&cur_datablk_addr))
 			return -IO_ERR;
@@ -1166,6 +1166,7 @@ int slfs_read(slfs_file_t *pf, uint8_t *pbuf, uint32_t bytes_read)
 		bytes_read = pf->file_size - pf->pos;
 
 	datablk_idx_pos = 0;
+	offset = pf->pos;
 	/* 1-1. find datablk index including pos */
 	while(offset > SLFS_DATABLK_PAYLOAD_SIZE) {
 		datablk_idx_pos++;
