@@ -22,8 +22,6 @@
 #include <timer.h>
 #include <sgi.h>
 
-#define SGI_IRQ_NUM	16
-
 uint32_t smp_processor_id();
 struct ihandler handler[NUM_IRQS];
 
@@ -69,7 +67,7 @@ void init_gic_dist(void)
 	for (i = 0; i < ext_irq_num; i += 4)
 		writel(cpumask, GIC_ICDIPTR8 + i); 
 
-	/* Disabling interrupts forwarding */
+	/* Disabling all interrupts forwarding */
 	writel(0x0000FFFF, GIC_ICDICER0);
 	writel(0xFFFFFFFF, GIC_ICDICER1);
 	writel(0xFFFFFFFF, GIC_ICDICER2);
@@ -84,10 +82,10 @@ void init_gic_dist(void)
 	/* enable TTC0 interrupt forwarding, not here */
 	/*writel(0x00001C00, GIC_ICDISER1);*/
 
-	/* enable GIC distributor, 
-	 * banked register 
+	/* enable GIC distributor to update intr register 
+	 * in both secure, non-secure interrupt singal occurrance
 	 */
-	writel(1, GIC_ICDDCR);
+	writel(0x3, GIC_ICDDCR);
 }
 
 void init_gic_cpu(void)
@@ -114,10 +112,16 @@ void init_gic(void)
 
 void init_gic_secondary(void)
 {
+	/* Disabling interrupt forwarding is already done
+	 * in init_gic_dist(), which should be done before
+	 * gic_mask_interrupt()
+	 */
+#if 0
 	/* Disabling interrupts forwarding */
 	writel(0x0000FFFF, GIC_ICDICER0);
 	writel(0xFFFFFFFF, GIC_ICDICER1);
 	writel(0xFFFFFFFF, GIC_ICDICER2);
+#endif
 
 	/* enable GIC distributor, 
 	 * banked register 
@@ -142,6 +146,7 @@ void init_gic_secondary(void)
 	 * writing 1 enables intr.
 	 * writing 0 has no effect. 
 	 * Enable all PPIs and SGI #15
+	 * Each SPI enable is set by calling gic_mask_interrupt
 	 */
 	writel(0xFFFF8000, GIC_ICDISER0);
 	/*writel(0xFFFFFFFF, GIC_ICDISER0);*/
@@ -166,7 +171,7 @@ uint32_t gic_irq_handler(void)
 
 	if (num >= NUM_IRQS) {
 		return 1;
-	} else if (num < SGI_IRQ_NUM) {
+	} else if (num < NUM_SGI) {
 		dat.cpuid = val & 0x1C00;
 		dat.num = num;
 	}
@@ -185,26 +190,28 @@ uint32_t gic_mask_interrupt(int vec)
 {
 	uint32_t cpuid, reg, bit, val, byte;
 
-	/* get current cpuid */
-	cpuid = smp_processor_id();
-	/* reprogram GIC_ICDIPTR */
-	reg = GIC_ICDIPTR0 + (uint32_t)(vec / 4) * 4;
-	byte = (uint32_t)(vec % 4);
-	val = readl(reg);
-	/* clear current cpuid in the byte */
-	val = val & (0xFFFFFFFF & (0x00 << (byte * 8)));
-	/* set the cpuid in the byte */
-	val = val | ((0x1 << cpuid) << (byte * 8));
-	writel(val, reg);
+	/* only SPI can be set with the target CPU */
+	if (vec >= SPI_BASE) {
+		/* get current cpuid */
+		cpuid = smp_processor_id();
+		/* reprogram GIC_ICDIPTR */
+		reg = GIC_ICDIPTR0 + (uint32_t)(vec / 4) * 4;
+		byte = (uint32_t)(vec % 4);
+		val = readl(reg);
+		/* clear current cpuid in the byte */
+		val = val & (0xFFFFFFFF & (0x00 << (byte * 8)));
+		/* set the cpuid in the byte */
+		val = val | ((0x1 << cpuid) << (byte * 8));
+		writel(val, reg);
+	}
 
-	/* banked register set-enable ICDISER0 */
+	/* register set-enable ICDISER0~2, only GIC_ICDISER0 is banked */
 	reg = GIC_ICDISER0 + (uint32_t)(vec / 32) * 4;
 	bit = 1 << (vec & 0x1F);
 
-	/* 
-	 * writing 1 enables intr
-	 * writing 0 has no effect 
-	 */
+	/* writing 1 enables intr */
+	val = readl(reg);
+	val |= bit;
 	writel(bit, reg);
 	return 0;
 }

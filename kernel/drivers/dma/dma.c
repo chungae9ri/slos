@@ -1,7 +1,7 @@
 /*
   kernel/drivers/dma.c dma coprocessor driver
   (C) 2018 Kwangdo Yi <kwangdo.yi@gmail.com>
- 
+
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation; either version 2 of the License, or
@@ -22,11 +22,11 @@
 #include <mm.h>
 #include <printk.h>
 
-#define MODCORE_DMA_BURST_LEN	0x1000
+#define MODCORE_DMA_BURST_LEN 0x1000
 
-struct dma_work_order *p_dma_work_order;
+static struct dma_work_order *p_dma_work_order;
 int bFirst;
-uint32_t enqueue_workq(void (*func)(void *), void *arg) ;
+uint32_t enqueue_workq(void (*func)(void *), void *arg);
 
 void init_dma(void)
 {
@@ -84,7 +84,7 @@ void set_dma_work(uint32_t src, uint32_t dst, uint32_t len)
 		ptemp->order_num = 0;
 		ptemp->src = src;
 		ptemp->dst = dst;
-		ptemp->len = MODCORE_DMA_BURST_LEN;
+		ptemp->len = len;
 		ptemp->next = NULL;
 
 		p_dma_work_order = ptemp;
@@ -123,12 +123,13 @@ int dma_irq (void *arg)
 {
 	uint32_t cntl;
 	if (p_dma_work_order) {
+		printk("enqueue next dma work\n");
 		enqueue_workq(start_dma, NULL);
 	} else {
 		cntl = readl(MODCORE_DMA_REG_CNTL);
 		cntl &= ~MODCORE_DMA_START;
 		writel(cntl, MODCORE_DMA_REG_CNTL);
-		/*printk("dma done!\n");*/
+		printk("dma done!\n");
 	}
 
 	cntl = readl(MODCORE_DMA_REG_CNTL);

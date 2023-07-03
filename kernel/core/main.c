@@ -181,7 +181,8 @@ int secondary_start_kernel(void)
 	enable_sgi_irq(0xF, sgi_irq);
 
 	/* odev device driver is running in the cpu1 */
-	init_odev();
+	/* FIXME: temp disabled */
+	/*init_odev();*/
 	create_workq_worker();
 	cpuidle_secondary();
 
@@ -224,9 +225,9 @@ int start_kernel(void)
 
 	create_ramdisk_fs();
 	printk("### load user app to slfs.\n");
-	/*
+
+	/* dma task is running in cpu0 */
 	init_dma();
-	 */
 
 	create_workq_worker();
 

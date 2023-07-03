@@ -174,7 +174,7 @@ begin
 	M_AXI_AWQOS	<= x"0";
 	M_AXI_AWVALID <= sig_axi_awvalid;
 	M_AXI_WDATA	<= sig_axi_wdata;
-	M_AXI_WSTRB	<= (others => '0'); --sig_axi_wstrb;	
+	M_AXI_WSTRB	<= sig_axi_wstrb;	
 	M_AXI_WLAST	<= sig_axi_wlast;
 	M_AXI_WVALID <= sig_axi_wvalid;
 	M_AXI_BREADY <= sig_axi_bready;	--Write Response (B)

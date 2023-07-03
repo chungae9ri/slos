@@ -62,12 +62,12 @@
 #define GIC_SPISTATUS0	XPS_SCU_PERIPH_BASE + 0x1D04
 #define GIC_SPISTATUS1	XPS_SCU_PERIPH_BASE + 0x1D08
 
-#define NUM_SGI			16
-#define NUM_PPI			16
-#define NUM_SPI			64
-#define NUM_IRQS	(NUM_SGI + NUM_PPI + NUM_SPI)
+#define NUM_SGI             16
+#define NUM_PPI             16
+#define SPI_BASE            (NUM_PPI + NUM_SGI)	
+#define NUM_SPI			    64
+#define NUM_IRQS	        (NUM_SGI + NUM_PPI + NUM_SPI)
 
-#define SPI_BASE	
 #define TTC0_TIMER0_INT		42
 #define TTC0_TIMER1_INT		43
 #define TTC0_TIMER2_INT		44
