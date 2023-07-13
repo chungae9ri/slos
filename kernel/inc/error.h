@@ -13,5 +13,6 @@
 #define LIST_BROKEN_ERR     9
 #define FILE_SIZE_ERR       10
 #define USER_APP_MAX_ERR    11
+#define ERR_ITAB_FULL		12
 
 #endif

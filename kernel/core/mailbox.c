@@ -27,6 +27,7 @@ void push_mail(enum letter_type letter)
 	 * set target cpuid
 	 */
 	cpuid = smp_processor_id();
+	spin_lock_acquire(&mailbox_lock);
 	if (cpuid == 0) {
 		pmailbox = &mailbox_1;
 	} else {
@@ -35,7 +36,6 @@ void push_mail(enum letter_type letter)
 
 	// blocking until the letter is read
 	while (1) {
-		spin_lock_acquire(&mailbox_lock);
 		if (pmailbox->status == READ) {
 			pmailbox->letter = letter;
 			pmailbox->status = NOT_READ;

@@ -21,9 +21,10 @@
 #include <gic.h>
 #include <timer.h>
 #include <sgi.h>
+#include <percpudef.h>
 
 uint32_t smp_processor_id();
-struct ihandler handler[NUM_IRQS];
+static struct ihandler handler[NR_CPUS][NUM_IRQS];
 
 void init_gic_dist(void)
 {
@@ -160,8 +161,10 @@ void gic_fiq(void)
 /*imsi for test uint32_t gic_irq(struct task_struct *frame)*/
 uint32_t gic_irq_handler(void)
 {
-	uint32_t ret = 0;
-	uint32_t num, val;
+	uint32_t ret;
+	uint32_t num;
+	uint32_t val;
+	uint32_t cpuid;
 	struct sgi_data dat = {0, 0};
 
 	/* ack the interrupt */
@@ -176,7 +179,9 @@ uint32_t gic_irq_handler(void)
 		dat.num = num;
 	}
 
-	ret = handler[num].func(&dat);
+	/* get current cpuid */
+	cpuid = smp_processor_id();
+	ret = handler[cpuid][num].func(&dat);
 	/* clear timer int(29U) status bit */
 	if (num == PRIV_TMR_INT_VEC) {
 		writel(1, PRIV_TMR_INTSTAT);
@@ -199,7 +204,7 @@ uint32_t gic_mask_interrupt(int vec)
 		byte = (uint32_t)(vec % 4);
 		val = readl(reg);
 		/* clear current cpuid in the byte */
-		val = val & (0xFFFFFFFF & (0x00 << (byte * 8)));
+		val = val & ~(0x000000FF << (byte * 8));
 		/* set the cpuid in the byte */
 		val = val | ((0x1 << cpuid) << (byte * 8));
 		writel(val, reg);
@@ -235,8 +240,15 @@ uint32_t gic_unmask_interrupt(int vec)
 
 void gic_register_int_handler(int vec, int_handler func, void *arg)
 {
-	handler[vec].func = func;
-	handler[vec].arg = arg;
+	uint32_t cpuid;
+
+	/* get current cpuid to register isr for
+	 * the corresponding cpu
+	 */
+	cpuid = smp_processor_id();
+
+	handler[cpuid][vec].func = func;
+	handler[cpuid][vec].arg = arg;
 }
 
 

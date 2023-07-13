@@ -25,7 +25,7 @@
 #include <ktimer.h>
 #include <printk.h>
 #include <loader.h>
-#include <slos_error.h>
+#include <error.h>
 #include <odev.h>
 #include <percpu.h>
 #include <mailbox.h>
@@ -34,12 +34,12 @@
 #include <string.h>
 #include <dma.h>
 
-#define SVCSPSR 0x13 
+#define SVCSPSR 			0x13 
 #define COPROC_SRC_ADDR		0x10000000
-#define COPROC_DAT_LEN		0x100
+#define COPROC_DAT_LEN		0x1000
 #define COPROC_DST_ADDR		(COPROC_SRC_ADDR + COPROC_DAT_LEN)
-#define ICDSGIR			0xF8F01F00
-#define CMD_LEN			32	
+#define ICDSGIR				0xF8F01F00
+#define CMD_LEN				32	
 
 uint32_t show_stat = 0;
 extern struct task_struct *upt[MAX_USR_TASK];
@@ -69,7 +69,7 @@ static uint32_t oneshot_worker(void)
 		yield();
 	}
 
-	return ERR_NO;
+	return NO_ERR;
 }
 
 static uint32_t rt_worker1(void)
@@ -97,7 +97,7 @@ static uint32_t rt_worker1(void)
 		/* should yield after finish current work */
 		yield();
 	}
-	return ERR_NO;
+	return NO_ERR;
 }
 
 static uint32_t rt_worker2(void)
@@ -124,7 +124,7 @@ static uint32_t rt_worker2(void)
 		/* should yield after finish current work */
 		yield();
 	}
-	return ERR_NO;
+	return NO_ERR;
 }
 
 static uint32_t cfs_dummy1(void )
@@ -140,7 +140,7 @@ static uint32_t cfs_dummy1(void )
 		msleep(1000);
 	}
 
-	return 0;
+	return NO_ERR;
 }
 
 static uint32_t cfs_dummy2(void )
@@ -156,7 +156,7 @@ static uint32_t cfs_dummy2(void )
 		msleep(1000);
 	}
 
-	return 0;
+	return NO_ERR;
 }
 
 static uint32_t cfs_dummy3(void )
@@ -172,7 +172,7 @@ static uint32_t cfs_dummy3(void )
 		msleep(1000);
 	}
 
-	return 0;
+	return NO_ERR;
 }
 
 #define TEST_KMALLOC_SZ 	4096 * 1024
@@ -213,7 +213,7 @@ static uint32_t test_mem(void)
 		pc = NULL;
 	}
 
-	return ERR_NO;
+	return NO_ERR;
 }
 
 #ifdef FILE_SYSTEM
@@ -260,7 +260,7 @@ static uint32_t cfs_worker2(void)
 			printk("cfs_worker2 running....\n");
 		}
 	}
-	return ERR_NO;
+	return NO_ERR;
 }
 #endif
 
@@ -291,7 +291,7 @@ uint32_t cfs_worker3(void )
 		}
 	}
 
-	return ERR_NO;
+	return NO_ERR;
 }
 #endif
 
@@ -337,7 +337,7 @@ static uint32_t workq_worker(void)
 		yield();
 	}
 
-	return ERR_NO;
+	return NO_ERR;
 }
 
 static void create_cfs_workers(void)
@@ -463,7 +463,7 @@ uint32_t enqueue_workq(void (*func)(void *), void *arg)
 		this_qworker->enq_idx++;
 	}
 
-	return ERR_NO;
+	return NO_ERR;
 }
 
 void create_workq_worker(void)

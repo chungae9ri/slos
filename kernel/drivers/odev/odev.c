@@ -1,5 +1,5 @@
 #include <stdint.h>
-#include <slos_error.h>
+#include <error.h>
 #include <odev.h>
 #include <regops.h>
 #include <mem_layout.h>
@@ -16,7 +16,7 @@ int32_t init_odev(void)
 	 */
 	gic_mask_interrupt(ODEV_IRQ_ID);
 
-	return ERR_NO;
+	return NO_ERR;
 }
 
 int32_t start_odev(void)
@@ -27,7 +27,7 @@ int32_t start_odev(void)
 	ctrl |= CTRL_GBL_START_MASK;
 	writel(ctrl, ODEV_REG_CTRL);
 
-	return ERR_NO;
+	return NO_ERR;
 }
 
 int32_t start_odev_stream(void)
@@ -38,7 +38,7 @@ int32_t start_odev_stream(void)
 	ctrl |= CTRL_OSTREAM_START_MASK;
 	writel(ctrl, ODEV_REG_CTRL);
 
-	return ERR_NO;
+	return NO_ERR;
 }
 
 int32_t stop_odev(void)
@@ -48,7 +48,7 @@ int32_t stop_odev(void)
 	ctrl = readl(ODEV_REG_CTRL);
 	ctrl &= ~CTRL_GBL_START_MASK;
 	writel(ctrl, ODEV_REG_CTRL);
-	return ERR_NO;
+	return NO_ERR;
 }
 
 int32_t stop_odev_stream(void)
@@ -59,7 +59,7 @@ int32_t stop_odev_stream(void)
 	ctrl &= ~CTRL_OSTREAM_START_MASK;
 	writel(ctrl, ODEV_REG_CTRL);
 
-	return ERR_NO;
+	return NO_ERR;
 }
 
 int32_t put_to_itab(uint32_t sAddr, uint32_t sLen)
@@ -69,7 +69,7 @@ int32_t put_to_itab(uint32_t sAddr, uint32_t sLen)
 	status = readl(ODEV_REG_STATUS);
 	/* ITAB is full, return error */
 	if (status & STAT_ITAB_FULL_MASK)
-		return ERR_ITAB_FULL;
+		return -ERR_ITAB_FULL;
 
 	writel(sAddr, ODEV_REG_ADDR);
 	writel(sLen, ODEV_REG_LEN);
@@ -87,9 +87,9 @@ int32_t put_to_itab(uint32_t sAddr, uint32_t sLen)
 			break;
 		}
 		ctrl = readl(ODEV_REG_CTRL);
-		/* if stop ODEV, then exit */
+		/* if ODEV stopped, then exit */
 		if (!(ctrl & CTRL_GBL_START_MASK))
-			return ERR_NO;
+			return NO_ERR;
 	}
 
 #else
@@ -97,7 +97,7 @@ int32_t put_to_itab(uint32_t sAddr, uint32_t sLen)
 		ctrl = readl(ODEV_REG_CTRL);
 		/* if stop ODEV, then exit */
 		if (!(ctrl & CTRL_GBL_START_MASK))
-			return ERR_NO;
+			return NO_ERR;
 	}
 #endif
 
@@ -107,7 +107,7 @@ int32_t put_to_itab(uint32_t sAddr, uint32_t sLen)
 	writel(ctrl, ODEV_REG_CTRL);
 	/*printk("ctrl after: 0x%x\n", ctrl);*/
 
-	return ERR_NO;
+	return NO_ERR;
 }
 
 extern uint32_t smp_processor_id(void);
@@ -126,14 +126,14 @@ int odev_irq(void *arg)
 	writel(cntl, ODEV_REG_CTRL);
 	printk("odev irq done from cpu: 0x%x!\n", cpuid);
 
-	return ERR_NO;
+	return NO_ERR;
 }
 
 int32_t set_consume_latency(uint32_t lat)
 {
 	writel(lat, ODEV_REG_LATENCY);
 
-	return ERR_NO;
+	return NO_ERR;
 }
 
 int32_t start_consumer(void)
@@ -145,7 +145,7 @@ int32_t start_consumer(void)
 	cntl |= CTRL_CONSUMER_START_MASK;
 	writel(cntl, ODEV_REG_CTRL);
 
-	return ERR_NO;
+	return NO_ERR;
 }
 
 int32_t stop_consumer(void)
@@ -160,7 +160,7 @@ int32_t stop_consumer(void)
 	writel(cntl, ODEV_REG_CTRL);
 	printk("odev consumer stops!\n");
 
-	return ERR_NO;
+	return NO_ERR;
 
 }
 
@@ -173,6 +173,7 @@ uint32_t run_odev_task(void)
 {
 	uint8_t *psrc;
 	uint32_t i;
+	int32_t ret;
 
 	psrc = (uint8_t *)O_STREAM_START;
 
@@ -182,33 +183,29 @@ uint32_t run_odev_task(void)
 		/* seq number starting from 1*/
 		((uint32_t *)((uint32_t)psrc + O_STREAM_BURST_SZ * i))[0] = i + 1;
 	}
-	// 
-	/*printk("start odev \n");*/
-	set_consume_latency(10000);
 
+	set_consume_latency(10000);
 	start_odev_stream();
 
 	i = 0;
+	
 	/* out stream forever */
 	for (;;) {
-		/*((uint32_t *)((uint32_t)psrc + O_STREAM_STEP * i))[0] = k++;*/
-		if (!put_to_itab(O_STREAM_START + O_STREAM_STEP * i, O_STREAM_STEP)) {
+		ret = put_to_itab(O_STREAM_START + O_STREAM_STEP * i, O_STREAM_STEP);
+		if (!ret) {
 			printk("put_to_itab: 0x%x\n", i);
-			/* spin for a while */
 			msleep(10);
 			i++;
-#if 0
-			/* make a sequence error */
-			if (i == O_STREAM_WRAP) {
-				*(uint32_t *)psrc = 0xFFFFFFFF;
-			}
-#endif
 
 			i = i % O_STREAM_WRAP;
-		} else {
+		}
+		else if (ret == -ERR_ITAB_FULL) {
 			msleep(100);
 		}
-		/*printk("i: 0x%x\n", i);*/
+		else {
+			printk("put_to_itab error ret=0x%x\n", ret);
+			break;
+		}
 	}
 
 	stop_consumer();
@@ -217,7 +214,7 @@ uint32_t run_odev_task(void)
 
 	/* spin forever */
 	while (1) ;
-	return ERR_NO;
+	return NO_ERR;
 
 }
 

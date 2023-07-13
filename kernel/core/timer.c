@@ -78,6 +78,7 @@ inline uint32_t timer_get_phy_tick_cnt(void)
 	return (uint32_t)readl(PRIV_TMR_CNTR);
 }
 
+/* banked cpu private timer: cpu0 */
 void timer_enable(void)
 {
 	int ctrl;
@@ -90,6 +91,7 @@ void timer_enable(void)
 	writel(ctrl, PRIV_TMR_CTRL);
 }
 
+/* banked cpu private timer: cpu1 */
 void timer_enable_secondary(void)
 {
 	uint32_t ctrl;
@@ -214,7 +216,7 @@ void set_ticks_per_sec(uint32_t tps)
 
 void init_timer(void)
 {
-	uint32_t tc = 0, cpuid = 0;
+	uint32_t tc = 0;
 	struct timer_struct *pct = NULL;
 	struct task_struct *this_current = NULL;
 	struct timer_root *this_ptroot = NULL; 
@@ -230,15 +232,11 @@ void init_timer(void)
 	pct->pt = this_current;
 	tc = pct->tc;
 	writel(tc, PRIV_TMR_LD);
-	/* register timer isr only from CPU 0.
-	 * This is becasue CPU 0 and CPU 1 share the 
-	 * same isr for its banked private timer intr.
-	 * timer_irq doesn't need to be banked per cpu.
-	 */
-	cpuid = smp_processor_id();
-	if (cpuid == 0)
-		gic_register_int_handler(PRIV_TMR_INT_VEC, timer_irq, NULL);
 
+	/* register timer isr for each corresponding cpu in
+	 * the gic_register_int_handler()
+	 */
+	gic_register_int_handler(PRIV_TMR_INT_VEC, timer_irq, NULL);
 	gic_mask_interrupt(PRIV_TMR_INT_VEC);
 }
 
