@@ -23,7 +23,7 @@ entity odev_v1_0 is
 	);
 	port (
 		-- Users to add ports here
-        SW_DMA_IRQ : out std_logic;
+        SW_ODEV_IRQ : out std_logic;
 		-- User ports ends
 		-- Do not modify the ports beyond this line
 
@@ -119,7 +119,7 @@ architecture arch_imp of odev_v1_0 is
 	signal sig_itab_in_trans_done: std_logic;
 	signal sig_consume_latency: std_logic_vector(C_M00_AXI_ADDR_WIDTH-1 downto 0);
 	signal sig_intr_done: std_logic;
-	signal sig_dma_irq: std_logic;
+	signal sig_odev_irq: std_logic;
 	signal sig_consumer_start: std_logic;
 	signal sig_seq_err: std_logic;
 	signal sig_s_seq_err: std_logic;
@@ -127,7 +127,7 @@ architecture arch_imp of odev_v1_0 is
 	
 --	attribute MARK_DEBUG : string;
 --	attribute MARK_DEBUG of sig_in_trans_valid : signal is "TRUE";
---	attribute MARK_DEBUG of sig_dma_irq : signal is "TRUE";
+--	attribute MARK_DEBUG of sig_odev_irq : signal is "TRUE";
 --	attribute MARK_DEBUG of sig_itab_empty: signal is "TRUE";
 --	attribute MARK_DEBUG of sig_rdbuff_empty: signal is "TRUE";
 	
@@ -453,24 +453,24 @@ odev_v1_0_M00_AXI_inst : odev_v1_0_M00_AXI
         DATA_SEQ_ERR => sig_dc_seq_err
     );
     
-    SW_DMA_IRQ <= sig_dma_irq;
+    SW_ODEV_IRQ <= sig_odev_irq;
     process (s00_axi_aclk)
     begin
         if (rising_edge(s00_axi_aclk)) then
             if (sig_stream_start = '1' AND sig_consumer_start = '1') then
                 if (sig_rdbuff_empty = '1' OR sig_seq_err = '1' OR sig_s_seq_err = '1' OR sig_dc_seq_err = '1') then -- only rdbuff empty is a hazard
-                    if (sig_dma_irq = '0') then 
-                        sig_dma_irq <= '1';
+                    if (sig_odev_irq = '0') then 
+                        sig_odev_irq <= '1';
                     elsif (sig_intr_done = '1') then
-                        sig_dma_irq <= '0';
+                        sig_odev_irq <= '0';
                     else
-                        sig_dma_irq <= sig_dma_irq;
+                        sig_odev_irq <= sig_odev_irq;
                     end if;
                 else 
-                    sig_dma_irq <= sig_dma_irq;
+                    sig_odev_irq <= sig_odev_irq;
                 end if;
             else
-                sig_dma_irq <= '0';
+                sig_odev_irq <= '0';
             end if;
         end if;
     end process;

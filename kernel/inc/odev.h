@@ -3,6 +3,13 @@
 
 #define O_STREAM_TASK_PRI	4
 
+/* CAUTION!
+ * O_STREAM_START address is used as the start address of
+ * sequence number check in the PL's slave AXI module.
+ * Currently it is hardcoded in both (PS and PL) and should
+ * be the same. When modify this, it also should be changed
+ * in the odev slave module's sig_seq_addr in multiple place.
+ */
 #define O_STREAM_START		0x18000000
 #define O_STREAM_BURST_SZ	0x00000040 /* 64B */
 #define O_STREAM_STEP		0x00000100 /* 256B */

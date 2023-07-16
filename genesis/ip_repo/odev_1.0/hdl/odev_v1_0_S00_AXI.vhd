@@ -565,7 +565,11 @@ begin
 							sig_after <= sig_before;
 							-- S_G_PULSE generation
 							slave_state <= WARMINGUP;
-							sig_seq_addr <= 16#38000000#;
+							-- odev start address is sequence check
+							-- start address. Currently it is hardcoded and
+							-- should be the same as the value in the PS kernel
+							-- odev task
+							sig_seq_addr <= 16#18000000#;
 							sig_seq_err_chk_out <= '0';
 						else
 							sig_trig_g_start <= '0';
@@ -593,10 +597,10 @@ begin
 								reg_status(STAT_TRANS_DONE_BIT) <= '0';
 								slave_state <= WRITING;
 								if (sig_seq_addr /= to_integer(unsigned(reg_addr))) then
-								    if (reg_addr /= x"3800_0000") then
+								    if (reg_addr /= x"1800_0000") then
 								        sig_seq_err_chk_out <= '1';
 							        else
-								        sig_seq_addr <= 16#38000100#;
+								        sig_seq_addr <= 16#18000100#;
 								    end if;
 							    else
 							        sig_seq_addr <= sig_seq_addr + 256;
