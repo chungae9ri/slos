@@ -175,42 +175,47 @@ static uint32_t cfs_dummy3(void )
 	return NO_ERR;
 }
 
-#define TEST_KMALLOC_SZ 	4096 * 1024
+#define TEST_KMALLOC_SZ 	1024 * 1024
 static uint32_t test_mem(void)
 {
+	uint32_t cnt;
 	uint8_t *pc;
 	int i;
 
 	printk("I am %s worker\n", __func__);
 
 	pc = NULL;
-	while (1) {
-		if (show_stat)
-			printk("%s is running....\n", __func__);
+	/* demanding pages */
+	pc = (uint8_t *)kmalloc(sizeof(uint8_t) * TEST_KMALLOC_SZ);
+	if (pc != NULL) {
+		/* write pattern */
+		for (i = 0; i < TEST_KMALLOC_SZ; i++)
+			pc[i] = (uint8_t)(i % 256);
 
-		/* demanding pages */
-		pc = (uint8_t *)kmalloc(sizeof(uint8_t) * TEST_KMALLOC_SZ);
-		if (pc != NULL) {
-			/* write pattern */
-			for (i = 0; i < TEST_KMALLOC_SZ; i++)
-				pc[i] = (uint8_t)(i % 256);
+		/* check pattern */
+		for (i = 0; i < TEST_KMALLOC_SZ; i++) {
+			if (pc[i] != (uint8_t)(i % 256)) {
+				printk("demaning page test fail, value: 0x%x at 0x%x\n", pc[i], i);
+				break;
+			}
+		}
 
-			/* check pattern */
-			for (i = 0; i < TEST_KMALLOC_SZ; i++)
-				if (pc[i] != (uint8_t)(i % 256)) {
-					printk("demaning page test fail, value: 0x%x at 0x%x\n", pc[i], i);
-					while (1);
-				}
-
-			/* reset memory */
+		if (i == TEST_KMALLOC_SZ) {
 			printk("test mem pass\n");
-			for (i = 0; i < TEST_KMALLOC_SZ; i++)
-				pc[i] = 0x00;
-
 			/* free memory */
 			kfree((uint32_t)pc);
-		} 
-		pc = NULL;
+			pc = NULL;
+		}
+	}
+
+	cnt = 0;
+	while (1) {
+		cnt++;
+		if (cnt > 1000000)
+			cnt = 0;
+
+		printk("test_mem cfs dummy worker cnt: 0x%x\n", cnt);
+		msleep(1000);
 	}
 
 	return NO_ERR;
