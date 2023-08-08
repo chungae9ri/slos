@@ -1,34 +1,34 @@
 #include <stdint.h>
+#include <stddef.h>
 
-static inline uint32_t strcmp(const char *l, const char *r) 
-{
-	uint32_t i;
+int printf(const char *fmt, ...);
 
-	i = 0;
-	while (l[i] != '\0') {
-		if (l[i] != r[i]) {
-			break;
-		}
-		i++;
-	}
+void __assert_func(const char *a1, int a2, const char *a3, const char *a4);
 
-	if (l[i] == '\0' && r[i] == '\0') {
-		return 0;
-	}
-	else {
-		return 1;
-	}
-}
+void *malloc(size_t sz);
 
-static inline void strcpy(char *dst, const char *src)
-{
-	uint32_t i;
+void free(void *ptr);
 
-	i = 0;
-	while (src[i] != '\0') {
-		dst[i] = src[i];
-		i++;
-	}
+size_t strlen (const char *s);
 
-	dst[i] = '\0';
-}
+uint32_t strcmp(const char *l, const char *r);
+
+void strcpy(char *dst, const char *src);
+
+void memset(void *block, int c, size_t sz);
+
+uint32_t memcmp(const void *s1, const void *s2, size_t len);
+
+char *strchr(const char *str, int c);
+
+uint32_t strcspn(const char *str, const char *reject);
+
+uint32_t strspn(const char *str, const char *accept);
+
+void *memcpy (void *dst, const void *src, size_t len);
+
+uint32_t __popcountsi2(uint32_t a);
+
+void __aeabi_uidiv(uint32_t n, uint32_t d);
+
+void __aeabi_uidivmod(uint32_t n, uint32_t d);

@@ -220,7 +220,6 @@ int start_kernel(void)
 	init_timer();
 	init_mailbox();
 	update_csd();
-	timer_enable();
 
 	create_ramdisk_fs();
 	printk("### load user app to slfs.\n");
@@ -234,6 +233,7 @@ int start_kernel(void)
 	printk("### start secondary cpu.\n");
 	start_cpu1();
 #endif
+	timer_enable();
 	cpuidle();
 
 	return 0;
