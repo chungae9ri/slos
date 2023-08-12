@@ -15,21 +15,22 @@
 
 KERNMODULES := core arm fs/slfs fs/littlefs libs drivers/uart drivers/dma drivers/odev drivers/ramdisk
 KERNOUTDIR := $(addprefix ../out/kernel/,$(KERNMODULES)) 
+KERNELDIR := $(shell pwd)
 
 KERNCSRC := $(foreach sdir,$(KERNMODULES),$(wildcard $(sdir)/*.c))
 KERNCOBJ := $(patsubst %.c,../out/kernel/%.o,$(KERNCSRC))
 KERNASMSRC := $(foreach sdir,$(KERNMODULES),$(wildcard $(sdir)/*.S))
 KERNASMOBJ := $(patsubst %.S,../out/kernel/%.o,$(KERNASMSRC))
 
-INC := -I$(TOPDIR)/libxil/include -I$(TOPDIR)/kernel/inc
-LDS :=$(TOPDIR)/kernel/linker/kernel.lds
+INC := -I$(KERNELDIR)/inc -I$(KERNELDIR)/fs/littlefs
+LDS :=$(KERNELDIR)/linker/kernel.lds
 
 vpath %.c $(KERNMODULES)
 vpath %.S $(KERNMODULES)
 
 define make-obj
 $1/%.o: %.c
-	$(CC) $(CFLAGS) $(INC) -o $$@ -c $$< -g -D_ENABLE_SMP_ -mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=softfp -Wall -fno-omit-frame-pointer -ffreestanding
+	$(CC) $(CFLAGS) $(INC) -o $$@ -c $$< -g -DLITTLEFS -D_ENABLE_SMP_ -mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=softfp -Wall -fno-omit-frame-pointer -ffreestanding
 
 $1/%.o: %.S
 	$(CC) $(INC) -o $$@ -c $$< -g -D_ENABLE_SMP_ -mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=softfp -Wall -fno-omit-frame-pointer -ffreestanding

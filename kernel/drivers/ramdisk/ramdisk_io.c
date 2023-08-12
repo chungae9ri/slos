@@ -23,7 +23,45 @@
  */
 
 
+#include <error.h>
 #include <ramdisk_io.h>
+
+#ifdef LITTLEFS
+#include <lfs.h>
+
+// Read a region in a block. Negative error codes are propagated
+// to the user.
+int lfs_read_ramdisk(const struct lfs_config *c, lfs_block_t block,
+					 lfs_off_t off, void *buffer, lfs_size_t size)
+{
+	return NO_ERR;
+}
+
+// Program a region in a block. The block must have previously
+// been erased. Negative error codes are propagated to the user.
+// May return LFS_ERR_CORRUPT if the block should be considered bad.
+int lfs_prog_ramdisk(const struct lfs_config *c, lfs_block_t block,
+					 lfs_off_t off, const void *buffer, lfs_size_t size)
+{
+	return NO_ERR;
+}
+
+// Erase a block. A block must be erased before being programmed.
+// The state of an erased block is undefined. Negative error codes
+// are propagated to the user.
+// May return LFS_ERR_CORRUPT if the block should be considered bad.
+int lfs_erase_ramdisk(const struct lfs_config *c, lfs_block_t block)
+{
+	return NO_ERR;
+}
+
+// Sync the state of the underlying block device. Negative error codes
+// are propagated to the user.
+int lfs_sync_ramdisk(const struct lfs_config *c)
+{
+	return NO_ERR;
+}
+#endif
 
 static int erase_ramdisk_chip(void)
 {
@@ -32,7 +70,7 @@ static int erase_ramdisk_chip(void)
 	for (i = 0; i < RAMDISK_SIZE; i++)
 		((uint8_t *)(RAMDISK_START))[i] = 0xFF;
 
-	return 0;
+	return NO_ERR;
 }
 
 static int erase_ramdisk_page(uint32_t page)
@@ -42,7 +80,7 @@ static int erase_ramdisk_page(uint32_t page)
 	for (i = 0; i < RAMDISK_PAGE_SIZE; i++)
 		((uint8_t *)(RAMDISK_START + page * RAMDISK_PAGE_SIZE))[i] = 0xFF; 
 
-	return 0;
+	return NO_ERR;
 }
 
 static int read_ramdisk_blk(uint32_t blk, uint8_t *buf)
@@ -52,7 +90,7 @@ static int read_ramdisk_blk(uint32_t blk, uint8_t *buf)
 	for (i = 0; i < RAMDISK_BLK_SIZE; i++)
 		buf[i] = ((uint8_t *)(RAMDISK_START + blk * RAMDISK_BLK_SIZE))[i];
 
-	return 0;
+	return NO_ERR;
 }
 
 static int write_ramdisk_blk(uint32_t blk, uint8_t *buf)
@@ -62,7 +100,7 @@ static int write_ramdisk_blk(uint32_t blk, uint8_t *buf)
 	for (i = 0; i < RAMDISK_BLK_SIZE; i++)
 		((uint8_t *)(RAMDISK_START + blk * RAMDISK_BLK_SIZE))[i] = buf[i];
 
-	return 0;
+	return NO_ERR;
 }
 
 static int write_ramdisk(uint32_t addr, uint32_t len, uint8_t *buf)
@@ -76,7 +114,7 @@ static int write_ramdisk(uint32_t addr, uint32_t len, uint8_t *buf)
 	for (i = 0; i < len; i++)
 		((uint8_t *)(RAMDISK_START + offset))[i] = buf[i];
 
-	return 0;
+	return NO_ERR;
 }
 
 static int read_ramdisk(uint32_t addr, uint32_t len, uint8_t *buf)
@@ -90,7 +128,7 @@ static int read_ramdisk(uint32_t addr, uint32_t len, uint8_t *buf)
 	for (i = 0; i < len; i++)
 		buf[i] = ((uint8_t *)(RAMDISK_START + offset))[i];
 
-	return 0;
+	return NO_ERR;
 }
 
 struct ramdisk_io_ops io_ops = {
@@ -101,4 +139,3 @@ struct ramdisk_io_ops io_ops = {
 	.write_blk = write_ramdisk_blk,
 	.read_blk = read_ramdisk_blk,
 };
-

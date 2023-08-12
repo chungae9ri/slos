@@ -6,12 +6,13 @@
 
 int printf(const char *fmt, ...)
 {
+    /* Not implemented */
     return 0;
 }
 
 void __assert_func(const char *a1, int a2, const char *a3, const char *a4)
 {
-
+    /* Not Implemented */
 }
 
 void *malloc(size_t sz)
