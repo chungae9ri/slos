@@ -32,18 +32,16 @@
 
 typedef int (*flash_erase_chip)(void);
 typedef int (*flash_erase_page)(uint32_t page);
-typedef int (*flash_write)(uint32_t addr, uint32_t len, uint8_t *buf);
+typedef int (*flash_erase_addr_len)(uint32_t addr, uint32_t len);
+typedef int (*flash_write)(uint32_t addr, uint32_t len, const uint8_t *buf);
 typedef int (*flash_read)(uint32_t addr, uint32_t len, uint8_t *buf);
-typedef int (*flash_write_blk)(uint32_t blk, uint8_t *buf);
-typedef int (*flash_read_blk)(uint32_t blk, uint8_t *buf);
 
 struct ramdisk_io_ops {
 	flash_erase_chip erase_chip;
 	flash_erase_page erase_page;
+  flash_erase_addr_len erase_addr_len;
 	flash_write write;
 	flash_read read;
-	flash_write_blk write_blk;
-	flash_read_blk read_blk;
 };
 
 extern struct ramdisk_io_ops io_ops;

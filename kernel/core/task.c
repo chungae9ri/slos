@@ -33,6 +33,7 @@
 #include <rwbyte.h>
 #include <string.h>
 #include <dma.h>
+#include <ramdisk_io.h>
 
 #define SVCSPSR 			0x13 
 #define COPROC_SRC_ADDR		0x10000000
@@ -45,6 +46,66 @@ uint32_t show_stat = 0;
 extern struct task_struct *upt[MAX_USR_TASK];
 extern void enable_interrupt(void);
 extern void disable_interrupt(void);
+
+#ifdef LITTLEFS
+#include <lfs.h>
+
+static struct lfs_config cfg;
+static lfs_t lfs;
+static lfs_file_t lfs_file;
+
+static int lfs_api_read(const struct lfs_config *c, lfs_block_t block,
+			lfs_off_t off, void *buffer, lfs_size_t size)
+{
+	size_t offset = block * c->block_size + off;
+
+	return io_ops.read(offset, size, buffer);
+}
+
+static int lfs_api_prog(const struct lfs_config *c, lfs_block_t block,
+			lfs_off_t off, const void *buffer, lfs_size_t size)
+{
+	size_t offset = block * c->block_size + off;
+
+	return io_ops.write(offset, size, buffer);
+}
+
+static int lfs_api_erase(const struct lfs_config *c, lfs_block_t block)
+{
+	return io_ops.erase_page(block);
+}
+
+int littlefs_task(void)
+{
+	int32_t ret;
+
+	cfg.read_size = 1;
+	cfg.prog_size = 1;
+	cfg.block_size = RAMDISK_PAGE_SIZE;
+	cfg.block_count = RAMDISK_PAGE_NUM;
+	cfg.block_cycles = 500;
+	cfg.cache_size = 32;
+	cfg.lookahead_size = 32;
+
+	cfg.read = lfs_api_read;
+	cfg.prog = lfs_api_prog;
+	cfg.erase = lfs_api_erase;
+
+	ret = lfs_mount(&lfs, &cfg);
+    /* reformat if we can't mount the filesystem
+	 * this should only happen on the first boot
+	 */
+    if (ret) {
+        lfs_format(&lfs, &cfg);
+        lfs_mount(&lfs, &cfg);
+    }
+
+    /* release any resources we were using */
+    lfs_unmount(&lfs);
+
+	return NO_ERR;
+}
+#endif
 
 static uint32_t oneshot_worker(void)
 {
@@ -265,37 +326,6 @@ static uint32_t cfs_worker2(void)
 			printk("cfs_worker2 running....\n");
 		}
 	}
-	return NO_ERR;
-}
-#endif
-
-/* not used. shell cmd start dma does this. deprecated.*/
-#if 0 
-uint32_t cfs_worker3(void )
-{
-	uint8_t *psrc;
-	int i, j;
-
-	printk("I am cfs_worker3....\n");
-
-	i = 0;
-	while (1) {
-		psrc = (uint8_t *)COPROC_SRC_ADDR;
-		for (j = 0; j < COPROC_DAT_LEN; j++) {
-			psrc[j] = (uint8_t)(j % 256);
-		}
-
-		if (show_stat) {
-			printk("cfs_worker3 is running....\n");
-		}
-
-		if (i == 0) {
-			set_dma_work(COPROC_SRC_ADDR, COPROC_DST_ADDR, COPROC_DAT_LEN);
-			start_dma(NULL);
-			i++;
-		}
-	}
-
 	return NO_ERR;
 }
 #endif
