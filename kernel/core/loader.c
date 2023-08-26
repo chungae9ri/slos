@@ -52,7 +52,7 @@ int32_t create_ramdisk_fs(void)
 		if (ret)
 			return ret;
 
-		ret = slfs_write(&fp, (uint8_t *)app_addr, app_len);
+		ret = slfs_write(&fp, (const uint8_t *)app_addr, app_len);
 		if (ret)
 			return ret;
 

@@ -29,7 +29,7 @@ int slfs_umount(void);
 int slfs_format(void);
 int slfs_open(const uint8_t *pname, slfs_file_t *pf);
 int slfs_seek(slfs_file_t *pf, uint32_t offset, slfs_fseek_t whence);
-int slfs_write(slfs_file_t *pf, uint8_t *pbuf, uint32_t len);
+int slfs_write(slfs_file_t *pf, const uint8_t *pbuf, uint32_t len);
 int slfs_read(slfs_file_t *pf, uint8_t *pbuf, uint32_t len); 
 int slfs_close(slfs_file_t *pf);
 int slfs_delete(slfs_file_t *pf);

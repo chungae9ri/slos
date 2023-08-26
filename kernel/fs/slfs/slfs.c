@@ -909,7 +909,7 @@ int slfs_seek(slfs_file_t *pf, uint32_t offset, slfs_fseek_t whence)
 }
 
 
-int slfs_write(slfs_file_t *pf, uint8_t *pbuf, uint32_t bytes_write)
+int slfs_write(slfs_file_t *pf, const uint8_t *pbuf, uint32_t bytes_write)
 {
 	uint8_t data_buf[SLFS_DATABLK_SIZE];
 	uint32_t i;
