@@ -17,6 +17,7 @@
 */
 
 #include <stdint.h>
+
 #include <mem_layout.h>
 #include <task.h>
 #include <waitq.h>
@@ -34,6 +35,7 @@
 #include <string.h>
 #include <dma.h>
 #include <ramdisk_io.h>
+#include <fs.h>
 
 #define SVCSPSR 			0x13 
 #define COPROC_SRC_ADDR		0x10000000
@@ -46,66 +48,6 @@ uint32_t show_stat = 0;
 extern struct task_struct *upt[MAX_USR_TASK];
 extern void enable_interrupt(void);
 extern void disable_interrupt(void);
-
-#ifdef LITTLEFS
-#include <lfs.h>
-
-static struct lfs_config cfg;
-static lfs_t lfs;
-static lfs_file_t lfs_file;
-
-static int lfs_api_read(const struct lfs_config *c, lfs_block_t block,
-			lfs_off_t off, void *buffer, lfs_size_t size)
-{
-	size_t offset = block * c->block_size + off;
-
-	return io_ops.read(offset, size, buffer);
-}
-
-static int lfs_api_prog(const struct lfs_config *c, lfs_block_t block,
-			lfs_off_t off, const void *buffer, lfs_size_t size)
-{
-	size_t offset = block * c->block_size + off;
-
-	return io_ops.write(offset, size, buffer);
-}
-
-static int lfs_api_erase(const struct lfs_config *c, lfs_block_t block)
-{
-	return io_ops.erase_page(block);
-}
-
-int littlefs_task(void)
-{
-	int32_t ret;
-
-	cfg.read_size = 1;
-	cfg.prog_size = 1;
-	cfg.block_size = RAMDISK_PAGE_SIZE;
-	cfg.block_count = RAMDISK_PAGE_NUM;
-	cfg.block_cycles = 500;
-	cfg.cache_size = 32;
-	cfg.lookahead_size = 32;
-
-	cfg.read = lfs_api_read;
-	cfg.prog = lfs_api_prog;
-	cfg.erase = lfs_api_erase;
-
-	ret = lfs_mount(&lfs, &cfg);
-    /* reformat if we can't mount the filesystem
-	 * this should only happen on the first boot
-	 */
-    if (ret) {
-        lfs_format(&lfs, &cfg);
-        lfs_mount(&lfs, &cfg);
-    }
-
-    /* release any resources we were using */
-    lfs_unmount(&lfs);
-
-	return NO_ERR;
-}
-#endif
 
 static uint32_t oneshot_worker(void)
 {
@@ -351,7 +293,7 @@ static uint32_t workq_worker(void)
 		/* Woken up */
 		enq_idx = this_qworker->enq_idx;
 		deq_idx = this_qworker->deq_idx;
-		printk("cpu 0x%x qworker enq_idx: 0x%x, deq_idx: 0x%x\n", cpuid, enq_idx, deq_idx);
+		printk("### cpu 0x%x qworker enq_idx: 0x%x, deq_idx: 0x%x\n", cpuid, enq_idx, deq_idx);
 		
 		/* enq_idx is wrapped around */
 		if (enq_idx < deq_idx)
@@ -643,6 +585,7 @@ void shell(void)
 				printk("task 0x%x is not in runq\n", pid);
 			}
 		} else if (!strcmp(cmdline, "apprun")) {
+			create_ramdisk_fs(SLFS_FILE_SYSTEM);
 			load_ramdisk_app(0);
 		} else if (!strcmp(cmdline,"start cs")) {
 			start_consumer();

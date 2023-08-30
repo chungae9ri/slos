@@ -17,6 +17,7 @@
 */
 
 #include <stdint.h>
+
 #include <frame_pool.h>
 #include <page_table.h>
 #include <mem_layout.h>
@@ -269,7 +270,7 @@ void init_kernmem(struct framepool *kfp,
 	/*pvm_user = &pheap;*/
 }
 
-void *kmalloc(uint32_t size)
+void *kmalloc(size_t size)
 {
 	return (void *)(allocate(pvm_kernel, size));
 }

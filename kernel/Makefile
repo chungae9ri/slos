@@ -13,7 +13,7 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program; if not, see <http://www.gnu.org/licenses/>
 
-KERNMODULES := core arm fs/slfs fs/littlefs libs drivers/uart drivers/dma drivers/odev drivers/ramdisk
+KERNMODULES := core ca-9 fs fs/slfs fs/littlefs libs drivers/uart drivers/dma drivers/odev drivers/ramdisk
 KERNOUTDIR := $(addprefix ../out/kernel/,$(KERNMODULES)) 
 KERNELDIR := $(shell pwd)
 

@@ -82,17 +82,17 @@ static void init_uart(void)
 static void init_platform(void)
 {
 	init_uart();
-	printk("vPlatformInit\n");
+	printk("### vPlatformInit\n");
 }
 
 static void cpuidle_secondary(void)
 {
 	uint32_t i = 0;
-	printk("I am cpuidle_secondary.....\n");
+	printk("### I am cpuidle_secondary.....\n");
 
 	while (1) {
 		if (show_stat) {
-			printk("cpuidle_secondary is running....\n");
+			printk("### cpuidle_secondary is running....\n");
 		}
 
 		/* cpuidle can't go to waitq.
@@ -109,11 +109,11 @@ static void cpuidle_secondary(void)
 static void cpuidle(void)
 {
 	uint32_t i = 0;
-	printk("I am cpuidle.....\n");
+	printk("### I am cpuidle.....\n");
 
 	while (1) {
 		if (show_stat) {
-			printk("cpuidle is running....\n");
+			printk("### cpuidle is running....\n");
 		}
 		/* cpuidle can't go to waitq.
 		 * arch-dependent power saving routine here.
@@ -162,9 +162,9 @@ int secondary_start_kernel(void)
 	uint32_t scr = 0xFFFFFFFF;
 
 	cpuid = smp_processor_id();
-	printk("I am cpu 0x%x!\n", cpuid);
+	printk("### I am cpu 0x%x!\n", cpuid);
 	scr = read_scr();
-	printk("cpu 0x%x scr: 0x%x\n", cpuid, scr);
+	printk("### cpu 0x%x scr: 0x%x\n", cpuid, scr);
 
 	init_gic_secondary();
 	init_idletask();
@@ -200,16 +200,12 @@ int start_kernel(void)
 
 	cpuid = smp_processor_id();
 	scr = read_scr();
-	printk("cpu 0x%x scr: 0x%x\n", cpuid, scr);
+	printk("### cpu 0x%x scr: 0x%x\n", cpuid, scr);
 
 	init_kernmem(&framepool, &pgt, &kheap);
 	printk("### init_kernmem done.\n");
 	init_gic();
 	init_idletask();
-
-	/* let's first erase chip (initialize 0xFF) first */
-	io_ops.erase_chip();
-	slfs_mount();
 
 	init_wq();
 	init_rq();
@@ -220,9 +216,6 @@ int start_kernel(void)
 	init_timer();
 	init_mailbox();
 	update_csd();
-
-	create_ramdisk_fs();
-	printk("### load user app to slfs.\n");
 
 	/* dma task is running in cpu0 */
 	init_dma();

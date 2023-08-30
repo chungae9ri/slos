@@ -16,54 +16,16 @@
   along with this program; if not, see <http://www.gnu.org/licenses/>
 */
 #include <stdint.h>
+#include <string.h>
+
 #include <printk.h>
 #include <slfs.h>
 #include <elf.h>
 #include <loader.h>
 #include <task.h>
 #include <mem_layout.h>
-#include <string.h>
 #include <error.h>
 
-extern uint32_t RAMDISK_PHY_START;
-
-int32_t create_ramdisk_fs(void)
-{
-	char fname[16];
-	uint32_t i;
-	uint32_t offset;
-	uint32_t app_cnt;
-	uint32_t app_addr;
-	uint32_t app_len;
-	slfs_file_t fp;
-	int32_t ret;
-
-	offset = 0;
-	app_cnt = *((uint32_t *)&RAMDISK_PHY_START);
-	offset += sizeof(uint32_t);
-
-	for (i = 0; i < app_cnt; i++) {
-		app_len = *((uint32_t *)((uint32_t)(&RAMDISK_PHY_START) + offset));
-		offset += sizeof(uint32_t);
-		app_addr = (uint32_t)(&RAMDISK_PHY_START) + offset;
-
-		sprintk(fname, "App_%x", (unsigned int)i);
-		ret = slfs_open((const uint8_t *)fname, &fp);
-		if (ret)
-			return ret;
-
-		ret = slfs_write(&fp, (const uint8_t *)app_addr, app_len);
-		if (ret)
-			return ret;
-
-		ret = slfs_close(&fp);
-		if (ret)
-			return ret;
-		offset += app_len;
-	}
-
-	return NO_ERR;
-}
 
 struct task_struct *upt[MAX_USR_TASK];
 char *exec = NULL;
