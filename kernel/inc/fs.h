@@ -1,5 +1,5 @@
 #ifndef FS_H
-#define FS_h
+#define FS_H
 
 #include <stdint.h>
 #include <stddef.h>

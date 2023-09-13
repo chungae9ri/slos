@@ -35,7 +35,6 @@
 #include <string.h>
 #include <dma.h>
 #include <ramdisk_io.h>
-#include <fs.h>
 
 #define SVCSPSR 			0x13 
 #define COPROC_SRC_ADDR		0x10000000
@@ -585,8 +584,13 @@ void shell(void)
 				printk("task 0x%x is not in runq\n", pid);
 			}
 		} else if (!strcmp(cmdline, "apprun")) {
+#ifdef FS_USE_SLFS
 			create_ramdisk_fs(SLFS_FILE_SYSTEM);
-			load_ramdisk_app(0);
+			load_ramdisk_app(SLFS_FILE_SYSTEM, 0);
+#else
+			create_ramdisk_fs(LITTLEFS_FILE_SYSTEM);
+			load_ramdisk_app(LITTLEFS_FILE_SYSTEM, 0);
+#endif
 		} else if (!strcmp(cmdline,"start cs")) {
 			start_consumer();
 		} else if (!strcmp(cmdline, "stop cs")) {

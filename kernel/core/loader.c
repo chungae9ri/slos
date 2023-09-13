@@ -19,7 +19,6 @@
 #include <string.h>
 
 #include <printk.h>
-#include <slfs.h>
 #include <elf.h>
 #include <loader.h>
 #include <task.h>
@@ -36,14 +35,14 @@ void exit_elf(uint32_t idx)
 		upt[idx]->state = TASK_STOP_RUNNING;
 }
 
-int32_t load_ramdisk_app(uint32_t app_idx)
+int32_t load_ramdisk_app(FILE_SYSTEM_TYPE fs_t, uint32_t app_idx)
 {
 	/* user elfs are loaded to the file system.
 	 * read it to the buffer and load it to
 	 */
 	uint32_t base_addr;
 	uint8_t fname[SLFS_FNAME_LEN];
-	slfs_file_t fp;
+	file_t fp;
 	int32_t ret;
 	int32_t i;
 	int32_t j;
@@ -62,12 +61,14 @@ int32_t load_ramdisk_app(uint32_t app_idx)
 		printk("err: user task idx overflow\n");
 		return USER_APP_MAX_ERR;
 	}
+
+	fp.fs_t = fs_t;
 	sprintk((char *)fname, "App_%x", (unsigned int)app_idx);
-	ret = slfs_open((const uint8_t *)fname, &fp);
+	ret = fs_open(fs_t, (const uint8_t *)fname, &fp);
 	if (ret)
 		return ret;
 
-	ret = slfs_read(&fp, (uint8_t *)&ehdr, sizeof(ehdr));
+	ret = fs_read(&fp, (uint8_t *)&ehdr, sizeof(ehdr));
 	if (ret)
 		return ret;
 
@@ -76,11 +77,11 @@ int32_t load_ramdisk_app(uint32_t app_idx)
 	/* load all loadable segments to memory */
 	for (i = 0; i < ehdr.e_phnum; i++) {
 		offset = ehdr.e_phoff + i * ehdr.e_phentsize;
-		ret = slfs_seek(&fp, offset, SLFS_SEEK_SET);
+		ret = fs_seek(&fp, offset, SLFS_SEEK_SET);
 		if (ret)
 			return ret;
 
-		ret = slfs_read(&fp, (uint8_t *)&phdr, ehdr.e_phentsize);
+		ret = fs_read(&fp, (uint8_t *)&phdr, ehdr.e_phentsize);
 		if (ret)
 			return ret;
 
@@ -90,12 +91,12 @@ int32_t load_ramdisk_app(uint32_t app_idx)
 		if (!phdr.p_filesz)
 			continue;
 
-		ret = slfs_seek(&fp, phdr.p_offset, SLFS_SEEK_SET);
+		ret = fs_seek(&fp, phdr.p_offset, SLFS_SEEK_SET);
 		if (ret)
 			return ret;
 
 		dst_addr = base_addr + phdr.p_vaddr;
-		ret = slfs_read(&fp, (uint8_t *)dst_addr, phdr.p_filesz);
+		ret = fs_read(&fp, (uint8_t *)dst_addr, phdr.p_filesz);
 		if (ret)
 			return ret;
 	}
@@ -103,40 +104,40 @@ int32_t load_ramdisk_app(uint32_t app_idx)
 	/* seek main entry from symbol table section */
 	for (i = 0; i < ehdr.e_shnum; i++) {
 		offset = ehdr.e_shoff + i * ehdr.e_shentsize;
-		ret = slfs_seek(&fp, offset, SLFS_SEEK_SET);
+		ret = fs_seek(&fp, offset, SLFS_SEEK_SET);
 		if (ret)
 			return ret;
 
-		ret = slfs_read(&fp, (uint8_t *)&shdr, ehdr.e_shentsize);
+		ret = fs_read(&fp, (uint8_t *)&shdr, ehdr.e_shentsize);
 		if (ret)
 			return ret;
 
 		if (shdr.sh_type == SHT_SYMTAB) {
 			/* sh_link is equal to the section hdr index of associated string table */
 			offset = ehdr.e_shoff + shdr.sh_link * ehdr.e_shentsize;
-			ret = slfs_seek(&fp, offset, SLFS_SEEK_SET);
+			ret = fs_seek(&fp, offset, SLFS_SEEK_SET);
 			if (ret)
 				return ret;
 
-			ret = slfs_read(&fp, (uint8_t *)&str_shdr, ehdr.e_shentsize);
+			ret = fs_read(&fp, (uint8_t *)&str_shdr, ehdr.e_shentsize);
 			if (ret)
 				return ret;
 
 			string_tab = (uint8_t *)kmalloc(str_shdr.sh_size);
-			ret = slfs_seek(&fp, str_shdr.sh_offset, SLFS_SEEK_SET);
+			ret = fs_seek(&fp, str_shdr.sh_offset, SLFS_SEEK_SET);
 			if (ret)
 				return ret;
 
-			ret = slfs_read(&fp, string_tab, str_shdr.sh_size);
+			ret = fs_read(&fp, string_tab, str_shdr.sh_size);
 			if (ret)
 				return ret;
 
 			sym_tab = (uint8_t *)kmalloc(shdr.sh_size);
-			ret = slfs_seek(&fp, shdr.sh_offset, SLFS_SEEK_SET);
+			ret = fs_seek(&fp, shdr.sh_offset, SLFS_SEEK_SET);
 			if (ret)
 				return ret;
 
-			ret = slfs_read(&fp, sym_tab, shdr.sh_size);
+			ret = fs_read(&fp, sym_tab, shdr.sh_size);
 			if (ret)
 				return ret;
 
@@ -154,7 +155,7 @@ int32_t load_ramdisk_app(uint32_t app_idx)
 	kfree((uint32_t)string_tab);
 	kfree((uint32_t)sym_tab);
 
-	ret = slfs_close(&fp);
+	ret = fs_close(&fp);
 	if (ret)
 		return ret;
 

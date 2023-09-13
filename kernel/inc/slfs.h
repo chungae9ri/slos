@@ -19,9 +19,9 @@ typedef struct {
 } slfs_file_t;
 
 typedef enum {
-	SLFS_SEEK_SET,
-	SLFS_SEEK_CUR,
-	SLFS_SEEK_END,
+	SLFS_SEEK_SET = 0,
+	SLFS_SEEK_CUR = 1,
+	SLFS_SEEK_END = 2,
 } slfs_fseek_t;
 
 int slfs_mount(void);

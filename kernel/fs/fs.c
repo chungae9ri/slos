@@ -27,6 +27,11 @@ static int lfs_api_erase(const struct lfs_config *c, lfs_block_t block)
 	return io_ops.erase_page(block);
 }
 
+static int lfs_api_sync(const struct lfs_config *c)
+{
+    return 0;
+}
+
 static int init_littlefs(void)
 {
 	cfg.read_size = 1;
@@ -40,6 +45,7 @@ static int init_littlefs(void)
 	cfg.read = lfs_api_read;
 	cfg.prog = lfs_api_prog;
 	cfg.erase = lfs_api_erase;
+	cfg.sync = lfs_api_sync;
 
     return NO_ERR;
 }
@@ -55,6 +61,14 @@ int32_t fs_mount(FILE_SYSTEM_TYPE fs)
          * this should only happen on the first boot
          */
         if (ret) {
+			/* FIXME: 
+             * littlefs fails to format. 
+             * it fails in checking crc at lfs.c:lfs_dir_commitcrc() line 1729 
+             * if (crc != crc1) {
+             *     return LFS_ERR_CORRUPT;
+             * }
+             * this breaks the littlefs porting.
+             */
             lfs_format(&lfs, &cfg);
             lfs_mount(&lfs, &cfg);
         }
