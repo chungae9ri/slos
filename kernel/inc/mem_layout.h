@@ -25,27 +25,16 @@
 .set SEC_CONTEXT_MEM, 				0x00004200 /* cpu1 secure mode context memory address */
 .set SEC_CONTEXT_MEM_SP,			0x422C
 .set SEC_CONTEXT_MEM_END, 			0x00004238
-.set MON_CONTEXT_MEM_S,     0x00005000
-.set MON_CONTEXT_MEM_NS,     0x00006000
 /* kernel*/
-.set SECURE_KERNEL_EXCEPTION_BASE, 0xC0101000			
 .set KERNEL_CODE_BASE, 				0x100000
 .set KERNEL_END, 				0x300000
 /* CPU 0 secure mode stacks */
-.set MON_STACK_BASE,        0x315FFC /* 3M + 4KiB*22 */
-.set SVC_STACK_BASE_S, 				0x314FFC /* 3M + 4KiB*21, support 16 kernel threads */
-.set SYS_STACK_BASE_S, 				0x304FFC /* 3M + 4KiB*5 */
-.set IRQ_STACK_BASE_S, 				0x303FFC /* 3M + 4KiB*4 */
-.set FIQ_STACK_BASE_S, 				0x302FFC /* 3M + 4KiB*3 */
-.set ABT_STACK_BASE_S, 				0x301FFC /* 3M + 4KiB*2 */
+.set SVC_STACK_BASE, 				0x314FFC /* 3M + 4KiB*21 support 16 kernel threads */
+.set SYS_STACK_BASE, 				0x304FFC /* 3M + 4KiB*5 */
+.set IRQ_STACK_BASE, 				0x303FFC /* 3M + 4KiB*4 */
+.set FIQ_STACK_BASE, 				0x302FFC /* 3M + 4KiB*3 */
+.set ABT_STACK_BASE, 				0x301FFC /* 3M + 4KiB*2 */
 .set UNDEF_STACK_BASE, 				0x300FFC /* 3M + 4KiB */
-/* CPU 0 non-secure mode stacks */
-.set SVC_STACK_BASE_NS, 				0x334FFC /* 3M + 4KiB*21, support 16 kernel threads */
-.set SYS_STACK_BASE_NS, 				0x324FFC /* 3M + 4KiB*5 */
-.set IRQ_STACK_BASE_NS, 				0x323FFC /* 3M + 4KiB*4 */
-.set FIQ_STACK_BASE_NS, 				0x322FFC /* 3M + 4KiB*3 */
-.set ABT_STACK_BASE_NS, 				0x321FFC /* 3M + 4KiB*2 */
-.set UNDEF_STACK_BASE_NS, 				0x320FFC /* 3M + 4KiB */
 /* blank for CPU 0 normal world stack */
 /* CPU 1 secure mode stacks */
 .set SEC_SVC_STACK_BASE,			0x354FFC
@@ -58,14 +47,15 @@
 .set KERN_PGD_START_BASE, 			0x400000 /* page directory base, size 16KiB aligned = 1 page directory * 4KEntries * 4B size */
 .set KERN_PGT_START_BASE, 			0x404000 /* page table base, size 4MiB = (1024 * 1024) entries * 4 */
 /* user app */
-.set USER_APP_BASE, 				0xF00000 /* user app base */
+.set USER_APP_BASE, 				0x1000000 /* user app base */
+/* ramdisk */
+.set RAMDISK_FS_BASE, 				0x3000000 /* 48M */
 /* end of memory map */
 /* misc definitions */
 .set USER_APP_GAP, 				0x100000  /* 1MB user app gap */
 .set TASK_STACK_GAP, 				0x1000 /* 4k */
 .set MODE_SVC, 					0x13
 .set MODE_ABT, 					0x17
-.set MODE_MON,          0x16
 .set MODE_UND, 					0x1b
 .set MODE_SYS, 					0x1f
 .set MODE_FIQ, 					0x11
@@ -73,7 +63,6 @@
 .set I_BIT, 					0x80
 .set F_BIT, 					0x40
 .set IF_BIT, 					0xC0
-.set NS_BIT,          0x01
 .set CONTEXT_MEM_LEN, 				0xF
 #else
 /* memory map */
@@ -106,7 +95,10 @@
 #define KERN_PGD_START_BASE 			0x400000 /* page directory base, size 16KiB aligned = 1 page directory * 4KEntries * 4B size */
 #define KERN_PGT_START_BASE 			0x404000 /* page table base, size 4MiB = (1024 * 1024) entries * 4 */
 /* user app */
-#define USER_APP_BASE 				0xF00000 /* user app base */
+#define USER_APP_BASE 				0x1000000 /* user app base */
+/* ramdisk */
+#define SCRATCH_BASE				0x02000000 /* 32M */
+#define RAMDISK_FS_BASE 			0x3000000 /* 48M */
 /* peripheral reg address */
 /* outstream device regs */
 #define ODEV_REG_CTRL				0x43c00000

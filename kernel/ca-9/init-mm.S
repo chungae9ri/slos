@@ -106,8 +106,11 @@ ssbl:
 	bic	r0, r0, #MASK_AFE /* clear AFE bit, Access flag is disabled, AP[2:0] is used */
 	/* enable D cache, I cache */
 	mrc	p15, 0, r0, c1, c0, 0		/* read SCTLR (partially banked) register 1 */
-	orr 	r0, r0, #0x1000 		/* set bits for IU  */
-	orr 	r0, r0, #0x100 			/* set bits for D */
+	orr 	r0, r0, #0x1000 		/* set bits for I-cache  */
+ /* fixme: enabling D-cache doesn't work, sgi for cpu1 doesn't work */
+#if 0
+	orr 	r0, r0, #0x4 			/* set bits for D-cache, unified cache */
+#endif
 	orr 	r0, r0, #0x1			/* set bits for MMU  */
 	mcr	p15, 0, r0, c1, c0, 0		/* write value back */
 	/* Write to ACTLR */
