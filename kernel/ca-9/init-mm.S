@@ -101,17 +101,13 @@ ssbl:
 	mcr	p15, 0, r0, c2, c0, 0
 	/* read system control register (SCTLR (partially banked)) of cp 15 */
 	mrc	p15, 0, r0, c1, c0, 0	
-	orr	r0, r0, #MASK_MMU | MASK_DCACHE
+	/* enable I cache, MMU
+	 * fixme: D cache enable results in sgi cmd doesn't work
+	 */
+	orr	r0, r0, #MASK_MMU
 	orr	r0, r0, #MASK_ICACHE
 	bic	r0, r0, #MASK_AFE /* clear AFE bit, Access flag is disabled, AP[2:0] is used */
 	/* enable D cache, I cache */
-	mrc	p15, 0, r0, c1, c0, 0		/* read SCTLR (partially banked) register 1 */
-	orr 	r0, r0, #0x1000 		/* set bits for I-cache  */
- /* fixme: enabling D-cache doesn't work, sgi for cpu1 doesn't work */
-#if 0
-	orr 	r0, r0, #0x4 			/* set bits for D-cache, unified cache */
-#endif
-	orr 	r0, r0, #0x1			/* set bits for MMU  */
 	mcr	p15, 0, r0, c1, c0, 0		/* write value back */
 	/* Write to ACTLR */
 	mrc	p15, 0, r0, c1, c0, 1		/* Read ACTLR*/
