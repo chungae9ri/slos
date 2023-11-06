@@ -30,10 +30,10 @@ vpath %.S $(KERNMODULES)
 
 define make-obj
 $1/%.o: %.c
-	$(CC) $(CFLAGS) $(INC) -o $$@ -c $$< -g -DLITTLEFS -DFS_USE_SLFS -D_ENABLE_SMP_ -mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=softfp -Wall -fno-omit-frame-pointer -ffreestanding
+	$(CC) $(CFLAGS) $(INC) -o $$@ -c $$< -g -DLITTLEFS -DFS_USE_SLFS -D_ENABLE_SMP_ -mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=hard -Wall -fno-omit-frame-pointer -ffreestanding
 
 $1/%.o: %.S
-	$(CC) $(INC) -o $$@ -c $$< -g -D_ENABLE_SMP_ -mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=softfp -Wall -fno-omit-frame-pointer -ffreestanding
+	$(CC) $(INC) -o $$@ -c $$< -g -D_ENABLE_SMP_ -mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=hard -Wall -fno-omit-frame-pointer -ffreestanding
 endef
 
 $(foreach bdir, $(KERNOUTDIR),$(eval $(call make-obj,$(bdir))))
