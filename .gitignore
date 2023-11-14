@@ -1,7 +1,6 @@
 out/
 *.o
 libxil.a
-*.elf
 *.bak
 *.swp
 *.bin
@@ -12,4 +11,9 @@ cscope*
 a
 libslos.a
 mkappfs/mkappfs
-ramdisk.img
+genesis/genesis
+.Xil
+*.jou
+*.log
+*code-workspace
+build/

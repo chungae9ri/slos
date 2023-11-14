@@ -1,0 +1,31 @@
+set(CMAKE_SYSTEM_PROCESSOR ARM)
+set(CMAKE_SYSTEM_NAME Generic)
+set(KERNEL_ELF kernel)
+set(LINKER_SCRIPT linker/kernel.lds)
+#set(CMAKE_EXE_LINKER_FLAGS "-Wl,--gc-sections --specs=nano.specs --specs=nosys.specs -mthumb -mabi=aapcs -Wl,-Map=${CMAKE_PROJECT_NAME}.map" CACHE INTERNAL "Linker options")
+set(CMAKE_EXE_LINKER_FLAGS "-nostdlib -Wl,-Map=${KERNEL_ELF}.map" CACHE INTERNAL "Linker options")
+set(CMAKE_C_FLAGS "-g -D_ENABLE_SMP_ -mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=softfp -fzero-initialized-in-bss -Wuninitialized -Wall -fno-omit-frame-pointer -ffreestanding" CACHE INTERNAL "C Compiler options")
+#add_compile_options(-g -march=armv7-a -mfpu=vfpv3 -mfloat-abi=softfp -Wall -fno-omit-frame-pointer -ffreestanding)
+#add_compile_options("-stdlib=libc++" "-lc++abi" "-v")
+#add_compile_options("-lc" "-v")
+#set(CMAKE_ASM_SOURCE_FILE_EXTENSIONS s;S;asm)
+#add_compile_options(-g -D_ENABLE_SMP_ -march=cortex-a9 -mfpu=vfpv3 -mfloat-abi=softfp -Wall -fno-omit-frame-pointer -ffreestanding)
+set(CMAKE_EXECUTABLE_SUFFIX .elf)
+
+aux_source_directory(ca-9 ARM_SRC)
+aux_source_directory(core CORE_SRC)
+aux_source_directory(drivers/dma DRV_DMA_SRC)
+aux_source_directory(drivers/odev DRV_ODEV_SRC)
+aux_source_directory(drivers/uart DRV_UART_SRC)
+
+add_executable(${KERNEL_ELF} ca-9/cache.S ca-9/init-mm.S ca-9/ops.S 
+                        ca-9/smp-reset.S ca-9/smp-vector.S ca-9/vector.S 
+                        ${ARM_SRC} ${CORE_SRC} ${DRV_DMA_SRC} ${DRV_ODEV_SRC} ${DRV_UART_SRC})
+
+#set_target_properties(${KERNEL_ELF} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ../)
+#set_target_properties(${KERNEL_ELF} PROPERTIES LINK_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${LINKER_SCRIPT})
+target_include_directories(${KERNEL_ELF} PUBLIC inc)
+#target_compile_options(${KERNEL_ELF} PRIVATE -g -Wall)
+#target_compile_options(${KERNEL_ELF} PRIVATE "-g D_ENABLE_SMP_ -Wall -fno-omit-frame-pointer -ffreestanding")
+#target_compile_definitions(${KERNEL_ELF} PRIVATE "D_ENABLE_SMP_")
+target_link_options(${KERNEL_ELF} PUBLIC "-T${CMAKE_CURRENT_SOURCE_DIR}/${LINKER_SCRIPT}")

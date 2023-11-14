@@ -1,0 +1,156 @@
+/*
+  kernel/ca-9/vector_ns.S kernel exception handler
+  (C) 2018 Kwangdo Yi <kwangdo.yi@gmail.com>
+ 
+  This program is free software; you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation; either version 2 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program; if not, see <http://www.gnu.org/licenses/>
+*/
+
+.include "mem_layout.h"
+
+/* arm exception code */
+
+.extern platform_undefined_handler
+.extern platform_syscall_handler
+.extern platform_prefetch_abort_handler
+.extern platform_data_abort_handler
+.extern gic_irq_handler
+.extern platform_fiq_handler
+.extern start_kernel 
+.extern init_monitor
+
+.section EXCEPTIONS_NS, "ax"
+.arm
+.global exceptions_ns
+.global reset_handler_ns
+
+exceptions_ns:
+	b reset_handler_ns
+	b undefined_instruction_handler
+	b syscall_handler
+	b prefetch_abort_handler
+	b data_abort_handler
+	b reserved
+	b irq_handler
+	b fiq_handler
+
+reset_handler_ns:
+	/*set VBAR (banked) with 0x111000 */
+	ldr	r0, =KERNEL_EXCEPTION_START_NS
+	mcr	p15,0,r0,c12,c0,0 
+
+	 /*change to supervisor*/
+	msr	CPSR_c, #MODE_SVC | I_BIT | F_BIT
+	
+	/* setup svc stack*/
+	ldr	r0,=SVC_STACK_BASE_NS
+	mov	r13, r0
+
+	/*; Switch to undefined mode and setup the undefined mode stack*/
+	msr     CPSR_c, #MODE_UND | I_BIT | F_BIT
+	ldr 	r0,=UNDEF_STACK_BASE_NS
+	mov     r13, r0
+
+	/* Switch to abort mode and setup the abort mode stack*/
+	msr     CPSR_c, #MODE_ABT | I_BIT | F_BIT
+	ldr	r0,=ABT_STACK_BASE_NS
+	mov     r13, r0
+
+	/* Switch to SYS mode and setup the SYS mode stack*/
+	msr     CPSR_c, #MODE_SYS | I_BIT | F_BIT
+	ldr	r0,=SYS_STACK_BASE_NS
+	mov     r13, r0
+
+	/* Switch to IRQ mode and setup the IRQ mode stack*/
+	msr     CPSR_c, #MODE_IRQ | I_BIT | F_BIT
+	ldr	r0,=IRQ_STACK_BASE_NS
+	mov     r13, r0
+
+	/* Switch to FIQ mode and setup the FIQ mode stack*/
+	msr     CPSR_c, #MODE_FIQ | I_BIT | F_BIT
+	ldr	r0,=FIQ_STACK_BASE_NS
+	mov     r13, r0
+
+	/* Return to supervisor mode and enable irq, fiq */
+	msr     CPSR_c, #MODE_SVC
+	b	start_kernel
+;
+undefined_instruction_handler:
+	b	platform_undefined_handler
+;
+syscall_handler:
+	msr	cpsr_c, #MODE_SVC | I_BIT | F_BIT
+	stmfd	sp!, {r0-r12,lr}
+	ldr 	r12, [lr,#-4]
+	bic	r12, #0xff000000
+	/* r0 for message buffer, r1 is idx for user task
+	   r2 is for syscall number
+	 */
+	mov 	r2, r12
+	bl	platform_syscall_handler
+	mrs	r0, CPSR
+	bic	r1, r0, #I_BIT|F_BIT
+	msr     cpsr_c, r1
+	ldmfd	sp!, {r0-r12,pc}
+;
+prefetch_abort_handler:
+	b	.
+;
+data_abort_handler:
+#if 0
+	mrc	p15, 0, r0, c5, c0, 0 /* read dfsr, test code */
+	mrc	p15, 0, r1, c5, c1, 0 /* read ifsr, test code */
+	mrc	p15, 0, r2, c6, c0, 0 /* read fault address, test code */
+	mrc 	p15, 0, r3, c2, c0, 0 /* read TTBR0, test code */
+	mrc 	p15, 0, r4, c2, c0, 1 /* read TTBR1, test code */
+#endif
+	sub	r12, r14, #8
+	msr 	cpsr_c, #MODE_SVC | I_BIT | F_BIT
+	stmfd	sp!, {r0-r11, r12}
+	push	{r14}
+	mrc	p15, 0, r0, c5, c0, 0 /* read dfsr, test code */
+	bl	platform_data_abort_handler
+	pop	{r14}
+	mrs	r0, CPSR
+	bic	r1, r0, #I_BIT|F_BIT
+	msr	cpsr_c, r1
+	ldmfd	sp!, {r0-r11, pc}
+;
+reserved:
+	b	.
+;
+irq_handler:
+	ldr 	r12, =CONTEXT_MEM
+	sub	r12, #4
+	stmfa	r12!, {r0-r11}
+	sub 	r0, lr, #4
+	msr	cpsr_c, #MODE_SVC | I_BIT | F_BIT  /* irq,fiq disabled */
+	mov	r12, #CONTEXT_MEM_SP
+	stmfa	r12!, {sp, lr}
+	/* r0 should be saved after storing sp, lr 
+	 * stmfa r12!, {sp, lr, r0} doesn't work.
+	 * Compiler changes the order.
+	 */
+	str	r0, [r12, #4]
+	bl	gic_irq_handler
+	;
+	mrs	r0, CPSR
+	bic	r1, r0, #I_BIT|F_BIT
+	msr	cpsr_c, r1
+	ldr	r12, =CONTEXT_MEM_END
+	ldmfa	r12!, {r0-r11, sp, lr, pc}
+
+fiq_handler:
+	b 	.
+;
+.end
