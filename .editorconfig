@@ -1,0 +1,63 @@
+# EditorConfig is awesome: https://EditorConfig.org
+
+# top-most EditorConfig file
+root = true
+
+# Unix-style newlines with a newline ending every file
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_white_space = true
+max_line_length = 100
+
+# ARM assembly
+[*.S]
+indent_style = tab
+indent_size = 8
+
+# C
+[*.{c,h}]
+indent_style = tab
+indent_size = 8
+
+# C++
+[*.{cpp,hpp}]
+indent_style = tab
+indent_size = 8
+
+# ld
+[*.ld]
+indent_style = tab
+indent_size = 8
+
+# python
+[*.py]
+indent_style = space
+indent_size = 4
+
+# perl
+[*.pl]
+indent_style = tab
+indent_size = 8
+
+# shell script
+[*.sh]
+indent_style = space
+indent_size = 4
+
+# Windows cmd script
+[*.cmd]
+end_of_line = crlf
+indent_style = tab
+indent_size = 8
+
+# CMake
+[{CMakeLists.txt, *.cmake}]
+indent_style = space
+indent_size = 2
+
+# Makefile
+[Makefile]
+indent_style = tab
+indent_size = 8
