@@ -1,5 +1,5 @@
 /*
-  kernel/arm/vector.S kernel exception handler
+  kernel/ca-9/vector_ns.S kernel exception handler
   (C) 2018 Kwangdo Yi <kwangdo.yi@gmail.com>
  
   This program is free software; you can redistribute it and/or modify
@@ -27,15 +27,15 @@
 .extern gic_irq_handler
 .extern platform_fiq_handler
 .extern start_kernel 
+.extern init_monitor
 
-.section EXCEPTIONS, "ax"
+.section EXCEPTIONS_NS, "ax"
 .arm
-.global exceptions
-.global reset_handler
-.set KERNEL_EXCEPTION_START, 0xC0101000			
+.global exceptions_ns
+.global reset_handler_ns
 
-exceptions:
-	b reset_handler		
+exceptions_ns:
+	b reset_handler_ns
 	b undefined_instruction_handler
 	b syscall_handler
 	b prefetch_abort_handler
@@ -44,44 +44,44 @@ exceptions:
 	b irq_handler
 	b fiq_handler
 
-reset_handler:
-	/*set VBAR (banked) with 0x100000 */
-	ldr	r0, =KERNEL_EXCEPTION_START
+reset_handler_ns:
+	/*set VBAR (banked) with 0x111000 */
+	ldr	r0, =KERNEL_EXCEPTION_START_NS
 	mcr	p15,0,r0,c12,c0,0 
 
 	 /*change to supervisor*/
 	msr	CPSR_c, #MODE_SVC | I_BIT | F_BIT
 	
 	/* setup svc stack*/
-	ldr	r0,=SVC_STACK_BASE
+	ldr	r0,=SVC_STACK_BASE_NS
 	mov	r13, r0
 
 	/*; Switch to undefined mode and setup the undefined mode stack*/
 	msr     CPSR_c, #MODE_UND | I_BIT | F_BIT
-	ldr 	r0,=UNDEF_STACK_BASE
+	ldr 	r0,=UNDEF_STACK_BASE_NS
 	mov     r13, r0
 
 	/* Switch to abort mode and setup the abort mode stack*/
 	msr     CPSR_c, #MODE_ABT | I_BIT | F_BIT
-	ldr	r0,=ABT_STACK_BASE
+	ldr	r0,=ABT_STACK_BASE_NS
 	mov     r13, r0
 
 	/* Switch to SYS mode and setup the SYS mode stack*/
 	msr     CPSR_c, #MODE_SYS | I_BIT | F_BIT
-	ldr	r0,=SYS_STACK_BASE
+	ldr	r0,=SYS_STACK_BASE_NS
 	mov     r13, r0
 
 	/* Switch to IRQ mode and setup the IRQ mode stack*/
 	msr     CPSR_c, #MODE_IRQ | I_BIT | F_BIT
-	ldr	r0,=IRQ_STACK_BASE
+	ldr	r0,=IRQ_STACK_BASE_NS
 	mov     r13, r0
 
 	/* Switch to FIQ mode and setup the FIQ mode stack*/
 	msr     CPSR_c, #MODE_FIQ | I_BIT | F_BIT
-	ldr	r0,=FIQ_STACK_BASE
+	ldr	r0,=FIQ_STACK_BASE_NS
 	mov     r13, r0
 
-	/* Return to supervisor mode*/
+	/* Return to supervisor mode and enable irq, fiq */
 	msr     CPSR_c, #MODE_SVC
 	b	start_kernel
 ;

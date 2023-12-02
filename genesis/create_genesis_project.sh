@@ -1,3 +1,3 @@
-vivado=$HOME/vivado/Vivado/2023.1/bin/vivado
+vivado=$HOME/Vivado/2023.2/bin/vivado
 
 $vivado -mode batch -source sources/vivado_tcl_scripts/create/genesis.tcl

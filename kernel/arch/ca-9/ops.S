@@ -138,11 +138,11 @@ smp_processor_id:
 
 .global read_scr
 read_scr:
-	mrc 	p15, 0, r0, c1, c1, 0 /* read SCR */
-#if 0
-	orr	r0, r0, #6 /* Monitor mode entered when IRQ, FIQ is taken*/
-	mcr 	p15, 0, r0, c1, c1, 0 /* write to SCR */
-	mrc 	p15, 0, r0, c1, c1, 0 /* read SCR again to check */
+	mrc p15, 0, r0, c1, c1, 0 /* read SCR */
+#if 1
+	orr	r0, r0, #4 /* Monitor mode entered when FIQ is taken*/
+	mcr p15, 0, r0, c1, c1, 0 /* write to SCR */
+	mrc p15, 0, r0, c1, c1, 0 /* read SCR again to check */
 #endif
 	mov	pc, lr
 .end
