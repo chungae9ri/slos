@@ -54,4 +54,3 @@ finished:
 	dsb	st
 	isb
 	bx	lr
-
