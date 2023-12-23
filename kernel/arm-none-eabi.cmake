@@ -13,7 +13,5 @@ add_compile_options(
 
 add_link_options(
   -nostdlib 
-  -Wl,-Map=kernel.map
-  -o kernel.elf
 )
 
