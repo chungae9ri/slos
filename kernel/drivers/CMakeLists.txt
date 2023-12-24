@@ -6,4 +6,3 @@ add_library(
   uart/rwbyte.c
 )
 
-#target_compile_options(drivers_objs PRIVATE -Wall -fno-omit-frame-pointer -ffreestanding)

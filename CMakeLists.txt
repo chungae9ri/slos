@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.27)
 
-#set(CMAKE_TOOLCHAIN_FILE cross-tools.cmake)
+set(CMAKE_TRY_COMPILE_TARGET_TYPE "STATIC_LIBRARY")
 
 project(slos VERSION 1.0)
 

@@ -6,5 +6,4 @@ add_library(
   slfs/slfs.c
 )
 
-#target_compile_options(fs_objs PRIVATE -Wall -fno-omit-frame-pointer -ffreestanding)
 target_include_directories(fs_objs PRIVATE littlefs)
