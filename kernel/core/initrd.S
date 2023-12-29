@@ -1,3 +1,3 @@
 	.section ".initrd", "a"
 
-	.incbin "../../out/ramdisk/ramdisk.img"
+	.incbin "../ramdisk/ramdisk.img"

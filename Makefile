@@ -22,14 +22,11 @@ export ASM := arm-none-eabi-as
 export LD := arm-none-eabi-ld
 export AR := arm-none-eabi-ar
 export OBJCOPY :=arm-none-eabi-objcopy
-export LIBXIL := libxil.a
 
 export TOPDIR := $(shell pwd)
 export TOPOUT := $(TOPDIR)/out
-export RAMDISKOUT := $(TOPOUT)/ramdisk
+export RAMDISKOUT := $(TOPDIR)/kernel/ramdisk
 
-#MAKEFILES = $(shell find . -maxdepth 2 -type f -name Makefile)
-#SUBDIRS   = $(filter-out ./,$(dir $(MAKEFILES)))
 SUBDIRS := libslos mkfs apps kernel 
 
 all:
@@ -42,3 +39,4 @@ all:
 clean :
 	@echo clean
 	rm -rf out
+	rm -rf $(RAMDISKOUT)
