@@ -71,6 +71,11 @@ build_kernel32() {
 
 build_kernel64() {
     echo "cmake build for kernel64"
+    cd ${SLOS_PATH}
+    rm -rf build-slos
+    mkdir build-slos && cd build-slos
+    cmake -DCMAKE_TOOLCHAIN_FILE=${SLOS_PATH}/cmake/aarch64-none-elf.cmake -DTARGET_ARCH="aarch64" ..
+    make
 }
 
 # Parse command-line options
