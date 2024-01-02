@@ -23,7 +23,7 @@ KERNASMSRC := $(foreach sdir,$(KERNMODULES),$(wildcard $(sdir)/*.S))
 KERNASMOBJ := $(patsubst %.S,../out/kernel/%.o,$(KERNASMSRC))
 
 INC := -I$(KERNELDIR)/inc -I$(KERNELDIR)/fs/littlefs
-LDS :=$(KERNELDIR)/linker/kernel.lds
+LDS :=$(KERNELDIR)/linker/kernel32.lds
 
 vpath %.c $(KERNMODULES)
 vpath %.S $(KERNMODULES)
