@@ -20,7 +20,7 @@ build_apps() {
     cd ${SLOS_PATH}
     rm -rf build-apps
     mkdir build-apps && cd build-apps
-    cmake -DCMAKE_TOOLCHAIN_FILE=${SLOS_PATH}/cmake/arm-none-eabi.cmake ../apps
+    cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_TOOLCHAIN_FILE=${SLOS_PATH}/cmake/arm-none-eabi.cmake ../apps
     make
 }
 
@@ -65,7 +65,7 @@ build_kernel32() {
     cd ${SLOS_PATH}
     rm -rf build-slos
     mkdir build-slos && cd build-slos
-    cmake -DCMAKE_TOOLCHAIN_FILE=${SLOS_PATH}/cmake/arm-none-eabi.cmake ..
+    cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_TOOLCHAIN_FILE=${SLOS_PATH}/cmake/arm-none-eabi.cmake ..
     make
 }
 
@@ -74,7 +74,7 @@ build_kernel64() {
     cd ${SLOS_PATH}
     rm -rf build-slos
     mkdir build-slos && cd build-slos
-    cmake -DCMAKE_TOOLCHAIN_FILE=${SLOS_PATH}/cmake/aarch64-none-elf.cmake -DTARGET_ARCH="aarch64" ..
+    cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_TOOLCHAIN_FILE=${SLOS_PATH}/cmake/aarch64-none-elf.cmake -DTARGET_ARCH="aarch64" ..
     make
 }
 
