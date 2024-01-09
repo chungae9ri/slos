@@ -20,6 +20,10 @@ include_directories(inc)
 
 if (TARGET_ARCH STREQUAL "aarch64")
 message("TARGET_ARCH is aarch64")
+add_compile_options(
+  -g -march=armv8-a -mcpu=cortex-a53
+  -Wall -fno-omit-frame-pointer -ffreestanding
+)
 add_subdirectory(arch/ca-53)
 
 add_executable(

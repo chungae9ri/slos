@@ -4,4 +4,5 @@ set(CMAKE_ASM_COMPILER "aarch64-none-elf-gcc")
 set(CMAKE_LINKER "aarch64-none-elf-gcc")
 set(CMAKE_CROSSCOMPILING true)
 set(CMAKE_SYSTEM_NAME Generic)
+set(TARGET_ARCH "aarch64")
 

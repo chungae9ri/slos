@@ -2,6 +2,12 @@
 
 source setup-cmake.sh
 
+BUILD_PATH=${SLOS_PATH}/build
+if [[ ! -d "${BUILD_PATH}" ]]
+then
+    mkdir ${BUILD_PATH}
+fi
+
 # Function to display usage information
 usage() {
     echo "Usage: $0 [options...]"
@@ -17,10 +23,11 @@ usage() {
 
 build_apps() {
     echo "cmake build for apps"
-    cd ${SLOS_PATH}
-    rm -rf build-apps
-    mkdir build-apps && cd build-apps
-    cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_TOOLCHAIN_FILE=${SLOS_PATH}/cmake/arm-none-eabi.cmake ../apps
+    echo "build_path ${BUILD_PATH}"
+    cd ${BUILD_PATH}
+    rm -rf ${BUILD_PATH}/apps
+    mkdir ${BUILD_PATH}/apps && cd ${BUILD_PATH}/apps
+    cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_TOOLCHAIN_FILE=${SLOS_PATH}/cmake/arm-none-eabi.cmake ${SLOS_PATH}/apps
     make
 }
 
@@ -29,52 +36,49 @@ clean_builds() {
         then
         echo "SLOS_PATH sin't set"
     else 
-        echo "clean ${SLOS_PATH}/build-slos, mkfs, apps and ramdisk"
-        rm -rf ${SLOS_PATH}/build-slos
-        rm -rf ${SLOS_PATH}/build-mkfs
-        rm -rf ${SLOS_PATH}/build-apps
-        rm -rf ${SLOS_PATH}/kernel/ramdisk
+        echo "clean ${BUILD_PATH}"
+        rm -rf ${BUILD_PATH}
     fi
 }
 
 build_ramdisk() {
-    APPS_FILE=${SLOS_PATH}/build-apps/helloworld
+    APPS_FILE=${BUILD_PATH}/apps/helloworld
     if [[ ! -f ${APPS_FILE} ]]; then
         echo "build apps first"
         exit 1
     fi
 
     echo "cmake build for mkfs"
-    cd ${SLOS_PATH}
-    rm -rf build-mkfs
-    mkdir build-mkfs && cd build-mkfs
-    cmake ../mkfs
+    cd ${BUILD_PATH}
+    rm -rf ${BUILD_PATH}/mkfs
+    mkdir ${BUILD_PATH}/mkfs && cd ${BUILD_PATH}/mkfs
+    cmake ${SLOS_PATH}/mkfs
     make
 
     echo "build ramdisk.img"
     rm -rf ${SLOS_PATH}/kernel/ramdisk
     mkdir ${SLOS_PATH}/kernel/ramdisk
-    cp ${SLOS_PATH}/build-apps/helloworld ${SLOS_PATH}/kernel/ramdisk
-    cp ${SLOS_PATH}/build-mkfs/mkfs ${SLOS_PATH}/kernel/ramdisk
+    cp ${BUILD_PATH}/apps/helloworld ${SLOS_PATH}/kernel/ramdisk
+    cp ${BUILD_PATH}/mkfs/mkfs ${SLOS_PATH}/kernel/ramdisk
     cd ${SLOS_PATH}/kernel/ramdisk
     ./mkfs ./ramdisk.img ./helloworld
 }
 
 build_kernel32() {
     echo "cmake build for kernel32"
-    cd ${SLOS_PATH}
-    rm -rf build-slos
-    mkdir build-slos && cd build-slos
-    cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_TOOLCHAIN_FILE=${SLOS_PATH}/cmake/arm-none-eabi.cmake ..
+    cd ${BUILD_PATH}
+    rm -rf ${BUILD_PATH}/slos32
+    mkdir ${BUILD_PATH}/slos32 && cd ${BUILD_PATH}/slos32
+    cmake -DCMAKE_TOOLCHAIN_FILE=${SLOS_PATH}/cmake/arm-none-eabi.cmake ${SLOS_PATH}
     make
 }
 
 build_kernel64() {
     echo "cmake build for kernel64"
-    cd ${SLOS_PATH}
-    rm -rf build-slos
-    mkdir build-slos && cd build-slos
-    cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_TOOLCHAIN_FILE=${SLOS_PATH}/cmake/aarch64-none-elf.cmake -DTARGET_ARCH="aarch64" ..
+    cd ${BUILD_PATH}
+    rm -rf ${BUILD_PATH}/slos64
+    mkdir ${BUILD_PATH}/slos64 && cd ${BUILD_PATH}/slos64
+    cmake -DCMAKE_TOOLCHAIN_FILE=${SLOS_PATH}/cmake/aarch64-none-elf.cmake ${SLOS_PATH}
     make
 }
 
