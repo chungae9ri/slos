@@ -2,46 +2,42 @@
 
 #define ZYNQMP_UART1_BASEADDR		0x00FF010000
 
-typedef struct uart_ps {
-	volatile uint32_t CR;
-	volatile uint32_t MR;
-	volatile uint32_t IER;
-	volatile uint32_t IDR;
-	volatile const uint32_t IMR;
-	volatile uint32_t ISR;
-	volatile uint32_t BAUDGEN;
-	volatile uint32_t RXTOUT;
-	volatile uint32_t RXWM;
-	volatile uint32_t MODEMCR;
-	volatile uint32_t MODEMSR;
-	volatile const uint32_t SR;
-	volatile uint32_t FIFO;
-	volatile uint32_t BAUD_DIV;
-	volatile uint32_t FLOW_DELAY;
-	volatile uint32_t TX_FIFO_TRIG_LV;
-} UART_PS_t;
+#define CR_OFFSET 0x0
+#define MR_OFFSET 0x4
+#define IER_OFFSET 0x8
+#define IDR_OFFSET 0xC
+#define IMR_OFFSET 0x10
+#define ISR_OFFSET 0x14
+#define BAUDGEN_OFFSET 0x18
+#define RXTOUT_OFFSET 0x1C
+#define RXWM_OFFSET 0x20
+#define MODEMCR_OFFSET 0x24
+#define MODEMSR_OFFSET 0x28
+#define SR_OFFSET 0x2C
+#define FIFO_OFFSET 0x30
+#define BAUD_DIV_OFFSET 0x34
+#define FLOW_DELAY_OFFSET 0x38
+#define TX_FIFO_TRIG_LV_OFFSET 0x44
+#define RX_FIFO_TRIG_LV_OFFSET 0x48
 
 static void init_uart(void)
 {
-	UART_PS_t *puart = (UART_PS_t *)(ZYNQMP_UART1_BASEADDR);
-	puart->CR = 0x00000114;
-	puart->MR = 0x00000020;
-	puart->IER = 0x00000000;
-	puart->IDR = 0x00000000;
-	puart->BAUDGEN = 0x0000007C;
-	puart->RXTOUT = 0x0000000A;
-	puart->RXWM = 0x00000038;
-	puart->MODEMCR = 0x00000003;
-	puart->BAUD_DIV = 0x00000006;
-	puart->FLOW_DELAY = 0x00000000;
-	puart->TX_FIFO_TRIG_LV = 0x00000020;
+	*((uint32_t *)(ZYNQMP_UART1_BASEADDR + CR_OFFSET)) = 0x00000114;
+	*((uint32_t *)(ZYNQMP_UART1_BASEADDR + MR_OFFSET)) = 0x00000020;
+	*((uint32_t *)(ZYNQMP_UART1_BASEADDR + IER_OFFSET)) = 0x00000000;
+	*((uint32_t *)(ZYNQMP_UART1_BASEADDR + IDR_OFFSET)) = 0x00000000;
+	*((uint32_t *)(ZYNQMP_UART1_BASEADDR + BAUDGEN_OFFSET)) = 0x0000007C;
+	*((uint32_t *)(ZYNQMP_UART1_BASEADDR + RXTOUT_OFFSET)) = 0x0000000A;
+	*((uint32_t *)(ZYNQMP_UART1_BASEADDR + RXWM_OFFSET)) = 0x00000038;
+	*((uint32_t *)(ZYNQMP_UART1_BASEADDR + MODEMCR_OFFSET)) = 0x00000003;
+	*((uint32_t *)(ZYNQMP_UART1_BASEADDR + BAUD_DIV_OFFSET)) = 0x00000006;
+	*((uint32_t *)(ZYNQMP_UART1_BASEADDR + FLOW_DELAY_OFFSET)) = 0x00000000;
+	*((uint32_t *)(ZYNQMP_UART1_BASEADDR + TX_FIFO_TRIG_LV_OFFSET)) = 0x00000020;
 }
-
 
 int main(void)
 {
 	init_uart();
-	/*printk("Hello World!\n");*/
 
 	return 0;
 }

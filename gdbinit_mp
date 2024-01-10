@@ -2,7 +2,7 @@
 # for zynqmp US+
 set architecture aarch64
 target remote localhost:3001
-file build-slos/kernel/kernel64.elf
+file build/slos64/kernel/kernel64.elf
 b *0x8000000
 #b load_ramdisk_app
 #commands 1
