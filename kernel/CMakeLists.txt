@@ -4,7 +4,7 @@ if (TARGET_ARCH STREQUAL "aarch64")
 set(TARGET_NAME kernel64)
 else ()
 set(TARGET_NAME kernel32)
-endif()
+endif ()
 
 set(CMAKE_C_COMPILER_WORKS TRUE)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DLITTLEFS -DFS_USE_SLFS -D_ENABLE_SMP_")
@@ -25,10 +25,12 @@ add_compile_options(
   -Wall -fno-omit-frame-pointer -ffreestanding
 )
 add_subdirectory(arch/ca-53)
+add_subdirectory(core)
 
 add_executable(
   ${TARGET_NAME}
   $<TARGET_OBJECTS:arch_objs>
+  $<TARGET_OBJECTS:core_objs>
 )
 
 else ()
@@ -52,7 +54,7 @@ add_executable(
   $<TARGET_OBJECTS:fs_objs>
   $<TARGET_OBJECTS:libs_objs>
 )
-endif()
+endif ()
 
 target_link_options(
   ${TARGET_NAME} PRIVATE
