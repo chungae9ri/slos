@@ -1,6 +1,6 @@
 #include <stdint.h>
 #include <stdarg.h>
-#include <rwbyte.h>
+#include <uart.h>
 
 #define NUM_STR_MAX		(16u)
 

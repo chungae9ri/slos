@@ -31,7 +31,7 @@
 #include <percpu.h>
 #include <mailbox.h>
 #include <timer.h>
-#include <rwbyte.h>
+#include <uart.h>
 #include <string.h>
 #include <dma.h>
 #include <ramdisk_io.h>

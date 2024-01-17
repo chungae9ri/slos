@@ -32,56 +32,24 @@
 #include <sgi.h>
 #include <mailbox.h>
 #include <slfs.h>
+#include <uart.h>
+
 
 extern uint32_t show_stat;
 extern void secondary_reset(void);
 extern void flush_ent_dcache(void);
 extern uint32_t read_scr(void);
 
+#define UART_BASE_ADDR		0xE0000000
 #define A9_CPU_RST_CTRL		(0xF8000244)
 #define A9_RST0_MASK		(0x1)
 #define A9_RST1_MASK		(0x2)
 #define A9_CLKSTOP0_MASK	(0x10)
 #define A9_CLKSTOP1_MASK	(0x20)
 
-typedef struct uart_ps {
-	volatile uint32_t CR;
-	volatile uint32_t MR;
-	volatile uint32_t IER;
-	volatile uint32_t IDR;
-	volatile const uint32_t IMR;
-	volatile uint32_t ISR;
-	volatile uint32_t BAUDGEN;
-	volatile uint32_t RXTOUT;
-	volatile uint32_t RXWM;
-	volatile uint32_t MODEMCR;
-	volatile uint32_t MODEMSR;
-	volatile const uint32_t SR;
-	volatile uint32_t FIFO;
-	volatile uint32_t BAUD_DIV;
-	volatile uint32_t FLOW_DELAY;
-	volatile uint32_t TX_FIFO_TRIG_LV;
-} UART_PS_t;
-
-static void init_uart(void)
-{
-	UART_PS_t *puart = (UART_PS_t *)(STDIN_BASEADDRESS);
-	puart->CR = 0x00000114;
-	puart->MR = 0x00000020;
-	puart->IER = 0x00000000;
-	puart->IDR = 0x00000000;
-	puart->BAUDGEN = 0x0000007C;
-	puart->RXTOUT = 0x0000000A;
-	puart->RXWM = 0x00000038;
-	puart->MODEMCR = 0x00000003;
-	puart->BAUD_DIV = 0x00000006;
-	puart->FLOW_DELAY = 0x00000000;
-	puart->TX_FIFO_TRIG_LV = 0x00000020;
-}
-
 static void init_platform(void)
 {
-	init_uart();
+	init_uart(UART_BASE_ADDR);
 	printk("### vPlatformInit\n");
 }
 

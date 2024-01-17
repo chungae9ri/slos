@@ -24,13 +24,16 @@ add_compile_options(
   -g -march=armv8-a -mcpu=cortex-a53
   -Wall -fno-omit-frame-pointer -ffreestanding
 )
+
 add_subdirectory(arch/ca-53)
 add_subdirectory(core)
+add_subdirectory(drivers)
 
 add_executable(
   ${TARGET_NAME}
   $<TARGET_OBJECTS:arch_objs>
   $<TARGET_OBJECTS:core_objs>
+  $<TARGET_OBJECTS:drivers_objs>
 )
 
 else ()

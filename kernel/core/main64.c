@@ -1,43 +1,16 @@
 #include <stdint.h>
 
+#include <uart.h>
+#include <printk.h>
+
+#define ZYNQMP_UART0_BASEADDR		0x00FF000000
 #define ZYNQMP_UART1_BASEADDR		0x00FF010000
-
-#define CR_OFFSET 0x0
-#define MR_OFFSET 0x4
-#define IER_OFFSET 0x8
-#define IDR_OFFSET 0xC
-#define IMR_OFFSET 0x10
-#define ISR_OFFSET 0x14
-#define BAUDGEN_OFFSET 0x18
-#define RXTOUT_OFFSET 0x1C
-#define RXWM_OFFSET 0x20
-#define MODEMCR_OFFSET 0x24
-#define MODEMSR_OFFSET 0x28
-#define SR_OFFSET 0x2C
-#define FIFO_OFFSET 0x30
-#define BAUD_DIV_OFFSET 0x34
-#define FLOW_DELAY_OFFSET 0x38
-#define TX_FIFO_TRIG_LV_OFFSET 0x44
-#define RX_FIFO_TRIG_LV_OFFSET 0x48
-
-static void init_uart(void)
-{
-	*((uint32_t *)(ZYNQMP_UART1_BASEADDR + CR_OFFSET)) = 0x00000114;
-	*((uint32_t *)(ZYNQMP_UART1_BASEADDR + MR_OFFSET)) = 0x00000020;
-	*((uint32_t *)(ZYNQMP_UART1_BASEADDR + IER_OFFSET)) = 0x00000000;
-	*((uint32_t *)(ZYNQMP_UART1_BASEADDR + IDR_OFFSET)) = 0x00000000;
-	*((uint32_t *)(ZYNQMP_UART1_BASEADDR + BAUDGEN_OFFSET)) = 0x0000007C;
-	*((uint32_t *)(ZYNQMP_UART1_BASEADDR + RXTOUT_OFFSET)) = 0x0000000A;
-	*((uint32_t *)(ZYNQMP_UART1_BASEADDR + RXWM_OFFSET)) = 0x00000038;
-	*((uint32_t *)(ZYNQMP_UART1_BASEADDR + MODEMCR_OFFSET)) = 0x00000003;
-	*((uint32_t *)(ZYNQMP_UART1_BASEADDR + BAUD_DIV_OFFSET)) = 0x00000006;
-	*((uint32_t *)(ZYNQMP_UART1_BASEADDR + FLOW_DELAY_OFFSET)) = 0x00000000;
-	*((uint32_t *)(ZYNQMP_UART1_BASEADDR + TX_FIFO_TRIG_LV_OFFSET)) = 0x00000020;
-}
 
 int main(void)
 {
-	init_uart();
+	init_uart(ZYNQMP_UART1_BASEADDR);
+
+	printk("hello world\n");
 
 	return 0;
 }
