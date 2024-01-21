@@ -8,9 +8,12 @@
 
 int main(void)
 {
+	uint32_t current_el= 0;
 	init_uart(ZYNQMP_UART1_BASEADDR);
 
-	printk("hello world\n");
+	/* read currentEL*/
+	asm volatile ("mrs %[cel], CurrentEL" : [cel] "=r" (current_el)::);
+	printk("currentEL: %d\n", current_el); 
 
 	return 0;
 }

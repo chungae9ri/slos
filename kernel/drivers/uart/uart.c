@@ -1,5 +1,4 @@
 #include <stdint.h>
-/*#include <xparameters.h>*/
 
 #define CR_OFFSET 0x0
 #define MR_OFFSET 0x4
