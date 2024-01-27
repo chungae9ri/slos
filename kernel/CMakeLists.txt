@@ -27,11 +27,13 @@ add_compile_options(
 
 add_subdirectory(arch/ca-53)
 add_subdirectory(core)
+add_subdirectory(core64)
 add_subdirectory(drivers)
 
 add_executable(
   ${TARGET_NAME}
   $<TARGET_OBJECTS:arch_objs>
+  $<TARGET_OBJECTS:core64_objs>
   $<TARGET_OBJECTS:core_objs>
   $<TARGET_OBJECTS:drivers_objs>
 )
