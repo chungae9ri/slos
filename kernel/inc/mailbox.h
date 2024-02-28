@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
+//
+// Copyright (c) 2024 kwangdo.yi<kwangdo.yi@gmail.com>
+
 #ifndef _MAILBOX_H_
 #define _MAILBOX_H_
 
