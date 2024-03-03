@@ -18,6 +18,10 @@ int main(void)
 	/* read currentEL*/
 	asm volatile ("mrs %[cel], CurrentEL" : [cel] "=r" (current_el)::);
 	printk("currentEL: %d\n", current_el); 
+
+	return 0;
+}
+
 #if 0
 void entry_el1(void){
     Print (L"running in el1.\n\r");
@@ -53,6 +57,6 @@ UefiMain (
 
     "eret" : : "r" (entry_el1) :
     );
-#endif
 	return 0;
 }
+#endif

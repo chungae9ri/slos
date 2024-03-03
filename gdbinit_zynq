@@ -1,12 +1,9 @@
-#target remote localhost:3000
-#for zynqmp US+
-target remote localhost:3121
-file build-slos/kernel/kernel64.elf
-b *0x8000000
+target remote localhost:3000
 #file out/kernel/kernel.elf
-#b *0x100000
-#b ssbl
-#b start_kernel
+file build/slos32/kernel/kernel32.elf
+b *0x100000
+b ssbl
+b start_kernel
 #b load_ramdisk_app
 #commands 1
 #restore a.bin binary 0x1000

@@ -59,7 +59,6 @@ static void cpuidle_secondary(void)
 	}
 }
 
-
 static void cpuidle(void)
 {
 	uint32_t i = 0;
