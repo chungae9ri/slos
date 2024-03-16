@@ -22,8 +22,7 @@ void init_gic_dist(void)
 	/* Disabling GIC */
 	writel(0, GIC_ICDDCR);
 
-	/*  
-	 * GIC_ICDICTR: interrupt controller type reg.
+	/* GIC_ICDICTR: interrupt controller type reg.
 	 * Find out how many interrupts are supported.
 	 */
 	ext_irq_num = readl(GIC_ICDICTR) & 0x1f;
@@ -216,8 +215,7 @@ uint32_t gic_unmask_interrupt(int vec)
 	reg = GIC_ICDICER0 + (uint32_t)(vec / 32) * 4;
 	bit = 1 << (vec & 31);
 
-	/* 
-	 * writing 1 disables intr
+	/* writing 1 disables intr
 	 * writing 0 has no effect 
 	 */
 	writel(bit, reg);
