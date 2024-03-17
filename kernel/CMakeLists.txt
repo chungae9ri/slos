@@ -16,6 +16,19 @@ project(
   LANGUAGES ASM C
 )
 
+set(devicetree_defs_fname generated_devicetree_defs.h)
+set(devicetree_custom_target gen_devicetree_defs)
+add_custom_command(
+  OUTPUT ${devicetree_defs_fname}
+  COMMAND ${CMAKE_COMMAND} -E env python3 ${CMAKE_CURRENT_SOURCE_DIR}/dts/gen_defs.py > ${devicetree_defs_fname}
+  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/dts/gen_defs.py
+)
+
+add_custom_target(
+  ${devicetree_custom_target} ALL
+  DEPENDS ${devicetree_defs_fname}
+)
+
 include_directories(inc)
 
 if (TARGET_ARCH STREQUAL "aarch64")
@@ -60,6 +73,8 @@ add_executable(
   $<TARGET_OBJECTS:libs_objs>
 )
 endif ()
+
+add_dependencies(${TARGET_NAME} ${devicetree_custom_target})
 
 target_link_options(
   ${TARGET_NAME} PRIVATE

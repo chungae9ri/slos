@@ -20,10 +20,18 @@ class node:
     def add_leaf(self, leaf):
         self.leaves.append(leaf)
 
-def dfs(node):
+def dfs(node, path):
     for leaf in node.leaves:
-        dfs(leaf)
-    print(f"node: {node.name}\n")
+        devtree_macro = path +"_S_" + leaf.name
+        print(f"#define {devtree_macro} 1")
+        if leaf.compat is not None:
+            print(f"#define {devtree_macro}_P_compat \"{leaf.compat}\"")
+        if leaf.base_addr is not None:
+            print(f"#define {devtree_macro}_P_base_addr {leaf.base_addr}")
+        if leaf.intr is not None:
+            print(f"#define {devtree_macro}_P_intr {leaf.intr}")
+
+        dfs(leaf, devtree_macro)
 
 def build_tree(dts_file, root):
     with open(dts_file, 'r') as file:
@@ -84,10 +92,10 @@ def main():
     root = node(None, None, None, None, None)
 
     for file_name in glob.glob(dts_path, recursive=False):
-        print(f"filename: {file_name}")
+        #print(f"filename: {file_name}")
         build_tree(file_name, root)
 
-    dfs(root)
+    dfs(root, root.name)
 
 if __name__ == '__main__':
     main()
