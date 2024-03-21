@@ -20,7 +20,8 @@ set(devicetree_defs_fname generated_devicetree_defs.h)
 set(devicetree_custom_target gen_devicetree_defs)
 add_custom_command(
   OUTPUT ${devicetree_defs_fname}
-  COMMAND ${CMAKE_COMMAND} -E env python3 ${CMAKE_CURRENT_SOURCE_DIR}/dts/gen_defs.py > ${devicetree_defs_fname}
+  COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/generated
+  COMMAND ${CMAKE_COMMAND} -E env python3 ${CMAKE_CURRENT_SOURCE_DIR}/dts/gen_defs.py > ${CMAKE_BINARY_DIR}/generated/${devicetree_defs_fname}
   DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/dts/gen_defs.py
 )
 
@@ -30,6 +31,7 @@ add_custom_target(
 )
 
 include_directories(inc)
+include_directories(${CMAKE_BINARY_DIR}/generated)
 
 if (TARGET_ARCH STREQUAL "aarch64")
 message("TARGET_ARCH is aarch64")

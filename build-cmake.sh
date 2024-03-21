@@ -67,8 +67,8 @@ build_ramdisk() {
 build_kernel32() {
     echo "cmake build for kernel32"
     cd ${BUILD_PATH}
-    rm -rf ${BUILD_PATH}/slos32
-    mkdir ${BUILD_PATH}/slos32 && cd ${BUILD_PATH}/slos32
+    rm -rf ${BUILD_PATH}/kernel32
+    mkdir ${BUILD_PATH}/kernel32 && cd ${BUILD_PATH}/kernel32
     cmake -DCMAKE_TOOLCHAIN_FILE=${SLOS_PATH}/cmake/arm-none-eabi.cmake ${SLOS_PATH}
     make
 }
@@ -76,8 +76,8 @@ build_kernel32() {
 build_kernel64() {
     echo "cmake build for kernel64"
     cd ${BUILD_PATH}
-    rm -rf ${BUILD_PATH}/slos64
-    mkdir ${BUILD_PATH}/slos64 && cd ${BUILD_PATH}/slos64
+    rm -rf ${BUILD_PATH}/kernel64
+    mkdir ${BUILD_PATH}/kernel64 && cd ${BUILD_PATH}/kernel64
     cmake -DCMAKE_TOOLCHAIN_FILE=${SLOS_PATH}/cmake/aarch64-none-elf.cmake ${SLOS_PATH}
     make
 }

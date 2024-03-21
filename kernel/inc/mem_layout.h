@@ -92,12 +92,6 @@
 #define ODEV_REG_ADDR				0x43c00008
 #define ODEV_REG_LEN				0x43c0000c
 #define ODEV_REG_LATENCY			0x43c00010
-/* modecore device regs */
-#define MODCORE_DMA_REG_CNTL			0x43c10000
-#define MODCORE_DMA_REG_STATUS			0x43c10004
-#define MODCORE_DMA_REG_SRC_ADDR		0x43c10008
-#define MODCORE_DMA_REG_LEN			0x43c1000c
-#define MODCORE_DMA_REG_DST_ADDR		0x43c10010
 /* end of memory map */
 
 /* misc definitions */
