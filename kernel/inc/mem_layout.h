@@ -86,12 +86,6 @@
 #define SCRATCH_BASE				0x02000000 /* 32M */
 #define RAMDISK_FS_BASE 			0x3000000 /* 48M */
 /* peripheral reg address */
-/* outstream device regs */
-#define ODEV_REG_CTRL				0x43c00000
-#define ODEV_REG_STATUS				0x43c00004
-#define ODEV_REG_ADDR				0x43c00008
-#define ODEV_REG_LEN				0x43c0000c
-#define ODEV_REG_LATENCY			0x43c00010
 /* end of memory map */
 
 /* misc definitions */

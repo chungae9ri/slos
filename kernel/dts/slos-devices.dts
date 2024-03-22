@@ -12,5 +12,11 @@
 		reg = <0x43c10000 0x100>;
 		interrupts = <61 4>;
 	};
+
+	odev@43c00000 {
+		compatible = "slos,odev";
+		reg = <0x43c00000 0x100>;
+		interrupts = <62 4>;
+	};
 };
 
