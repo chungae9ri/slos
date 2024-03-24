@@ -19,7 +19,7 @@ void printk(const char *fmt, ...)
 
 	for (pch = (uint8_t *)fmt; *pch != '\0'; pch++) {
 		if (*pch != '%') {
-			outbyte(*pch);
+			poll_out(*pch);
 			continue;
 		}
 		switch (*++pch) {
@@ -39,14 +39,14 @@ void printk(const char *fmt, ...)
 			str_len = i;
 			num_str[i] = '\0';
 			for (i = 0; i < str_len; i++) {
-				outbyte(num_str[str_len - 1 - i]);
+				poll_out(num_str[str_len - 1 - i]);
 			}
 			break;
 
 		case 's':
 			pstr = va_arg(argp, uint8_t *);
 			while (*pstr != '\0') {
-				outbyte(*pstr++);
+				poll_out(*pstr++);
 			}
 			break;
 		default:

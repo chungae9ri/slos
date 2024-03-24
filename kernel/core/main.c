@@ -26,7 +26,6 @@ extern void secondary_reset(void);
 extern void flush_ent_dcache(void);
 extern uint32_t read_scr(void);
 
-#define UART_BASE_ADDR		0xE0000000
 #define A9_CPU_RST_CTRL		(0xF8000244)
 #define A9_RST0_MASK		(0x1)
 #define A9_RST1_MASK		(0x2)
@@ -35,7 +34,7 @@ extern uint32_t read_scr(void);
 
 static void init_platform(void)
 {
-	init_uart(UART_BASE_ADDR);
+	init_uart();
 	printk("### vPlatformInit\n");
 }
 

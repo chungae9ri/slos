@@ -4,6 +4,11 @@
 
 #include <stdint.h>
 
+#include <regops.h>
+
+#include <generated_devicetree_defs.h>
+#include <device.h>
+
 #define CR_OFFSET 0x0
 #define MR_OFFSET 0x4
 #define IER_OFFSET 0x8
@@ -25,80 +30,70 @@
 #define BM_SR_TXFULL		0x00000010U /**< TX FIFO full */
 #define BM_SR_RXEMPTY		0x00000002U /**< RX FIFO empty */
 
-static uint32_t uart_base_addr;
+DEVICE_DEFINE(uart,
+			  DT_N_S_uart_E0000000_P_compat,
+			  DT_N_S_uart_E0000000_P_base_addr,
+			  DT_N_S_uart_E0000000_P_intr);
 
-#define XUartPs_IsReceiveData()			 \
-	!((Xil_In32((uart_base_addr) + SR_OFFSET) & 	\
-				(uint32_t)BM_SR_RXEMPTY) == (uint32_t)BM_SR_RXEMPTY)
+void poll_out(char c) {
+	uint32_t reg_val;
 
-#define XUartPs_ReadReg(RegOffset) \
-	Xil_In32((uart_base_addr) + (uint32_t)(RegOffset))
+	reg_val = readl(DEVICE_GET_BASE_ADDR(uart) + SR_OFFSET);
 
-#define XUartPs_IsTransmitFull()			 \
-	((Xil_In32((uart_base_addr) + SR_OFFSET) & 	\
-	  (uint32_t)BM_SR_TXFULL) == (uint32_t)BM_SR_TXFULL)
-
-#define XUartPs_WriteReg(RegOffset, RegisterValue) \
-	Xil_Out32((uint32_t *)((uart_base_addr) + (uint32_t)(RegOffset)), (uint32_t)(RegisterValue))
-
-
-static inline void Xil_Out32(uint32_t *Addr, uint32_t Value)
-{
-	volatile uint32_t *LocalAddr = (volatile uint32_t *)Addr;
-	*LocalAddr = Value;
-}
-
-static inline uint32_t Xil_In32(uint32_t Addr)
-{
-	return *(volatile uint32_t *) Addr;
-}
-
-void XUartPs_SendByte(uint8_t Data)
-{
-	/* Wait until there is space in TX FIFO */
-	while (XUartPs_IsTransmitFull()) {
-		;
+	while((reg_val & BM_SR_TXFULL) == BM_SR_TXFULL) {
+		reg_val = readl(DEVICE_GET_BASE_ADDR(uart) + SR_OFFSET);
 	}
 
-	/* Write the byte into the TX FIFO */
-	XUartPs_WriteReg(FIFO_OFFSET, (uint32_t)Data);
+	writel((uint32_t)c, DEVICE_GET_BASE_ADDR(uart) + FIFO_OFFSET);
+
+	reg_val = readl(DEVICE_GET_BASE_ADDR(uart) + SR_OFFSET);
+
+	while((reg_val & BM_SR_TXFULL) == BM_SR_TXFULL) {
+		reg_val = readl(DEVICE_GET_BASE_ADDR(uart) + SR_OFFSET);
+	}
 }
 
-void outbyte(char c) {
-	XUartPs_SendByte(c);
-}
-
-uint8_t XUartPs_RecvByte(void)
+uint8_t poll_in(void) 
 {
-	uint32_t RecievedByte;
+	uint32_t c = 0;
+
 	/* Wait until there is data */
-	while (!XUartPs_IsReceiveData()) {
+#if 0
+	/* FIXME: 
+	 * This routine doesn't work. while loop exits 
+	 * even though there is no input char. Could be because 
+	 * while loop is preempted and when gets back the while loop
+	 * exits because of corrupted context switching.
+	 */
+	uint32_t reg_val;
+
+	reg_val = readl(DEVICE_GET_BASE_ADDR(uart) + SR_OFFSET);
+	while ((reg_val & BM_SR_RXEMPTY) == BM_SR_RXEMPTY) {
+		reg_val = readl(DEVICE_GET_BASE_ADDR(uart) + SR_OFFSET);
+	}
+#else
+	while ((readl(DEVICE_GET_BASE_ADDR(uart) + SR_OFFSET) &
+			BM_SR_RXEMPTY) == BM_SR_RXEMPTY) {
 		;
 	}
-	RecievedByte = XUartPs_ReadReg(FIFO_OFFSET);
-	/* Return the byte received */
-	return (uint8_t)RecievedByte;
+#endif
+
+	c = readl(DEVICE_GET_BASE_ADDR(uart) + FIFO_OFFSET);
+
+	return (uint8_t)c;
 }
 
-uint8_t inbyte() 
+void init_uart(void)
 {
-	return XUartPs_RecvByte();
+	*((uint32_t *)(DEVICE_GET_BASE_ADDR(uart) + CR_OFFSET)) = 0x00000114;
+	*((uint32_t *)(DEVICE_GET_BASE_ADDR(uart) + MR_OFFSET)) = 0x00000020;
+	*((uint32_t *)(DEVICE_GET_BASE_ADDR(uart) + IER_OFFSET)) = 0x00000000;
+	*((uint32_t *)(DEVICE_GET_BASE_ADDR(uart) + IDR_OFFSET)) = 0x00000000;
+	*((uint32_t *)(DEVICE_GET_BASE_ADDR(uart) + BAUDGEN_OFFSET)) = 0x0000007C;
+	*((uint32_t *)(DEVICE_GET_BASE_ADDR(uart) + RXTOUT_OFFSET)) = 0x0000000A;
+	*((uint32_t *)(DEVICE_GET_BASE_ADDR(uart) + RXWM_OFFSET)) = 0x00000038;
+	*((uint32_t *)(DEVICE_GET_BASE_ADDR(uart) + MODEMCR_OFFSET)) = 0x00000003;
+	*((uint32_t *)(DEVICE_GET_BASE_ADDR(uart) + BAUD_DIV_OFFSET)) = 0x00000006;
+	*((uint32_t *)(DEVICE_GET_BASE_ADDR(uart) + FLOW_DELAY_OFFSET)) = 0x00000000;
+	*((uint32_t *)(DEVICE_GET_BASE_ADDR(uart) + TX_FIFO_TRIG_LV_OFFSET)) = 0x00000020;
 }
-
-void init_uart(uint32_t base_addr)
-{
-	uart_base_addr = base_addr;
-
-	*((uint32_t *)(uart_base_addr + CR_OFFSET)) = 0x00000114;
-	*((uint32_t *)(uart_base_addr + MR_OFFSET)) = 0x00000020;
-	*((uint32_t *)(uart_base_addr + IER_OFFSET)) = 0x00000000;
-	*((uint32_t *)(uart_base_addr + IDR_OFFSET)) = 0x00000000;
-	*((uint32_t *)(uart_base_addr + BAUDGEN_OFFSET)) = 0x0000007C;
-	*((uint32_t *)(uart_base_addr + RXTOUT_OFFSET)) = 0x0000000A;
-	*((uint32_t *)(uart_base_addr + RXWM_OFFSET)) = 0x00000038;
-	*((uint32_t *)(uart_base_addr + MODEMCR_OFFSET)) = 0x00000003;
-	*((uint32_t *)(uart_base_addr + BAUD_DIV_OFFSET)) = 0x00000006;
-	*((uint32_t *)(uart_base_addr + FLOW_DELAY_OFFSET)) = 0x00000000;
-	*((uint32_t *)(uart_base_addr + TX_FIFO_TRIG_LV_OFFSET)) = 0x00000020;
-}
-

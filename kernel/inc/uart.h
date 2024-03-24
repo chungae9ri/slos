@@ -4,7 +4,24 @@
 
 #ifndef _UART_H_
 #define _UART_H_
-void init_uart(uint32_t uart_base_addr);
-void outbyte(char c);
-uint8_t inbyte(void);
+
+/**
+ * @brief 
+ * 
+ */
+void init_uart(void);
+
+/**
+ * @brief 
+ * 
+ * @param c 
+ */
+void poll_out(char c);
+
+/**
+ * @brief 
+ * 
+ * @return uint8_t 
+ */
+uint8_t poll_in(void);
 #endif
