@@ -3,16 +3,20 @@
 # Copyright (c) 2024 kwangdo.yi<kwangdo.yi@gmail.com>
 
 KERNMODULES := core arch/ca-9 fs fs/slfs fs/littlefs libs drivers/uart drivers/dma drivers/odev drivers/ramdisk
-KERNOUTDIR := $(addprefix ../out/kernel/,$(KERNMODULES)) 
+KERNOUTDIR := $(addprefix $(TOPOUT)/kernel/,$(KERNMODULES)) 
 KERNELDIR := $(shell pwd)
 
 KERNCSRC := $(foreach sdir,$(KERNMODULES),$(wildcard $(sdir)/*.c))
-KERNCOBJ := $(patsubst %.c,../out/kernel/%.o,$(KERNCSRC))
+KERNCOBJ := $(patsubst %.c,$(TOPOUT)/kernel/%.o,$(KERNCSRC))
 KERNASMSRC := $(foreach sdir,$(KERNMODULES),$(wildcard $(sdir)/*.S))
-KERNASMOBJ := $(patsubst %.S,../out/kernel/%.o,$(KERNASMSRC))
+KERNASMOBJ := $(patsubst %.S,$(TOPOUT)/kernel/%.o,$(KERNASMSRC))
 
-INC := -I$(KERNELDIR)/inc -I$(KERNELDIR)/fs/littlefs
+INC := -I$(TOPOUT)/kernel/generated -I$(KERNELDIR)/inc -I$(KERNELDIR)/fs/littlefs
 LDS :=$(KERNELDIR)/linker/kernel32.lds
+
+.PHONY: gen_devicetree
+
+all: gen_devicetree kernel
 
 vpath %.c $(KERNMODULES)
 vpath %.S $(KERNMODULES)
@@ -27,8 +31,12 @@ endef
 
 $(foreach bdir, $(KERNOUTDIR),$(eval $(call make-obj,$(bdir))))
 
-kernel: $(KERNOUTDIR) $(KERNCOBJ) $(KERNASMOBJ)
-	$(CC) -Wl,-T -Wl,$(LDS) -o $(TOPOUT)/kernel/kernel.elf $(KERNCOBJ) $(KERNASMOBJ) -Wl,-Map=$(TOPOUT)/kernel/kernel.map -nostdlib
+kernel: gen_devicetree $(KERNOUTDIR) $(KERNCOBJ) $(KERNASMOBJ)
+	$(CC) -Wl,-T -Wl,$(LDS) -o $(TOPOUT)/kernel/kernel32.elf $(KERNCOBJ) $(KERNASMOBJ) -Wl,-Map=$(TOPOUT)/kernel/kernel.map -nostdlib
+
+gen_devicetree:
+	mkdir -p $(TOPOUT)/kernel/generated
+	python dts/gen_defs.py > $(TOPOUT)/kernel/generated/generated_devicetree_defs.h
 
 $(KERNOUTDIR):
 	mkdir -p $@
