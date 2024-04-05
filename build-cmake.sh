@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 source setup-cmake.sh
 
 BUILD_PATH=${SLOS_PATH}/build
