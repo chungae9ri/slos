@@ -13,8 +13,9 @@ KERNASMOBJ := $(patsubst %.S,$(TOPOUT)/kernel/%.o,$(KERNASMSRC))
 
 INC := -I$(TOPOUT)/kernel/generated -I$(KERNELDIR)/inc -I$(KERNELDIR)/fs/littlefs
 LDS :=$(KERNELDIR)/linker/kernel32.lds
+CFLAGS := $(CFLAGS) -DAARCH32
 
-.PHONY: gen_devicetree
+.PHONY: gen_devicetree kernel
 
 all: gen_devicetree kernel
 
@@ -36,7 +37,7 @@ kernel: gen_devicetree $(KERNOUTDIR) $(KERNCOBJ) $(KERNASMOBJ)
 
 gen_devicetree:
 	mkdir -p $(TOPOUT)/kernel/generated
-	python dts/gen_defs.py > $(TOPOUT)/kernel/generated/generated_devicetree_defs.h
+	python dts/gen_defs.py --soc zynq-7000 > $(TOPOUT)/kernel/generated/generated_devicetree_defs.h
 
 $(KERNOUTDIR):
 	mkdir -p $@
