@@ -6,7 +6,7 @@
 
 import glob
 import os
-import re
+import argparse
 
 class node:
     def __init__(self, parent, name, compat, base_addr, intr):
@@ -86,7 +86,13 @@ def build_tree(dts_file, root):
 
 
 def main():
-    script_dir = os.path.dirname(os.path.abspath(__file__))
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-s', '--soc', type=str, required=True, default='zynq-7000')
+    args = parser.parse_args()
+
+    soc = args.soc
+
+    script_dir = os.path.dirname(os.path.abspath(__file__)) + '/' + soc 
     dts_path = os.path.join(script_dir, '*.dts*')
 
     root = node(None, None, None, None, None)

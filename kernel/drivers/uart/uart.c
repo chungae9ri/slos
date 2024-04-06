@@ -30,10 +30,17 @@
 #define BM_SR_TXFULL		0x00000010U /**< TX FIFO full */
 #define BM_SR_RXEMPTY		0x00000002U /**< RX FIFO empty */
 
+#ifdef AARCH32
 DEVICE_DEFINE(uart,
 			  DT_N_S_uart_E0000000_P_compat,
 			  DT_N_S_uart_E0000000_P_base_addr,
 			  DT_N_S_uart_E0000000_P_intr);
+#else
+DEVICE_DEFINE(uart,
+			  DT_N_S_uart_00FF010000_P_compat,
+			  DT_N_S_uart_00FF010000_P_base_addr,
+			  0);
+#endif
 
 void poll_out(char c) {
 	uint32_t reg_val;

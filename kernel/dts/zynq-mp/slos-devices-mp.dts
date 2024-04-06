@@ -1,0 +1,12 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
+//
+// Copyright (c) 2024 kwangdo.yi<kwangdo.yi@gmail.com>
+
+/dts-v1/;
+
+/ {
+	uart@00FF010000 {
+		compatible = "ps,uart";
+		reg = <0x00FF010000 0x1000>;
+	};
+};
