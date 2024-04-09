@@ -14,7 +14,9 @@ int main(void)
 
 	/* read currentEL*/
 	asm volatile ("mrs %[cel], CurrentEL" : [cel] "=r" (current_el)::);
-	printk("currentEL: %d\n", current_el); 
+	printk("currentEL: 0x%x\n", current_el >> 2); 
+
+	while (1) ;
 
 	return 0;
 }
