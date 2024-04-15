@@ -8,19 +8,21 @@ ENTRY(exceptions)
 /* Define Memories in the system */
 MEMORY
 {
-	DDR_REGION : ORIGIN = 0x8000000, LENGTH = 0x40000000
+	ROM_REGION (rx): ORIGIN = 0x8000000, LENGTH = 0x1000000	/* 16 MiB*/
+	RAM_REGION (rw): ORIGIN = 0x9000000, LENGTH = 0x20000000 /* 512 MiB */
 }
 
 SECTIONS
 {
+	. = 0x8000000;
 	.text : {
-		*(EXCEPTIONS);
+		KEEP(*(EXCEPTIONS));
 		*(.text) 
-	} > DDR_REGION
+	} > ROM_REGION
 	.data : { 
 		*(.data);
-	} > DDR_REGION
+	} > RAM_REGION
 	.bss : { 
 		*(.bss); 
-	} > DDR_REGION
+	} > RAM_REGION
 }

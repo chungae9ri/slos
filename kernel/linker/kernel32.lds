@@ -29,7 +29,7 @@ SECTIONS
 
 	. = 0xC0101000;
 	.text : AT(ADDR(.text) - 0xC0000000) {
-		*(EXCEPTIONS);
+		KEEP(*(EXCEPTIONS));
 		*(.text);
 	}
 
