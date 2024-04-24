@@ -17,7 +17,7 @@ SECTIONS
 	. = 0x8000000;
 	.text : {
 		KEEP(*(EXCEPTIONS));
-		*(.text) 
+		*(.text);
 	} > ROM_REGION
 	.data : { 
 		*(.data);

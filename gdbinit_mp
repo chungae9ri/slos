@@ -1,9 +1,9 @@
 # using gdb-multiarch
 # for zynqmp US+
-set architecture aarch64
+#set architecture aarch64
 target remote localhost:3001
-file build/slos64/kernel/kernel64.elf
-b *0x8000000
+#file build/kernel64/kernel/kernel64.elf
+#b *0x8000000
 #b load_ramdisk_app
 #commands 1
 #restore a.bin binary 0x1000

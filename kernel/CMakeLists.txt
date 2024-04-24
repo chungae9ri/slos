@@ -41,6 +41,7 @@ add_custom_target(
 add_compile_options(
   -g -march=armv8-a -mcpu=cortex-a53
   -Wall -fno-omit-frame-pointer -ffreestanding
+  -mgeneral-regs-only
 )
 
 add_compile_options(-DAARCH64=1)
