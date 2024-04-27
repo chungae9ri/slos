@@ -45,18 +45,18 @@ DEVICE_DEFINE(uart,
 void poll_out(char c) {
 	uint32_t reg_val;
 
-	reg_val = readl(DEVICE_GET_BASE_ADDR(uart) + SR_OFFSET);
+	reg_val = read32(DEVICE_GET_BASE_ADDR(uart) + SR_OFFSET);
 
 	while((reg_val & BM_SR_TXFULL) == BM_SR_TXFULL) {
-		reg_val = readl(DEVICE_GET_BASE_ADDR(uart) + SR_OFFSET);
+		reg_val = read32(DEVICE_GET_BASE_ADDR(uart) + SR_OFFSET);
 	}
 
-	writel((uint32_t)c, DEVICE_GET_BASE_ADDR(uart) + FIFO_OFFSET);
+	write32(DEVICE_GET_BASE_ADDR(uart) + FIFO_OFFSET, (uint32_t)c);
 
-	reg_val = readl(DEVICE_GET_BASE_ADDR(uart) + SR_OFFSET);
+	reg_val = read32(DEVICE_GET_BASE_ADDR(uart) + SR_OFFSET);
 
 	while((reg_val & BM_SR_TXFULL) == BM_SR_TXFULL) {
-		reg_val = readl(DEVICE_GET_BASE_ADDR(uart) + SR_OFFSET);
+		reg_val = read32(DEVICE_GET_BASE_ADDR(uart) + SR_OFFSET);
 	}
 }
 
@@ -74,18 +74,18 @@ uint8_t poll_in(void)
 	 */
 	uint32_t reg_val;
 
-	reg_val = readl(DEVICE_GET_BASE_ADDR(uart) + SR_OFFSET);
+	reg_val = read32(DEVICE_GET_BASE_ADDR(uart) + SR_OFFSET);
 	while ((reg_val & BM_SR_RXEMPTY) == BM_SR_RXEMPTY) {
-		reg_val = readl(DEVICE_GET_BASE_ADDR(uart) + SR_OFFSET);
+		reg_val = read32(DEVICE_GET_BASE_ADDR(uart) + SR_OFFSET);
 	}
 #else
-	while ((readl(DEVICE_GET_BASE_ADDR(uart) + SR_OFFSET) &
+	while ((read32(DEVICE_GET_BASE_ADDR(uart) + SR_OFFSET) &
 			BM_SR_RXEMPTY) == BM_SR_RXEMPTY) {
 		;
 	}
 #endif
 
-	c = readl(DEVICE_GET_BASE_ADDR(uart) + FIFO_OFFSET);
+	c = read32(DEVICE_GET_BASE_ADDR(uart) + FIFO_OFFSET);
 
 	return (uint8_t)c;
 }

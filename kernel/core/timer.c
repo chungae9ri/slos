@@ -61,7 +61,7 @@ inline uint32_t get_timer_freq()
 
 inline uint32_t timer_get_phy_tick_cnt(void)
 {
-	return (uint32_t)readl(PRIV_TMR_CNTR);
+	return (uint32_t)read32(PRIV_TMR_CNTR);
 }
 
 /* banked cpu private timer: cpu0 */
@@ -69,12 +69,12 @@ void timer_enable(void)
 {
 	int ctrl;
 
-	ctrl = readl(PRIV_TMR_CTRL);
+	ctrl = read32(PRIV_TMR_CTRL);
 	ctrl = ctrl | (PRIV_TMR_EN_MASK 
 			| PRIV_TMR_AUTO_RE_MASK
 			| PRIV_TMR_IRQ_EN_MASK);
 		
-	writel(ctrl, PRIV_TMR_CTRL);
+	write32(PRIV_TMR_CTRL, ctrl);
 }
 
 /* banked cpu private timer: cpu1 */
@@ -99,10 +99,10 @@ void timer_disable(void)
 {
 	int ctrl;
 
-	ctrl = readl(PRIV_TMR_CTRL);
+	ctrl = read32(PRIV_TMR_CTRL);
 	ctrl = ctrl & ~PRIV_TMR_EN_MASK;
 		
-	writel(ctrl, PRIV_TMR_CTRL);
+	write32(PRIV_TMR_CTRL, ctrl);
 }
 
 
@@ -125,14 +125,14 @@ int timer_irq (void *arg)
 #endif
 
 	// read banked PRIV_TMR_LD register.
-	elapsed = (uint32_t)(readl(PRIV_TMR_LD));
+	elapsed = (uint32_t)(read32(PRIV_TMR_LD));
 
 	pct = container_of(this_ptroot->rb_leftmost, struct timer_struct, run_node);
 	update_timer_tree(elapsed);
 	pnt = container_of(this_ptroot->rb_leftmost, struct timer_struct, run_node);
 	tc = pnt->tc;
 	/* reprogram next earliest deadline timer intr. */
-	writel(tc, PRIV_TMR_LD);
+	write32(PRIV_TMR_LD, tc);
 
 	update_current(elapsed);
 
@@ -217,7 +217,7 @@ void init_timer(void)
 	pct = container_of(this_ptroot->rb_leftmost, struct timer_struct, run_node);
 	pct->pt = this_current;
 	tc = pct->tc;
-	writel(tc, PRIV_TMR_LD);
+	write32(PRIV_TMR_LD, tc);
 
 	/* register timer isr for each corresponding cpu in
 	 * the gic_register_int_handler()

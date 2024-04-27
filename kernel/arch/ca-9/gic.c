@@ -20,12 +20,12 @@ void init_gic_dist(void)
 	uint32_t cpumask = 0x01010101;
 
 	/* Disabling GIC */
-	writel(0, GIC_ICDDCR);
+	write32(GIC_ICDDCR, 0);
 
 	/* GIC_ICDICTR: interrupt controller type reg.
 	 * Find out how many interrupts are supported.
 	 */
-	ext_irq_num = readl(GIC_ICDICTR) & 0x1f;
+	ext_irq_num = read32(GIC_ICDICTR) & 0x1f;
 	ext_irq_num = ext_irq_num * 32; 
 
 	/* Set each interrupt line based on UG585 
@@ -39,10 +39,10 @@ void init_gic_dist(void)
 	 * polarity for intr ID #62 of odev intr
 	 * All others are don't-care
 	 */
-	writel(0x555D555F, GIC_ICDICFR2);
-	writel(0xDD55D555, GIC_ICDICFR3);
-	writel(0x755557FF, GIC_ICDICFR4);
-	writel(0x03FFFF55, GIC_ICDICFR5);
+	write32(GIC_ICDICFR2, 0x555D555F);
+	write32(GIC_ICDICFR3, 0xDD55D555);
+	write32(GIC_ICDICFR4, 0x755557FF);
+	write32(GIC_ICDICFR5, 0x03FFFF55);
 
 	/* setup target cpu for each interrupt 
 	 * all intr are targeted to CPU0.
@@ -51,27 +51,27 @@ void init_gic_dist(void)
 	 * enabled in gic_mask_interrupt().
 	 */
 	for (i = 0; i < ext_irq_num; i += 4)
-		writel(cpumask, GIC_ICDIPTR8 + i); 
+		write32(GIC_ICDIPTR8 + i, cpumask); 
 
 	/* Disabling all interrupts forwarding */
-	writel(0x0000FFFF, GIC_ICDICER0);
-	writel(0xFFFFFFFF, GIC_ICDICER1);
-	writel(0xFFFFFFFF, GIC_ICDICER2);
+	write32(GIC_ICDICER0, 0x0000FFFF);
+	write32(GIC_ICDICER1, 0xFFFFFFFF);
+	write32(GIC_ICDICER2, 0xFFFFFFFF);
 
 	/* banked register set-enable ICDISER0. 
 	 * writing 1 enables intr.
 	 * writing 0 has no effect. 
 	 * Enable all PPIs and SGI #15
 	 */
-	writel(0xFFFF8000, GIC_ICDISER0);
+	write32(GIC_ICDISER0, 0xFFFF8000);
 
 	/* enable TTC0 interrupt forwarding, not here */
-	/*writel(0x00001C00, GIC_ICDISER1);*/
+	/*write32(GIC_ICDISER1, 0x00001C00);*/
 
 	/* enable GIC distributor to update intr register 
 	 * in both secure, non-secure interrupt singal occurrance
 	 */
-	writel(0x3, GIC_ICDDCR);
+	write32(GIC_ICDDCR, 0x3);
 }
 
 void init_gic_cpu(void)
@@ -83,11 +83,11 @@ void init_gic_cpu(void)
 	 * which has max value of priority.
 	 * Pass all levels of interrupts.
 	 */
-	writel(0xF8, GIC_ICCPMR);
+	write32(GIC_ICCPMR, 0xF8);
 	/* enable GIC cpu interface,
 	 * banked register
 	 */ 
-	writel(0x07, GIC_ICCICR);
+	write32(GIC_ICCICR, 0x07);
 }
 
 void init_gic(void)
@@ -104,15 +104,15 @@ void init_gic_secondary(void)
 	 */
 #if 0
 	/* Disabling interrupts forwarding */
-	writel(0x0000FFFF, GIC_ICDICER0);
-	writel(0xFFFFFFFF, GIC_ICDICER1);
-	writel(0xFFFFFFFF, GIC_ICDICER2);
+	write32(GIC_ICDICER0, 0x0000FFFF);
+	write32(GIC_ICDICER1, 0xFFFFFFFF);
+	write32(GIC_ICDICER2, 0xFFFFFFFF);
 #endif
 
 	/* enable GIC distributor, 
 	 * banked register 
 	 */
-	writel(0x1, GIC_ICDDCR);
+	write32(GIC_ICDDCR, 0x1);
 
 	/* 32 priority level (ICCPMR[2:0] = 2b000)
 	 * supported. ICDIPR0 ~ 23 is used to set 
@@ -121,12 +121,12 @@ void init_gic_secondary(void)
 	 * which has max value of priority.
 	 * Pass all levels of interrupts.
 	 */
-	writel(0xF8, GIC_ICCPMR);
+	write32(GIC_ICCPMR, 0xF8);
 
 	/* enable GIC cpu interface, 
 	 * banked register.
 	 */ 
-	writel(0x7, GIC_ICCICR);
+	write32(GIC_ICCICR, 0x7);
 
 	/* banked register set-enable ICDISER0. 
 	 * writing 1 enables intr.
@@ -134,8 +134,8 @@ void init_gic_secondary(void)
 	 * Enable all PPIs and SGI #15
 	 * Each SPI enable is set by calling gic_mask_interrupt
 	 */
-	writel(0xFFFF8000, GIC_ICDISER0);
-	/*writel(0xFFFFFFFF, GIC_ICDISER0);*/
+	write32(GIC_ICDISER0, 0xFFFF8000);
+	/*write32(GIC_ICDISER0, 0xFFFFFFFF);*/
 }
 
 void gic_fiq(void)
@@ -153,7 +153,7 @@ uint32_t gic_irq_handler(void)
 	struct sgi_data dat = {0, 0};
 
 	/* ack the interrupt */
-	val = readl(GIC_ICCIAR);
+	val = read32(GIC_ICCIAR);
 
 	num = val & 0x3FF;
 
@@ -169,10 +169,10 @@ uint32_t gic_irq_handler(void)
 	ret = handler[cpuid][num].func(&dat);
 	/* clear timer int(29U) status bit */
 	if (num == PRIV_TMR_INT_VEC) {
-		writel(1, PRIV_TMR_INTSTAT);
+		write32(PRIV_TMR_INTSTAT, 1);
 	}
 
-	writel(val, GIC_ICCEOIR);
+	write32(GIC_ICCEOIR, val);
 	return ret;
 }
 
@@ -187,12 +187,12 @@ uint32_t gic_mask_interrupt(int vec)
 		/* reprogram GIC_ICDIPTR */
 		reg = GIC_ICDIPTR0 + (uint32_t)(vec / 4) * 4;
 		byte = (uint32_t)(vec % 4);
-		val = readl(reg);
+		val = read32(reg);
 		/* clear current cpuid in the byte */
 		val = val & ~(0x000000FF << (byte * 8));
 		/* set the cpuid in the byte */
 		val = val | ((0x1 << cpuid) << (byte * 8));
-		writel(val, reg);
+		write32(reg, val);
 	}
 
 	/* register set-enable ICDISER0~2, only GIC_ICDISER0 is banked */
@@ -200,9 +200,9 @@ uint32_t gic_mask_interrupt(int vec)
 	bit = 1 << (vec & 0x1F);
 
 	/* writing 1 enables intr */
-	val = readl(reg);
+	val = read32(reg);
 	val |= bit;
-	writel(bit, reg);
+	write32(reg, bit);
 	return 0;
 }
 
@@ -218,7 +218,7 @@ uint32_t gic_unmask_interrupt(int vec)
 	/* writing 1 disables intr
 	 * writing 0 has no effect 
 	 */
-	writel(bit, reg);
+	write32(reg, bit);
 	return 0;
 }
 

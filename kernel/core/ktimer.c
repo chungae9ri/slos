@@ -77,7 +77,7 @@ void update_csd(void)
 
 uint32_t get_elapsedtime(void)
 {
-	return (uint32_t)(readl(PRIV_TMR_LD));
+	return (uint32_t)(read32(PRIV_TMR_LD));
 }
 
 void update_timer_tree(uint32_t elapsed)

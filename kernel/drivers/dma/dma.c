@@ -53,7 +53,7 @@ void init_dma(void)
 	p_dma_work_order = NULL;
 	/* reset mdcore hw */
 	cntl = BM_MODCORE_DMA_RESET;
-	writel(cntl, DEVICE_GET_BASE_ADDR(dma) + MODCORE_DMA_CNTL_OFFSET);
+	write32(DEVICE_GET_BASE_ADDR(dma) + MODCORE_DMA_CNTL_OFFSET, cntl);
 }
 
 void set_dma_work(uint32_t src, uint32_t dst, uint32_t len)
@@ -122,17 +122,17 @@ void start_dma(void *arg)
 	len = p_dma_work_order->len;
 	printk("dma start: 0x%x, 0x%x, 0x%x\n", src, dst, len);
 
-	writel(src, DEVICE_GET_BASE_ADDR(dma) + MODCORE_DMA_SRC_ADDR_OFFSET);
-	writel(dst, DEVICE_GET_BASE_ADDR(dma) + MODCORE_DMA_DST_ADDR_OFFSET);
-	writel(len, DEVICE_GET_BASE_ADDR(dma) + MODCORE_DMA_LEN_OFFSET);
+	write32(DEVICE_GET_BASE_ADDR(dma) + MODCORE_DMA_SRC_ADDR_OFFSET, src);
+	write32(DEVICE_GET_BASE_ADDR(dma) + MODCORE_DMA_DST_ADDR_OFFSET, dst);
+	write32(DEVICE_GET_BASE_ADDR(dma) + MODCORE_DMA_LEN_OFFSET, len);
 
 	ptemp = p_dma_work_order;
 	p_dma_work_order = p_dma_work_order->next;
 	kfree((uint32_t)ptemp);
 
-	cntl = readl(DEVICE_GET_BASE_ADDR(dma) + MODCORE_DMA_CNTL_OFFSET);
+	cntl = read32(DEVICE_GET_BASE_ADDR(dma) + MODCORE_DMA_CNTL_OFFSET);
 	cntl |= BM_MODCORE_DMA_START;
-	writel(cntl, DEVICE_GET_BASE_ADDR(dma) + MODCORE_DMA_CNTL_OFFSET);
+	write32(DEVICE_GET_BASE_ADDR(dma) + MODCORE_DMA_CNTL_OFFSET, cntl);
 }
 
 int dma_irq (void *arg)
@@ -142,15 +142,15 @@ int dma_irq (void *arg)
 		printk("enqueue next dma work\n");
 		enqueue_workq(start_dma, NULL);
 	} else {
-		cntl = readl(DEVICE_GET_BASE_ADDR(dma) + MODCORE_DMA_CNTL_OFFSET);
+		cntl = read32(DEVICE_GET_BASE_ADDR(dma) + MODCORE_DMA_CNTL_OFFSET);
 		cntl &= ~BM_MODCORE_DMA_START;
-		writel(cntl, DEVICE_GET_BASE_ADDR(dma) + MODCORE_DMA_CNTL_OFFSET);
+		write32(DEVICE_GET_BASE_ADDR(dma) + MODCORE_DMA_CNTL_OFFSET, cntl);
 		printk("dma done!\n");
 	}
 
-	cntl = readl(DEVICE_GET_BASE_ADDR(dma) + MODCORE_DMA_CNTL_OFFSET);
+	cntl = read32(DEVICE_GET_BASE_ADDR(dma) + MODCORE_DMA_CNTL_OFFSET);
 	cntl |= BM_MODCORE_DMA_IRQ_DONE;
-	writel(cntl, DEVICE_GET_BASE_ADDR(dma) + MODCORE_DMA_CNTL_OFFSET);
+	write32(DEVICE_GET_BASE_ADDR(dma) + MODCORE_DMA_CNTL_OFFSET, cntl);
 
 	return 0;
 }
