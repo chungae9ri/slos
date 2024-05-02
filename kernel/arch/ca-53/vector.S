@@ -51,16 +51,18 @@ el2_entry_aarch64:
     eret
 
 el1_entry_aarch64:
-    // we can use the same vector table in this example, but in general
-    // each combination of Exception level, Security state, and Execution state
-    // will need a new vector table
-    //ldr      x0, =vectors
-    //msr      VBAR_EL1, x0
+    /* we can use the same vector table in this example, but in general
+     * each combination of Exception level, Security state, and Execution state
+     * will need a new vector table
+     */
+    ldr      x0, =vector_table_el1
+    msr      VBAR_EL1, x0
 
-    //we must ensure that floating point register accesses are not trapped
-    //since the c library for AArch64-v8A uses them
-    //mov      x0, #(0x3 << 20)
-    //msr      CPACR_EL1, x0
+    /* we must ensure that floating point register accesses are not trapped
+     * since the c library for AArch64-v8A uses them
+     */
+    mov      x0, #(0x3 << 20)
+    msr      CPACR_EL1, x0
   
 	mov sp, #0x200000
 	b main	
@@ -118,7 +120,60 @@ vector_table_el3:
 .balign 0x80
 	b	serr_intr_handler
 
-/* dumb exception handler */
+.balign 0x800
+/* current EL with SP0 */
+vector_table_el1:
+	b	synch_intr_handler
+
+.balign 0x80
+	b	irq_intr_handler
+
+.balign 0x80
+	b	fiq_intr_handler
+
+.balign 0x80
+	b	serr_intr_handler
+
+/* current EL with SPx */
+.balign 0x80
+	b	synch_intr_handler
+
+.balign 0x80
+	b	irq_intr_handler
+
+.balign 0x80
+	b	fiq_intr_handler
+
+.balign 0x80
+	b	serr_intr_handler
+
+/* lower EL using aarch64 */
+.balign 0x80
+	b	synch_intr_handler
+
+.balign 0x80
+	b	irq_intr_handler
+
+.balign 0x80
+	b	fiq_intr_handler
+
+.balign 0x80
+	b	serr_intr_handler
+
+/* lower EL using aarch32 */
+.balign 0x80
+	b	synch_intr_handler
+
+.balign 0x80
+	b	irq_intr_handler
+
+.balign 0x80
+	b	fiq_intr_handler
+
+.balign 0x80
+	b	serr_intr_handler
+
+/* exception handler */
 synch_intr_handler:
     b .
     eret
