@@ -71,7 +71,7 @@ build_kernel32() {
     cd ${BUILD_PATH}
     rm -rf ${BUILD_PATH}/kernel32
     mkdir ${BUILD_PATH}/kernel32 && cd ${BUILD_PATH}/kernel32
-    cmake -DCMAKE_TOOLCHAIN_FILE=${SLOS_PATH}/cmake/arm-none-eabi.cmake ${SLOS_PATH}
+    cmake -DCMAKE_TOOLCHAIN_FILE=${SLOS_PATH}/cmake/arm-none-eabi.cmake -DTARGET_ARCH="aarch32" ${SLOS_PATH}/kernel
     make
 }
 
@@ -80,7 +80,7 @@ build_kernel64() {
     cd ${BUILD_PATH}
     rm -rf ${BUILD_PATH}/kernel64
     mkdir ${BUILD_PATH}/kernel64 && cd ${BUILD_PATH}/kernel64
-    cmake -DCMAKE_TOOLCHAIN_FILE=${SLOS_PATH}/cmake/aarch64-none-elf.cmake ${SLOS_PATH}
+    cmake -DCMAKE_TOOLCHAIN_FILE=${SLOS_PATH}/cmake/aarch64-none-elf.cmake -DTARGET_ARCH="aarch64" ${SLOS_PATH}/kernel
     make
 }
 

@@ -2,7 +2,6 @@
 //
 // Copyright (c) 2024 kwangdo.yi<kwangdo.yi@gmail.com>
 
-#include <xparameters_ps.h>
 #include <regops.h>
 #include <gic.h>
 #include <timer.h>

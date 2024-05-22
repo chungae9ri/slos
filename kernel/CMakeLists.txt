@@ -1,9 +1,9 @@
 cmake_minimum_required(VERSION 3.27)
 
 if (TARGET_ARCH STREQUAL "aarch64")
-set(TARGET_NAME kernel64)
+  set(TARGET_NAME kernel64)
 else ()
-set(TARGET_NAME kernel32)
+  set(TARGET_NAME kernel32)
 endif ()
 
 set(CMAKE_C_COMPILER_WORKS TRUE)

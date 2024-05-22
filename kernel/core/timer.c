@@ -5,7 +5,6 @@
 #include <stdint.h>
 #include <timer.h>
 #include <gic.h>
-#include <xparameters_ps.h>
 #include <regops.h>
 #include <rbtree.h>
 #include <ktimer.h>
