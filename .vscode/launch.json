@@ -5,13 +5,14 @@
             "type": "debugpy",
             "request": "launch",
             "program": "${file}",
-            "console": "integratedTerminal"
+            "console": "integratedTerminal",
+            "args": "--soc zynq-7000"
         },
         {
             "name": "C/C++: arm-none-eabi-gcc build and debug active file",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/build/slos32/kernel/kernel32.elf",
+            "program": "${workspaceFolder}/build/kernel32/kernel/kernel32.elf",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",

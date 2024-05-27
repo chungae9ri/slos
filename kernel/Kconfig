@@ -1,0 +1,9 @@
+menu "Main Menu"
+
+config EXAMPLE_OPTION
+    bool "Example option"
+    default n
+    help
+        This is an example option.
+
+endmenu

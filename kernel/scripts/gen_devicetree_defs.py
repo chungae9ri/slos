@@ -92,7 +92,7 @@ def main():
 
     soc = args.soc
 
-    script_dir = os.path.dirname(os.path.abspath(__file__)) + '/' + soc 
+    script_dir = os.path.dirname(os.path.abspath(__file__)) + '/../dts/' + soc 
     dts_path = os.path.join(script_dir, '*.dts*')
 
     root = node(None, None, None, None, None)
