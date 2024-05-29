@@ -32,12 +32,15 @@ endef
 
 $(foreach bdir, $(KERNOUTDIR),$(eval $(call make-obj,$(bdir))))
 
-kernel: gen_devicetree $(KERNOUTDIR) $(KERNCOBJ) $(KERNASMOBJ)
+kernel: gen_devicetree gen_config_hdr $(KERNOUTDIR) $(KERNCOBJ) $(KERNASMOBJ)
 	$(CC) -Wl,-T -Wl,$(LDS) -o $(TOPOUT)/kernel/kernel32.elf $(KERNCOBJ) $(KERNASMOBJ) -Wl,-Map=$(TOPOUT)/kernel/kernel.map -nostdlib
 
 gen_devicetree:
 	mkdir -p $(TOPOUT)/kernel/generated
-	python dts/gen_defs.py --soc zynq-7000 > $(TOPOUT)/kernel/generated/generated_devicetree_defs.h
+	python scripts/gen_devicetree_defs.py --soc zynq-7000 > $(TOPOUT)/kernel/generated/generated_devicetree_defs.h
+
+gen_config_hdr:
+	python scripts/gen_kconfig_defs.py
 
 $(KERNOUTDIR):
 	mkdir -p $@
