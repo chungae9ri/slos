@@ -4,6 +4,18 @@ pipeline {
             PATH = "/home/good4u/bin/cmake-3.28.3-linux-x86_64/bin:/home/good4u/bin/arm-gnu-toolchain-13.2.Rel1-x86_64-aarch64-none-elf/bin:/home/good4u/bin/gcc-arm-none-eabi-10.3-2021.10/bin:$PATH"
     }
     stages {
+        stage('Setup') {
+            steps {
+                // Check Python version
+                sh 'python3 --version'
+
+                // Upgrade pip
+                sh 'python3 -m pip install --upgrade pip'
+
+                // Install the desired Python module
+                sh 'python3 -m pip install kconfiglib'
+            }
+        }
         stage('Clone slos') {
             steps {
                 // Clone the GitHub repository
@@ -80,3 +92,4 @@ pipeline {
         }
     }
 }
+
