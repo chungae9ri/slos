@@ -1,0 +1,9 @@
+menu "CA9 Arch"
+
+config ARCH_CORTEX_A9
+    bool "Cortex-A9 architecture"
+    default y
+    help
+        Cortex-A9 architecture
+        
+endmenu

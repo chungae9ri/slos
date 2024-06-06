@@ -2,7 +2,9 @@
 //
 // Copyright (c) 2024 kwangdo.yi<kwangdo.yi@gmail.com>
 
-#include <printk.h>
+#include <generated_kconfig_defs.h>
+
+#if defined(ARCH_CORTEX_A9)
 #include <gic.h>
 #include <ktimer.h>
 #include <timer.h>
@@ -19,8 +21,12 @@
 #include <mailbox.h>
 #include <slfs.h>
 #include <uart.h>
+#endif
 
+#include <printk.h>
+#include <uart.h>
 
+#if defined(ARCH_CORTEX_A9)
 extern uint32_t show_stat;
 extern void secondary_reset(void);
 extern void flush_ent_dcache(void);
@@ -183,3 +189,20 @@ int start_kernel(void)
 
 	return 0;
 }
+#elif defined (ARCH_CORTEX_A53)
+
+int main(void)
+{
+	uint32_t current_el= 0;
+	init_uart();
+
+	/* read currentEL*/
+	asm volatile ("mrs %[cel], CurrentEL" : [cel] "=r" (current_el)::);
+	printk("currentEL: 0x%x\n", current_el >> 2); 
+
+	while (1) ;
+
+	return 0;
+}
+#endif
+

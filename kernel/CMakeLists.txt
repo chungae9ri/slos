@@ -44,7 +44,7 @@ message("generate kconfig defs")
 add_custom_command(
   OUTPUT ${kconfig_defs_fname}
   COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/generated
-  COMMAND ${CMAKE_COMMAND} -E env python3 ${CMAKE_CURRENT_SOURCE_DIR}/scripts/gen_kconfig_defs.py > ${CMAKE_BINARY_DIR}/generated/${kconfig_defs_fname}
+  COMMAND ${CMAKE_COMMAND} -E env python3 ${CMAKE_CURRENT_SOURCE_DIR}/scripts/gen_kconfig_defs.py --defconfig zynqmp_defconfig > ${CMAKE_BINARY_DIR}/generated/${kconfig_defs_fname}
   DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/scripts/gen_kconfig_defs.py
 )
 
@@ -63,13 +63,11 @@ add_compile_options(-DAARCH64=1)
 
 add_subdirectory(arch/ca-53)
 add_subdirectory(core)
-add_subdirectory(core64)
 add_subdirectory(drivers)
 
 add_executable(
   ${TARGET_NAME}
   $<TARGET_OBJECTS:arch_objs>
-  $<TARGET_OBJECTS:core64_objs>
   $<TARGET_OBJECTS:core_objs>
   $<TARGET_OBJECTS:drivers_objs>
 )
@@ -93,7 +91,7 @@ message("generate kconfig defs")
 add_custom_command(
   OUTPUT ${kconfig_defs_fname}
   COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/generated
-  COMMAND ${CMAKE_COMMAND} -E env python3 ${CMAKE_CURRENT_SOURCE_DIR}/scripts/gen_kconfig_defs.py > ${CMAKE_BINARY_DIR}/generated/${kconfig_defs_fname}
+  COMMAND ${CMAKE_COMMAND} -E env python3 ${CMAKE_CURRENT_SOURCE_DIR}/scripts/gen_kconfig_defs.py --defconfig zynq7000_defconfig > ${CMAKE_BINARY_DIR}/generated/${kconfig_defs_fname}
   DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/scripts/gen_kconfig_defs.py
 )
 

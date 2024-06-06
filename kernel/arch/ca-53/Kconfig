@@ -1,0 +1,9 @@
+menu "CA53 Arch"
+
+config ARCH_CORTEX_A53
+    bool "Cortex-A53 architecture"
+    default y
+    help
+        Cortex-A53 architecture
+
+endmenu

@@ -2,6 +2,7 @@
 if (TARGET_ARCH STREQUAL "aarch64")
   add_library(
     core_objs OBJECT
+    main.c
     printk.c
   )
 else ()

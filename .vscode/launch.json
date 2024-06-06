@@ -6,7 +6,8 @@
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
-            "args": "--soc zynq-7000"
+            /*"args": "--soc zynq-7000"*/
+            "args": "--defconfig zynq7000_defconfig"
         },
         {
             "name": "C/C++: arm-none-eabi-gcc build and debug active file",

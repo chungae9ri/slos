@@ -1,9 +1,16 @@
 menu "Main Menu"
 
-config EXAMPLE_OPTION
-    bool "Example option"
-    default n
-    help
-        This is an example option.
+config SOC_ZYNQ7000
+    bool "SOC is zynq7000"
 
+config SOC_ZYNQMP
+    bool "SOC is zynqmp"
 endmenu
+
+if SOC_ZYNQ7000
+    source "arch/ca-9/Kconfig"
+endif
+
+if SOC_ZYNQMP
+    source "arch/ca-53/Kconfig"
+endif
