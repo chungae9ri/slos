@@ -25,13 +25,11 @@ set(kconfig_custom_target gen_kconfig_defs)
 include_directories(inc)
 include_directories(${CMAKE_BINARY_DIR}/generated)
 
-if (TARGET_ARCH STREQUAL "aarch64")
-message("TARGET_ARCH is aarch64")
 message("generate devicetree defs")
 add_custom_command(
   OUTPUT ${devicetree_defs_fname}
   COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/generated
-  COMMAND ${CMAKE_COMMAND} -E env python3 ${CMAKE_CURRENT_SOURCE_DIR}/scripts/gen_devicetree_defs.py --soc zynq-mp > ${CMAKE_BINARY_DIR}/generated/${devicetree_defs_fname}
+  COMMAND ${CMAKE_COMMAND} -E env python3 ${CMAKE_CURRENT_SOURCE_DIR}/scripts/gen_devicetree_defs.py --soc ${SOC} > ${CMAKE_BINARY_DIR}/generated/${devicetree_defs_fname}
   DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/scripts/gen_devicetree_defs.py
 )
 
@@ -44,7 +42,7 @@ message("generate kconfig defs")
 add_custom_command(
   OUTPUT ${kconfig_defs_fname}
   COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/generated
-  COMMAND ${CMAKE_COMMAND} -E env python3 ${CMAKE_CURRENT_SOURCE_DIR}/scripts/gen_kconfig_defs.py --defconfig zynqmp_defconfig > ${CMAKE_BINARY_DIR}/generated/${kconfig_defs_fname}
+  COMMAND ${CMAKE_COMMAND} -E env python3 ${CMAKE_CURRENT_SOURCE_DIR}/scripts/gen_kconfig_defs.py --defconfig ${CMAKE_CURRENT_SOURCE_DIR}/configs/${SOC}_defconfig > ${CMAKE_BINARY_DIR}/generated/${kconfig_defs_fname}
   DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/scripts/gen_kconfig_defs.py
 )
 
@@ -52,6 +50,9 @@ add_custom_target(
   ${kconfig_custom_target} ALL
   DEPENDS ${kconfig_defs_fname}
 )
+
+if (TARGET_ARCH STREQUAL "aarch64")
+message("TARGET_ARCH is aarch64")
 
 add_compile_options(
   -g -march=armv8-a -mcpu=cortex-a53
@@ -74,32 +75,6 @@ add_executable(
 
 else ()
 message("TARGET_ARCH is aarch32")
-message("generate devicetree defs")
-add_custom_command(
-  OUTPUT ${devicetree_defs_fname}
-  COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/generated
-  COMMAND ${CMAKE_COMMAND} -E env python3 ${CMAKE_CURRENT_SOURCE_DIR}/scripts/gen_devicetree_defs.py --soc zynq-7000 > ${CMAKE_BINARY_DIR}/generated/${devicetree_defs_fname}
-  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/scripts/gen_devicetree_defs.py
-)
-
-add_custom_target(
-  ${devicetree_custom_target} ALL
-  DEPENDS ${devicetree_defs_fname}
-)
-
-message("generate kconfig defs")
-add_custom_command(
-  OUTPUT ${kconfig_defs_fname}
-  COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/generated
-  COMMAND ${CMAKE_COMMAND} -E env python3 ${CMAKE_CURRENT_SOURCE_DIR}/scripts/gen_kconfig_defs.py --defconfig zynq7000_defconfig > ${CMAKE_BINARY_DIR}/generated/${kconfig_defs_fname}
-  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/scripts/gen_kconfig_defs.py
-)
-
-add_custom_target(
-  ${kconfig_custom_target} ALL
-  DEPENDS ${kconfig_defs_fname}
-)
-
 add_compile_options(
   -g -mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=hard
   -Wall -fno-omit-frame-pointer -ffreestanding

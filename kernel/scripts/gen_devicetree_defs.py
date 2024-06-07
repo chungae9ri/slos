@@ -87,7 +87,7 @@ def build_tree(dts_file, root):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-s', '--soc', type=str, required=True, default='zynq-7000')
+    parser.add_argument('-s', '--soc', type=str, required=True, default='zynq7000')
     args = parser.parse_args()
 
     soc = args.soc
