@@ -37,10 +37,10 @@ kernel: gen_devicetree gen_config_hdr $(KERNOUTDIR) $(KERNCOBJ) $(KERNASMOBJ)
 
 gen_devicetree:
 	mkdir -p $(TOPOUT)/kernel/generated
-	python scripts/gen_devicetree_defs.py --soc zynq-7000 > $(TOPOUT)/kernel/generated/generated_devicetree_defs.h
+	python scripts/gen_devicetree_defs.py --soc zynq7000 > $(TOPOUT)/kernel/generated/generated_devicetree_defs.h
 
 gen_config_hdr:
-	python scripts/gen_kconfig_defs.py
+	python scripts/gen_kconfig_defs.py --defconfig configs/zynq7000_defconfig > $(TOPOUT)/kernel/generated/generated_kconfig_defs.h
 
 $(KERNOUTDIR):
 	mkdir -p $@
