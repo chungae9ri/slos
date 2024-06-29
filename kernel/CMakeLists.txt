@@ -67,7 +67,7 @@ add_subdirectory(core)
 add_subdirectory(drivers)
 
 add_executable(
-  ${TARGET_NAME}
+  ${TARGET_NAME}.elf
   $<TARGET_OBJECTS:arch_objs>
   $<TARGET_OBJECTS:core_objs>
   $<TARGET_OBJECTS:drivers_objs>
@@ -89,7 +89,7 @@ add_subdirectory(fs)
 add_subdirectory(libs)
 
 add_executable(
-  ${TARGET_NAME}
+  ${TARGET_NAME}.elf
   $<TARGET_OBJECTS:arch_objs>
   $<TARGET_OBJECTS:core_objs>
   $<TARGET_OBJECTS:drivers_objs>
@@ -98,10 +98,10 @@ add_executable(
 )
 endif ()
 
-add_dependencies(${TARGET_NAME} ${devicetree_custom_target} ${kconfig_custom_target})
+add_dependencies(${TARGET_NAME}.elf ${devicetree_custom_target} ${kconfig_custom_target})
 
 target_link_options(
-  ${TARGET_NAME} PRIVATE
+  ${TARGET_NAME}.elf PRIVATE
   -nostdlib
   -Wl,-Map=${TARGET_NAME}.map
   -Wl,-T

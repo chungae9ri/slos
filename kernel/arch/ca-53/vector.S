@@ -9,9 +9,9 @@
 .global serr_intr_handler
 .global synch_intr_handler
 
-.global exceptions
+.global _start
 
-exceptions:
+_start:
     /* initialize VBAR_EL3.*/
     ldr x1, =vector_table_el3
     msr VBAR_EL3, x1
@@ -63,8 +63,10 @@ el1_entry_aarch64:
      */
     mov      x0, #(0x3 << 20)
     msr      CPACR_EL1, x0
-  
-	mov sp, #0x200000
+
+    /* __stack_start should be page size aligned */
+    adrp x0, __stack_start
+    mov sp, x0
 	b main	
 
 .balign 0x800
