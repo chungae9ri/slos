@@ -6,7 +6,7 @@
 
 #include <dma.h>
 #include <regops.h>
-#include <gic.h>
+#include <gic_390.h>
 #include <mm.h>
 #include <printk.h>
 #include <generated_devicetree_defs.h>

@@ -27,4 +27,11 @@
 			reg = <1>;
 		};
 	};
+
+	soc {
+		gic: gic@f8f00000 {
+			compatible = "arm,gic-390";
+			reg = <0xf8f00000 0x100>;
+		};
+	};
 };

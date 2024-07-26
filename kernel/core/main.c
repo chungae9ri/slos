@@ -5,7 +5,7 @@
 #include <generated_kconfig_defs.h>
 
 #if defined(ARCH_CORTEX_A9)
-#include <gic.h>
+#include <gic_390.h>
 #include <ktimer.h>
 #include <timer.h>
 #include <task.h>
@@ -37,12 +37,6 @@ extern uint32_t read_scr(void);
 #define A9_RST1_MASK		(0x2)
 #define A9_CLKSTOP0_MASK	(0x10)
 #define A9_CLKSTOP1_MASK	(0x20)
-
-static void init_platform(void)
-{
-	init_uart();
-	printk("### vPlatformInit\n");
-}
 
 static void cpuidle_secondary(void)
 {
@@ -154,7 +148,8 @@ int start_kernel(void)
 	struct pagetable pgt;
 	struct vmpool kheap;
 
-	init_platform();
+	init_uart();
+	printk("stdio uart initialized");
 
 	cpuid = smp_processor_id();
 	scr = read_scr();
@@ -195,6 +190,7 @@ int main(void)
 {
 	uint32_t current_el= 0;
 	init_uart();
+	printk("stdio uart initialized");
 
 	/* read currentEL*/
 	asm volatile ("mrs %[cel], CurrentEL" : [cel] "=r" (current_el)::);

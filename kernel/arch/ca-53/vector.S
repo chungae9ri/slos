@@ -43,9 +43,7 @@ el2_entry_aarch64:
     /* elr to EL1 entry */
     msr SCTLR_EL1, xzr
     adr x0, el1_entry_aarch64
-    ldr x1, =0x30C50838
     msr ELR_EL2, x0
-    /*msr SCTLR_EL1, x1*/
 
     /* exception return to EL1 */
     eret

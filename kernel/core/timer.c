@@ -4,7 +4,7 @@
 
 #include <stdint.h>
 #include <timer.h>
-#include <gic.h>
+#include <gic_390.h>
 #include <regops.h>
 #include <rbtree.h>
 #include <ktimer.h>
@@ -83,7 +83,6 @@ void timer_enable_secondary(void)
 	/* init timer */
 	*(volatile uint32_t *)(PRIV_TMR_LD) = 1000000;
 	gic_mask_interrupt(PRIV_TMR_INT_VEC);
-	*(volatile uint32_t *)(GIC_ICDICER0) = 0xDFFFFFFF;
 
 	/* enable timer */
 	ctrl = *(volatile uint32_t *)(PRIV_TMR_CTRL);

@@ -1,7 +1,7 @@
 add_library(
   arch_objs OBJECT 
   cache.S
-  gic.c
+  gic_390.c
   init-mm.S
   ops.S
   smp-reset.S

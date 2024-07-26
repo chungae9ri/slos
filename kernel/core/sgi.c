@@ -2,7 +2,7 @@
 //
 // Copyright (c) 2024 kwangdo.yi<kwangdo.yi@gmail.com>
 
-#include <gic.h>
+#include <gic_390.h>
 #include <sgi.h>
 #include <sched.h>
 #include <task.h>
