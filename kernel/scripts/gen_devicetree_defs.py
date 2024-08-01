@@ -8,9 +8,12 @@ import glob
 import os
 import argparse
 
+compat_dict = {}
+
 class node:
-    def __init__(self, parent, name, compat, base_addr, intr):
+    def __init__(self, parent, name, idx, compat, base_addr, intr):
         self.name = name
+        self.idx = idx
         self.compat = compat
         self.base_addr = base_addr
         self.intr = intr
@@ -23,13 +26,14 @@ class node:
 def dfs(node, path):
     for leaf in node.leaves:
         devtree_macro = path +"_S_" + leaf.name
-        print(f"#define {devtree_macro} 1")
-        if leaf.compat is not None:
-            print(f"#define {devtree_macro}_P_compat \"{leaf.compat}\"")
+        compat = str(leaf.compat).upper()
+        #print(f"#define {devtree_macro} 1")
+        #if leaf.compat is not None:
+            #print(f"#define {devtree_macro}_P_compat \"{leaf.compat}\"")
         if leaf.base_addr is not None:
-            print(f"#define {devtree_macro}_P_base_addr {leaf.base_addr}")
+            print(f"#define {compat}_{leaf.idx}_P_BASE_ADDR {leaf.base_addr}")
         if leaf.intr is not None:
-            print(f"#define {devtree_macro}_P_intr {leaf.intr}")
+            print(f"#define {compat}_{leaf.idx}_P_INTR {leaf.intr}")
 
         dfs(leaf, devtree_macro)
 
@@ -52,7 +56,7 @@ def build_tree(dts_file, root):
                 right = line.find('{')
                 node_name = line[left:right].strip()
                 node_name = node_name.replace('@', '_')
-                leaf = node(current, node_name, None, None, None)
+                leaf = node(current, node_name, None, None, None, None)
                 current.add_leaf(leaf)
                 current = leaf
                 depth += 1
@@ -71,6 +75,12 @@ def build_tree(dts_file, root):
                 compat_str = line_split[-1].strip()
                 compat_str = compat_str.replace('.', '_').replace(' ', '_').replace('-', '_').replace(',', '_')
                 current.compat = compat_str
+                if compat_str in compat_dict:
+                    compat_dict[compat_str] = compat_dict[compat_str] + 1
+                else:
+                    compat_dict[compat_str] = 0
+
+                current.idx = compat_dict[compat_str]
 
             elif in_devicetree and 'reg' in line:
                 left = line.find('<')
@@ -95,7 +105,7 @@ def main():
     script_dir = os.path.dirname(os.path.abspath(__file__)) + '/../dts/' + soc 
     dts_path = os.path.join(script_dir, '*.dts*')
 
-    root = node(None, None, None, None, None)
+    root = node(None, None, None, None, None, None)
 
     for file_name in glob.glob(dts_path, recursive=False):
         #print(f"filename: {file_name}")

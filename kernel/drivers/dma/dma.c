@@ -2,6 +2,8 @@
 //
 // Copyright (c) 2024 kwangdo.yi<kwangdo.yi@gmail.com>
 
+#define 	DEVICE_DT_COMPAT	SLOS_MODCORE_DMA
+
 #include <stddef.h>
 
 #include <dma.h>
@@ -26,11 +28,6 @@
 
 #define MODCORE_DMA_BURST_LEN			0x1000
 
-DEVICE_DEFINE(dma,
-			  DT_N_S_dma_43c10000_P_compat,
-			  DT_N_S_dma_43c10000_P_base_addr,
-			  DT_N_S_dma_43c10000_P_intr);
-
 struct dma_work_order {
 	uint32_t order_num;
 	uint32_t src;
@@ -48,12 +45,12 @@ void init_dma(void)
 {
 	uint32_t cntl;
 
-	gic_register_int_handler(DEVICE_GET_IRQ(dma), dma_irq, NULL);
-	gic_mask_interrupt(DEVICE_GET_IRQ(dma));
+	gic_register_int_handler(DEVICE_GET_IRQ(0), dma_irq, NULL);
+	gic_mask_interrupt(DEVICE_GET_IRQ(0));
 	p_dma_work_order = NULL;
 	/* reset mdcore hw */
 	cntl = BM_MODCORE_DMA_RESET;
-	write32(DEVICE_GET_BASE_ADDR(dma) + MODCORE_DMA_CNTL_OFFSET, cntl);
+	write32(DEVICE_GET_BASE_ADDR(0) + MODCORE_DMA_CNTL_OFFSET, cntl);
 }
 
 void set_dma_work(uint32_t src, uint32_t dst, uint32_t len)
@@ -122,17 +119,17 @@ void start_dma(void *arg)
 	len = p_dma_work_order->len;
 	printk("dma start: 0x%x, 0x%x, 0x%x\n", src, dst, len);
 
-	write32(DEVICE_GET_BASE_ADDR(dma) + MODCORE_DMA_SRC_ADDR_OFFSET, src);
-	write32(DEVICE_GET_BASE_ADDR(dma) + MODCORE_DMA_DST_ADDR_OFFSET, dst);
-	write32(DEVICE_GET_BASE_ADDR(dma) + MODCORE_DMA_LEN_OFFSET, len);
+	write32(DEVICE_GET_BASE_ADDR(0) + MODCORE_DMA_SRC_ADDR_OFFSET, src);
+	write32(DEVICE_GET_BASE_ADDR(0) + MODCORE_DMA_DST_ADDR_OFFSET, dst);
+	write32(DEVICE_GET_BASE_ADDR(0) + MODCORE_DMA_LEN_OFFSET, len);
 
 	ptemp = p_dma_work_order;
 	p_dma_work_order = p_dma_work_order->next;
 	kfree((uint32_t)ptemp);
 
-	cntl = read32(DEVICE_GET_BASE_ADDR(dma) + MODCORE_DMA_CNTL_OFFSET);
+	cntl = read32(DEVICE_GET_BASE_ADDR(0) + MODCORE_DMA_CNTL_OFFSET);
 	cntl |= BM_MODCORE_DMA_START;
-	write32(DEVICE_GET_BASE_ADDR(dma) + MODCORE_DMA_CNTL_OFFSET, cntl);
+	write32(DEVICE_GET_BASE_ADDR(0) + MODCORE_DMA_CNTL_OFFSET, cntl);
 }
 
 int dma_irq (void *arg)
@@ -142,15 +139,15 @@ int dma_irq (void *arg)
 		printk("enqueue next dma work\n");
 		enqueue_workq(start_dma, NULL);
 	} else {
-		cntl = read32(DEVICE_GET_BASE_ADDR(dma) + MODCORE_DMA_CNTL_OFFSET);
+		cntl = read32(DEVICE_GET_BASE_ADDR(0) + MODCORE_DMA_CNTL_OFFSET);
 		cntl &= ~BM_MODCORE_DMA_START;
-		write32(DEVICE_GET_BASE_ADDR(dma) + MODCORE_DMA_CNTL_OFFSET, cntl);
+		write32(DEVICE_GET_BASE_ADDR(0) + MODCORE_DMA_CNTL_OFFSET, cntl);
 		printk("dma done!\n");
 	}
 
-	cntl = read32(DEVICE_GET_BASE_ADDR(dma) + MODCORE_DMA_CNTL_OFFSET);
+	cntl = read32(DEVICE_GET_BASE_ADDR(0) + MODCORE_DMA_CNTL_OFFSET);
 	cntl |= BM_MODCORE_DMA_IRQ_DONE;
-	write32(DEVICE_GET_BASE_ADDR(dma) + MODCORE_DMA_CNTL_OFFSET, cntl);
+	write32(DEVICE_GET_BASE_ADDR(0) + MODCORE_DMA_CNTL_OFFSET, cntl);
 
 	return 0;
 }

@@ -2,6 +2,8 @@
 //
 // Copyright (c) 2024 kwangdo.yi<kwangdo.yi@gmail.com>
 
+#define DEVICE_DT_COMPAT	PS_UART
+
 #include <stdint.h>
 
 #include <regops.h>
@@ -30,33 +32,21 @@
 #define BM_SR_TXFULL		0x00000010U /**< TX FIFO full */
 #define BM_SR_RXEMPTY		0x00000002U /**< RX FIFO empty */
 
-#ifdef AARCH32
-DEVICE_DEFINE(uart,
-			  DT_N_S_uart_E0000000_P_compat,
-			  DT_N_S_uart_E0000000_P_base_addr,
-			  DT_N_S_uart_E0000000_P_intr);
-#else
-DEVICE_DEFINE(uart,
-			  DT_N_S_uart_00FF010000_P_compat,
-			  DT_N_S_uart_00FF010000_P_base_addr,
-			  0);
-#endif
-
 void poll_out(char c) {
 	uint32_t reg_val;
 
-	reg_val = read32(DEVICE_GET_BASE_ADDR(uart) + SR_OFFSET);
+	reg_val = read32(DEVICE_GET_BASE_ADDR(0) + SR_OFFSET);
 
 	while((reg_val & BM_SR_TXFULL) == BM_SR_TXFULL) {
-		reg_val = read32(DEVICE_GET_BASE_ADDR(uart) + SR_OFFSET);
+		reg_val = read32(DEVICE_GET_BASE_ADDR(0) + SR_OFFSET);
 	}
 
-	write32(DEVICE_GET_BASE_ADDR(uart) + FIFO_OFFSET, (uint32_t)c);
+	write32(DEVICE_GET_BASE_ADDR(0) + FIFO_OFFSET, (uint32_t)c);
 
-	reg_val = read32(DEVICE_GET_BASE_ADDR(uart) + SR_OFFSET);
+	reg_val = read32(DEVICE_GET_BASE_ADDR(0) + SR_OFFSET);
 
 	while((reg_val & BM_SR_TXFULL) == BM_SR_TXFULL) {
-		reg_val = read32(DEVICE_GET_BASE_ADDR(uart) + SR_OFFSET);
+		reg_val = read32(DEVICE_GET_BASE_ADDR(0) + SR_OFFSET);
 	}
 }
 
@@ -74,33 +64,33 @@ uint8_t poll_in(void)
 	 */
 	uint32_t reg_val;
 
-	reg_val = read32(DEVICE_GET_BASE_ADDR(uart) + SR_OFFSET);
+	reg_val = read32(DEVICE_GET_BASE_ADDR(0) + SR_OFFSET);
 	while ((reg_val & BM_SR_RXEMPTY) == BM_SR_RXEMPTY) {
-		reg_val = read32(DEVICE_GET_BASE_ADDR(uart) + SR_OFFSET);
+		reg_val = read32(DEVICE_GET_BASE_ADDR(0) + SR_OFFSET);
 	}
 #else
-	while ((read32(DEVICE_GET_BASE_ADDR(uart) + SR_OFFSET) &
+	while ((read32(DEVICE_GET_BASE_ADDR(0) + SR_OFFSET) &
 			BM_SR_RXEMPTY) == BM_SR_RXEMPTY) {
 		;
 	}
 #endif
 
-	c = read32(DEVICE_GET_BASE_ADDR(uart) + FIFO_OFFSET);
+	c = read32(DEVICE_GET_BASE_ADDR(0) + FIFO_OFFSET);
 
 	return (uint8_t)c;
 }
 
 void init_uart(void)
 {
-	write32(DEVICE_GET_BASE_ADDR(uart) + CR_OFFSET, 0x00000114);
-	write32(DEVICE_GET_BASE_ADDR(uart) + MR_OFFSET, 0x00000020);
-	write32(DEVICE_GET_BASE_ADDR(uart) + IER_OFFSET, 0x00000000);
-	write32(DEVICE_GET_BASE_ADDR(uart) + IDR_OFFSET, 0x00000000);
-	write32(DEVICE_GET_BASE_ADDR(uart) + BAUDGEN_OFFSET, 0x0000007C);
-	write32(DEVICE_GET_BASE_ADDR(uart) + RXTOUT_OFFSET, 0x0000000A);
-	write32(DEVICE_GET_BASE_ADDR(uart) + RXWM_OFFSET, 0x00000038);
-	write32(DEVICE_GET_BASE_ADDR(uart) + MODEMCR_OFFSET, 0x00000003);
-	write32(DEVICE_GET_BASE_ADDR(uart) + BAUD_DIV_OFFSET, 0x00000006);
-	write32(DEVICE_GET_BASE_ADDR(uart) + FLOW_DELAY_OFFSET, 0x00000000);
-	write32(DEVICE_GET_BASE_ADDR(uart) + TX_FIFO_TRIG_LV_OFFSET, 0x00000020);
+	write32(DEVICE_GET_BASE_ADDR(0) + CR_OFFSET, 0x00000114);
+	write32(DEVICE_GET_BASE_ADDR(0) + MR_OFFSET, 0x00000020);
+	write32(DEVICE_GET_BASE_ADDR(0) + IER_OFFSET, 0x00000000);
+	write32(DEVICE_GET_BASE_ADDR(0) + IDR_OFFSET, 0x00000000);
+	write32(DEVICE_GET_BASE_ADDR(0) + BAUDGEN_OFFSET, 0x0000007C);
+	write32(DEVICE_GET_BASE_ADDR(0) + RXTOUT_OFFSET, 0x0000000A);
+	write32(DEVICE_GET_BASE_ADDR(0) + RXWM_OFFSET, 0x00000038);
+	write32(DEVICE_GET_BASE_ADDR(0) + MODEMCR_OFFSET, 0x00000003);
+	write32(DEVICE_GET_BASE_ADDR(0) + BAUD_DIV_OFFSET, 0x00000006);
+	write32(DEVICE_GET_BASE_ADDR(0) + FLOW_DELAY_OFFSET, 0x00000000);
+	write32(DEVICE_GET_BASE_ADDR(0) + TX_FIFO_TRIG_LV_OFFSET, 0x00000020);
 }
