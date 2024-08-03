@@ -28,8 +28,8 @@ def dfs(node, path):
         devtree_macro = path +"_S_" + leaf.name
         compat = str(leaf.compat).upper()
         #print(f"#define {devtree_macro} 1")
-        #if leaf.compat is not None:
-            #print(f"#define {devtree_macro}_P_compat \"{leaf.compat}\"")
+        if leaf.compat is not None:
+            print(f"#define {compat}_{leaf.idx}_P_COMPAT \"{compat}\"")
         if leaf.base_addr is not None:
             print(f"#define {compat}_{leaf.idx}_P_BASE_ADDR {leaf.base_addr}")
         if leaf.intr is not None:

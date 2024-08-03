@@ -12,6 +12,11 @@
 #include <generated_devicetree_defs.h>
 #include <device.h>
 
+DEVICE_DEFINE(gic_0,
+			  DT_GET_COMPAT(0),
+			  DT_GET_BASE_ADDR(0),
+			  0);
+
 uint32_t smp_processor_id();
 static struct ihandler handler[NR_CPUS][NUM_IRQS];
 
@@ -23,12 +28,12 @@ void init_gic_dist(void)
 	uint32_t cpumask = 0x01010101;
 
 	/* Disabling GIC */
-	write32(DEVICE_GET_BASE_ADDR(0) + GIC_ICDDCR_OFFSET, 0);
+	write32(DEVICE_GET_BASE_ADDR(gic_0) + GIC_ICDDCR_OFFSET, 0);
 
 	/* GIC_ICDICTR: interrupt controller type reg.
 	 * Find out how many interrupts are supported.
 	 */
-	ext_irq_num = read32(DEVICE_GET_BASE_ADDR(0) + GIC_ICDICTR_OFFSET) & 0x1f;
+	ext_irq_num = read32(DEVICE_GET_BASE_ADDR(gic_0) + GIC_ICDICTR_OFFSET) & 0x1f;
 	ext_irq_num = ext_irq_num * 32; 
 
 	/* Set each interrupt line based on UG585 
@@ -42,10 +47,10 @@ void init_gic_dist(void)
 	 * polarity for intr ID #62 of odev intr
 	 * All others are don't-care
 	 */
-	write32(DEVICE_GET_BASE_ADDR(0) + GIC_ICDICFR2_OFFSET, 0x555D555F);
-	write32(DEVICE_GET_BASE_ADDR(0) + GIC_ICDICFR3_OFFSET, 0xDD55D555);
-	write32(DEVICE_GET_BASE_ADDR(0) + GIC_ICDICFR4_OFFSET, 0x755557FF);
-	write32(DEVICE_GET_BASE_ADDR(0) + GIC_ICDICFR5_OFFSET, 0x03FFFF55);
+	write32(DEVICE_GET_BASE_ADDR(gic_0) + GIC_ICDICFR2_OFFSET, 0x555D555F);
+	write32(DEVICE_GET_BASE_ADDR(gic_0) + GIC_ICDICFR3_OFFSET, 0xDD55D555);
+	write32(DEVICE_GET_BASE_ADDR(gic_0) + GIC_ICDICFR4_OFFSET, 0x755557FF);
+	write32(DEVICE_GET_BASE_ADDR(gic_0) + GIC_ICDICFR5_OFFSET, 0x03FFFF55);
 
 	/* setup target cpu for each interrupt 
 	 * all intr are targeted to CPU0.
@@ -54,19 +59,19 @@ void init_gic_dist(void)
 	 * enabled in gic_mask_interrupt().
 	 */
 	for (i = 0; i < ext_irq_num; i += 4)
-		write32(DEVICE_GET_BASE_ADDR(0) + GIC_ICDIPTR8_OFFSET + i, cpumask); 
+		write32(DEVICE_GET_BASE_ADDR(gic_0) + GIC_ICDIPTR8_OFFSET + i, cpumask); 
 
 	/* Disabling all interrupts forwarding */
-	write32(DEVICE_GET_BASE_ADDR(0) + GIC_ICDICER0_OFFSET, 0x0000FFFF);
-	write32(DEVICE_GET_BASE_ADDR(0) + GIC_ICDICER1_OFFSET, 0xFFFFFFFF);
-	write32(DEVICE_GET_BASE_ADDR(0) + GIC_ICDICER2_OFFSET, 0xFFFFFFFF);
+	write32(DEVICE_GET_BASE_ADDR(gic_0) + GIC_ICDICER0_OFFSET, 0x0000FFFF);
+	write32(DEVICE_GET_BASE_ADDR(gic_0) + GIC_ICDICER1_OFFSET, 0xFFFFFFFF);
+	write32(DEVICE_GET_BASE_ADDR(gic_0) + GIC_ICDICER2_OFFSET, 0xFFFFFFFF);
 
 	/* banked register set-enable ICDISER0. 
 	 * writing 1 enables intr.
 	 * writing 0 has no effect. 
 	 * Enable all PPIs and SGI #15
 	 */
-	write32(DEVICE_GET_BASE_ADDR(0) + GIC_ICDISER0_OFFSET, 0xFFFF8000);
+	write32(DEVICE_GET_BASE_ADDR(gic_0) + GIC_ICDISER0_OFFSET, 0xFFFF8000);
 
 	/* enable TTC0 interrupt forwarding, not here */
 	/*write32(GIC_ICDISER1, 0x00001C00);*/
@@ -74,7 +79,7 @@ void init_gic_dist(void)
 	/* enable GIC distributor to update intr register 
 	 * in both secure, non-secure interrupt singal occurrance
 	 */
-	write32(DEVICE_GET_BASE_ADDR(0) + GIC_ICDDCR_OFFSET, 0x3);
+	write32(DEVICE_GET_BASE_ADDR(gic_0) + GIC_ICDDCR_OFFSET, 0x3);
 }
 
 void init_gic_cpu(void)
@@ -86,11 +91,11 @@ void init_gic_cpu(void)
 	 * which has max value of priority.
 	 * Pass all levels of interrupts.
 	 */
-	write32(DEVICE_GET_BASE_ADDR(0) + GIC_ICCPMR_OFFSET, 0xF8);
+	write32(DEVICE_GET_BASE_ADDR(gic_0) + GIC_ICCPMR_OFFSET, 0xF8);
 	/* enable GIC cpu interface,
 	 * banked register
 	 */ 
-	write32(DEVICE_GET_BASE_ADDR(0) + GIC_ICCICR_OFFSET, 0x07);
+	write32(DEVICE_GET_BASE_ADDR(gic_0) + GIC_ICCICR_OFFSET, 0x07);
 }
 
 void init_gic(void)
@@ -115,7 +120,7 @@ void init_gic_secondary(void)
 	/* enable GIC distributor, 
 	 * banked register 
 	 */
-	write32(DEVICE_GET_BASE_ADDR(0) + GIC_ICDDCR_OFFSET, 0x1);
+	write32(DEVICE_GET_BASE_ADDR(gic_0) + GIC_ICDDCR_OFFSET, 0x1);
 
 	/* 32 priority level (ICCPMR[2:0] = 2b000)
 	 * supported. ICDIPR0 ~ 23 is used to set 
@@ -124,12 +129,12 @@ void init_gic_secondary(void)
 	 * which has max value of priority.
 	 * Pass all levels of interrupts.
 	 */
-	write32(DEVICE_GET_BASE_ADDR(0) + GIC_ICCPMR_OFFSET, 0xF8);
+	write32(DEVICE_GET_BASE_ADDR(gic_0) + GIC_ICCPMR_OFFSET, 0xF8);
 
 	/* enable GIC cpu interface, 
 	 * banked register.
 	 */ 
-	write32(DEVICE_GET_BASE_ADDR(0) + GIC_ICCICR_OFFSET, 0x7);
+	write32(DEVICE_GET_BASE_ADDR(gic_0) + GIC_ICCICR_OFFSET, 0x7);
 
 	/* banked register set-enable ICDISER0. 
 	 * writing 1 enables intr.
@@ -137,7 +142,7 @@ void init_gic_secondary(void)
 	 * Enable all PPIs and SGI #15
 	 * Each SPI enable is set by calling gic_mask_interrupt
 	 */
-	write32(DEVICE_GET_BASE_ADDR(0) + GIC_ICDISER0_OFFSET, 0xFFFF8000);
+	write32(DEVICE_GET_BASE_ADDR(gic_0) + GIC_ICDISER0_OFFSET, 0xFFFF8000);
 	/*write32(GIC_ICDISER0, 0xFFFFFFFF);*/
 }
 
@@ -156,7 +161,7 @@ uint32_t gic_irq_handler(void)
 	struct sgi_data dat = {0, 0};
 
 	/* ack the interrupt */
-	val = read32(DEVICE_GET_BASE_ADDR(0) + GIC_ICCIAR_OFFSET);
+	val = read32(DEVICE_GET_BASE_ADDR(gic_0) + GIC_ICCIAR_OFFSET);
 
 	num = val & 0x3FF;
 
@@ -175,7 +180,7 @@ uint32_t gic_irq_handler(void)
 		write32(PRIV_TMR_INTSTAT, 1);
 	}
 
-	write32(DEVICE_GET_BASE_ADDR(0) + GIC_ICCEOIR_OFFSET, val);
+	write32(DEVICE_GET_BASE_ADDR(gic_0) + GIC_ICCEOIR_OFFSET, val);
 	return ret;
 }
 
@@ -188,7 +193,7 @@ uint32_t gic_mask_interrupt(int vec)
 		/* get current cpuid */
 		cpuid = smp_processor_id();
 		/* reprogram GIC_ICDIPTR */
-		reg = DEVICE_GET_BASE_ADDR(0) + GIC_ICDIPTR0_OFFSET + (uint32_t)(vec / 4) * 4;
+		reg = DEVICE_GET_BASE_ADDR(gic_0) + GIC_ICDIPTR0_OFFSET + (uint32_t)(vec / 4) * 4;
 		byte = (uint32_t)(vec % 4);
 		val = read32(reg);
 		/* clear current cpuid in the byte */
@@ -199,7 +204,7 @@ uint32_t gic_mask_interrupt(int vec)
 	}
 
 	/* register set-enable ICDISER0~2, only GIC_ICDISER0 is banked */
-	reg = DEVICE_GET_BASE_ADDR(0) + GIC_ICDISER0_OFFSET + (uint32_t)(vec / 32) * 4;
+	reg = DEVICE_GET_BASE_ADDR(gic_0) + GIC_ICDISER0_OFFSET + (uint32_t)(vec / 32) * 4;
 	bit = 1 << (vec & 0x1F);
 
 	/* writing 1 enables intr */
@@ -215,7 +220,7 @@ uint32_t gic_unmask_interrupt(int vec)
 	uint32_t bit;
 
 	/* banked register clear-enable ICDICER0 */
-	reg = DEVICE_GET_BASE_ADDR(0) + GIC_ICDICER0_OFFSET + (uint32_t)(vec / 32) * 4;
+	reg = DEVICE_GET_BASE_ADDR(gic_0) + GIC_ICDICER0_OFFSET + (uint32_t)(vec / 32) * 4;
 	bit = 1 << (vec & 31);
 
 	/* writing 1 disables intr
