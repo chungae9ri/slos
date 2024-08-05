@@ -63,12 +63,14 @@ add_compile_options(
 add_compile_options(-DAARCH64=1)
 
 add_subdirectory(arch/ca-53)
+add_subdirectory(arch/common)
 add_subdirectory(core)
 add_subdirectory(drivers)
 
 add_executable(
   ${TARGET_NAME}.elf
   $<TARGET_OBJECTS:arch_objs>
+  $<TARGET_OBJECTS:arch_common_objs>
   $<TARGET_OBJECTS:core_objs>
   $<TARGET_OBJECTS:drivers_objs>
 )
@@ -82,6 +84,7 @@ add_compile_options(
 
 add_compile_options(-DAARCH32=1)
 
+add_subdirectory(arch/common)
 add_subdirectory(core)
 add_subdirectory(arch/ca-9)
 add_subdirectory(drivers)
@@ -91,6 +94,7 @@ add_subdirectory(libs)
 add_executable(
   ${TARGET_NAME}.elf
   $<TARGET_OBJECTS:arch_objs>
+  $<TARGET_OBJECTS:arch_common_objs>
   $<TARGET_OBJECTS:core_objs>
   $<TARGET_OBJECTS:drivers_objs>
   $<TARGET_OBJECTS:fs_objs>

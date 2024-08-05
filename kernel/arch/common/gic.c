@@ -2,13 +2,23 @@
 //
 // Copyright (c) 2024 kwangdo.yi<kwangdo.yi@gmail.com>
 
+#ifdef AARCH32
 #define DEVICE_DT_COMPAT	ARM_GIC_390
+#else
+#define DEVICE_DT_COMPAT	ARM_GIC_400
+#endif
 
 #include <regops.h>
+#ifdef AARCH32
 #include <gic_390.h>
+#else
+#include <gic_400.h>
+#endif
 #include <timer.h>
 #include <sgi.h>
+#ifdef AARCH32
 #include <percpudef.h>
+#endif
 #include <generated_devicetree_defs.h>
 #include <device.h>
 
@@ -16,9 +26,12 @@ DEVICE_DEFINE(gic_0,
 			  DT_GET_COMPAT(0),
 			  DT_GET_BASE_ADDR(0),
 			  0);
-
+#ifdef AARCH32
 uint32_t smp_processor_id();
 static struct ihandler handler[NR_CPUS][NUM_IRQS];
+#else
+static struct ihandler handler[NUM_IRQS];
+#endif
 
 void init_gic_dist(void)
 {
@@ -104,18 +117,13 @@ void init_gic(void)
 	init_gic_cpu();
 }
 
+#ifdef AARCH32
 void init_gic_secondary(void)
 {
 	/* Disabling interrupt forwarding is already done
 	 * in init_gic_dist(), which should be done before
 	 * gic_mask_interrupt()
 	 */
-#if 0
-	/* Disabling interrupts forwarding */
-	write32(GIC_ICDICER0, 0x0000FFFF);
-	write32(GIC_ICDICER1, 0xFFFFFFFF);
-	write32(GIC_ICDICER2, 0xFFFFFFFF);
-#endif
 
 	/* enable GIC distributor, 
 	 * banked register 
@@ -145,6 +153,7 @@ void init_gic_secondary(void)
 	write32(DEVICE_GET_BASE_ADDR(gic_0) + GIC_ICDISER0_OFFSET, 0xFFFF8000);
 	/*write32(GIC_ICDISER0, 0xFFFFFFFF);*/
 }
+#endif
 
 void gic_fiq(void)
 {
@@ -157,7 +166,9 @@ uint32_t gic_irq_handler(void)
 	uint32_t ret;
 	uint32_t num;
 	uint32_t val;
+#ifdef AARCH32
 	uint32_t cpuid;
+#endif
 	struct sgi_data dat = {0, 0};
 
 	/* ack the interrupt */
@@ -167,26 +178,38 @@ uint32_t gic_irq_handler(void)
 
 	if (num >= NUM_IRQS) {
 		return 1;
-	} else if (num < NUM_SGI) {
+	} 
+#ifdef AARCH32
+	else if (num < NUM_SGI) {
 		dat.cpuid = val & 0x1C00;
 		dat.num = num;
 	}
 
+
 	/* get current cpuid */
 	cpuid = smp_processor_id();
 	ret = handler[cpuid][num].func(&dat);
+#else
+	ret = handler[num].func(&dat);
+#endif
 	/* clear timer int(29U) status bit */
 	if (num == PRIV_TMR_INT_VEC) {
 		write32(PRIV_TMR_INTSTAT, 1);
 	}
 
 	write32(DEVICE_GET_BASE_ADDR(gic_0) + GIC_ICCEOIR_OFFSET, val);
+
 	return ret;
 }
 
 uint32_t gic_mask_interrupt(int vec)
 {
-	uint32_t cpuid, reg, bit, val, byte;
+	uint32_t reg;
+	uint32_t bit;
+	uint32_t val;
+#ifdef AARCH32	
+	uint32_t byte;
+	uint32_t cpuid;
 
 	/* only SPI can be set with the target CPU */
 	if (vec >= SPI_BASE) {
@@ -202,6 +225,7 @@ uint32_t gic_mask_interrupt(int vec)
 		val = val | ((0x1 << cpuid) << (byte * 8));
 		write32(reg, val);
 	}
+#endif
 
 	/* register set-enable ICDISER0~2, only GIC_ICDISER0 is banked */
 	reg = DEVICE_GET_BASE_ADDR(gic_0) + GIC_ICDISER0_OFFSET + (uint32_t)(vec / 32) * 4;
@@ -211,6 +235,7 @@ uint32_t gic_mask_interrupt(int vec)
 	val = read32(reg);
 	val |= bit;
 	write32(reg, bit);
+
 	return 0;
 }
 
@@ -227,11 +252,13 @@ uint32_t gic_unmask_interrupt(int vec)
 	 * writing 0 has no effect 
 	 */
 	write32(reg, bit);
+
 	return 0;
 }
 
 void gic_register_int_handler(int vec, int_handler func, void *arg)
 {
+#ifdef AARCH32
 	uint32_t cpuid;
 
 	/* get current cpuid to register isr for
@@ -241,6 +268,11 @@ void gic_register_int_handler(int vec, int_handler func, void *arg)
 
 	handler[cpuid][vec].func = func;
 	handler[cpuid][vec].arg = arg;
+#else
+	handler[vec].func = func;
+	handler[vec].arg = arg;
+#endif
+
 }
 
 

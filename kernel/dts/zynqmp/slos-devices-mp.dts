@@ -4,6 +4,8 @@
 
 /dts-v1/;
 
+#include "zynqmp.dtsi"
+
 / {
 	uart@00FF010000 {
 		compatible = "ps,uart";
