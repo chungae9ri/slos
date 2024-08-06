@@ -2,7 +2,7 @@
 #
 # Copyright (c) 2024 kwangdo.yi<kwangdo.yi@gmail.com>
 
-KERNMODULES := core arch/ca-9 fs fs/slfs fs/littlefs libs drivers/uart drivers/dma drivers/odev drivers/ramdisk
+KERNMODULES := core arch/common arch/ca-9 fs fs/slfs fs/littlefs libs drivers/uart drivers/dma drivers/odev drivers/ramdisk
 KERNOUTDIR := $(addprefix $(TOPOUT)/kernel/,$(KERNMODULES)) 
 KERNELDIR := $(shell pwd)
 
