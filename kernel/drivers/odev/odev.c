@@ -9,7 +9,7 @@
 #include <odev.h>
 #include <regops.h>
 #include <mem_layout.h>
-#include <gic_390.h>
+#include <gic.h>
 #include <printk.h>
 #include <task.h>
 #include <timer.h>

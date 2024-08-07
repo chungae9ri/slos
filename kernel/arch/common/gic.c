@@ -9,11 +9,7 @@
 #endif
 
 #include <regops.h>
-#ifdef AARCH32
-#include <gic_390.h>
-#else
-#include <gic_400.h>
-#endif
+#include <gic.h>
 #include <timer.h>
 #include <sgi.h>
 #ifdef AARCH32

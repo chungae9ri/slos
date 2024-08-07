@@ -5,7 +5,7 @@
 #include <generated_kconfig_defs.h>
 
 #if defined(ARCH_CORTEX_A9)
-#include <gic_390.h>
+#include <gic.h>
 #include <ktimer.h>
 #include <timer.h>
 #include <task.h>

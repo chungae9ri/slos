@@ -4,7 +4,7 @@
 
 #include <stdint.h>
 #include <timer.h>
-#include <gic_390.h>
+#include <gic.h>
 #include <regops.h>
 #include <rbtree.h>
 #include <ktimer.h>
