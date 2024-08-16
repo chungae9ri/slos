@@ -2,19 +2,13 @@
 //
 // Copyright (c) 2024 kwangdo.yi<kwangdo.yi@gmail.com>
 
-#ifdef AARCH32
 #define DEVICE_DT_COMPAT	ARM_GIC_390
-#else
-#define DEVICE_DT_COMPAT	ARM_GIC_400
-#endif
 
 #include <regops.h>
-#include <gic.h>
+#include <gic_v1.h>
 #include <timer.h>
 #include <sgi.h>
-#ifdef AARCH32
 #include <percpudef.h>
-#endif
 #include <generated_devicetree_defs.h>
 #include <device.h>
 
@@ -22,12 +16,9 @@ DEVICE_DEFINE(gic_0,
 			  DT_GET_COMPAT(0),
 			  DT_GET_BASE_ADDR(0),
 			  0);
-#ifdef AARCH32
+
 uint32_t smp_processor_id();
 static struct ihandler handler[NR_CPUS][NUM_IRQS];
-#else
-static struct ihandler handler[NUM_IRQS];
-#endif
 
 void init_gic_dist(void)
 {
@@ -43,7 +34,7 @@ void init_gic_dist(void)
 	 * Find out how many interrupts are supported.
 	 */
 	ext_irq_num = read32(DEVICE_GET_BASE_ADDR(gic_0) + GIC_ICDICTR_OFFSET) & 0x1f;
-	ext_irq_num = ext_irq_num * 32; 
+	ext_irq_num = (ext_irq_num + 1) * 32; 
 
 	/* Set each interrupt line based on UG585 
 	 * interrupt polarities are set
@@ -65,7 +56,7 @@ void init_gic_dist(void)
 	 * all intr are targeted to CPU0.
 	 * GIC_ICDIPTR0~7 for intr #0~#31 are ro.
 	 * SPI will be retargeted when it is 
-	 * enabled in gic_mask_interrupt().
+	 * enabled in gic_enable_interrupt().
 	 */
 	for (i = 0; i < ext_irq_num; i += 4)
 		write32(DEVICE_GET_BASE_ADDR(gic_0) + GIC_ICDIPTR8_OFFSET + i, cpumask); 
@@ -113,12 +104,11 @@ void init_gic(void)
 	init_gic_cpu();
 }
 
-#ifdef AARCH32
 void init_gic_secondary(void)
 {
 	/* Disabling interrupt forwarding is already done
 	 * in init_gic_dist(), which should be done before
-	 * gic_mask_interrupt()
+	 * gic_enable_interrupt()
 	 */
 
 	/* enable GIC distributor, 
@@ -144,27 +134,23 @@ void init_gic_secondary(void)
 	 * writing 1 enables intr.
 	 * writing 0 has no effect. 
 	 * Enable all PPIs and SGI #15
-	 * Each SPI enable is set by calling gic_mask_interrupt
+	 * Each SPI enable is set by calling gic_enable_interrupt
 	 */
 	write32(DEVICE_GET_BASE_ADDR(gic_0) + GIC_ICDISER0_OFFSET, 0xFFFF8000);
 	/*write32(GIC_ICDISER0, 0xFFFFFFFF);*/
 }
-#endif
 
 void gic_fiq(void)
 {
 	/* do nothing */
 }
 
-/*imsi for test uint32_t gic_irq(struct task_struct *frame)*/
 uint32_t gic_irq_handler(void)
 {
 	uint32_t ret;
 	uint32_t num;
 	uint32_t val;
-#ifdef AARCH32
 	uint32_t cpuid;
-#endif
 	struct sgi_data dat = {0, 0};
 
 	/* ack the interrupt */
@@ -175,7 +161,6 @@ uint32_t gic_irq_handler(void)
 	if (num >= NUM_IRQS) {
 		return 1;
 	} 
-#ifdef AARCH32
 	else if (num < NUM_SGI) {
 		dat.cpuid = val & 0x1C00;
 		dat.num = num;
@@ -185,9 +170,6 @@ uint32_t gic_irq_handler(void)
 	/* get current cpuid */
 	cpuid = smp_processor_id();
 	ret = handler[cpuid][num].func(&dat);
-#else
-	ret = handler[num].func(&dat);
-#endif
 	/* clear timer int(29U) status bit */
 	if (num == PRIV_TMR_INT_VEC) {
 		write32(PRIV_TMR_INTSTAT, 1);
@@ -198,12 +180,11 @@ uint32_t gic_irq_handler(void)
 	return ret;
 }
 
-uint32_t gic_mask_interrupt(int vec)
+uint32_t gic_enable_interrupt(int vec)
 {
 	uint32_t reg;
 	uint32_t bit;
 	uint32_t val;
-#ifdef AARCH32	
 	uint32_t byte;
 	uint32_t cpuid;
 
@@ -221,7 +202,6 @@ uint32_t gic_mask_interrupt(int vec)
 		val = val | ((0x1 << cpuid) << (byte * 8));
 		write32(reg, val);
 	}
-#endif
 
 	/* register set-enable ICDISER0~2, only GIC_ICDISER0 is banked */
 	reg = DEVICE_GET_BASE_ADDR(gic_0) + GIC_ICDISER0_OFFSET + (uint32_t)(vec / 32) * 4;
@@ -235,7 +215,7 @@ uint32_t gic_mask_interrupt(int vec)
 	return 0;
 }
 
-uint32_t gic_unmask_interrupt(int vec)
+uint32_t gic_disable_interrupt(int vec)
 {
 	uint32_t reg;
 	uint32_t bit;
@@ -254,7 +234,6 @@ uint32_t gic_unmask_interrupt(int vec)
 
 void gic_register_int_handler(int vec, int_handler func, void *arg)
 {
-#ifdef AARCH32
 	uint32_t cpuid;
 
 	/* get current cpuid to register isr for
@@ -264,11 +243,6 @@ void gic_register_int_handler(int vec, int_handler func, void *arg)
 
 	handler[cpuid][vec].func = func;
 	handler[cpuid][vec].arg = arg;
-#else
-	handler[vec].func = func;
-	handler[vec].arg = arg;
-#endif
-
 }
 
 

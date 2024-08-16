@@ -8,7 +8,7 @@
 
 #include <dma.h>
 #include <regops.h>
-#include <gic.h>
+#include <gic_v1.h>
 #include <mm.h>
 #include <printk.h>
 #include <generated_devicetree_defs.h>
@@ -51,7 +51,7 @@ void init_dma(void)
 	uint32_t cntl;
 
 	gic_register_int_handler(DEVICE_GET_IRQ(dma_0), dma_irq, NULL);
-	gic_mask_interrupt(DEVICE_GET_IRQ(dma_0));
+	gic_enable_interrupt(DEVICE_GET_IRQ(dma_0));
 	p_dma_work_order = NULL;
 	/* reset mdcore hw */
 	cntl = BM_MODCORE_DMA_RESET;

@@ -9,7 +9,7 @@
 #include <odev.h>
 #include <regops.h>
 #include <mem_layout.h>
-#include <gic.h>
+#include <gic_v1.h>
 #include <printk.h>
 #include <task.h>
 #include <timer.h>
@@ -58,7 +58,7 @@ int32_t init_odev(void)
 	/* This also reprogram the distributor 
 	 * forwarding target cpu in the ICDIPTR register.
 	 */
-	gic_mask_interrupt(DEVICE_GET_IRQ(odev_0));
+	gic_enable_interrupt(DEVICE_GET_IRQ(odev_0));
 
 	return NO_ERR;
 }

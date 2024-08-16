@@ -5,7 +5,6 @@
 #include <generated_kconfig_defs.h>
 
 #if defined(ARCH_CORTEX_A9)
-#include <gic.h>
 #include <ktimer.h>
 #include <timer.h>
 #include <task.h>
@@ -23,6 +22,7 @@
 #include <uart.h>
 #endif
 
+#include <gic_v1.h>
 #include <printk.h>
 #include <uart.h>
 
@@ -195,6 +195,8 @@ int main(void)
 	/* read currentEL*/
 	asm volatile ("mrs %[cel], CurrentEL" : [cel] "=r" (current_el)::);
 	printk("currentEL: 0x%x\n", current_el >> 2); 
+	
+	init_gic();
 
 	while (1) ;
 

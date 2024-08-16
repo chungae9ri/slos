@@ -6,4 +6,5 @@ add_library(
   smp-reset.S
   smp-vector.S
   vector.S
+  gic_v1.c
 )
