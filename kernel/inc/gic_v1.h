@@ -2,8 +2,8 @@
 //
 // Copyright (c) 2024 kwangdo.yi<kwangdo.yi@gmail.com>
 
-#ifndef GIC_V1_H
-#define GIC_V1_H
+#ifndef _GIC_V1_H_
+#define _GIC_V1_H_
 
 #include <stdint.h>
 

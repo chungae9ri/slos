@@ -2,8 +2,8 @@
 //
 // Copyright (c) 2024 kwangdo.yi<kwangdo.yi@gmail.com>
 
-#ifndef __TASK_H__
-#define __TASK_H__
+#ifndef _TASK_H_
+#define _TASK_H_
 
 #include <stdint.h>
 #include <stddef.h>

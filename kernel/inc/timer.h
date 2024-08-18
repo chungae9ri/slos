@@ -2,6 +2,11 @@
 //
 // Copyright (c) 2024 kwangdo.yi<kwangdo.yi@gmail.com>
 
+#ifndef _TIMER_H_
+#define _TIMER_H_
+
+#include <stdint.h>
+
 #define XPAR_PS7_SCUTIMER_0_BASEADDR 0xF8F00600
 #define PRIV_TMR_LD XPAR_PS7_SCUTIMER_0_BASEADDR + 0x0000
 #define PRIV_TMR_CNTR XPAR_PS7_SCUTIMER_0_BASEADDR + 0x0004
@@ -35,3 +40,5 @@ uint32_t timer_get_phy_tick_cnt(void);
 void init_timer(void);
 void timer_enable(void);
 void timer_enable_secondary(void);
+
+#endif

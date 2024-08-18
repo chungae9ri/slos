@@ -2,6 +2,9 @@
 //
 // Copyright (c) 2024 kwangdo.yi<kwangdo.yi@gmail.com>
 
+#ifndef _DMA_H_
+#define _DMA_H_
+
 #include <stdint.h>
 
 /**
@@ -33,3 +36,5 @@ void start_dma(void *arg);
  * @return int 
  */
 int dma_irq (void *arg);
+
+#endif

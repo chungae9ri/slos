@@ -2,8 +2,8 @@
 //
 // Copyright (c) 2024 kwangdo.yi<kwangdo.yi@gmail.com>
 
-#ifndef FS_H
-#define FS_H
+#ifndef _FS_H_
+#define _FS_H_
 
 #include <stdint.h>
 #include <stddef.h>

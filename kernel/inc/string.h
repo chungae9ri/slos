@@ -2,6 +2,9 @@
 //
 // Copyright (c) 2024 kwangdo.yi<kwangdo.yi@gmail.com>
 
+#ifndef _STRING_H_
+#define _STRING_H_
+
 #include <stdint.h>
 #include <stddef.h>
 
@@ -36,3 +39,5 @@ uint32_t __popcountsi2(uint32_t a);
 void __aeabi_uidiv(uint32_t n, uint32_t d);
 
 void __aeabi_uidivmod(uint32_t n, uint32_t d);
+
+#endif

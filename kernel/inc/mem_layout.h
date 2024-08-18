@@ -2,6 +2,9 @@
 //
 // Copyright (c) 2024 kwangdo.yi<kwangdo.yi@gmail.com>
 
+#ifndef _MEM_LAYOUT_H_
+#define _MEM_LAYOUT_H_
+
 #ifdef __ASSEMBLY__
 /* memory map */
 .set KERNEL_FRAME_BITMAP,			0xC000 
@@ -101,4 +104,6 @@
 #define HEAP_FRAME_NUM ((64 MB) / (4 KB))
 #define PREALLOC_FRAME_START ((0 MB) / (4 KB))
 #define PREALLOC_FRAME_NUM ((64 MB) / (4 KB))
+#endif
+
 #endif

@@ -2,8 +2,9 @@
 //
 // Copyright (c) 2024 kwangdo.yi<kwangdo.yi@gmail.com>
 
-#ifndef __SCHED_H__
-#define __SCHED_H__
+#ifndef _SCHED_H_
+#define _SCHED_H_
+
 #include <stdint.h>
 #include <mem_layout.h>
 #include <defs.h>

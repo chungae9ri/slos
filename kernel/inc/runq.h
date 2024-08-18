@@ -2,8 +2,9 @@
 //
 // Copyright (c) 2024 kwangdo.yi<kwangdo.yi@gmail.com>
 
-#ifndef __RUNQ_H__
-#define __RUNQ_H__
+#ifndef _RUNQ_H_
+#define _RUNQ_H_
+
 #include <stdint.h>
 #include <defs.h>
 #include <sched.h>

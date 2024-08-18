@@ -2,8 +2,8 @@
 //
 // Copyright (c) 2024 kwangdo.yi<kwangdo.yi@gmail.com>
 
-#ifndef _page_table_H_ 
-#define _page_table_H_
+#ifndef _PAGE_TABLE_H_ 
+#define _PAGE_TABLE_H_
 
 #include <frame_pool.h>
 #include <vm_pool.h>

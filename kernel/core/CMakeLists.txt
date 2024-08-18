@@ -4,6 +4,7 @@ if (TARGET_ARCH STREQUAL "aarch64")
     core_objs OBJECT
     main.c
     printk.c
+    timer.c
   )
 else ()
   add_library(

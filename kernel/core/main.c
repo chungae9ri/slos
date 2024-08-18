@@ -6,7 +6,6 @@
 
 #if defined(ARCH_CORTEX_A9)
 #include <ktimer.h>
-#include <timer.h>
 #include <task.h>
 #include <sched.h>
 #include <runq.h>
@@ -22,6 +21,7 @@
 #include <uart.h>
 #endif
 
+#include <timer.h>
 #include <gic_v1.h>
 #include <printk.h>
 #include <uart.h>
@@ -197,6 +197,7 @@ int main(void)
 	printk("currentEL: 0x%x\n", current_el >> 2); 
 	
 	init_gic();
+	init_timer();
 
 	while (1) ;
 

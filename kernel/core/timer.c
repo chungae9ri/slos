@@ -2,7 +2,12 @@
 //
 // Copyright (c) 2024 kwangdo.yi<kwangdo.yi@gmail.com>
 
+#include <generated_kconfig_defs.h>
+
+#if defined(ARCH_CORTEX_A9)
+
 #include <stdint.h>
+
 #include <timer.h>
 #include <gic_v1.h>
 #include <regops.h>
@@ -224,4 +229,23 @@ void init_timer(void)
 	gic_enable_interrupt(PRIV_TMR_INT_VEC);
 }
 
+#else
+
+#include <stdint.h>
+#include <stddef.h>
+
+#include <timer.h>
+#include <gic_v2.h>
+
+int timer_irq (void *arg)
+{
+	return 0;
+}
+
+void init_timer(void)
+{
+	gic_register_int_handler(PRIV_TMR_INT_VEC, timer_irq, NULL);
+	gic_enable_interrupt(PRIV_TMR_INT_VEC);
+}
+#endif
 

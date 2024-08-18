@@ -2,6 +2,9 @@
 //
 // Copyright (c) 2024 kwangdo.yi<kwangdo.yi@gmail.com>
 
+#ifndef _REGOPS_H_
+#define _REGOPS_H_
+
 #include <stdint.h>
 #include <stddef.h>
 
@@ -44,3 +47,5 @@ static inline void write64(size_t addr, uint64_t val)
 {
     *(volatile uint64_t *)addr = val;
 }
+
+#endif
