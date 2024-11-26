@@ -91,6 +91,7 @@ while getopts 'acprklh' option; do
             build_apps
             build_ramdisk
             build_kernel32
+            build_kernel64
             ;;
         c) 
             clean_builds

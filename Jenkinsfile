@@ -48,7 +48,7 @@ pipeline {
         stage('cmake Build for aarch32') {
             steps {
                 sh '/bin/bash build-cmake.sh -c'
-                sh '/bin/bash build-cmake.sh -a'
+                sh '/bin/bash build-cmake.sh -k'
 
             }
         }
