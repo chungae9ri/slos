@@ -46,7 +46,7 @@ Implementation list
 Build system:
    - CMake build, Make build both are working
    - Kconfig and statically linked device tree
-   - 
+
 Refer A little book on custom OS developement from scratch.pdf for more information.
 
 Notes: To petalinux-package for cora z7, petalinux v2023.2 is used and verified
