@@ -45,7 +45,8 @@ Implementation list
 
 Build system:
    - CMake build, Make build both are working
-   - Kconfig and statically linked device tree
+   - Kconfig
+   - Statically linked device tree for device driver
 
 Refer A little book on custom OS developement from scratch.pdf for more information.
 
