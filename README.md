@@ -41,8 +41,12 @@ Implementation list
    - CPU 0 and CPU 1 boots up and running with the identical kernel
    - PERCPU resource storage
    - SGI (Software Generated Interrupt) between CPU 0 and CPU 1
-   - Mailbox for communication between CPU 0 and CPU 1 
-
+   - Mailbox for communication between CPU 0 and CPU 1
+     
+Build system:
+   - CMake build, Make build both are working
+   - Kconfig and statically linked device tree
+     
 Refer A little book on custom OS developement from scratch.pdf for more information.
 
-Notes: To petalinux-package for cora z7, petalinux v2019.2 is used and verified
+Notes: To petalinux-package for cora z7, petalinux v2023.2 is used and verified
