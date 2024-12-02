@@ -10,10 +10,10 @@
             "args": "--defconfig zynq7000_defconfig"
         },
         {
-            "name": "C/C++: arm-none-eabi-gcc build and debug active file",
+            "name": "slos in zynq-7000 debuggin",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/build/kernel32/kernel/kernel32.elf",
+            "program": "${workspaceFolder}/build/kernel32/kernel32.elf",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
@@ -22,19 +22,9 @@
             "MIMode": "gdb",
             "setupCommands": [
                 {
-                    "description": "Enable .gdbinit",
-                    "text": "-gdb-set startup-with-shell off",
-                    "ignoreFailures": true
-                },
-                {
-                    "description": "Load .gdbinit",
-                    "text": "-environment-cd ${env:HOME}",
-                    "ignoreFailures": true
-                },
-                {
-                    "description": "Execute .gdbinit",
-                    "text": "-interpreter-exec console \"source .gdbinit\"",
-                    "ignoreFailures": true
+                    "description": "Load gdbinit_zynq",
+                    "text": "source ${workspaceFolder}/gdbinit_zynq",
+                    "ignoreFailures": false 
                 }
             ],
             "miDebuggerPath": "${env:HOME}/bin/gcc-arm-none-eabi-10.3-2021.10/bin/arm-none-eabi-gdb"

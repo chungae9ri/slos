@@ -25,7 +25,7 @@ typedef int (*flash_read)(uint32_t addr, uint32_t len, uint8_t *buf);
 struct ramdisk_io_ops {
 	flash_erase_chip erase_chip;
 	flash_erase_page erase_page;
-  flash_erase_addr_len erase_addr_len;
+	flash_erase_addr_len erase_addr_len;
 	flash_write write;
 	flash_read read;
 };

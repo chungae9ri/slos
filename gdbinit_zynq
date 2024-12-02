@@ -1,6 +1,6 @@
 target remote localhost:3000
 #file out/kernel/kernel.elf
-file build/slos32/kernel/kernel32.elf
+#file build/kernel32/kernel32.elf
 b *0x100000
 b ssbl
 b start_kernel
