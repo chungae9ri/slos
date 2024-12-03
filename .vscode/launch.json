@@ -1,4 +1,5 @@
 {
+    "version": "2.0.0",
     "configurations": [
         {
             "name": "Python Debugger: Current File",
@@ -10,7 +11,25 @@
             "args": "--defconfig zynq7000_defconfig"
         },
         {
-            "name": "slos in zynq-7000 debuggin",
+            "name": "cortex-debug slos zynq-7000",
+            "type": "cortex-debug",
+            "cwd": "${workspaceFolder}",
+            "request": "attach",
+            "executable": "${workspaceFolder}/build/kernel32/kernel32.elf",
+            "runToEntryPoint": "main",
+            "servertype": "external",
+            "armToolchainPath": "${env:HOME}/bin/gcc-arm-none-eabi-10.3-2021.10/bin",
+            "breakAfterReset": true,
+            "device": "Cortex-A9",
+            "gdbTarget": "localhost:3000",
+            "postAttachCommands": [
+                "b ssbl",
+                "b start_kernel",
+                "b create_ramdisk_fs"
+            ]
+        },
+        {
+            "name": "cppdbg slos zynq-7000",
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/build/kernel32/kernel32.elf",
@@ -29,6 +48,5 @@
             ],
             "miDebuggerPath": "${env:HOME}/bin/gcc-arm-none-eabi-10.3-2021.10/bin/arm-none-eabi-gdb"
         }
-    ],
-    "version": "2.0.0"
+    ]
 }
