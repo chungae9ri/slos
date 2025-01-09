@@ -4,13 +4,79 @@
 
 #include <stdint.h>
 #include <stddef.h>
-#include <mm.h>
+#include <stdarg.h>
 
-/*typedef uint32_t size_t;*/
+#include <mm.h>
+#include <uart.h>
 
 int printf(const char *fmt, ...)
 {
-    /* Not implemented */
+	uint8_t *pch, *pstr;
+	uint32_t u_int, i, u_hex, str_len;
+	uint8_t num_str[16] = {0};
+	int32_t s_int, s_int_val;
+	va_list argp;
+
+	va_start(argp, fmt);
+
+	for (pch = (uint8_t *)fmt; *pch != '\0'; pch++) {
+		if (*pch != '%') {
+			poll_out(*pch);
+			continue;
+		}
+		switch (*++pch) {
+		case 'x':
+			u_int = va_arg(argp, uint32_t);
+			i = 0;
+			do {
+				u_hex = (u_int & 0xF);
+				if (u_hex < 10) {
+					num_str[i++] = u_hex + '0';
+				} else {
+					num_str[i++] = (u_hex - 10) + 'A';
+				}
+				u_int >>= 4;
+			} while (u_int > 0);
+
+			str_len = i;
+			num_str[i] = '\0';
+			for (i = 0; i < str_len; i++) {
+				poll_out(num_str[str_len - 1 - i]);
+			}
+			break;
+		
+		/* FIXME: Context switching doesn't support FPU context switch.
+		 * Decimal printing isn't stable.
+		 */
+		case 'd':
+			s_int = va_arg(argp, int32_t);
+			i = 0;
+			do {
+				s_int_val = (s_int % 10);
+				num_str[i++] = s_int_val + '0';
+				s_int /= 10;
+			} while (s_int > 0);
+
+			str_len = i;
+			num_str[i] = '\0';
+			for (i = 0; i < str_len; i++) {
+				poll_out(num_str[str_len - 1 - i]);
+			}
+		break;
+
+		case 's':
+			pstr = va_arg(argp, uint8_t *);
+			while (*pstr != '\0') {
+				poll_out(*pstr++);
+			}
+			break;
+		default:
+			break;
+		}
+	}
+
+	va_end(argp);
+
     return 0;
 }
 
@@ -72,12 +138,12 @@ void strcpy(char *dst, const char *src)
 	dst[i] = '\0';
 }
 
-void *memset(void *block, int c, size_t sz)
+void *memset(void *block, uint8_t c, size_t sz)
 {
     uint32_t i;
-    uint32_t *p = (uint32_t *)block;
+    uint8_t *p = (uint8_t *)block;
 
-    for (i = 0; i < (sz >> 2); i++) 
+    for (i = 0; i < sz; i++) 
         p[i] = c;
     
     return p;
@@ -86,8 +152,8 @@ void *memset(void *block, int c, size_t sz)
 uint32_t memcmp(const void *s1, const void *s2, size_t len)
 {
     uint32_t i;
-    uint32_t *ps1 = (uint32_t *)s1;
-    uint32_t *ps2 = (uint32_t *)s2;
+    uint8_t *ps1 = (uint8_t *)s1;
+    uint8_t *ps2 = (uint8_t *)s2;
 
     for (i = 0; i < len; i++) {
         if (ps1[i] != ps2[i])
@@ -249,10 +315,10 @@ char *strchr(const char *s, int c_in)
 void *memcpy (void *dst, const void *src, size_t len)
 {
     uint32_t i;
-    uint32_t *dstp = (uint32_t *)dst;
-    uint32_t *srcp = (uint32_t *)src;
+    uint8_t *dstp = (uint8_t *)dst;
+    uint8_t *srcp = (uint8_t *)src;
 
-    for (i = 0; i < (len >> 2); i++) 
+    for (i = 0; i < len; i++) 
         dstp[i] = srcp[i];
 
   return dstp;

@@ -16,7 +16,7 @@
             "cwd": "${workspaceFolder}",
             "request": "attach",
             "executable": "${workspaceFolder}/build/kernel32/kernel32.elf",
-            "runToEntryPoint": "main",
+            "runToEntryPoint": "start_kernel",
             "servertype": "external",
             "armToolchainPath": "${env:HOME}/bin/gcc-arm-none-eabi-10.3-2021.10/bin",
             "breakAfterReset": true,

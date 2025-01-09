@@ -43,6 +43,7 @@ int32_t load_ramdisk_app(FILE_SYSTEM_TYPE fs_t, uint32_t app_idx)
 	uint32_t dst_addr;
 	Elf32_Addr entry;
 	Elf32_Sym *syms;
+	uint32_t flag = 0;
 
 	if (app_idx >= MAX_USR_TASK) {
 		printk("err: user task idx overflow\n");
@@ -50,8 +51,11 @@ int32_t load_ramdisk_app(FILE_SYSTEM_TYPE fs_t, uint32_t app_idx)
 	}
 
 	fp.fs_t = fs_t;
-	sprintk((char *)fname, "App_%x", (unsigned int)app_idx);
-	ret = fs_open(fs_t, (const uint8_t *)fname, &fp);
+	sprintk((char *)fname, "/App_%x", (unsigned int)app_idx);
+	if (fs_t == LITTLEFS_FILE_SYSTEM)
+		flag = LFS_O_RDONLY;
+
+	ret = fs_open(fs_t, (const uint8_t *)fname, &fp, flag);
 	if (ret)
 		return ret;
 

@@ -4,6 +4,7 @@
 
 #include <stdint.h>
 #include <stdarg.h>
+
 #include <uart.h>
 
 #define NUM_STR_MAX		(16u)
@@ -13,6 +14,7 @@ void printk(const char *fmt, ...)
 	uint8_t *pch, *pstr;
 	uint32_t u_int, i, u_hex, str_len;
 	uint8_t num_str[NUM_STR_MAX] = {0};
+	int32_t s_int, s_int_val;
 	va_list argp;
 
 	va_start(argp, fmt);
@@ -35,6 +37,25 @@ void printk(const char *fmt, ...)
 				}
 				u_int >>= 4;
 			} while (u_int > 0);
+
+			str_len = i;
+			num_str[i] = '\0';
+			for (i = 0; i < str_len; i++) {
+				poll_out(num_str[str_len - 1 - i]);
+			}
+			break;
+		
+		/* FIXME: Context switching doesn't support FPU context switch.
+		 * Decimal printing isn't stable.
+		 */
+		case 'd':
+			s_int = va_arg(argp, int32_t);
+			i = 0;
+			do {
+				s_int_val = (s_int % 10);
+				num_str[i++] = s_int_val + '0';
+				s_int /= 10;
+			} while (s_int > 0);
 
 			str_len = i;
 			num_str[i] = '\0';

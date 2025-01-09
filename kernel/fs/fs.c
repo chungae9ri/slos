@@ -38,19 +38,18 @@ static int lfs_api_sync(const struct lfs_config *c)
 
 static int init_littlefs(void)
 {
-	cfg.read_size = 1;
-	cfg.prog_size = 1;
-	cfg.block_size = RAMDISK_PAGE_SIZE;
-	cfg.block_count = RAMDISK_PAGE_NUM;
-	cfg.block_cycles = 500;
-	cfg.cache_size = 32;
-	cfg.lookahead_size = 32;
+    cfg.read_size = 1024;
+    cfg.prog_size = 1024;
+	cfg.block_size = 0x10000;
+	cfg.block_count = 64;
+	cfg.block_cycles = -1;
+	cfg.cache_size = 1024;
+	cfg.lookahead_size = 1024;
 
 	cfg.read = lfs_api_read;
 	cfg.prog = lfs_api_prog;
 	cfg.erase = lfs_api_erase;
 	cfg.sync = lfs_api_sync;
-
     return NO_ERR;
 }
 
@@ -58,24 +57,17 @@ int32_t fs_mount(FILE_SYSTEM_TYPE fs)
 {	
 	int32_t ret;
 
+    io_ops.erase_chip();
+
     if (fs == LITTLEFS_FILE_SYSTEM) {
         init_littlefs();
+        ret = lfs_format(&lfs, &cfg);
+        if (ret)
+            return ret;
+
         ret = lfs_mount(&lfs, &cfg);
-        /* reformat if we can't mount the filesystem
-         * this should only happen on the first boot
-         */
-        if (ret) {
-			/* FIXME: 
-             * littlefs fails to format. 
-             * it fails in checking crc at lfs.c:lfs_dir_commitcrc() line 1729 
-             * if (crc != crc1) {
-             *     return LFS_ERR_CORRUPT;
-             * }
-             * this breaks the littlefs porting.
-             */
-            lfs_format(&lfs, &cfg);
-            lfs_mount(&lfs, &cfg);
-        }
+        if (ret)
+            return ret;
     } else {
         ret = slfs_mount();
 
@@ -88,13 +80,13 @@ int32_t fs_mount(FILE_SYSTEM_TYPE fs)
     return NO_ERR;
 }
 
-int32_t fs_open(FILE_SYSTEM_TYPE fs_t, const uint8_t *name, file_t *fp)
+int32_t fs_open(FILE_SYSTEM_TYPE fs_t, const uint8_t *name, file_t *fp, uint32_t flag)
 {
     int32_t ret;
 
     if (fs_t == LITTLEFS_FILE_SYSTEM) {
         fp->virt_fp = kmalloc(sizeof(lfs_file_t));
-        ret = lfs_file_open(&lfs, (lfs_file_t *)fp->virt_fp, (const char *)name, LFS_O_RDWR);
+        ret = lfs_file_open(&lfs, (lfs_file_t *)fp->virt_fp, (const char *)name, (int)flag);
     } else {
         fp->virt_fp = kmalloc(sizeof(slfs_file_t));
         ret = slfs_open(name, (slfs_file_t *)fp->virt_fp);
@@ -109,8 +101,13 @@ int32_t fs_read(file_t *fp, uint8_t *buff, size_t len)
 {
     int32_t ret;
 
-    if (fp->fs_t == LITTLEFS_FILE_SYSTEM)
+    if (fp->fs_t == LITTLEFS_FILE_SYSTEM) {
         ret = (int32_t)lfs_file_read(&lfs, (lfs_file_t *)fp->virt_fp, buff, len);
+        if (ret == len)
+            return 0;
+        else 
+            return -1;
+    }
     else
         ret = slfs_read((slfs_file_t *)fp->virt_fp, buff, len);
 
@@ -121,8 +118,13 @@ int32_t fs_write(file_t *fp, const uint8_t *buff, size_t len)
 {
     int32_t ret;
 
-    if (fp->fs_t == LITTLEFS_FILE_SYSTEM)
+    if (fp->fs_t == LITTLEFS_FILE_SYSTEM) {
         ret = (int32_t)lfs_file_write(&lfs, (lfs_file_t *)fp->virt_fp, buff, len);
+        if (ret == len)
+            return 0;
+        else 
+            return -1;
+    }
     else
         ret = slfs_write((slfs_file_t *)fp->virt_fp, buff, len);
 
@@ -133,8 +135,10 @@ int32_t fs_seek(file_t *fp, uint32_t offset, int whence)
 {
     int32_t ret;
 
-    if (fp->fs_t == LITTLEFS_FILE_SYSTEM)
-        ret = (int32_t)lfs_file_seek(&lfs, (lfs_file_t *)fp->virt_fp, offset, whence);
+    if (fp->fs_t == LITTLEFS_FILE_SYSTEM) {
+        lfs_file_seek(&lfs, (lfs_file_t *)fp->virt_fp, offset, whence);
+        ret = 0;
+    }
     else
         ret = slfs_seek((slfs_file_t *)fp->virt_fp, offset, (slfs_fseek_t)whence);
 
@@ -180,6 +184,7 @@ int32_t create_ramdisk_fs(FILE_SYSTEM_TYPE fs_t)
 	uint32_t app_len;
 	file_t file;
 	int32_t ret;
+    uint32_t flag;
 
     fs_mount(fs_t);
 
@@ -192,14 +197,19 @@ int32_t create_ramdisk_fs(FILE_SYSTEM_TYPE fs_t)
 		offset += sizeof(uint32_t);
 		app_addr = (uint32_t)(&RAMDISK_PHY_START) + offset;
 
-		sprintk(fname, "App_%x", (unsigned int)i);
-		ret = fs_open(fs_t, (const uint8_t *)fname, &file);
+		sprintk(fname, "/App_%x", (unsigned int)i);
+        if (fs_t == LITTLEFS_FILE_SYSTEM)
+            flag = LFS_O_CREAT | LFS_O_RDWR;
+        else 
+            flag = 0;
+
+		ret = fs_open(fs_t, (const uint8_t *)fname, &file, flag);
 		if (ret)
 			return ret;
 
 		ret = fs_write(&file, (const uint8_t *)app_addr, app_len);
-		if (ret)
-			return ret;
+        if (ret)
+            return ret;
 
 		ret = fs_close(&file);
 		if (ret)

@@ -48,7 +48,8 @@ pipeline {
         stage('cmake Build for aarch32') {
             steps {
                 sh '/bin/bash build-cmake.sh -c'
-                sh '/bin/bash build-cmake.sh -k'
+                // build apps -> ramdisk -> kernel32
+                sh '/bin/bash build-cmake.sh -prk'
 
             }
         }
@@ -78,7 +79,7 @@ pipeline {
     // Define a trigger to run the pipeline whenever there is a new commit to the GitHub repository
     triggers {
     //    pollSCM('*/5 * * * *')
-    cron('0 14 * * *')
+    cron('0 20 * * *')
     }
     
     post {

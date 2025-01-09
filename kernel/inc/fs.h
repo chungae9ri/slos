@@ -22,11 +22,10 @@ typedef struct {
     size_t size;
     /* file pointer to slfs or lfs */
     void *virt_fp;
-
 } file_t;
 
 int32_t fs_mount(FILE_SYSTEM_TYPE fs);
-int32_t fs_open(FILE_SYSTEM_TYPE fs_t, const uint8_t *name, file_t *fp);
+int32_t fs_open(FILE_SYSTEM_TYPE fs_t, const uint8_t *name, file_t *fp, uint32_t flag);
 int32_t fs_read(file_t *fp, uint8_t *buff, size_t len);
 int32_t fs_write(file_t *fp, const uint8_t *buff, size_t len);
 int32_t fs_close(file_t *fp);
