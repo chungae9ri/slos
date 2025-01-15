@@ -13,14 +13,6 @@ RAMDISK_VIRT_START = VIRT_ADDR_BASE + RAMDISK_PHY_START;
 
 SECTIONS
 {
-	/* percpu storage, allocated 2 pages */
-	/*
-	. = 0x2000;
-	.data.percpu : {
-		*(.data.percpu);
-	}
-	*/
-
 	. = 0x00100000;
 	.ssbl : {
 		*(SSBL);

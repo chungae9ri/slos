@@ -4,8 +4,7 @@
 
 .include "mem_layout.h"
 
-/*.set CONTEXT_MEM, 0x4000*/
-
+.set CPU_CONTEXT_SZ,0x40
 .set LOCKED,0x1
 .set UNLOCKED,0x0
 
@@ -31,7 +30,22 @@ switch_context_yield:
 	str	sp, [r12],#4
 	str	lr, [r12],#4
 	/* save current lr to the saved pc */
-	str	lr, [r12]
+	str	lr, [r12],#4
+	/* save current task's FPU context */
+	add r12, r12, #4 /* skip reserved */
+    vstmia r12!, {d0-d15}   /* save all 15 double-precision registers */
+	mrc p10, 7, r0, c1, c0, 2  /* read FPSCR */
+	str r0, [r12],#4             /* save FPSCR to memory */
+	mrc p10, 7, r0, c8, c0, 3  /* read FPEXC */
+	str r0, [r12]             /* save FPEXC to memory */
+	/**/
+	/* restore FPU context from next task's FPU context */
+	add r12, r1,#CPU_CONTEXT_SZ /* set r12 to the start of FPU context */
+	vldmia r12!, {d0-d15}   /* restore all 15 double-precision registers */
+	ldr r0, [r12],#4          /* load FPSCR from memory */
+	mcr p10, 7, r0, c1, c0, 2  /* write FPSCR */
+	ldr r0, [r12]           /* load FPEXC from memory */
+	mcr p10, 7, r0, c8, c0, 3  /* write FPEXC */
 	/* update regs with new task's ctx */
 	mov 	r12, r1
 	ldmia	r12!, {r0-r11}
@@ -63,18 +77,40 @@ secondary_context:
 	mov	r2, #CONTEXT_MEM_LEN
 	ldr	r4,=SEC_CONTEXT_MEM
 	mov	r12, r4		/* back up context mem addr to r12 */
+/* save preempted task's context from CONTEXT_MEM 
+ * to current task's context memory ([r0]) 
+ */
 savectxt:
 	ldr	r3,[r4],#4
 	str	r3,[r0],#4
-	subs	r2,r2,#1
+	subs r2,r2,#1
 	bne	savectxt
-	mov 	r2,#CONTEXT_MEM_LEN
+	/* save FPU context to current task's FPU context */
+	add r0, r0, #4 /* skip reserved */
+    vstmia r0!, {d0-d15}   /* save all 15 double-precision registers */
+	mrc p10, 7, r2, c1, c0, 2  /* read FPSCR */
+	str r2, [r0],#4             /* save FPSCR to memory */
+	mrc p10, 7, r2, c8, c0, 3  /* read FPEXC */
+	str r2, [r0]             /* save FPEXC to memory */
+	/* */
+	mov r2,#CONTEXT_MEM_LEN
 	mov	r4, r12
+/* save next task's context ([r1]) to the CONTEXT_MEM.
+ * restore next task's context when return from ISR 
+ */
 restrctxt:
 	ldr	r3,[r1],#4
 	str	r3,[r4],#4
 	subs	r2,r2,#1
 	bne	restrctxt
+	/* restore FPU context from next task's FPU context */
+	add r4, r4, #4 /* skip reserved */
+	vldmia r4!, {d0-d15}   /* restore all 15 double-precision registers */
+	ldr r1, [r4],#4          /* load FPSCR from memory */
+	mcr p10, 7, r1, c1, c0, 2  /* write FPSCR */
+	ldr r1, [r4]           /* load FPEXC from memory */
+	mcr p10, 7, r1, c8, c0, 3  /* write FPEXC */
+	/* */
 	pop	{r0-r5, pc}
 
 .global enable_interrupt

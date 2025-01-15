@@ -166,7 +166,6 @@ uint32_t gic_irq_handler(void)
 		dat.num = num;
 	}
 
-
 	/* get current cpuid */
 	cpuid = smp_processor_id();
 	ret = handler[cpuid][num].func(&dat);

@@ -67,6 +67,18 @@ reset_handler:
 	ldr	r0,=FIQ_STACK_BASE
 	mov     r13, r0
 
+	/* enable FPU
+	 * step 1: enable FPU access from CPACR (Coprocessor Access Control register)
+	 */
+	mrc p15, 0, r0, c1, c0, 2  /* Read CPACR into r0 */
+	orr r0, r0, #(0xF << 20)   /* Set cp10 and cp11 to full access */
+	mcr p15, 0, r0, c1, c0, 2  /* Write back to CPACR */
+	isb                        /* Ensure changes take effect */
+	/* step 2: enable FPU from FPEXC (FPU exception control register) */
+	mrc p10, 7, r0, c8, c0, 3  /* Read FPEXC into r0 */
+	orr r0, r0, #0x40000000    /* Set the EN bit (bit 30) */
+	mcr p10, 7, r0, c8, c0, 3  /* Write back to FPEXC */
+
 	/* Return to supervisor mode*/
 	msr     CPSR_c, #MODE_SVC
 	b	start_kernel
