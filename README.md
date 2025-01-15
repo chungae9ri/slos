@@ -27,17 +27,20 @@ Implementation list
    - virtual memory manager
    - page fault handler
    - demand paging
-6. SLFS (Simple Light File System) 
-   - based on ramdisk
-   - 2 level file system : file size up to 800KB
-   - ram disk and elf loader for use applications
-7. syscalls through the svc instruction - libslos.a
-8. Hardware-Software codesign
+6. File Systems
+   - Custom SLFS (Simple Light File System) 
+      - based on ramdisk
+      - 2 level file system : file size up to 800KB
+      - ramdisk and elf loader for user applications
+   - Opensource littleFS ported
+      - ramdisk and elf loader is working with littleFS
+8. syscalls through the svc instruction - libslos.a
+9. Hardware-Software codesign
    - Two FPGA (modcore, odev) implementations for a custom peripheral HW in PL subsystem 
    - Script base Vivado project implementation
    - a device driver with DMA interrupt handler
    - a device driver for out-stream device
-9. SMP (Symmetric Multiprocessor)
+10. SMP (Symmetric Multiprocessor)
    - CPU 0 and CPU 1 boots up and running with the identical kernel
    - PERCPU resource storage
    - SGI (Software Generated Interrupt) between CPU 0 and CPU 1
