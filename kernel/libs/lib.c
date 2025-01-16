@@ -45,9 +45,6 @@ int printf(const char *fmt, ...)
 			}
 			break;
 		
-		/* FIXME: Context switching doesn't support FPU context switch.
-		 * Decimal printing isn't stable.
-		 */
 		case 'd':
 			s_int = va_arg(argp, int32_t);
 			i = 0;

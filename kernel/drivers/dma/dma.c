@@ -122,7 +122,7 @@ void start_dma(void *arg)
 	src = p_dma_work_order->src;
 	dst = p_dma_work_order->dst;
 	len = p_dma_work_order->len;
-	printk("dma start: 0x%x, 0x%x, 0x%x\n", src, dst, len);
+	printk("dma start, src: 0x%x, dst: 0x%x, 0x%xbytes\n", src, dst, len);
 
 	write32(DEVICE_GET_BASE_ADDR(dma_0) + MODCORE_DMA_SRC_ADDR_OFFSET, src);
 	write32(DEVICE_GET_BASE_ADDR(dma_0) + MODCORE_DMA_DST_ADDR_OFFSET, dst);

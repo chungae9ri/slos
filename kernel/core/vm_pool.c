@@ -39,7 +39,7 @@ void init_vmpool(struct vmpool *pvmpool,
 
 	region_num_supported = (int)(PAGE_SIZE / sizeof(struct vmpool));
 
-	printk("### Total 0x%x number of kmalloc calls(vm region desc) supported!\n", region_num_supported);
+	printk("### Total %d number of kmalloc calls(vm region desc) supported!\n", region_num_supported);
 }
 
 /* lazy allocator */

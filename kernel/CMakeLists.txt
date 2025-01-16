@@ -76,7 +76,7 @@ add_executable(
 else ()
 message("TARGET_ARCH is aarch32")
 add_compile_options(
-  -g -mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=hard
+  -g -mcpu=cortex-a9 -mfpu=vfpv3-d16 -mfloat-abi=hard
   -Wall -fno-omit-frame-pointer -ffreestanding
 )
 

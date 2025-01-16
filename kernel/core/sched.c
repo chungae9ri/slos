@@ -52,26 +52,25 @@ void print_task_stat(void *arg)
 	this_first = first;
 #endif
 	cpuid = smp_processor_id();
-	printk("**** cpu: 0x%x taskstat ****\n", cpuid);
+	printk("**** cpu: %d taskstat ****\n", cpuid);
 	next_lh = &this_first->task;
 	pcur = (struct task_struct *)to_task_from_listhead(next_lh);
 	/*for (i = 0; i < runq->cfs_task_num; i++) {*/
 	do {
 		if (!pcur) break;
-
 		if (pcur->type == CFS_TASK) {
 			printk("cfs task:%s\n", pcur->name);
-			printk("pid: 0x%x\n", pcur->pid);
-			printk("state: 0x%x\n", (uint32_t)pcur->state);
-			printk("priority: 0x%x\n", pcur->se.priority);
-			printk("jiffies_vruntime: 0x%x\n", pcur->se.jiffies_vruntime);
-			printk("jiffies_consumed: 0x%x\n", pcur->se.jiffies_consumed);
+			printk("pid: %d\n", pcur->pid);
+			printk("state: %d\n", (uint32_t)pcur->state);
+			printk("priority: %d\n", pcur->se.priority);
+			printk("jiffies_vruntime: %d\n", pcur->se.jiffies_vruntime);
+			printk("jiffies_consumed: %d\n", pcur->se.jiffies_consumed);
 		} else if (pcur->type == RT_TASK) {
 			printk("rt task:%s\n", pcur->name);
-			printk("pid: 0x%x\n", pcur->pid);
-			printk("state: 0x%x\n", (uint32_t)pcur->state);
-			printk("time interval: 0x%x msec\n", pcur->timeinterval);
-			printk("deadline 0x%x times missed\n", pcur->missed_cnt);
+			printk("pid: %d\n", pcur->pid);
+			printk("state: %d\n", (uint32_t)pcur->state);
+			printk("time interval: %d msec\n", pcur->timeinterval);
+			printk("deadline %d times missed\n", pcur->missed_cnt);
 		}
 
 		next_lh = next_lh->next;

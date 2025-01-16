@@ -44,10 +44,7 @@ void printk(const char *fmt, ...)
 				poll_out(num_str[str_len - 1 - i]);
 			}
 			break;
-		
-		/* FIXME: Context switching doesn't support FPU context switch.
-		 * Decimal printing isn't stable.
-		 */
+
 		case 'd':
 			s_int = va_arg(argp, int32_t);
 			i = 0;

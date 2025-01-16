@@ -114,9 +114,9 @@ int secondary_start_kernel(void)
 	uint32_t scr = 0xFFFFFFFF;
 
 	cpuid = smp_processor_id();
-	printk("### I am cpu 0x%x!\n", cpuid);
+	printk("### I am cpu %d!\n", cpuid);
 	scr = read_scr();
-	printk("### cpu 0x%x scr: 0x%x\n", cpuid, scr);
+	printk("### cpu %d scr: 0x%x\n", cpuid, scr);
 
 	init_gic_secondary();
 	init_idletask();
@@ -153,7 +153,7 @@ int start_kernel(void)
 
 	cpuid = smp_processor_id();
 	scr = read_scr();
-	printk("### cpu 0x%x scr: 0x%x\n", cpuid, scr);
+	printk("### cpu %d scr: 0x%x\n", cpuid, scr);
 
 	init_kernmem(&framepool, &pgt, &kheap);
 	printk("### init_kernmem done.\n");

@@ -152,7 +152,7 @@ int odev_irq(void *arg)
 	cntl = read32(DEVICE_GET_BASE_ADDR(odev_0) + REG_CTRL_OFFSET);
 	cntl |= BM_INTR_DONE;
 	write32(DEVICE_GET_BASE_ADDR(odev_0) + REG_CTRL_OFFSET, cntl);
-	printk("odev irq done from cpu: 0x%x!\n", cpuid);
+	printk("odev irq done from cpu: %d!\n", cpuid);
 
 	return NO_ERR;
 }
@@ -220,7 +220,7 @@ uint32_t run_odev_task(void)
 	for (;;) {
 		ret = put_to_itab(O_STREAM_START + O_STREAM_STEP * i, O_STREAM_STEP);
 		if (!ret) {
-			printk("put_to_itab: 0x%x\n", i);
+			printk("put_to_itab: %d\n", i);
 			msleep(10);
 			i++;
 

@@ -74,7 +74,7 @@ static uint32_t rt_worker1(void)
 		/* do some real time work here */
 		this_current->done = 0;
 		if (show_stat) {
-			printk("I am rt worker1 j: 0x%x\n", j);	
+			printk("I am rt worker1 j: %d\n", j);	
 		}
 		for (i = 0; i < 1000; i++) {
 			j++;
@@ -101,7 +101,7 @@ static uint32_t rt_worker2(void)
 		/* do some real time work here */
 		this_current->done = 0;
 		if (show_stat) {
-			printk("I am rt worker2 j: 0x%x\n", j);
+			printk("I am rt worker2 j: %d\n", j);
 		}
 		for (i = 0; i < 500; i++) {
 			j++;
@@ -124,7 +124,7 @@ static uint32_t cfs_dummy1(void )
 		cnt++;
 		if (cnt > 1000000)
 			cnt = 0;
-		printk("dummy1 cfs worker cnt: 0x%x\n", cnt);
+		printk("dummy1 cfs worker cnt: %d\n", cnt);
 		msleep(1000);
 	}
 
@@ -140,7 +140,7 @@ static uint32_t cfs_dummy2(void )
 		cnt++;
 		if (cnt > 1000000)
 			cnt = 0;
-		printk("dummy 2 cfs worker cnt: 0x%x\n", cnt);
+		printk("dummy 2 cfs worker cnt: %d\n", cnt);
 		msleep(1000);
 	}
 
@@ -156,7 +156,7 @@ static uint32_t cfs_dummy3(void )
 		cnt++;
 		if (cnt > 1000000)
 			cnt = 0;
-		printk("dummy 3 cfs worker cnt: 0x%x\n", cnt);
+		printk("dummy 3 cfs worker cnt: %d\n", cnt);
 		msleep(1000);
 	}
 
@@ -183,7 +183,7 @@ static uint32_t test_mem(void)
 		/* check pattern */
 		for (i = 0; i < TEST_KMALLOC_SZ; i++) {
 			if (pc[i] != (uint8_t)(i % 256)) {
-				printk("demaning page test fail, value: 0x%x at 0x%x\n", pc[i], i);
+				printk("demaning page test fail, value: %d at %d\n", pc[i], i);
 				break;
 			}
 		}
@@ -202,7 +202,7 @@ static uint32_t test_mem(void)
 		if (cnt > 1000000)
 			cnt = 0;
 
-		printk("test_mem cfs dummy worker cnt: 0x%x\n", cnt);
+		printk("test_mem cfs dummy worker cnt: %d\n", cnt);
 		msleep(1000);
 	}
 
@@ -278,7 +278,7 @@ static uint32_t workq_worker(void)
 		/* Woken up */
 		enq_idx = this_qworker->enq_idx;
 		deq_idx = this_qworker->deq_idx;
-		printk("### cpu 0x%x qworker enq_idx: 0x%x, deq_idx: 0x%x\n", cpuid, enq_idx, deq_idx);
+		printk("### cpu %d qworker enq_idx: %d, deq_idx: %d\n", cpuid, enq_idx, deq_idx);
 		
 		/* enq_idx is wrapped around */
 		if (enq_idx < deq_idx)
@@ -544,7 +544,7 @@ void shell(void)
 			if (j < this_runq->cfs_task_num && pwait_task->state == TASK_RUNNING) {
 				dequeue_se_to_wq(&pwait_task->se);
 			} else {
-				printk("task 0x%x is not in runq\n", pid);
+				printk("task %d is not in runq\n", pid);
 			}
 
 		} else if (!strcmp(cmdline, "run")) {
@@ -567,7 +567,7 @@ void shell(void)
 			if (j < this_runq->cfs_task_num && pwait_task->state == TASK_WAITING) {
 				enqueue_se_to_runq(&pwait_task->se);
 			} else {
-				printk("task 0x%x is not in runq\n", pid);
+				printk("task %d is not in runq\n", pid);
 			}
 		} else if (!strcmp(cmdline, "apprun")) {
 #ifdef FS_USE_SLFS
