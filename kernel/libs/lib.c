@@ -332,7 +332,7 @@ void *memcpy(void *dst, const void *src, size_t len)
  * which contains no characters from REJECT.
  */
 
-#define likely(x) __builtin_expect(!!(x), 1)
+#define likely(x)   __builtin_expect(!!(x), 1)
 #define unlikely(x) __builtin_expect(!!(x), 0)
 
 size_t strcspn(const char *str, const char *reject)

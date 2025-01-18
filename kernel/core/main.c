@@ -199,9 +199,9 @@ int main(void)
 	init_gic();
 	init_timer();
 
-	while (1) ;
+	while (1)
+		;
 
 	return 0;
 }
 #endif
-

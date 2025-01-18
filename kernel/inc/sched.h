@@ -11,7 +11,7 @@
 #include <rbtree.h>
 #include <mm.h>
 
-#define MAX_TASK ((SVC_STACK_BASE - SYS_STACK_BASE) / (TASK_STACK_GAP))
+#define MAX_TASK    ((SVC_STACK_BASE - SYS_STACK_BASE) / (TASK_STACK_GAP))
 #define CFS_PRI_NUM (5u)
 
 enum task_state {
