@@ -8,7 +8,7 @@
 #ifdef __ASSEMBLY__
 /* memory map */
 .set KERNEL_FRAME_BITMAP,			0xC000 
-.set CONTEXT_MEM, 				0x00004000 /* cpu0 secure mode context memory address */
+.set CONTEXT_MEM, 					0x00004000 /* cpu0 secure mode context memory address */
 .set CONTEXT_MEM_SP,				0x402C
 .set CONTEXT_MEM_END, 				0x00004038
 .set SEC_CONTEXT_MEM, 				0x00005000 /* cpu1 secure mode context memory address */
@@ -16,7 +16,7 @@
 .set SEC_CONTEXT_MEM_END, 			0x00005038
 /* kernel*/
 .set KERNEL_CODE_BASE, 				0x100000
-.set KERNEL_END, 				0x300000
+.set KERNEL_END, 					0x300000
 /* CPU 0 secure mode stacks */
 .set SVC_STACK_BASE, 				0x314FFC /* 3M + 4KiB*21 support 16 kernel threads */
 .set SYS_STACK_BASE, 				0x304FFC /* 3M + 4KiB*5 */
@@ -59,9 +59,7 @@
 #define CONTEXT_MEM         0x00004000 /* cpu0 secure mode context memory address */
 #define CONTEXT_MEM_SP      0x402C
 #define CONTEXT_MEM_END     0x00004038
-#define SEC_CONTEXT_MEM                                                                            \
-	0x00005000 /* cpu1 secure mode context memory address                                      \
-	            */
+#define SEC_CONTEXT_MEM     0x00005000 /* cpu1 secure mode context memory address */
 #define SEC_CONTEXT_MEM_SP   0x502C
 #define SEC_CONTEXT_MEM_END  0x00005038
 /* kernel*/
@@ -83,9 +81,7 @@
 #define SEC_ABT_STACK_BASE   0x341FFC
 #define SEC_UNDEF_STACK_BASE 0x340FFC
 /* blank for CPU 1 normal world stack */
-#define KERN_PGD_START_BASE                                                                        \
-	0x400000                     /* page directory base, size 16KiB aligned = 1 page directory \
-	                              * 4KEntries * 4B size */
+#define KERN_PGD_START_BASE  0x400000 /* page directory base, size 16KiB aligned = 1 page directory 4KEntries * 4B size */
 #define KERN_PGT_START_BASE 0x404000 /* page table base, size 4MiB = (1024 * 1024) entries * 4 */
 /* user app */
 #define USER_APP_BASE       0x1000000  /* user app base */
