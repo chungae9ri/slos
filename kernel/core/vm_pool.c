@@ -6,14 +6,12 @@
 #include <page_table.h>
 #include <printk.h>
 
-#define PAGE_SIZE		(4 * 1024)
-#define PAGE_SIZE_SHIFT		(12)
-#define PAGE_SIZE_MASK		(0x00000FFF)
+#define PAGE_SIZE       (4 * 1024)
+#define PAGE_SIZE_SHIFT (12)
+#define PAGE_SIZE_MASK  (0x00000FFF)
 
-void init_vmpool(struct vmpool *pvmpool,
-		struct pagetable *_pagetable,
-   	    	unsigned int _base_address,
-	    	unsigned int _size)
+void init_vmpool(struct vmpool *pvmpool, struct pagetable *_pagetable, unsigned int _base_address,
+                 unsigned int _size)
 {
 	int region_num_supported;
 
@@ -26,7 +24,7 @@ void init_vmpool(struct vmpool *pvmpool,
 #endif
 
 	/* alloc a frame for region descriptor
-	 * to do this, generate a page fault 
+	 * to do this, generate a page fault
 	 * at the base address.
 	 * region descriptor has 4KB size limit.
 	 */
@@ -39,7 +37,8 @@ void init_vmpool(struct vmpool *pvmpool,
 
 	region_num_supported = (int)(PAGE_SIZE / sizeof(struct vmpool));
 
-	printk("### Total %d number of kmalloc calls(vm region desc) supported!\n", region_num_supported);
+	printk("### Total %d number of kmalloc calls(vm region desc) supported!\n",
+	       region_num_supported);
 }
 
 /* lazy allocator */
@@ -53,7 +52,7 @@ unsigned int allocate(struct vmpool *pvmpool, unsigned int _size)
 	if (!pvmpool->plast_region) {
 		pvmpool->plast_region = (struct region_desc *)(pvmpool->base_address);
 		while (pvmpool->plast_region->next) {
-			pvmpool->plast_region = pvmpool->plast_region->next; 
+			pvmpool->plast_region = pvmpool->plast_region->next;
 		}
 	}
 
@@ -80,10 +79,11 @@ void release(struct vmpool *pvmpool, unsigned int _start_address)
 	while (pcur) {
 		if (pcur->startAddr == _start_address) {
 			pcur->prev->next = pcur->next;
-			if (pcur->next) 
+			if (pcur->next)
 				pcur->next->prev = pcur->prev;
 			region_size = pcur->size;
-			pgnum = (int)(region_size >>  PAGE_SIZE_SHIFT) + ((region_size & PAGE_SIZE_MASK) ? 1 : 0);
+			pgnum = (int)(region_size >> PAGE_SIZE_SHIFT) +
+			        ((region_size & PAGE_SIZE_MASK) ? 1 : 0);
 			for (i = 0; i < pgnum; i++) {
 				free_page((unsigned int)(_start_address + (PAGE_SIZE * i)));
 			}
@@ -100,7 +100,7 @@ void release(struct vmpool *pvmpool, unsigned int _start_address)
 	if (pvmpool->plast_region->startAddr == _start_address) {
 		pvmpool->plast_region = (struct region_desc *)(pvmpool->base_address);
 		while (pvmpool->plast_region->next) {
-			pvmpool->plast_region = pvmpool->plast_region->next; 
+			pvmpool->plast_region = pvmpool->plast_region->next;
 		}
 	}
 }
@@ -109,12 +109,15 @@ int is_legitimate(struct vmpool *pvmpool, unsigned int _address)
 {
 	struct region_desc *pcur = (struct region_desc *)(pvmpool->base_address);
 
-	if (_address == pvmpool->base_address) return 1;
+	if (_address == pvmpool->base_address)
+		return 1;
 
 	pcur = pcur->next;
 	while (pcur) {
-		if (_address >= pcur->startAddr && _address < pcur->startAddr + pcur->size) return 1;
-		else pcur = pcur->next;
+		if (_address >= pcur->startAddr && _address < pcur->startAddr + pcur->size)
+			return 1;
+		else
+			pcur = pcur->next;
 	}
 
 	return 0;

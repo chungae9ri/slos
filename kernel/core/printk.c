@@ -7,7 +7,7 @@
 
 #include <uart.h>
 
-#define NUM_STR_MAX		(16u)
+#define NUM_STR_MAX (16u)
 
 void printk(const char *fmt, ...)
 {
@@ -82,7 +82,7 @@ void sprintk(uint8_t *buf, const char *fmt, ...)
 	uint8_t num_str[NUM_STR_MAX] = {0};
 	va_list argp;
 
-	va_start(argp, fmt); 
+	va_start(argp, fmt);
 	for (pch = (uint8_t *)fmt, i = 0; *pch; pch++) {
 		if (*pch != '%') {
 			buf[i++] = *pch;

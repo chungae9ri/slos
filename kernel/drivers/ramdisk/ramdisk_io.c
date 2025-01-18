@@ -8,7 +8,6 @@
  *	 ramdisk size = 4MiB
  */
 
-
 #include <error.h>
 #include <ramdisk_io.h>
 
@@ -27,7 +26,7 @@ static int erase_ramdisk_page(uint32_t page)
 	int i;
 
 	for (i = 0; i < RAMDISK_PAGE_SIZE; i++)
-		((uint8_t *)(RAMDISK_START + page * RAMDISK_PAGE_SIZE))[i] = 0xFF; 
+		((uint8_t *)(RAMDISK_START + page * RAMDISK_PAGE_SIZE))[i] = 0xFF;
 
 	return NO_ERR;
 }
@@ -72,7 +71,7 @@ static int erase_ramdisk(uint32_t addr, uint32_t len)
 
 	for (i = 0; i < pg_cnt; i++) {
 		for (j = 0; j < RAMDISK_PAGE_SIZE; j++) {
-			((uint8_t *)(start_pg + i * RAMDISK_PAGE_SIZE))[j] = 0xFF; 
+			((uint8_t *)(start_pg + i * RAMDISK_PAGE_SIZE))[j] = 0xFF;
 		}
 	}
 
@@ -80,9 +79,9 @@ static int erase_ramdisk(uint32_t addr, uint32_t len)
 }
 
 struct ramdisk_io_ops io_ops = {
-	.erase_chip = erase_ramdisk_chip,
-	.erase_page = erase_ramdisk_page,
-	.erase_addr_len = erase_ramdisk,
-	.write = write_ramdisk,
-	.read = read_ramdisk,
+    .erase_chip = erase_ramdisk_chip,
+    .erase_page = erase_ramdisk_page,
+    .erase_addr_len = erase_ramdisk,
+    .write = write_ramdisk,
+    .read = read_ramdisk,
 };

@@ -12,7 +12,6 @@
 #include <mem_layout.h>
 #include <error.h>
 
-
 struct task_struct *upt[MAX_USR_TASK];
 char *exec = NULL;
 
@@ -104,7 +103,9 @@ int32_t load_ramdisk_app(FILE_SYSTEM_TYPE fs_t, uint32_t app_idx)
 			return ret;
 
 		if (shdr.sh_type == SHT_SYMTAB) {
-			/* sh_link is equal to the section hdr index of associated string table */
+			/* sh_link is equal to the section hdr index of
+			 * associated string table 
+			 */
 			offset = ehdr.e_shoff + shdr.sh_link * ehdr.e_shentsize;
 			ret = fs_seek(&fp, offset, SLFS_SEEK_SET);
 			if (ret)
@@ -134,7 +135,8 @@ int32_t load_ramdisk_app(FILE_SYSTEM_TYPE fs_t, uint32_t app_idx)
 
 			syms = (Elf32_Sym *)sym_tab;
 			for (j = 0; j < shdr.sh_size / sizeof(Elf32_Sym); j++) {
-				if (strcmp("main", (const char *)(string_tab + syms[j].st_name)) == 0) {
+				if (strcmp("main", (const char *)(string_tab + syms[j].st_name)) ==
+				    0) {
 					entry = (Elf32_Addr)(base_addr + syms[j].st_value);
 					break;
 				}

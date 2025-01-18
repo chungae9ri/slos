@@ -12,16 +12,16 @@
 #include <lfs.h>
 
 typedef enum {
-    SLFS_FILE_SYSTEM,
-    LITTLEFS_FILE_SYSTEM,
+	SLFS_FILE_SYSTEM,
+	LITTLEFS_FILE_SYSTEM,
 } FILE_SYSTEM_TYPE;
 
 typedef struct {
-    FILE_SYSTEM_TYPE fs_t;
-    const uint8_t *name;
-    size_t size;
-    /* file pointer to slfs or lfs */
-    void *virt_fp;
+	FILE_SYSTEM_TYPE fs_t;
+	const uint8_t *name;
+	size_t size;
+	/* file pointer to slfs or lfs */
+	void *virt_fp;
 } file_t;
 
 int32_t fs_mount(FILE_SYSTEM_TYPE fs);

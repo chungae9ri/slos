@@ -15,7 +15,7 @@ void init_wq(void)
 	__get_cpu_var(wq) = (struct wait_queue *)kmalloc(sizeof(struct wait_queue));
 	this_wq = __get_cpu_var(wq);
 #else
-	this_wq = wq = (struct wait_queue *)kmalloc(sizeof(struct wait_queue));;
+	this_wq = wq = (struct wait_queue *)kmalloc(sizeof(struct wait_queue));
 #endif
 	this_wq->wqlock = 0;
 	this_wq->magic = 1;
@@ -72,7 +72,7 @@ void add_to_wq(struct task_struct *p)
 	this_wq = wq;
 #endif
 
-	if (!this_wq) 
+	if (!this_wq)
 		return;
 
 	temp_p = this_wq->task_list.next;
@@ -98,7 +98,7 @@ void remove_from_wq(struct task_struct *p)
 	this_wq = wq;
 #endif
 
-	if (!this_wq) 
+	if (!this_wq)
 		return;
 
 	spin_lock_acquire(&this_wq->wqlock);
@@ -179,7 +179,7 @@ void dequeue_se_to_exit(struct sched_entity *se)
 		return;
 
 	tp = container_of(se, struct task_struct, se);
-	if (tp->state == TASK_RUNNING || tp->state == TASK_STOP_RUNNING){
+	if (tp->state == TASK_RUNNING || tp->state == TASK_STOP_RUNNING) {
 		this_runq->priority_sum -= se->priority;
 		spin_lock_acquire(this_rqlock);
 		update_vruntime_runq(se);
@@ -193,4 +193,3 @@ void dequeue_se_to_exit(struct sched_entity *se)
 		tp->state = TASK_STOP;
 	}
 }
-

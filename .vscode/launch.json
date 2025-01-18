@@ -7,7 +7,6 @@
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
-            /*"args": "--soc zynq-7000"*/
             "args": "--defconfig zynq7000_defconfig"
         },
         {
@@ -24,8 +23,7 @@
             "gdbTarget": "localhost:3000",
             "postAttachCommands": [
                 "b ssbl",
-                "b start_kernel",
-                "b create_ramdisk_fs"
+                "b start_kernel"
             ]
         },
         {

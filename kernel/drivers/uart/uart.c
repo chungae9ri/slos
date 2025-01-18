@@ -2,7 +2,7 @@
 //
 // Copyright (c) 2024 kwangdo.yi<kwangdo.yi@gmail.com>
 
-#define DEVICE_DT_COMPAT	PS_UART
+#define DEVICE_DT_COMPAT PS_UART
 
 #include <stdint.h>
 
@@ -11,45 +11,40 @@
 #include <generated_devicetree_defs.h>
 #include <device.h>
 
-#define CR_OFFSET 0x0
-#define MR_OFFSET 0x4
-#define IER_OFFSET 0x8
-#define IDR_OFFSET 0xC
-#define IMR_OFFSET 0x10
-#define ISR_OFFSET 0x14
-#define BAUDGEN_OFFSET 0x18
-#define RXTOUT_OFFSET 0x1C
-#define RXWM_OFFSET 0x20
-#define MODEMCR_OFFSET 0x24
-#define MODEMSR_OFFSET 0x28
-#define SR_OFFSET 0x2C
-#define FIFO_OFFSET 0x30
-#define BAUD_DIV_OFFSET 0x34
-#define FLOW_DELAY_OFFSET 0x38
+#define CR_OFFSET              0x0
+#define MR_OFFSET              0x4
+#define IER_OFFSET             0x8
+#define IDR_OFFSET             0xC
+#define IMR_OFFSET             0x10
+#define ISR_OFFSET             0x14
+#define BAUDGEN_OFFSET         0x18
+#define RXTOUT_OFFSET          0x1C
+#define RXWM_OFFSET            0x20
+#define MODEMCR_OFFSET         0x24
+#define MODEMSR_OFFSET         0x28
+#define SR_OFFSET              0x2C
+#define FIFO_OFFSET            0x30
+#define BAUD_DIV_OFFSET        0x34
+#define FLOW_DELAY_OFFSET      0x38
 #define TX_FIFO_TRIG_LV_OFFSET 0x44
 #define RX_FIFO_TRIG_LV_OFFSET 0x48
 
-#define BM_SR_TXFULL		0x00000010U /**< TX FIFO full */
-#define BM_SR_RXEMPTY		0x00000002U /**< RX FIFO empty */
+#define BM_SR_TXFULL  0x00000010U /**< TX FIFO full */
+#define BM_SR_RXEMPTY 0x00000002U /**< RX FIFO empty */
 
 #ifdef AARCH32
-DEVICE_DEFINE(uart_0,
-			  DT_GET_COMPAT(0),
-			  DT_GET_BASE_ADDR(0),
-			  DT_GET_IRQ(0));
+DEVICE_DEFINE(uart_0, DT_GET_COMPAT(0), DT_GET_BASE_ADDR(0), DT_GET_IRQ(0));
 #else
-DEVICE_DEFINE(uart_0,
-			  DT_GET_COMPAT(0),
-			  DT_GET_BASE_ADDR(0),
-			  0);
+DEVICE_DEFINE(uart_0, DT_GET_COMPAT(0), DT_GET_BASE_ADDR(0), 0);
 #endif
 
-void poll_out(char c) {
+void poll_out(char c)
+{
 	uint32_t reg_val;
 
 	reg_val = read32(DEVICE_GET_BASE_ADDR(uart_0) + SR_OFFSET);
 
-	while((reg_val & BM_SR_TXFULL) == BM_SR_TXFULL) {
+	while ((reg_val & BM_SR_TXFULL) == BM_SR_TXFULL) {
 		reg_val = read32(DEVICE_GET_BASE_ADDR(uart_0) + SR_OFFSET);
 	}
 
@@ -57,12 +52,12 @@ void poll_out(char c) {
 
 	reg_val = read32(DEVICE_GET_BASE_ADDR(uart_0) + SR_OFFSET);
 
-	while((reg_val & BM_SR_TXFULL) == BM_SR_TXFULL) {
+	while ((reg_val & BM_SR_TXFULL) == BM_SR_TXFULL) {
 		reg_val = read32(DEVICE_GET_BASE_ADDR(uart_0) + SR_OFFSET);
 	}
 }
 
-uint8_t poll_in(void) 
+uint8_t poll_in(void)
 {
 	uint32_t c = 0;
 
@@ -81,8 +76,8 @@ uint8_t poll_in(void)
 		reg_val = read32(DEVICE_GET_BASE_ADDR(uart_0) + SR_OFFSET);
 	}
 #else
-	while ((read32(DEVICE_GET_BASE_ADDR(uart_0) + SR_OFFSET) &
-			BM_SR_RXEMPTY) == BM_SR_RXEMPTY) {
+	while ((read32(DEVICE_GET_BASE_ADDR(uart_0) + SR_OFFSET) & BM_SR_RXEMPTY) ==
+	       BM_SR_RXEMPTY) {
 		;
 	}
 #endif

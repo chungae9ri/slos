@@ -2,50 +2,46 @@
 //
 // Copyright (c) 2024 kwangdo.yi<kwangdo.yi@gmail.com>
 
-#ifndef _FRAME_POOL_H_                   // include file only once
+#ifndef _FRAME_POOL_H_ // include file only once
 #define _FRAME_POOL_H_
 
 /* ARM small page(4KB) frame is used
- * convert frame number to 32bit physical memory address 
+ * convert frame number to 32bit physical memory address
  */
 
 #define FRAMETOPHYADDR(X) ((unsigned long)((X * 4 * (0x1 << 10))))
 
 struct framepool {
-		/* base frame number(index) */
-		unsigned long base_frame_idx;
-		/* number of frames belonging to this frame pool */
-		unsigned long nFrames;
-		/* base frame number(index) of inaccessible memory */
-		unsigned long inacc_baseFrameNo;
-		/* number of frames belonging to inaccessible memory */
-		unsigned long inacc_nFrames;
-		/* start address of bit map that is a info frame of pool 
-		 * pointer must be volatile to point to memory not cache
-		 */
-		volatile char *pBitmap;
-		/* number of entry(size of 8bit) to bit map(info frame) */
-		unsigned int nBitmapEntry;
-		/* if nFrames is not divied by 8, then we need to 
-		 * consider the remainders for these frames
-		 */
-		unsigned int nRemainderBitmapEntry;
+	/* base frame number(index) */
+	unsigned long base_frame_idx;
+	/* number of frames belonging to this frame pool */
+	unsigned long nFrames;
+	/* base frame number(index) of inaccessible memory */
+	unsigned long inacc_baseFrameNo;
+	/* number of frames belonging to inaccessible memory */
+	unsigned long inacc_nFrames;
+	/* start address of bit map that is a info frame of pool
+	 * pointer must be volatile to point to memory not cache
+	 */
+	volatile char *pBitmap;
+	/* number of entry(size of 8bit) to bit map(info frame) */
+	unsigned int nBitmapEntry;
+	/* if nFrames is not divied by 8, then we need to
+	 * consider the remainders for these frames
+	 */
+	unsigned int nRemainderBitmapEntry;
 };
 
-void init_framepool(struct framepool *pframe,
-		    unsigned long _base_frame_no,
-		    unsigned long _nframes,
-		    unsigned long _info_frame_no);
-/* Allocates a frame from the frame pool. 
+void init_framepool(struct framepool *pframe, unsigned long _base_frame_no, unsigned long _nframes,
+                    unsigned long _info_frame_no);
+/* Allocates a frame from the frame pool.
  * If successful, returns the frame
- * number of the frame. If fails, returns 0. 
+ * number of the frame. If fails, returns 0.
  */
-int  get_frame(struct framepool *pframe);
+int get_frame(struct framepool *pframe);
 
-void mark_prealloc_frame(struct framepool *pframe,
-		       unsigned long _base_frame_no, 
-		       unsigned long _nframes);
+void mark_prealloc_frame(struct framepool *pframe, unsigned long _base_frame_no,
+                         unsigned long _nframes);
 
-int release_frame(struct framepool *pframe,
-		   unsigned long _frame_no);
+int release_frame(struct framepool *pframe, unsigned long _frame_no);
 #endif

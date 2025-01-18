@@ -11,7 +11,7 @@ extern void remove_from_wq(struct task_struct *p);
 static void enqueue_se(struct sched_entity *se)
 {
 	struct cfs_rq *this_runq = NULL;
-	struct rb_node **link, *parent=NULL;
+	struct rb_node **link, *parent = NULL;
 	uint64_t value = se->jiffies_vruntime;
 	int leftmost = 1;
 
@@ -25,34 +25,33 @@ static void enqueue_se(struct sched_entity *se)
 	/* Go to the bottom of the tree */
 	while (*link) {
 		parent = *link;
-		struct sched_entity *entry= rb_entry(parent, struct sched_entity, run_node);
+		struct sched_entity *entry = rb_entry(parent, struct sched_entity, run_node);
 
 		if (entry->jiffies_vruntime >= value)
 			link = &(*link)->rb_left;
 		else if (entry->jiffies_vruntime < value) {
 			link = &(*link)->rb_right;
 			leftmost = 0;
-		} /*else { 
-			if (entry->priority > se->priority)
-				link = &(*link)->rb_left;
-			else {
-				link = &(*link)->rb_right;
-				leftmost = 0;
-			}
+		} /*else {
+		        if (entry->priority > se->priority)
+		                link = &(*link)->rb_left;
+		        else {
+		                link = &(*link)->rb_right;
+		                leftmost = 0;
+		        }
 		}*/
 	}
 	/*
 	 * Maintain a cache of leftmost tree entries (it is frequently
 	 * used):
 	 */
-	if (leftmost) 
+	if (leftmost)
 		this_runq->rb_leftmost = &se->run_node;
 
 	/* Put the new node there */
 	rb_link_node(&se->run_node, parent, link);
 	rb_insert_color(&se->run_node, &this_runq->root);
 }
-
 
 void init_rq(void)
 {
@@ -72,7 +71,7 @@ void init_rq(void)
 	this_runq->cfs_task_num = 0;
 	this_runq->curr = this_runq->next = this_runq->last = NULL;
 	this_runq->root.rb_node = NULL;
-	
+
 	rb_init_node(&this_idle_task->se.run_node);
 	enqueue_se_to_runq(&this_idle_task->se);
 	this_runq->cfs_task_num++;
@@ -107,8 +106,8 @@ void update_vruntime_runq(struct sched_entity *se)
 	this_runq = runq;
 #endif
 	/* in very first time, the leftmost should be null */
-	if (!this_runq->rb_leftmost) 
-		return; 
+	if (!this_runq->rb_leftmost)
+		return;
 
 	cur_rb_node = this_runq->rb_leftmost;
 	se_leftmost = container_of(cur_rb_node, struct sched_entity, run_node);
@@ -118,13 +117,15 @@ void update_vruntime_runq(struct sched_entity *se)
 	se->jiffies_vruntime = se->jiffies_consumed * se->priority;
 
 	while (cur_se) {
-		cur_se->jiffies_consumed = (se_leftmost->jiffies_vruntime) >> (cur_se->pri_div_shift);
+		cur_se->jiffies_consumed =
+		    (se_leftmost->jiffies_vruntime) >> (cur_se->pri_div_shift);
 		cur_se->jiffies_vruntime = cur_se->jiffies_consumed * cur_se->priority;
 
 		cur_rb_node = rb_next(&cur_se->run_node);
 		if (cur_rb_node)
 			cur_se = container_of(cur_rb_node, struct sched_entity, run_node);
-		else cur_se = NULL;
+		else
+			cur_se = NULL;
 	}
 }
 

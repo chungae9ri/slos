@@ -74,10 +74,8 @@ void timer_enable(void)
 	int ctrl;
 
 	ctrl = read32(PRIV_TMR_CTRL);
-	ctrl = ctrl | (PRIV_TMR_EN_MASK 
-			| PRIV_TMR_AUTO_RE_MASK
-			| PRIV_TMR_IRQ_EN_MASK);
-		
+	ctrl = ctrl | (PRIV_TMR_EN_MASK | PRIV_TMR_AUTO_RE_MASK | PRIV_TMR_IRQ_EN_MASK);
+
 	write32(PRIV_TMR_CTRL, ctrl);
 }
 
@@ -91,9 +89,7 @@ void timer_enable_secondary(void)
 
 	/* enable timer */
 	ctrl = *(volatile uint32_t *)(PRIV_TMR_CTRL);
-	ctrl = ctrl | (PRIV_TMR_EN_MASK 
-			| PRIV_TMR_AUTO_RE_MASK
-			| PRIV_TMR_IRQ_EN_MASK);
+	ctrl = ctrl | (PRIV_TMR_EN_MASK | PRIV_TMR_AUTO_RE_MASK | PRIV_TMR_IRQ_EN_MASK);
 
 	*(volatile uint32_t *)(PRIV_TMR_CTRL) = ctrl;
 }
@@ -104,16 +100,15 @@ void timer_disable(void)
 
 	ctrl = read32(PRIV_TMR_CTRL);
 	ctrl = ctrl & ~PRIV_TMR_EN_MASK;
-		
+
 	write32(PRIV_TMR_CTRL, ctrl);
 }
 
-
-int timer_irq (void *arg)
+int timer_irq(void *arg)
 {
 	uint32_t elapsed = 0;
 	uint32_t tc = 0;
-	struct timer_struct *pnt = NULL, *pct = NULL; 
+	struct timer_struct *pnt = NULL, *pct = NULL;
 	struct task_struct *this_current = NULL;
 	struct timer_struct *this_sched_timer = NULL;
 	struct timer_root *this_ptroot;
@@ -139,55 +134,55 @@ int timer_irq (void *arg)
 
 	update_current(elapsed);
 
-	switch(pct->type) {
-		case SCHED_TIMER:
-			/* cfs task doesn't preempt rt task.
-			 * Let's wait until rt task complete its
-			 * task and yield().
-			 */
+	switch (pct->type) {
+	case SCHED_TIMER:
+		/* cfs task doesn't preempt rt task.
+		 * Let's wait until rt task complete its
+		 * task and yield().
+		 */
+		if (this_current->type == RT_TASK)
+			break;
+
+		this_sched_timer->handler(elapsed);
+		pct->pt = this_current;
+		break;
+
+	case REALTIME_TIMER:
+	case ONESHOT_TIMER:
+		if (this_current != pct->pt) {
 			if (this_current->type == RT_TASK)
-				break;
+				this_current->preempted = 1;
 
-			this_sched_timer->handler(elapsed);
-			pct->pt = this_current;
-			break;
-
-		case REALTIME_TIMER:
-		case ONESHOT_TIMER:
-			if (this_current != pct->pt) {
-				if (this_current->type == RT_TASK)
-					this_current->preempted = 1;
-
-				/* oneshot, realtime timer task should 
-				 * be switched everytime.
-				 */
-				switch_context(this_current, pct->pt);
-				pct->pt->yield_task = this_current;
+			/* oneshot, realtime timer task should
+			 * be switched everytime.
+			 */
+			switch_context(this_current, pct->pt);
+			pct->pt->yield_task = this_current;
 #if _ENABLE_SMP_
-				__get_cpu_var(current) = pct->pt;
+			__get_cpu_var(current) = pct->pt;
 #else
-				current = pct->pt;
+			current = pct->pt;
 #endif
-			} 
+		}
 
-			if (pct->type == ONESHOT_TIMER) {
-				if (pct->pt->state == TASK_WAITING) {
-					enqueue_se_to_runq(&pct->pt->se);
-				}
-				/* remove oneshot timer from timer tree */
-				del_timer(this_ptroot, pct);
-			} else if (!this_current->done && !this_current->preempted)
-				/* missed the deadline
-				 * when another timer intr 
-				 * fires before rt task done and next 
-				 * periodic timer. missed its deadline.
-				 */
-				this_current->missed_cnt++;
+		if (pct->type == ONESHOT_TIMER) {
+			if (pct->pt->state == TASK_WAITING) {
+				enqueue_se_to_runq(&pct->pt->se);
+			}
+			/* remove oneshot timer from timer tree */
+			del_timer(this_ptroot, pct);
+		} else if (!this_current->done && !this_current->preempted)
+			/* missed the deadline
+			 * when another timer intr
+			 * fires before rt task done and next
+			 * periodic timer. missed its deadline.
+			 */
+			this_current->missed_cnt++;
 
-			break;
+		break;
 
-		default:
-			break;
+	default:
+		break;
 	}
 
 	return 0;
@@ -208,7 +203,7 @@ void init_timer(void)
 	uint32_t tc = 0;
 	struct timer_struct *pct = NULL;
 	struct task_struct *this_current = NULL;
-	struct timer_root *this_ptroot = NULL; 
+	struct timer_root *this_ptroot = NULL;
 
 #if _ENABLE_SMP_
 	this_current = __get_cpu_var(current);
@@ -237,7 +232,7 @@ void init_timer(void)
 #include <timer.h>
 #include <gic_v2.h>
 
-int timer_irq (void *arg)
+int timer_irq(void *arg)
 {
 	return 0;
 }
@@ -248,4 +243,3 @@ void init_timer(void)
 	gic_enable_interrupt(PRIV_TMR_INT_VEC);
 }
 #endif
-

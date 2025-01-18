@@ -11,8 +11,8 @@
 #include <rbtree.h>
 #include <mm.h>
 
-#define MAX_TASK	((SVC_STACK_BASE-SYS_STACK_BASE)/(TASK_STACK_GAP))
-#define CFS_PRI_NUM	(5u)
+#define MAX_TASK ((SVC_STACK_BASE - SYS_STACK_BASE) / (TASK_STACK_GAP))
+#define CFS_PRI_NUM (5u)
 
 enum task_state {
 	TASK_RUNNING,
@@ -24,7 +24,6 @@ enum task_state {
 struct list_head {
 	struct list_head *prev, *next;
 };
-
 
 typedef uint32_t (*task_entry)(void);
 
@@ -41,21 +40,21 @@ struct sched_entity {
 /* do not change the order */
 struct task_context_struct {
 	/* TODO: task ctx has r0-r11, r12 isn't included */
-	uint32_t r[12];	
+	uint32_t r[12];
 	uint32_t sp;
 	uint32_t lr;
 	uint32_t pc;
 	uint32_t reserved; /* needed to align 8bytes for d0-15 registers */
-	uint64_t d[16];  /* 16 double-precision registers (d0-d15) */
-    uint32_t fpscr;  /* Floating-Point Status and Control Register */
-    uint32_t fpexc;  /* Floating-Point Exception Register */
+	uint64_t d[16];    /* 16 double-precision registers (d0-d15) */
+	uint32_t fpscr;    /* Floating-Point Status and Control Register */
+	uint32_t fpexc;    /* Floating-Point Exception Register */
 };
 
 typedef enum {
 	CFS_TASK = 0,
 	RT_TASK,
 	ONESHOT_TASK,
-}TASKTYPE;
+} TASKTYPE;
 
 struct task_struct {
 	struct task_context_struct ct;
@@ -67,7 +66,7 @@ struct task_struct {
 	struct list_head task;
 	struct task_struct *yield_task;
 	struct list_head waitlist;
-	TASKTYPE type; 
+	TASKTYPE type;
 	uint32_t missed_cnt;
 	enum task_state state;
 	uint32_t timeinterval;
@@ -77,13 +76,13 @@ struct task_struct {
 };
 
 static inline struct task_struct *to_task_from_listhead(struct list_head *t)
-{       
+{
 	/*return container_of(t, struct task_struct, task);*/
 	return ((struct task_struct *)((uint32_t)t - offsetof(struct task_struct, task)));
 }
 
 static inline struct task_struct *to_task_from_se(struct sched_entity *s)
-{       
+{
 	/*return container_of(t, struct task_struct, task);*/
 	return ((struct task_struct *)((uint32_t)s - offsetof(struct task_struct, se)));
 }

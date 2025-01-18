@@ -2,7 +2,7 @@
 //
 // Copyright (c) 2024 kwangdo.yi<kwangdo.yi@gmail.com>
 
-#define DEVICE_DT_COMPAT	SLOS_ODEV
+#define DEVICE_DT_COMPAT SLOS_ODEV
 
 #include <stdint.h>
 #include <error.h>
@@ -23,39 +23,36 @@
  * be the same. When modify this, it also should be changed
  * in the odev slave module's sig_seq_addr in multiple place.
  */
-#define O_STREAM_START				0x18000000
-#define O_STREAM_BURST_SZ			0x00000040 /* 64B */
-#define O_STREAM_STEP				0x00000100 /* 256B */
-#define O_STREAM_WRAP				0x00001000 /* 4096 */
+#define O_STREAM_START    0x18000000
+#define O_STREAM_BURST_SZ 0x00000040 /* 64B */
+#define O_STREAM_STEP     0x00000100 /* 256B */
+#define O_STREAM_WRAP     0x00001000 /* 4096 */
 
 /* register offset */
-#define REG_CTRL_OFFSET				0x0
-#define REG_STATUS_OFFSET			0x4
-#define REG_ADDR_OFFSET				0x8
-#define REG_LEN_OFFSET				0xc
-#define REG_LATENCY_OFFSET			0x10
+#define REG_CTRL_OFFSET    0x0
+#define REG_STATUS_OFFSET  0x4
+#define REG_ADDR_OFFSET    0x8
+#define REG_LEN_OFFSET     0xc
+#define REG_LATENCY_OFFSET 0x10
 /* bit masks */
-#define BM_GBL_START				(0x1)
-#define BM_INTR_DONE				(0x1 << 1)
-#define BM_IN_TRANS					(0x1 << 2)
-#define BM_OSTREAM_START			(0x1 << 3)
-#define BM_CONSUMER_START			(0x1 << 4)
-#define BM_ITAB_UNDER				(0x1)
-#define BM_DATA_BUFF_UNDER			(0x1 << 1)
-#define BM_ITAB_FULL				(0x1 << 2)
-#define BM_TRANSFER_DONE			(0x1 << 3)
+#define BM_GBL_START       (0x1)
+#define BM_INTR_DONE       (0x1 << 1)
+#define BM_IN_TRANS        (0x1 << 2)
+#define BM_OSTREAM_START   (0x1 << 3)
+#define BM_CONSUMER_START  (0x1 << 4)
+#define BM_ITAB_UNDER      (0x1)
+#define BM_DATA_BUFF_UNDER (0x1 << 1)
+#define BM_ITAB_FULL       (0x1 << 2)
+#define BM_TRANSFER_DONE   (0x1 << 3)
 
-#define O_STREAM_TASK_PRI	4
+#define O_STREAM_TASK_PRI 4
 
-DEVICE_DEFINE(odev_0,
-			  DT_GET_COMPAT(0),
-			  DT_GET_BASE_ADDR(0),
-			  DT_GET_IRQ(0));
+DEVICE_DEFINE(odev_0, DT_GET_COMPAT(0), DT_GET_BASE_ADDR(0), DT_GET_IRQ(0));
 
 int32_t init_odev(void)
 {
 	gic_register_int_handler(DEVICE_GET_IRQ(odev_0), odev_irq, NULL);
-	/* This also reprogram the distributor 
+	/* This also reprogram the distributor
 	 * forwarding target cpu in the ICDIPTR register.
 	 */
 	gic_enable_interrupt(DEVICE_GET_IRQ(odev_0));
@@ -121,7 +118,7 @@ int32_t put_to_itab(uint32_t sAddr, uint32_t sLen)
 	ctrl = read32(DEVICE_GET_BASE_ADDR(odev_0) + REG_CTRL_OFFSET);
 	ctrl |= BM_IN_TRANS;
 	write32(DEVICE_GET_BASE_ADDR(odev_0) + REG_CTRL_OFFSET, ctrl);
-	
+
 	while (!(read32(DEVICE_GET_BASE_ADDR(odev_0) + REG_STATUS_OFFSET) & BM_TRANSFER_DONE)) {
 		ctrl = read32(DEVICE_GET_BASE_ADDR(odev_0) + REG_CTRL_OFFSET);
 		/* if stop ODEV, then exit */
@@ -191,8 +188,8 @@ int32_t stop_consumer(void)
 	return NO_ERR;
 }
 
-/* This task is run in the cpu1 triggered 
- * by sgi interrupt. sgi interrupt in the 
+/* This task is run in the cpu1 triggered
+ * by sgi interrupt. sgi interrupt in the
  * cpu1 is triggered by shell 'sgi' cmd.
  */
 
@@ -215,7 +212,7 @@ uint32_t run_odev_task(void)
 	start_odev_stream();
 
 	i = 0;
-	
+
 	/* out stream forever */
 	for (;;) {
 		ret = put_to_itab(O_STREAM_START + O_STREAM_STEP * i, O_STREAM_STEP);
@@ -225,11 +222,9 @@ uint32_t run_odev_task(void)
 			i++;
 
 			i = i % O_STREAM_WRAP;
-		}
-		else if (ret == -ERR_ITAB_FULL) {
+		} else if (ret == -ERR_ITAB_FULL) {
 			msleep(100);
-		}
-		else {
+		} else {
 			printk("put_to_itab error ret=0x%x\n", ret);
 			break;
 		}
@@ -240,12 +235,12 @@ uint32_t run_odev_task(void)
 	stop_odev();
 
 	/* spin forever */
-	while (1) ;
+	while (1)
+		;
 	return NO_ERR;
-
 }
 
 void create_odev_task(void *arg)
 {
-	create_cfs_task("odev_worker", run_odev_task, O_STREAM_TASK_PRI); 
+	create_cfs_task("odev_worker", run_odev_task, O_STREAM_TASK_PRI);
 }

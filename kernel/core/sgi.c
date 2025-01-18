@@ -10,7 +10,7 @@
 #include <printk.h>
 #include <mailbox.h>
 
-void enable_sgi_irq(int vec, int (sgi_irq_handler)(void *arg))
+void enable_sgi_irq(int vec, int(sgi_irq_handler)(void *arg))
 {
 	gic_register_int_handler(vec, sgi_irq_handler, NULL);
 }

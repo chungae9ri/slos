@@ -6,89 +6,89 @@
 #define _ODEV_H_
 
 /**
- * @brief 
- * 
- * @return int32_t 
+ * @brief
+ *
+ * @return int32_t
  */
 int32_t init_odev(void);
 
 /**
- * @brief 
- * 
- * @return int32_t 
+ * @brief
+ *
+ * @return int32_t
  */
 int32_t start_odev(void);
 
 /**
- * @brief 
- * 
- * @return int32_t 
+ * @brief
+ *
+ * @return int32_t
  */
 int32_t stop_odev(void);
 
 /**
- * @brief 
- * 
- * @return int32_t 
+ * @brief
+ *
+ * @return int32_t
  */
 int32_t start_odev_stream(void);
 
 /**
- * @brief 
- * 
- * @return int32_t 
+ * @brief
+ *
+ * @return int32_t
  */
 int32_t stop_odev_stream(void);
 
 /**
- * @brief 
- * 
- * @param sAddr 
- * @param sLen 
- * @return int32_t 
+ * @brief
+ *
+ * @param sAddr
+ * @param sLen
+ * @return int32_t
  */
 int32_t put_to_itab(uint32_t sAddr, uint32_t sLen);
 
 /**
- * @brief 
- * 
- * @param arg 
- * @return int 
+ * @brief
+ *
+ * @param arg
+ * @return int
  */
 int odev_irq(void *arg);
 
 /**
  * @brief Set the consume latency object
- * 
- * @param lat 
- * @return int32_t 
+ *
+ * @param lat
+ * @return int32_t
  */
 int32_t set_consume_latency(uint32_t lat);
 
 /**
- * @brief 
- * 
- * @return int32_t 
+ * @brief
+ *
+ * @return int32_t
  */
 int32_t start_consumer(void);
 
 /**
- * @brief 
- * 
- * @return int32_t 
+ * @brief
+ *
+ * @return int32_t
  */
 int32_t stop_consumer(void);
 
 /**
- * @brief 
- * 
- * @return uint32_t 
+ * @brief
+ *
+ * @return uint32_t
  */
 uint32_t run_odev_task(void);
 
 /**
  * @brief Create a odev task object
- * 
+ *
  */
 void create_odev_task(void *);
 #endif

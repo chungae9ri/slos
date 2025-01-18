@@ -11,9 +11,9 @@
 #include <runq.h>
 #include <percpu.h>
 
-#define MAX_ONESHOT_TIMER_NUM		32
-#define MIN_TIME_INT 	(get_ticks_per_sec() >> 10)
-#define MSEC_MARGIN	(get_ticks_per_sec() >> 10)
+#define MAX_ONESHOT_TIMER_NUM 32
+#define MIN_TIME_INT          (get_ticks_per_sec() >> 10)
+#define MSEC_MARGIN           (get_ticks_per_sec() >> 10)
 
 static void cfs_scheduler(uint32_t elapsed)
 {
@@ -51,12 +51,13 @@ void init_timertree(void)
 {
 	struct timer_root *this_ptroot;
 #if _ENABLE_SMP_
-	__get_cpu_var(csd) = (struct clock_source_device *)kmalloc(sizeof(struct clock_source_device));
-	__get_cpu_var(ptroot) = (struct timer_root *) kmalloc(sizeof(struct timer_root));
+	__get_cpu_var(csd) =
+	    (struct clock_source_device *)kmalloc(sizeof(struct clock_source_device));
+	__get_cpu_var(ptroot) = (struct timer_root *)kmalloc(sizeof(struct timer_root));
 	this_ptroot = (struct timer_root *)__get_cpu_var(ptroot);
 #else
 	csd = (struct clock_source_device *)kmalloc(sizeof(struct clock_source_device));
-	ptroot = (struct timer_root *) kmalloc(sizeof(struct timer_root));
+	ptroot = (struct timer_root *)kmalloc(sizeof(struct timer_root));
 	this_ptroot = ptroot;
 #endif
 	this_ptroot->root = RB_ROOT;
@@ -103,17 +104,17 @@ void update_timer_tree(uint32_t elapsed)
 				/* re-enqueue this rt task to finish
 				 * its work in 1msec
 				 */
-				temp = (pct->tc - elapsed); 
-				if (temp < MIN_TIME_INT) 
+				temp = (pct->tc - elapsed);
+				if (temp < MIN_TIME_INT)
 					pct->tc = MIN_TIME_INT;
-				else 
+				else
 					pct->tc = temp;
 			}
 		} else {
-			temp = (pct->tc - elapsed); 
-			if (temp < MIN_TIME_INT) 
+			temp = (pct->tc - elapsed);
+			if (temp < MIN_TIME_INT)
 				pct->tc = MIN_TIME_INT;
-			else 
+			else
 				pct->tc = temp;
 		}
 		pcur = rb_next(pcur);
@@ -155,7 +156,8 @@ void init_oneshot_timers(void)
 	uint32_t *pthis_oneshot_timer_idx;
 	struct timer_struct *this_oneshot_timer;
 
-	this_oneshot_timer = (struct timer_struct *)kmalloc(sizeof(struct timer_struct) * MAX_ONESHOT_TIMER_NUM);
+	this_oneshot_timer =
+	    (struct timer_struct *)kmalloc(sizeof(struct timer_struct) * MAX_ONESHOT_TIMER_NUM);
 #if _ENABLE_SMP_
 	__get_cpu_var(oneshot_timer) = this_oneshot_timer;
 	pthis_oneshot_timer_idx = (uint32_t *)__get_cpu_var_addr(oneshot_timer_idx);
@@ -197,8 +199,8 @@ void create_oneshot_timer(struct task_struct *oneshot_task, uint32_t tc, void *a
 	this_oneshot_timer[*pthis_oneshot_timer_idx].type = ONESHOT_TIMER;
 	this_oneshot_timer[*pthis_oneshot_timer_idx].tc = tc;
 	this_oneshot_timer[*pthis_oneshot_timer_idx].intvl = tc;
-	/* idx is inited in init_oneshot_timers and 
-	 * not used in oneshot timer. 
+	/* idx is inited in init_oneshot_timers and
+	 * not used in oneshot timer.
 	 */
 	this_oneshot_timer[*pthis_oneshot_timer_idx].arg = arg;
 	insert_timer(this_ptroot, &this_oneshot_timer[*pthis_oneshot_timer_idx]);
@@ -252,4 +254,3 @@ void del_timer(struct timer_root *ptr, struct timer_struct *pts)
 
 	rb_erase(&pts->run_node, &ptr->root);
 }
-

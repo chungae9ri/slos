@@ -1,0 +1,23 @@
+# .clang-format
+
+BasedOnStyle: LLVM
+IndentWidth: 8           # Linux style uses 8 spaces for indentation
+TabWidth: 8              # Tab width is 8 spaces
+UseTab: ForIndentation   # Use tabs for indentation, spaces for alignment
+BreakBeforeBraces: Linux # Place braces in the Linux kernel style
+ColumnLimit: 100          # Wrap lines at 80 characters
+AllowShortIfStatementsOnASingleLine: false  # Force multi-line if statements
+IndentCaseLabels: false  # Case labels aligned with the switch statement
+PointerAlignment: Right # Pointer alignment on the left (e.g., int *ptr)
+SpaceBeforeParens: ControlStatements  # Space before parentheses in control statements
+SpacesInParentheses: false  # No spaces inside parentheses
+SpacesInAngles: false       # No spaces in angle brackets for templates
+AlignConsecutiveAssignments: false  # Don't align consecutive assignments
+AlignTrailingComments: true  # Align trailing comments
+KeepEmptyLinesAtTheStartOfBlocks: false  # Don't allow empty lines at the start of blocks
+SortIncludes: false  # Don't sort include directives (preserve order)
+AllowShortEnumsOnASingleLine: false  # Force multiline formatting for enums
+AllowShortFunctionsOnASingleLine: InlineOnly # Only allows functions with no body to stay on one line (e.g., void funcA(void);)
+# Align consecutive macros
+AlignConsecutiveMacros: true
+AlignTrailingComments: true

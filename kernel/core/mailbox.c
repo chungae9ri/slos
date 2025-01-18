@@ -5,11 +5,8 @@
 #include <stdint.h>
 #include <mailbox.h>
 
-__attribute__((__section__(".mailbox"))) 
-		struct mailbox_struct mailbox_0;
-__attribute__((__section__(".mailbox")))
-		struct mailbox_struct mailbox_1;
-
+__attribute__((__section__(".mailbox"))) struct mailbox_struct mailbox_0;
+__attribute__((__section__(".mailbox"))) struct mailbox_struct mailbox_1;
 
 volatile uint32_t mailbox_lock = 0;
 uint32_t smp_processor_id(void);
@@ -27,7 +24,7 @@ void push_mail(enum letter_type letter)
 	uint32_t cpuid;
 	struct mailbox_struct *pmailbox;
 
-	/* get current cpuid and 
+	/* get current cpuid and
 	 * set target cpuid
 	 */
 	cpuid = smp_processor_id();

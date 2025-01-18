@@ -32,11 +32,11 @@ extern void secondary_reset(void);
 extern void flush_ent_dcache(void);
 extern uint32_t read_scr(void);
 
-#define A9_CPU_RST_CTRL		(0xF8000244)
-#define A9_RST0_MASK		(0x1)
-#define A9_RST1_MASK		(0x2)
-#define A9_CLKSTOP0_MASK	(0x10)
-#define A9_CLKSTOP1_MASK	(0x20)
+#define A9_CPU_RST_CTRL  (0xF8000244)
+#define A9_RST0_MASK     (0x1)
+#define A9_RST1_MASK     (0x2)
+#define A9_CLKSTOP0_MASK (0x10)
+#define A9_CLKSTOP1_MASK (0x20)
 
 static void cpuidle_secondary(void)
 {
@@ -51,7 +51,7 @@ static void cpuidle_secondary(void)
 		/* cpuidle can't go to waitq.
 		 * arch-dependent power saving routine here.
 		 */
-		while( i <= 10000){
+		while (i <= 10000) {
 			i++;
 		}
 		i = 0;
@@ -70,7 +70,7 @@ static void cpuidle(void)
 		/* cpuidle can't go to waitq.
 		 * arch-dependent power saving routine here.
 		 */
-		while( i <= 10000){
+		while (i <= 10000) {
 			i++;
 		}
 		i = 0;
@@ -87,10 +87,10 @@ static void start_cpu1(void)
 	*(volatile uint32_t *)(A9_CPU_RST_CTRL) = A9_rst_ctrl;
 
 	/*load [0x8] to r0*/
-	*(volatile uint32_t *) (0x0) = *(uint32_t *)(secondary_reset);
+	*(volatile uint32_t *)(0x0) = *(uint32_t *)(secondary_reset);
 	/* bx to [r0] */
-	*(volatile uint32_t *) (0x4) = *(uint32_t *)(secondary_reset + 4);
-	*(volatile uint32_t *) (0x8) = KERNEL_CODE_BASE;
+	*(volatile uint32_t *)(0x4) = *(uint32_t *)(secondary_reset + 4);
+	*(volatile uint32_t *)(0x8) = KERNEL_CODE_BASE;
 
 	/* flush cache of cpu 0 */
 	flush_ent_dcache();
@@ -140,7 +140,7 @@ int secondary_start_kernel(void)
 	return 0;
 }
 
-int start_kernel(void) 
+int start_kernel(void)
 {
 	uint32_t scr = 0xFFFFFFFF;
 	uint32_t cpuid;
@@ -184,18 +184,18 @@ int start_kernel(void)
 
 	return 0;
 }
-#elif defined (ARCH_CORTEX_A53)
+#elif defined(ARCH_CORTEX_A53)
 
 int main(void)
 {
-	uint32_t current_el= 0;
+	uint32_t current_el = 0;
 	init_uart();
 	printk("stdio uart initialized");
 
 	/* read currentEL*/
-	asm volatile ("mrs %[cel], CurrentEL" : [cel] "=r" (current_el)::);
-	printk("currentEL: 0x%x\n", current_el >> 2); 
-	
+	asm volatile("mrs %[cel], CurrentEL" : [cel] "=r"(current_el)::);
+	printk("currentEL: 0x%x\n", current_el >> 2);
+
 	init_gic();
 	init_timer();
 

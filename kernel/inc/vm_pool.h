@@ -2,7 +2,7 @@
 //
 // Copyright (c) 2024 kwangdo.yi<kwangdo.yi@gmail.com>
 
-#ifndef _VM_POOL_H_                   // include file only once
+#ifndef _VM_POOL_H_ // include file only once
 #define _VM_POOL_H_
 
 #include <frame_pool.h>
@@ -26,9 +26,7 @@ struct vmpool {
 	struct pagetable *ppagetable;
 };
 
-void init_vmpool(struct vmpool *pvmpool,
-                 struct pagetable *_pagetable,
-		 unsigned int _base_address,
+void init_vmpool(struct vmpool *pvmpool, struct pagetable *_pagetable, unsigned int _base_address,
                  unsigned int _size);
 
 unsigned int allocate(struct vmpool *pvmpool, unsigned int _size);

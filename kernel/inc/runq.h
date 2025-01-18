@@ -17,7 +17,6 @@ struct cfs_rq {
 	uint32_t cfs_task_num;
 };
 
-
 extern void spin_lock_acquire(volatile uint32_t *pl);
 extern void spin_lock_release(volatile uint32_t *pl);
 

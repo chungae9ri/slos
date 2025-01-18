@@ -55,55 +55,59 @@
 .set CONTEXT_MEM_LEN, 				0xF
 #else
 /* memory map */
-#define KERNEL_FRAME_BITMAP			0xC000 
-#define CONTEXT_MEM 				0x00004000 /* cpu0 secure mode context memory address */
-#define CONTEXT_MEM_SP				0x402C
-#define CONTEXT_MEM_END				0x00004038
-#define SEC_CONTEXT_MEM				0x00005000 /* cpu1 secure mode context memory address */
-#define SEC_CONTEXT_MEM_SP			0x502C
-#define SEC_CONTEXT_MEM_END 			0x00005038
+#define KERNEL_FRAME_BITMAP 0xC000
+#define CONTEXT_MEM         0x00004000 /* cpu0 secure mode context memory address */
+#define CONTEXT_MEM_SP      0x402C
+#define CONTEXT_MEM_END     0x00004038
+#define SEC_CONTEXT_MEM                                                                            \
+	0x00005000 /* cpu1 secure mode context memory address                                      \
+	            */
+#define SEC_CONTEXT_MEM_SP   0x502C
+#define SEC_CONTEXT_MEM_END  0x00005038
 /* kernel*/
-#define KERNEL_CODE_BASE			0x100000
-#define KERNEL_END 				0x300000
+#define KERNEL_CODE_BASE     0x100000
+#define KERNEL_END           0x300000
 /* CPU 0 secure mode stacks */
-#define SVC_STACK_BASE 				0x314FFC /* 3M + 4KiB*21 support 16 kernel threads */
-#define SYS_STACK_BASE 				0x304FFC /* 3M + 4KiB*5 */
-#define IRQ_STACK_BASE 				0x303FFC /* 3M + 4KiB*4 */
-#define FIQ_STACK_BASE 				0x302FFC /* 3M + 4KiB*3 */
-#define ABT_STACK_BASE 				0x301FFC /* 3M + 4KiB*2 */
-#define UNDEF_STACK_BASE			0x300FFC /* 3M + 4KiB */
+#define SVC_STACK_BASE       0x314FFC /* 3M + 4KiB*21 support 16 kernel threads */
+#define SYS_STACK_BASE       0x304FFC /* 3M + 4KiB*5 */
+#define IRQ_STACK_BASE       0x303FFC /* 3M + 4KiB*4 */
+#define FIQ_STACK_BASE       0x302FFC /* 3M + 4KiB*3 */
+#define ABT_STACK_BASE       0x301FFC /* 3M + 4KiB*2 */
+#define UNDEF_STACK_BASE     0x300FFC /* 3M + 4KiB */
 /* blank for CPU 0 normal world stack */
 /* CPU 1 secure mode stacks */
-#define SEC_SVC_STACK_BASE			0x354FFC
-#define SEC_SYS_STACK_BASE			0x344FFC
-#define SEC_IRQ_STACK_BASE 			0x343FFC 
-#define SEC_FIQ_STACK_BASE 			0x342FFC
-#define SEC_ABT_STACK_BASE 			0x341FFC
-#define SEC_UNDEF_STACK_BASE 			0x340FFC
+#define SEC_SVC_STACK_BASE   0x354FFC
+#define SEC_SYS_STACK_BASE   0x344FFC
+#define SEC_IRQ_STACK_BASE   0x343FFC
+#define SEC_FIQ_STACK_BASE   0x342FFC
+#define SEC_ABT_STACK_BASE   0x341FFC
+#define SEC_UNDEF_STACK_BASE 0x340FFC
 /* blank for CPU 1 normal world stack */
-#define KERN_PGD_START_BASE 			0x400000 /* page directory base, size 16KiB aligned = 1 page directory * 4KEntries * 4B size */
-#define KERN_PGT_START_BASE 			0x404000 /* page table base, size 4MiB = (1024 * 1024) entries * 4 */
+#define KERN_PGD_START_BASE                                                                        \
+	0x400000                     /* page directory base, size 16KiB aligned = 1 page directory \
+	                              * 4KEntries * 4B size */
+#define KERN_PGT_START_BASE 0x404000 /* page table base, size 4MiB = (1024 * 1024) entries * 4 */
 /* user app */
-#define USER_APP_BASE 				0x1000000 /* user app base */
+#define USER_APP_BASE       0x1000000  /* user app base */
 /* ramdisk */
-#define SCRATCH_BASE				0x02000000 /* 32M */
-#define RAMDISK_FS_BASE 			0x3000000 /* 48M */
+#define SCRATCH_BASE        0x02000000 /* 32M */
+#define RAMDISK_FS_BASE     0x3000000  /* 48M */
 /* peripheral reg address */
 /* end of memory map */
 
 /* misc definitions */
-#define TASK_STACK_GAP 				0x1000 /* 4k */
-#define USER_APP_GAP 				0x100000  /* 1MB user app gap */
+#define TASK_STACK_GAP      0x1000     /* 4k */
+#define USER_APP_GAP        0x100000   /* 1MB user app gap */
 
-#define GB * (0x1 << 30)
-#define MB * (0x1 << 20)
-#define KB * (0x1 << 10)
-#define KERN_FRAME_START ((0 MB) / (4 KB))
-#define KERN_FRAME_NUM ((128 MB) / (4 KB))
-#define HEAP_FRAME_START ((64 MB) / (4 KB))
-#define HEAP_FRAME_NUM ((64 MB) / (4 KB))
+#define GB                   *(0x1 << 30)
+#define MB                   *(0x1 << 20)
+#define KB                   *(0x1 << 10)
+#define KERN_FRAME_START     ((0 MB) / (4 KB))
+#define KERN_FRAME_NUM       ((128 MB) / (4 KB))
+#define HEAP_FRAME_START     ((64 MB) / (4 KB))
+#define HEAP_FRAME_NUM       ((64 MB) / (4 KB))
 #define PREALLOC_FRAME_START ((0 MB) / (4 KB))
-#define PREALLOC_FRAME_NUM ((64 MB) / (4 KB))
+#define PREALLOC_FRAME_NUM   ((64 MB) / (4 KB))
 #endif
 
 #endif

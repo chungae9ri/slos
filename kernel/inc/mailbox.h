@@ -11,7 +11,7 @@ enum letter_type {
 	TASK_ODEV = 2,
 };
 
-enum letter_status{
+enum letter_status {
 	READ = 0,
 	NOT_READ = 1,
 };

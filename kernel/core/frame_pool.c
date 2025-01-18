@@ -6,14 +6,12 @@
 #include <frame_pool.h>
 #include <mem_layout.h>
 
-/* 
+/*
  * one bitmap frame(4KB) can address 4K * 8 * 4KB = 128MB memory
  * one bitmap frame is enough for kernel
  */
-void init_framepool(struct framepool *pframe,
-		unsigned long base_frame_idx,
-		unsigned long frame_num,
-		unsigned long bitmap_frame_idx)
+void init_framepool(struct framepool *pframe, unsigned long base_frame_idx, unsigned long frame_num,
+                    unsigned long bitmap_frame_idx)
 {
 	unsigned char prealloc_mask;
 	int i, j;
@@ -39,7 +37,7 @@ void init_framepool(struct framepool *pframe,
 	 * Each BitmapEntry size is 8bits
 	 */
 	pBitmapEntry = pframe->pBitmap;
-	/* bitmap size is 4KB. 
+	/* bitmap size is 4KB.
 	 * initialize it with 0x00
 	 */
 	for (i = 0; i < 4096; i++) {
@@ -47,8 +45,8 @@ void init_framepool(struct framepool *pframe,
 	}
 
 	if (bitmap_frame_idx == 0) {
-		/* 
-		 * initialize the kernel frames with 
+		/*
+		 * initialize the kernel frames with
 		 * preallocated memory frames.
 		 * mark it with 1'b0 if it is prealloced.
 		 */
@@ -63,7 +61,7 @@ void init_framepool(struct framepool *pframe,
 		for (j = 0; j < prealloc_num; j++) {
 			prealloc_mask |= (0x1 << j);
 		}
-		pframe->pBitmap[i] |= prealloc_mask; 
+		pframe->pBitmap[i] |= prealloc_mask;
 	}
 }
 
@@ -77,7 +75,7 @@ int get_frame(struct framepool *pframe)
 	/* find out the first free frame in Bitmap*/
 	for (i = 0; i < pframe->nBitmapEntry; i++) {
 		/* going through the bits in pBtmapEntry.
-		 * char has 8 bits 
+		 * char has 8 bits
 		 */
 		if (*pBitmapEntry == 0xFF) {
 			pBitmapEntry++;
@@ -95,7 +93,7 @@ int get_frame(struct framepool *pframe)
 	}
 	/* check if there is a free frame in the remainders */
 	for (i = 0; i < pframe->nRemainderBitmapEntry; i++) {
-		if((*pBitmapEntry & (0x1 << i)) == 0) {
+		if ((*pBitmapEntry & (0x1 << i)) == 0) {
 			frameIdx = pframe->base_frame_idx + pframe->nBitmapEntry * 8 + i;
 			/* set the Bitmap for the frame */
 			*pBitmapEntry |= (0x1 << i);
@@ -106,9 +104,8 @@ int get_frame(struct framepool *pframe)
 	return -1;
 }
 
-void mark_prealloc_frame(struct framepool *pframe,
-		       unsigned long _base_frame_no, 
-		       unsigned long _nframes)
+void mark_prealloc_frame(struct framepool *pframe, unsigned long _base_frame_no,
+                         unsigned long _nframes)
 {
 	volatile char *pBitmapEntry;
 	int i;
@@ -132,8 +129,7 @@ void mark_prealloc_frame(struct framepool *pframe,
 	}
 }
 
-int release_frame(struct framepool *pframe,
-		   unsigned long _frame_no)
+int release_frame(struct framepool *pframe, unsigned long _frame_no)
 {
 	unsigned long entryOffset;
 	char remainder;
@@ -143,12 +139,12 @@ int release_frame(struct framepool *pframe,
 	remainder = _frame_no % 8;
 
 	/* inaccessible region should not be freed */
-	if (_frame_no >= pframe->inacc_baseFrameNo&& 
-  	    _frame_no < pframe->inacc_baseFrameNo + pframe->inacc_nFrames)
+	if (_frame_no >= pframe->inacc_baseFrameNo &&
+	    _frame_no < pframe->inacc_baseFrameNo + pframe->inacc_nFrames)
 		return 1;
 
 	/* region out of bound should not be freed */
-	if (_frame_no >= pframe->base_frame_idx + pframe->nFrames || 
+	if (_frame_no >= pframe->base_frame_idx + pframe->nFrames ||
 	    _frame_no < pframe->base_frame_idx)
 		return 2;
 

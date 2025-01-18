@@ -12,5 +12,5 @@ struct sgi_data {
 };
 
 int sgi_irq(void *arg);
-void enable_sgi_irq(int vec, int(*)(void *arg));
+void enable_sgi_irq(int vec, int (*)(void *arg));
 #endif

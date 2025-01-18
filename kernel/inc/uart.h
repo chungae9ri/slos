@@ -6,22 +6,22 @@
 #define _UART_H_
 
 /**
- * @brief 
- * 
+ * @brief
+ *
  */
 void init_uart(void);
 
 /**
- * @brief 
- * 
- * @param c 
+ * @brief
+ *
+ * @param c
  */
 void poll_out(char c);
 
 /**
- * @brief 
- * 
- * @return uint8_t 
+ * @brief
+ *
+ * @return uint8_t
  */
 uint8_t poll_in(void);
 #endif

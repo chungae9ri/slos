@@ -8,33 +8,33 @@
 #include <stdint.h>
 
 /**
- * @brief 
- * 
+ * @brief
+ *
  */
 void init_dma(void);
 
 /**
  * @brief Set the dma work object
- * 
- * @param src 
- * @param dst 
- * @param len 
+ *
+ * @param src
+ * @param dst
+ * @param len
  */
 void set_dma_work(uint32_t src, uint32_t dst, uint32_t len);
 
 /**
- * @brief 
- * 
- * @param arg 
+ * @brief
+ *
+ * @param arg
  */
 void start_dma(void *arg);
 
 /**
- * @brief 
- * 
- * @param arg 
- * @return int 
+ * @brief
+ *
+ * @param arg
+ * @return int
  */
-int dma_irq (void *arg);
+int dma_irq(void *arg);
 
 #endif

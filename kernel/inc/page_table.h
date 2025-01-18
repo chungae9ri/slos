@@ -2,24 +2,24 @@
 //
 // Copyright (c) 2024 kwangdo.yi<kwangdo.yi@gmail.com>
 
-#ifndef _PAGE_TABLE_H_ 
+#ifndef _PAGE_TABLE_H_
 #define _PAGE_TABLE_H_
 
 #include <frame_pool.h>
 #include <vm_pool.h>
 
 typedef enum {
-	PG_TABLE_KERN = 0, 
+	PG_TABLE_KERN = 0,
 	PG_TABLE_USER = 1
 } PG_TYPE;
 
-struct pagetable { 
+struct pagetable {
 	/* is paging turned on (i.e. are addresses logical)? */
 	unsigned int paging_enabled;
 	/* Frame pool for the kernel memory */
-	struct framepool *pframepool;    
+	struct framepool *pframepool;
 	/* size of shared address space between kernel and user */
-	unsigned int shared_size; 
+	unsigned int shared_size;
 
 	/* static page_table for shared memory(4MB kernel) */
 	unsigned int *ppage_table;
@@ -31,9 +31,8 @@ struct pagetable {
 };
 
 /* Set the global parameters for the paging subsystem. */
-void init_pageregion(struct pagetable *ppagetable,
-		     struct framepool *pframepool,
-		     const unsigned int _shared_size);
+void init_pageregion(struct pagetable *ppagetable, struct framepool *pframepool,
+                     const unsigned int _shared_size);
 
 void init_pagetable(struct pagetable *ppagetable, PG_TYPE pagetype);
 void load_pagetable(struct pagetable *ppagetable);

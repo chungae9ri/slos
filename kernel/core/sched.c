@@ -19,7 +19,6 @@ static void init_jiffies(void)
 #endif
 }
 
-
 void init_cfs_scheduler(void)
 {
 	uint32_t cpuid = 0;
@@ -57,7 +56,8 @@ void print_task_stat(void *arg)
 	pcur = (struct task_struct *)to_task_from_listhead(next_lh);
 	/*for (i = 0; i < runq->cfs_task_num; i++) {*/
 	do {
-		if (!pcur) break;
+		if (!pcur)
+			break;
 		if (pcur->type == CFS_TASK) {
 			printk("cfs task:%s\n", pcur->name);
 			printk("pid: %d\n", pcur->pid);
@@ -95,9 +95,9 @@ void schedule(void)
 	se = rb_entry(this_runq->rb_leftmost, struct sched_entity, run_node);
 	next = (struct task_struct *)to_task_from_se(se);
 
-	/* you should not print message in interrupt context. 
-	   print message try to acquire spin lock but if it fails, it spins forever 
-	   because interrupt is disabled.
+	/* you should not print message in interrupt context.
+	 * print message try to acquire spin lock but if it fails, it spins
+	 * forever because interrupt is disabled.
 	 */
 	/*if (show_stat && next->pfwhoami) next->pfwhoami();*/
 
@@ -106,7 +106,7 @@ void schedule(void)
 #else
 	this_current = current;
 #endif
-	if (this_current == next) 
+	if (this_current == next)
 		return;
 
 	switch_context(this_current, next);
@@ -150,7 +150,7 @@ struct task_struct *forkyi(char *name, task_entry fn, TASKTYPE type, uint32_t pr
 #if _ENABLE_SMP_
 	this_first = __get_cpu_var(first);
 	this_last = __get_cpu_var(last);
-	pthis_task_created_num = (uint32_t *) __get_cpu_var_addr(task_created_num);
+	pthis_task_created_num = (uint32_t *)__get_cpu_var_addr(task_created_num);
 	this_current = __get_cpu_var(current);
 #else
 	this_first = first;
@@ -159,7 +159,7 @@ struct task_struct *forkyi(char *name, task_entry fn, TASKTYPE type, uint32_t pr
 	this_current = current;
 #endif
 
-	if (*pthis_task_created_num == MAX_TASK) 
+	if (*pthis_task_created_num == MAX_TASK)
 		return NULL;
 
 	pt = (struct task_struct *)kmalloc(sizeof(struct task_struct));
@@ -190,14 +190,16 @@ struct task_struct *forkyi(char *name, task_entry fn, TASKTYPE type, uint32_t pr
 	cpuid = smp_processor_id();
 	if (cpuid == 0)
 		pt->ct.sp = (uint32_t)(SVC_STACK_BASE - TASK_STACK_GAP * (*pthis_task_created_num));
-	else 
-		pt->ct.sp = (uint32_t)(SEC_SVC_STACK_BASE - TASK_STACK_GAP * (*pthis_task_created_num));
+	else
+		pt->ct.sp =
+		    (uint32_t)(SEC_SVC_STACK_BASE - TASK_STACK_GAP * (*pthis_task_created_num));
 
-	__asm __volatile("mov %[lr], r14" :[lr] "+r" (lr)::);
+	__asm __volatile("mov %[lr], r14" : [lr] "+r"(lr)::);
 	pt->ct.lr = (uint32_t)lr;
 	pt->ct.pc = (uint32_t)pt->entry;
 
-	/* get the last task from task list and add this task to the end of the task list*/
+	/* get the last task from task list and add this task to the end of the
+	 * task list*/
 	this_last->task.next = &(pt->task);
 	pt->task.prev = &(this_last->task);
 	pt->task.next = &(this_first->task);
@@ -214,7 +216,7 @@ struct task_struct *forkyi(char *name, task_entry fn, TASKTYPE type, uint32_t pr
 extern void disable_interrupt(void);
 /* yield() isn't fully thread-safe. yield() is used
  * from RT task and msleep() and ramdomly crashed
- * when both tasks are running. Fix me 
+ * when both tasks are running. Fix me
  */
 void yield(void)
 {
@@ -251,7 +253,7 @@ void yield(void)
 #if _ENABLE_SMP_
 	if (this_current->yield_task->state == TASK_RUNNING)
 		__get_cpu_var(current) = this_current->yield_task;
-	else 
+	else
 		__get_cpu_var(current) = this_idle_task;
 
 	this_current = __get_cpu_var(current);
@@ -259,7 +261,7 @@ void yield(void)
 #else
 	if (this_current->yield_task->state == TASK_RUNNING)
 		current = this_current->yield_task;
-	else 
+	else
 		current = this_idle_task;
 
 	switch_context_yield(temp, current);
@@ -287,9 +289,9 @@ void update_current(uint32_t elapsed)
 		jiffies++;
 #endif
 		this_current->se.jiffies_consumed++;
-		this_current->se.ticks_consumed += (uint64_t) elapsed;
-		this_current->se.jiffies_vruntime = (this_current->se.jiffies_consumed) *
-			(this_current->se.priority);
+		this_current->se.ticks_consumed += (uint64_t)elapsed;
+		this_current->se.jiffies_vruntime =
+		    (this_current->se.jiffies_consumed) * (this_current->se.priority);
 	} else if (this_current->type == RT_TASK) {
 		this_current->se.ticks_consumed += (uint64_t)elapsed;
 	}

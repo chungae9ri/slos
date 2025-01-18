@@ -6,20 +6,19 @@
 #include <frame_pool.h>
 #include <mem_layout.h>
 
-#define ENABLE_MMU		0x00000001
-#define ENABLE_DCACHE		0x00000004
-#define ENABLE_ICACHE		0x00001000
-#define MASK_MMU		0x00000001
-#define MASK_DCACHE		0x00000004
-#define MASK_ICACHE		0x00001000
+#define ENABLE_MMU    0x00000001
+#define ENABLE_DCACHE 0x00000004
+#define ENABLE_ICACHE 0x00001000
+#define MASK_MMU      0x00000001
+#define MASK_DCACHE   0x00000004
+#define MASK_ICACHE   0x00001000
 
-#define MMIO_START_ADDR		0xF8000000 /* size : 128MB */
+#define MMIO_START_ADDR 0xF8000000 /* size : 128MB */
 
 static struct pagetable *pcurrentpgt;
 
-void init_pageregion(struct pagetable *ppagetable,
-		     struct framepool *pframepool,
-		     const unsigned int _shared_size)
+void init_pageregion(struct pagetable *ppagetable, struct framepool *pframepool,
+                     const unsigned int _shared_size)
 {
 	ppagetable->paging_enabled = 0;
 	ppagetable->pframepool = pframepool;
@@ -30,20 +29,20 @@ void init_pageregion(struct pagetable *ppagetable,
 }
 
 /* small page translation is used */
-void init_pagetable(struct pagetable *ppagetable, PG_TYPE pagetype) 
+void init_pagetable(struct pagetable *ppagetable, PG_TYPE pagetype)
 {
 	if (pagetype == PG_TABLE_KERN && ppagetable->ppage_dir)
 		return;
 
-	/* page directory is located in process mem pool 
+	/* page directory is located in process mem pool
 	 * 16KB for 4096 entry(16KB = 4K * 4Byte) is needed
 	 */
 	if (pagetype == PG_TABLE_USER) {
 		/* do nothing for now */
 	} else {
-		/* 
-		 * assign prealloced 4 contiguous memory frames 
-		 * for page_directory : 4K entry 
+		/*
+		 * assign prealloced 4 contiguous memory frames
+		 * for page_directory : 4K entry
 		 */
 		ppagetable->ppage_dir = (unsigned int *)KERN_PGD_START_BASE;
 		ppagetable->ppage_table = (unsigned int *)KERN_PGT_START_BASE;
@@ -55,7 +54,7 @@ void load_pagetable(struct pagetable *ppagetable)
 	unsigned int r0 = 0;
 
 	/* invalidate tlb */
-	asm ("mcr p15, 0, %0, c8, c7, 0" : :"r" (r0) :);
+	asm("mcr p15, 0, %0, c8, c7, 0" : : "r"(r0) :);
 	pcurrentpgt = ppagetable;
 }
 
@@ -70,9 +69,9 @@ void handle_fault(void)
 	/*unsigned int *pcur;*/
 
 	/* read DFAR */
-	asm ("mrc p15, 0, %0, c6, c0, 0" : "=r" (pfa) ::);
+	asm("mrc p15, 0, %0, c6, c0, 0" : "=r"(pfa)::);
 	/* read ttb0 */
-	asm ("mrc p15, 0, %0, c2, c0, 0" : "=r" (pda) ::);
+	asm("mrc p15, 0, %0, c2, c0, 0" : "=r"(pda)::);
 #if 0
 	/* check fault address is in valid VM region */
 	for (i = 0; i < VMcnt; i++) {
@@ -90,7 +89,7 @@ void handle_fault(void)
 
 	/* section fault */
 	if ((*pde & 0x00000003) == 0x0) {
-		*pde = (KERN_PGT_START_BASE + ((pgdIdx << 8 ) << 2)) | 0x1E1;
+		*pde = (KERN_PGT_START_BASE + ((pgdIdx << 8) << 2)) | 0x1E1;
 	}
 
 	/* kernel heap fault only */
@@ -119,7 +118,7 @@ void free_page(unsigned int freedAddr)
 	unsigned int *frame_addr;
 	unsigned int frame_num;
 	/* read ttb */
-	asm ("mrc p15, 0, %0, c2, c0, 0" : "=r" (pda) ::);
+	asm("mrc p15, 0, %0, c2, c0, 0" : "=r"(pda)::);
 	/* entry for 1st level descriptor */
 	pgdIdx = ((unsigned int)freedAddr & 0xFFF00000) >> 20;
 	/*pde = (unsigned int *)(((unsigned int)pda) + (pgdIdx << 2));*/
@@ -132,8 +131,7 @@ void free_page(unsigned int freedAddr)
 	frame_addr = (unsigned int *)(*pte);
 	frame_num = (unsigned int)(frame_addr) >> 12;
 
-	if (frame_num >= HEAP_FRAME_START &&
- 	   frame_num < HEAP_FRAME_START + HEAP_FRAME_NUM) {
+	if (frame_num >= HEAP_FRAME_START && frame_num < HEAP_FRAME_START + HEAP_FRAME_NUM) {
 		release_frame(pcurrentpgt->pframepool, frame_num);
 	} else {
 		/* error !
@@ -148,5 +146,5 @@ void free_page(unsigned int freedAddr)
 	/**pde = 0x0;*/
 
 	/* invalidate tlb */
-	asm ("mcr p15, 0, %0, c8, c7, 0" : :"r" (r0) :);
+	asm("mcr p15, 0, %0, c8, c7, 0" : : "r"(r0) :);
 }

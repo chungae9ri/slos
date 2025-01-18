@@ -17,7 +17,7 @@ void main(void)
 
 	i = 0;
 	while (1) {
-		if (i>= 0xFFFFFFFF) {
+		if (i >= 0xFFFFFFFF) {
 			i = 0;
 		} else {
 			i++;

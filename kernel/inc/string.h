@@ -16,7 +16,7 @@ void *malloc(size_t sz);
 
 void free(void *ptr);
 
-size_t strlen (const char *s);
+size_t strlen(const char *s);
 
 uint32_t strcmp(const char *l, const char *r);
 
@@ -32,7 +32,7 @@ uint32_t strcspn(const char *str, const char *reject);
 
 uint32_t strspn(const char *str, const char *accept);
 
-void *memcpy (void *dst, const void *src, size_t len);
+void *memcpy(void *dst, const void *src, size_t len);
 
 uint32_t __popcountsi2(uint32_t a);
 

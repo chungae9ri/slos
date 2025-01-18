@@ -16,9 +16,7 @@ struct mm_struct {
 	struct pagetable pgt;
 	struct vmpool heap;
 };
-void init_kernmem(struct framepool *kfp, 
-		struct pagetable *pgt, 
-		struct vmpool *kheap);
+void init_kernmem(struct framepool *kfp, struct pagetable *pgt, struct vmpool *kheap);
 void init_pgt(void) __attribute__((section("PGT_INIT")));
 void *kmalloc(size_t size);
 void kfree(uint32_t addr);
