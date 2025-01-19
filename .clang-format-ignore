@@ -1,3 +1,5 @@
 kernel/inc/mem_layout.h
 kernel/core/rbtree.c
 *.S
+genesis
+genesis_mp

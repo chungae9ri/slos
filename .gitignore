@@ -1,4 +1,3 @@
-out/
 *.o
 libxil.a
 *.bak
@@ -17,3 +16,4 @@ genesis/genesis
 *.log
 *code-workspace
 build/
+doc/out

@@ -1,0 +1,48 @@
+# Doxygen configuration file
+
+# General configuration
+PROJECT_NAME           = "SLOS (Simple and Light OS)"           # Name of your project
+PROJECT_NUMBER         = "0.9"                 # Version number
+#PROJECT_BRIEF          = "SLOS has basic OS features"
+OUTPUT_DIRECTORY       = doc/out                  # Directory where documentation is generated
+INPUT                  = README.md kernel/ apps/ libslos/ mkfs/ # Directories containing source files
+FILE_PATTERNS          = *.c *.cpp *.h *.hpp   # Files to parse
+RECURSIVE              = YES                   # Search subdirectories recursively
+EXCLUDE                = genesis genesis_mp kernel/inc/rbtree.h kernel/core/retree.c
+
+# Build configuration
+EXTRACT_ALL            = YES                   # Extract documentation even without comments
+EXTRACT_PRIVATE        = NO                    # Extract private members
+EXTRACT_STATIC         = YES                   # Include static members
+
+# Warnings and reports
+WARNINGS               = YES                   # Enable warnings
+WARN_IF_UNDOCUMENTED   = YES                   # Warn if functions/classes are undocumented
+QUIET                  = NO                    # Show processing messages
+
+# Output formats
+GENERATE_HTML          = YES                   # Generate HTML documentation
+HTML_OUTPUT            = html                  # HTML output directory
+GENERATE_LATEX         = NO                    # Disable LaTeX documentation
+GENERATE_MAN           = NO                    # Disable man pages
+GENERATE_XML           = NO                    # Disable XML output
+
+# Code browsing
+SOURCE_BROWSER         = YES                   # Include source code in documentation
+INLINE_SOURCES         = YES                   # Show source code with documentation
+
+# Input filtering and preprocessing
+ENABLE_PREPROCESSING   = YES                   # Enable preprocessing
+MACRO_EXPANSION        = YES                   # Expand macros
+EXPAND_ONLY_PREDEF     = NO
+SKIP_FUNCTION_MACROS   = YES                   # Skip macros defined as functions
+
+# Class hierarchy and diagrams
+HAVE_DOT               = YES                   # Enable diagrams using Graphviz
+DOT_PATH               = /usr/bin/dot          # Path to Graphviz's dot
+CLASS_DIAGRAMS         = YES                   # Generate class diagrams
+CALL_GRAPH             = YES                   # Generate call graphs
+CALLER_GRAPH           = YES                   # Generate caller graphs
+
+# Examples and documentation
+USE_MDFILE_AS_MAINPAGE = README.md             # Use README.md as the main page
