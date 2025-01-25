@@ -60,4 +60,17 @@ void do_switch_context(struct task_struct *current, struct task_struct *next);
  */
 void switch_context_yieldyi(struct task_struct *target, struct task_struct *current);
 
+/**
+ * @brief Acquire spinlock
+ *
+ * @param pl Pointer to a flag in memory for exclusive access
+ */
+void spin_lock_acquire(uint32_t *pl);
+
+/**
+ * @brief Release spinlock
+ *
+ * @param pl Pointer to a flag in memory for exclusive access
+ */
+void spin_lock_release(uint32_t *pl);
 #endif

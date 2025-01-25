@@ -7,6 +7,7 @@
 #include <defs.h>
 #include <runq.h>
 #include <percpu.h>
+#include <ops.h>
 
 void init_wq(void)
 {

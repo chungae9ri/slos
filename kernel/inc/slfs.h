@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: MIT OR Apache-2.0
-//
-// Copyright (c) 2024 kwangdo.yi<kwangdo.yi@gmail.com>
+/* SPDX-License-Identifier: MIT OR Apache-2.0
+ *
+ * Copyright (c) 2024 kwangdo.yi<kwangdo.yi@gmail.com>
+ */
 
 #ifndef _SLFS_H_
 #define _SLFS_H_
@@ -13,13 +14,12 @@
 typedef struct {
 	uint32_t fd;
 	uint32_t pos;
-	uint32_t file_size; /**< used for file update starts (OPEN evt) flag */
+	uint32_t file_size; /**< Used for file update starts (OPEN evt) flag */
 	uint32_t open_cnt;
-	uint32_t datablk_addr; /**< used for file update ends (CLOSE evt) flag  */
+	uint32_t datablk_addr; /**< Used for file update ends (CLOSE evt) flag  */
 	uint32_t inode_idx;
 	uint32_t allocedblk_num;
-	uint32_t update_cnt; /**< only the biggest one is valid, others are
-	                        outdated inode*/
+	uint32_t update_cnt; /**< Only the biggest one is valid, others are outdated inode*/
 	uint8_t name[SLFS_FNAME_LEN];
 } slfs_file_t;
 

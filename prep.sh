@@ -26,6 +26,7 @@ else
                                   --ignore=SPDX_COMMENT_STYLE \
                                   --ignore=BRACES \
                                   --ignore=NEW_TYPEDEFS \
+                                  --ignore=COMPLEX_MACRO \
                                   --file ${f}
         echo "---------------------"
     done

@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: MIT OR Apache-2.0
-//
-// Copyright (c) 2024 kwangdo.yi<kwangdo.yi@gmail.com>
+/* SPDX-License-Identifier: MIT OR Apache-2.0
+ *
+ * Copyright (c) 2024 kwangdo.yi<kwangdo.yi@gmail.com>
+ */
 
 #ifndef _VM_POOL_H_ // include file only once
 #define _VM_POOL_H_
@@ -8,7 +9,7 @@
 #include <frame_pool.h>
 #include <page_table.h>
 
-/* region descriptor structure */
+/* Region descriptor structure */
 struct region_desc {
 	unsigned int startAddr;
 	unsigned int size;
@@ -27,7 +28,7 @@ struct vmpool {
 };
 
 void init_vmpool(struct vmpool *pvmpool, struct pagetable *_pagetable, unsigned int _base_address,
-                 unsigned int _size);
+		 unsigned int _size);
 
 unsigned int allocate(struct vmpool *pvmpool, unsigned int _size);
 void release(struct vmpool *pvmpool, unsigned int _start_address);

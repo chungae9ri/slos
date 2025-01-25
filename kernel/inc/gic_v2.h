@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: MIT OR Apache-2.0
-//
-// Copyright (c) 2024 kwangdo.yi<kwangdo.yi@gmail.com>
+/* SPDX-License-Identifier: MIT OR Apache-2.0
+ *
+ * Copyright (c) 2024 kwangdo.yi<kwangdo.yi@gmail.com>
+ */
 
 #ifndef _GIC_V2_H_
 #define _GIC_V2_H_
@@ -24,13 +25,13 @@
 
 /* GIC CPU Interface register offset */
 #define GICC_CTLR_OFFSET (0x00020000U)
-#define GICC_PMR_OFFSET  (0x00020004U)
-#define GICC_BPR_OFFSET  (0x00020008U)
-#define GICC_IAR_OFFSET  (0x0002000CU)
+#define GICC_PMR_OFFSET	 (0x00020004U)
+#define GICC_BPR_OFFSET	 (0x00020008U)
+#define GICC_IAR_OFFSET	 (0x0002000CU)
 #define GICC_EOIR_OFFSET (0x00020010U)
 
-#define NUM_SGI  16
-#define NUM_PPI  16
+#define NUM_SGI	 16
+#define NUM_PPI	 16
 #define NUM_IRQS 187
 
 typedef int (*int_handler)(void *arg);

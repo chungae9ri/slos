@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: MIT OR Apache-2.0
-//
-// Copyright (c) 2024 kwangdo.yi<kwangdo.yi@gmail.com>
+/* SPDX-License-Identifier: MIT OR Apache-2.0
+ *
+ * Copyright (c) 2024 kwangdo.yi<kwangdo.yi@gmail.com>
+ */
 
 #ifndef _RUNQ_H_
 #define _RUNQ_H_
@@ -16,9 +17,6 @@ struct cfs_rq {
 	uint32_t priority_sum;
 	uint32_t cfs_task_num;
 };
-
-extern void spin_lock_acquire(volatile uint32_t *pl);
-extern void spin_lock_release(volatile uint32_t *pl);
 
 void init_rq(void);
 void dequeue_se(struct sched_entity *se);

@@ -4,6 +4,7 @@
 
 #include <runq.h>
 #include <percpu.h>
+#include <ops.h>
 
 extern void remove_from_wq(struct task_struct *p);
 

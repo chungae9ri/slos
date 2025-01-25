@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: MIT OR Apache-2.0
-//
-// Copyright (c) 2024 kwangdo.yi<kwangdo.yi@gmail.com>
+/* SPDX-License-Identifier: MIT OR Apache-2.0
+ *
+ * Copyright (c) 2024 kwangdo.yi<kwangdo.yi@gmail.com>
+ */
 
 #ifndef _MAILBOX_H_
 #define _MAILBOX_H_
@@ -21,8 +22,6 @@ struct mailbox_struct {
 	enum letter_type letter;
 };
 
-extern void spin_lock_acquire(volatile uint32_t *pl);
-extern void spin_lock_release(volatile uint32_t *pl);
 void init_mailbox(void);
 enum letter_type pull_mail(void);
 void push_mail(enum letter_type letter);
