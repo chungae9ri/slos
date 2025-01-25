@@ -5,3 +5,4 @@ kernel/core/rbtree.c
 *.S
 genesis
 genesis_mp
+CMakeLists.txt
