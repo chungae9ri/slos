@@ -10,7 +10,7 @@
 #include <slfs.h>
 
 #define SLFS_MAGIC_STR_LEN 16
-#define FNAME_LEN          32
+#define FNAME_LEN	   32
 
 /* inode_idx and update_cnt should be placed together
  * file_size and datablk_addr should be placed together
@@ -44,17 +44,17 @@ typedef struct {
 #define SLFS_SUPER_BLK_START RAMDISK_START
 #define SLFS_PAGE_SIZE_SHIFT RAMDISK_PAGE_SIZE_SHIFT
 #define SLFS_STORAGE_SIZE    RAMDISK_SIZE
-#define SLFS_PAGE_SIZE       RAMDISK_PAGE_SIZE
-#define SLFS_PAGE_CNT        RAMDISK_PAGE_NUM
-#define MINUS_ONE            (0xFFFFFFFF)
-#define WD_MASK              (0xFFFFFFFCU)
-#define DWD_MASK             (0xFFFFFFF8U)
+#define SLFS_PAGE_SIZE	     RAMDISK_PAGE_SIZE
+#define SLFS_PAGE_CNT	     RAMDISK_PAGE_NUM
+#define MINUS_ONE	     (0xFFFFFFFF)
+#define WD_MASK		     (0xFFFFFFFCU)
+#define DWD_MASK	     (0xFFFFFFF8U)
 #define OFFSET_OF(st, m)     (uint32_t)(&(((st *)0)->m))
 
 /* swap page */
-#define SLFS_SWAP_PAGE_IDX       (RAMDISK_PAGE_NUM - 1)
-#define SLFS_SWAP_PAGE_START     (SLFS_SWAP_PAGE_IDX << SLFS_PAGE_SIZE_SHIFT)
-#define SLFS_SWAP_PAGE_SIZE      RAMDISK_PAGE_SIZE
+#define SLFS_SWAP_PAGE_IDX	 (RAMDISK_PAGE_NUM - 1)
+#define SLFS_SWAP_PAGE_START	 (SLFS_SWAP_PAGE_IDX << SLFS_PAGE_SIZE_SHIFT)
+#define SLFS_SWAP_PAGE_SIZE	 RAMDISK_PAGE_SIZE
 #define SLFS_SWAP_PAGE_TAIL_SIZE (4)
 #define SLFS_SWAP_PAGE_TAIL_START                                                                  \
 	(SLFS_SWAP_PAGE_START + SLFS_SWAP_PAGE_SIZE - SLFS_SWAP_PAGE_TAIL_SIZE)
@@ -67,13 +67,13 @@ typedef struct {
 #define SLFS_SUPERBLK_SIZE  (0x40U)
 /* inode bitmap */
 #define SLFS_INODE_BITMAP_START SLFS_SUPERBLK_SIZE
-#define SLFS_INODE_BITMAP_SIZE  (0x40U)
+#define SLFS_INODE_BITMAP_SIZE	(0x40U)
 /* datablk bitmap - is not used, deprecated */
 #define SLFS_DATABLK_BITMAP_START (SLFS_INODE_BITMAP_START + SLFS_INODE_BITMAP_SIZE)
 #define SLFS_DATABLK_BITMAP_SIZE  (0x40U)
 /* inode table */
 #define SLFS_INODE_MAX_CNT   (32U)
-#define SLFS_INODE_SIZE      (sizeof(slfs_inode_t))
+#define SLFS_INODE_SIZE	     (sizeof(slfs_inode_t))
 #define SLFS_INODE_TAB_START (SLFS_DATABLK_BITMAP_START + SLFS_DATABLK_BITMAP_SIZE)
 #define SLFS_INODE_TAB_SIZE  (SLFS_INODE_MAX_CNT * SLFS_INODE_SIZE)
 /* garbage page table */
@@ -81,12 +81,12 @@ typedef struct {
 #define SLFS_GARBAGE_PAGE_TAB_MAX_CNT (RAMDISK_PAGE_SIZE >> SLFS_PAGE_SIZE_SHIFT)
 #define SLFS_GARBAGE_PAGE_TAB_SIZE    (SLFS_GARBAGE_PAGE_TAB_MAX_CNT << 2)
 /* datablk */
-#define SLFS_DATABLK_START        RAMDISK_PAGE_SIZE
-#define SLFS_DATABLK_SIZE         RAMDISK_BLK_SIZE
-#define SLFS_DATABLK_MASK         (SLFS_DATABLK_SIZE - 1)
-#define SLFS_DATABLK_SIZE_SHIFT   RAMDISK_BLK_SIZE_SHIFT
-#define SLFS_DATABLK_MAX_CNT      ((RAMDISK_SIZE - SLFS_METADATA_SIZE) >> RAMDISK_BLK_SIZE_SHIFT)
-#define SLFS_DATABLK_TAIL_SIZE    (8U)
+#define SLFS_DATABLK_START	  RAMDISK_PAGE_SIZE
+#define SLFS_DATABLK_SIZE	  RAMDISK_BLK_SIZE
+#define SLFS_DATABLK_MASK	  (SLFS_DATABLK_SIZE - 1)
+#define SLFS_DATABLK_SIZE_SHIFT	  RAMDISK_BLK_SIZE_SHIFT
+#define SLFS_DATABLK_MAX_CNT	  ((RAMDISK_SIZE - SLFS_METADATA_SIZE) >> RAMDISK_BLK_SIZE_SHIFT)
+#define SLFS_DATABLK_TAIL_SIZE	  (8U)
 #define SLFS_DATABLK_PAYLOAD_SIZE (RAMDISK_BLK_SIZE - SLFS_DATABLK_TAIL_SIZE)
 #define SLFS_DATABLK_TAIL_OFF_HI  (SLFS_DATABLK_PAYLOAD_SIZE)
 #define SLFS_DATABLK_TAIL_OFF_LOW (SLFS_DATABLK_PAYLOAD_SIZE + 4)
@@ -200,7 +200,7 @@ static int rw_page(uint32_t page_idx, bool bwrite)
 	uint8_t garbage_page_section[SLFS_GARBAGE_PAGE_TAB_SIZE];
 	int ret;
 
-	if (SLFS_PAGE_CNT <= page_idx)
+	if (page_idx >= SLFS_PAGE_CNT)
 		return -PARAM_ERR;
 
 	if (!bwrite) {
@@ -235,7 +235,7 @@ static int rw_page(uint32_t page_idx, bool bwrite)
 		 */
 		if (page_idx != SLFS_METADATA_PAGE_IDX) {
 			if (io_ops.read(SLFS_GARBAGE_PAGE_TAB_START, SLFS_GARBAGE_PAGE_TAB_SIZE,
-			                (uint8_t *)&garbage_page_section))
+					(uint8_t *)&garbage_page_section))
 				return -IO_ERR;
 
 			for (i = 0; i < SLFS_GARBAGE_PAGE_TAB_MAX_CNT; i++) {
@@ -246,7 +246,7 @@ static int rw_page(uint32_t page_idx, bool bwrite)
 					addr = SLFS_GARBAGE_PAGE_TAB_START + (i * sizeof(uint32_t));
 					len = SLFS_GARBAGE_PAGE_TAB_SIZE;
 					if (io_ops.write(addr, len,
-					                 (uint8_t *)&garbage_page_section))
+							 (uint8_t *)&garbage_page_section))
 						return -IO_ERR;
 					break;
 				}
@@ -259,7 +259,7 @@ static int rw_page(uint32_t page_idx, bool bwrite)
 
 		/* 5. copy it from swap page to target page */
 		ret = copy_flash_to_flash((page_idx << SLFS_PAGE_SIZE_SHIFT), SLFS_SWAP_PAGE_START,
-		                          SLFS_PAGE_SIZE);
+					  SLFS_PAGE_SIZE);
 		if (ret)
 			return ret;
 
@@ -335,9 +335,9 @@ static int alloc_datablk(slfs_file_t *pf, uint32_t len)
 	len = pf->file_size;
 	blks_needed = 0U;
 
-	while (SLFS_DATABLK_PAYLOAD_SIZE < len) {
+	while (len > SLFS_DATABLK_PAYLOAD_SIZE) {
 		blks_needed++;
-		if (SLFS_DATABLK_PAYLOAD_SIZE < len)
+		if (len > SLFS_DATABLK_PAYLOAD_SIZE)
 			len -= SLFS_DATABLK_PAYLOAD_SIZE;
 		else
 			break;
@@ -356,14 +356,14 @@ static int alloc_datablk(slfs_file_t *pf, uint32_t len)
 	/* TODO: change to use datablk bitmap */
 	for (i = 0; i < SLFS_DATABLK_MAX_CNT; i++) {
 		if (io_ops.read(datablk_addr + SLFS_DATABLK_TAIL_OFF_HI, SLFS_DATABLK_TAIL_SIZE,
-		                datablk_tail))
+				datablk_tail))
 			return -IO_ERR;
 
 		prev_datablk_addr_tail = ((uint32_t *)datablk_tail)[0];
 		next_datablk_addr_tail = ((uint32_t *)datablk_tail)[1];
 
-		if ((MINUS_ONE == prev_datablk_addr_tail) &&
-		    (MINUS_ONE == next_datablk_addr_tail)) {
+		if ((prev_datablk_addr_tail == MINUS_ONE) &&
+		    (next_datablk_addr_tail == MINUS_ONE)) {
 			/* 3. if free datablk found, write the file size and the
 			 * first datablk addr into the inode. this ia an OPEN
 			 * event of COW.
@@ -379,12 +379,10 @@ static int alloc_datablk(slfs_file_t *pf, uint32_t len)
 				pf->datablk_addr = datablk_addr;
 
 				offset = OFFSET_OF(slfs_inode_t, file_size);
-				/* pf->inode_idx should be set before allocating
-				 * the datablks */
+				/* pf->inode_idx should be set before allocating the datablks */
 				addr = SLFS_INODE_TAB_START + (pf->inode_idx * SLFS_INODE_SIZE) +
 				       offset;
-				/* update file_size and datablk_addr in inode,
-				 * OPEN evt */
+				/* update file_size and datablk_addr in inode, OPEN evt */
 				if (io_ops.write(addr, SLFS_DATABLK_TAIL_SIZE, datablk_tail))
 					return -IO_ERR;
 
@@ -443,9 +441,9 @@ static int32_t get_datablk_num(slfs_file_t *pf, uint32_t *pdatablk_num)
 
 	datablk_num = 0;
 	cur_datablk_addr = pf->datablk_addr;
-	while (MINUS_ONE != cur_datablk_addr) {
+	while (cur_datablk_addr != MINUS_ONE) {
 		if (io_ops.read(cur_datablk_addr + SLFS_DATABLK_TAIL_OFF_LOW, sizeof(uint32_t),
-		                (uint8_t *)&cur_datablk_addr))
+				(uint8_t *)&cur_datablk_addr))
 			return -IO_ERR;
 
 		datablk_num++;
@@ -467,13 +465,13 @@ static int32_t get_datablk_addr(slfs_file_t *pf, uint32_t datablk_idx, uint32_t 
 		return -NULL_PTR_ERR;
 
 	/* pf doesn't have any datablk alloced yet */
-	if (MINUS_ONE == pf->datablk_addr)
+	if (pf->datablk_addr == MINUS_ONE)
 		return -NO_DATABLK_ERR;
 
 	cur_datablk_addr = pf->datablk_addr;
-	while ((0U != datablk_idx) && (MINUS_ONE != cur_datablk_addr)) {
+	while ((datablk_idx != 0U) && (cur_datablk_addr != MINUS_ONE)) {
 		if (io_ops.read(cur_datablk_addr + SLFS_DATABLK_TAIL_OFF_LOW, sizeof(uint32_t),
-		                (uint8_t *)&cur_datablk_addr))
+				(uint8_t *)&cur_datablk_addr))
 			return -IO_ERR;
 
 		datablk_idx--;
@@ -497,7 +495,7 @@ static int delete_datablks(slfs_inode_t *pinode)
 
 	datablk_addr = pinode->datablk_addr;
 	/* 1. go to the last datablk */
-	while (MINUS_ONE != datablk_addr) {
+	while (datablk_addr != MINUS_ONE) {
 		cur_datablk_addr = datablk_addr;
 		datablk_addr = *((uint32_t *)(cur_datablk_addr + SLFS_DATABLK_TAIL_OFF_LOW));
 		/* 1-1. compare prev addr of next datablk with current datablk
@@ -521,7 +519,7 @@ static int delete_datablks(slfs_inode_t *pinode)
 			 *      offset address should be used
 			 */
 			pdatablk = (uint32_t *)&page_load_data[cur_datablk_addr -
-			                                       PAGEADDR(cur_datablk_addr)];
+							       PAGEADDR(cur_datablk_addr)];
 			/* 2-3. read prev datablk addr */
 			cur_datablk_addr =
 			    *((uint32_t *)(cur_datablk_addr + SLFS_DATABLK_TAIL_OFF_HI));
@@ -529,7 +527,8 @@ static int delete_datablks(slfs_inode_t *pinode)
 				pdatablk[i] = MINUS_ONE;
 
 			/* 2-4. if prev datablk is still in current page, keep
-			 * staying current loop */
+			 * staying current loop
+			 */
 		} while (cur_page_idx == PAGEIDX(cur_datablk_addr));
 
 		/* 2-5. write back the updated page into storage */
@@ -539,7 +538,7 @@ static int delete_datablks(slfs_inode_t *pinode)
 		/* 2-6. The first datablk's prev points the inode and
 		 *      its value should be less than the datablk start address.
 		 */
-	} while (SLFS_DATABLK_START <= cur_datablk_addr);
+	} while (cur_datablk_addr >= SLFS_DATABLK_START);
 
 	return NO_ERR;
 }
@@ -561,14 +560,13 @@ static int recover_page(uint32_t page_idx)
 	if (ret)
 		return ret;
 
-	/* 3. if data page idx, clean the garbage page section in the metadata
-	 * page */
+	/* 3. if data page idx, clean the garbage page section in the metadata page */
 	if (page_idx != SLFS_METADATA_PAGE_IDX) {
 		if (rw_page(SLFS_METADATA_PAGE_IDX, false))
 			return -IO_ERR;
 		for (i = 0; i < SLFS_GARBAGE_PAGE_TAB_MAX_CNT; i++) {
 			pdata = (uint32_t *)&page_load_data[SLFS_GARBAGE_PAGE_TAB_START +
-			                                    (i * sizeof(uint32_t))];
+							    (i * sizeof(uint32_t))];
 			*pdata = MINUS_ONE;
 		}
 		if (rw_page(SLFS_METADATA_PAGE_IDX, true))
@@ -582,7 +580,7 @@ static int slfs_memcpy(void *pdst, void *psrc, uint32_t len)
 {
 	uint32_t i;
 
-	if ((NULL != psrc) && (NULL != pdst)) {
+	if ((psrc != NULL) && (pdst != NULL)) {
 		for (i = 0; i < len; i++)
 			((uint8_t *)pdst)[i] = ((uint8_t *)psrc)[i];
 
@@ -610,7 +608,7 @@ static int collect_garbage(void)
 	/* 1. collect obsolete inodes */
 	for (i = 0; i < SLFS_INODE_MAX_CNT; i++) {
 		if (io_ops.read(SLFS_INODE_TAB_START + i * SLFS_INODE_SIZE, SLFS_INODE_SIZE,
-		                (uint8_t *)&inode))
+				(uint8_t *)&inode))
 			return -IO_ERR;
 
 		/* 1-1. file_size isn't updated, not OPEN evt for this inode */
@@ -623,8 +621,7 @@ static int collect_garbage(void)
 		 */
 		if (inode.update_cnt == MINUS_ONE)
 			delete_datablks(&inode);
-		/* 1-3. record the deleted file's(file_size, datablk_addr are 0)
-		 * inode */
+		/* 1-3. record the deleted file's(file_size, datablk_addr are 0) inode */
 		else if ((inode.file_size == 0) && (inode.datablk_addr == 0)) {
 			del_file_desc[deleted_fd_idx++] = inode.file_id;
 			del_file_desc[deleted_fd_idx++] = inode.update_cnt;
@@ -642,7 +639,7 @@ static int collect_garbage(void)
 
 		for (j = 0; j < SLFS_INODE_MAX_CNT; j++) {
 			if (!io_ops.read(SLFS_INODE_TAB_START + j * SLFS_INODE_SIZE,
-			                 SLFS_INODE_SIZE, (uint8_t *)&inode))
+					 SLFS_INODE_SIZE, (uint8_t *)&inode))
 				return -IO_ERR;
 
 			/* should check file_id and update_cnt both */
@@ -724,12 +721,11 @@ int slfs_mount(void)
 			return ret;
 	}
 	/* 1-3. check if there is any pending page update from garbage page
-	 * 	table in the metadata. only the last entry is the right page
-	 * 	index that was stopped while being udpated.
+	 *      table in the metadata. only the last entry is the right page
+	 *      index that was stopped while being udpated.
 	 */
 	else {
-		/* load the metadata page into the global page_load_data buffer
-		 */
+		/* load the metadata page into the global page_load_data buffer */
 		if (rw_page(SLFS_METADATA_PAGE_IDX, false))
 			return -IO_ERR;
 
@@ -737,10 +733,10 @@ int slfs_mount(void)
 		for (i = 0; i < SLFS_GARBAGE_PAGE_TAB_MAX_CNT; i++) {
 			offset = SLFS_GARBAGE_PAGE_TAB_START + (i * sizeof(uint32_t));
 			garbage_page_idx = ((uint32_t *)page_load_data)[offset >> 2];
-			if (MINUS_ONE == garbage_page_idx)
+			if (garbage_page_idx == MINUS_ONE)
 				break;
-			else
-				garbage_page_idx_prev = garbage_page_idx;
+
+			garbage_page_idx_prev = garbage_page_idx;
 		}
 		if (garbage_page_idx_prev != 0) {
 			ret = recover_page(garbage_page_idx_prev);
@@ -814,7 +810,7 @@ int slfs_open(const uint8_t *pname, slfs_file_t *pf)
 	inode_last.inode_idx = MINUS_ONE;
 	for (i = 0; i < SLFS_INODE_MAX_CNT; i++) {
 		if (io_ops.read(SLFS_INODE_TAB_START + i * sizeof(inode), sizeof(inode),
-		                (uint8_t *)&inode))
+				(uint8_t *)&inode))
 			return -IO_ERR;
 
 		bfound = false;
@@ -835,7 +831,8 @@ int slfs_open(const uint8_t *pname, slfs_file_t *pf)
 					return ret;
 			} else {
 				/* if current inode is newer than inode_last,
-				 * update inode_last with current */
+				 * update inode_last with current
+				 */
 				if (inode_last.update_cnt < inode.update_cnt) {
 					ret = slfs_memcpy(&inode_last, &inode, sizeof(inode));
 					if (ret)
@@ -857,7 +854,7 @@ int slfs_open(const uint8_t *pname, slfs_file_t *pf)
 		pf->open_cnt++;
 		for (i = 0; i < SLFS_FNAME_LEN; i++) {
 			pf->name[i] = inode_last.name[i];
-			if ('\0' == inode_last.name[i])
+			if (inode_last.name[i] == '\0')
 				break;
 		}
 		pf->update_cnt = inode_last.update_cnt;
@@ -881,7 +878,7 @@ int slfs_open(const uint8_t *pname, slfs_file_t *pf)
 		pf->update_cnt = 0;
 		for (i = 0; i < SLFS_FNAME_LEN; i++) {
 			pf->name[i] = pname[i];
-			if ('\0' == pname[i])
+			if (pname[i] == '\0')
 				break;
 		}
 	}
@@ -904,22 +901,22 @@ int slfs_seek(slfs_file_t *pf, uint32_t offset, slfs_fseek_t whence)
 		pos = offset;
 		if (pos > pf->file_size)
 			return -FILE_PARAM_ERR;
-		else
-			pf->pos = pos;
+
+		pf->pos = pos;
 		break;
 	case SLFS_SEEK_CUR:
 		pos = pf->pos + offset;
 		if (pos > pf->file_size)
 			return -FILE_PARAM_ERR;
-		else
-			pf->pos = pos;
+
+		pf->pos = pos;
 		break;
 	case SLFS_SEEK_END:
 		pos = pf->file_size - offset;
 		if (pos > pf->file_size)
 			return -FILE_PARAM_ERR;
-		else
-			pf->pos = pos;
+
+		pf->pos = pos;
 		break;
 	default:
 		break;
@@ -1010,7 +1007,7 @@ int slfs_write(slfs_file_t *pf, const uint8_t *pbuf, uint32_t bytes_write)
 	/* 4-1. Open evt for fwrite */
 	inode.file_size = pf->file_size;
 	if (io_ops.write((SLFS_INODE_TAB_START + pf->inode_idx * SLFS_INODE_SIZE), SLFS_INODE_SIZE,
-	                 (uint8_t *)&inode))
+			 (uint8_t *)&inode))
 		return -IO_ERR;
 
 	/* 4-2. write other inode info */
@@ -1020,7 +1017,7 @@ int slfs_write(slfs_file_t *pf, const uint8_t *pbuf, uint32_t bytes_write)
 	/* backup the file name */
 	slfs_memcpy(&inode.name, pf->name, SLFS_FNAME_LEN);
 	if (io_ops.write((SLFS_INODE_TAB_START + pf->inode_idx * SLFS_INODE_SIZE), SLFS_INODE_SIZE,
-	                 (uint8_t *)&inode))
+			 (uint8_t *)&inode))
 		return -IO_ERR;
 
 	/* 5. write the buffer data to the flash datablks for the first time */
@@ -1038,15 +1035,16 @@ int slfs_write(slfs_file_t *pf, const uint8_t *pbuf, uint32_t bytes_write)
 			 */
 			if (bytes_write > SLFS_DATABLK_PAYLOAD_SIZE) {
 				if (io_ops.write(datablk_addr, SLFS_DATABLK_PAYLOAD_SIZE,
-				                 (uint8_t *)(&pbuf[buf_pos])))
+						 (uint8_t *)(&pbuf[buf_pos])))
 					return -IO_ERR;
 
 				bytes_write -= SLFS_DATABLK_PAYLOAD_SIZE;
 				buf_pos += SLFS_DATABLK_PAYLOAD_SIZE;
 				/* update the ptr to next datablk in the linked
-				 * list */
+				 * list
+				 */
 				if (io_ops.read(datablk_addr + SLFS_DATABLK_TAIL_OFF_LOW,
-				                sizeof(uint32_t), (uint8_t *)&datablk_addr))
+						sizeof(uint32_t), (uint8_t *)&datablk_addr))
 					return -IO_ERR;
 			}
 			/* 5-3. if current data size is less than one datablk
@@ -1055,7 +1053,7 @@ int slfs_write(slfs_file_t *pf, const uint8_t *pbuf, uint32_t bytes_write)
 			 */
 			else {
 				if (io_ops.write(datablk_addr, bytes_write,
-				                 (uint8_t *)(&pbuf[buf_pos])))
+						 (uint8_t *)(&pbuf[buf_pos])))
 					return -IO_ERR;
 
 				datablk_addr += bytes_write;
@@ -1064,21 +1062,20 @@ int slfs_write(slfs_file_t *pf, const uint8_t *pbuf, uint32_t bytes_write)
 			}
 		}
 	}
-	/* 6. if file_size is not 0, update (append, modify) the prev inode with
-	   file's fseek */
+	/* 6. if file_size is not 0, update (append, modify) the prev inode with file's fseek */
 	else {
 		datablk_addr = pf->datablk_addr;
 		pos = pf->pos;
 		bytes_written = 0;
 		/* 6-1. copy all datablks from previous inode datablk.
 		 *      while copying, update the new contents if it falls
-		 *      into datablk currently being copied (update file
-		 * content)
+		 *      into datablk currently being copied (update file content)
 		 */
 		buf_pos = 0;
 		for (i = 0; i < allocedblk_num_prev; i++) {
 			/* 6-1-1. copy prev file datablk content to data buf
-			 * except datablk tail data */
+			 * except datablk tail data
+			 */
 			if (io_ops.read(datablk_addr_prev, SLFS_DATABLK_PAYLOAD_SIZE, data_buf))
 				return -IO_ERR;
 
@@ -1099,7 +1096,8 @@ int slfs_write(slfs_file_t *pf, const uint8_t *pbuf, uint32_t bytes_write)
 						data_buf[j] = 0xFF;
 				}
 				/* reset pos to the start of datablk for the
-				 * next writing */
+				 * next writing
+				 */
 				pos = 0;
 				/* update the write buf_pos with written len */
 				buf_pos += len;
@@ -1121,7 +1119,7 @@ int slfs_write(slfs_file_t *pf, const uint8_t *pbuf, uint32_t bytes_write)
 			datablk_addr_prev =
 			    *((uint32_t *)(datablk_addr_prev + SLFS_DATABLK_TAIL_OFF_LOW));
 			if (io_ops.read(datablk_addr + SLFS_DATABLK_TAIL_OFF_LOW, sizeof(uint32_t),
-			                (uint8_t *)&datablk_addr))
+					(uint8_t *)&datablk_addr))
 				return -IO_ERR;
 		}
 		/* 6-2. if there are still bytes to be written (file append) */
@@ -1136,15 +1134,15 @@ int slfs_write(slfs_file_t *pf, const uint8_t *pbuf, uint32_t bytes_write)
 				}
 
 				if (io_ops.write(
-				        datablk_addr, len,
-				        &pbuf[bytes_written + (i * SLFS_DATABLK_PAYLOAD_SIZE)]))
+					datablk_addr, len,
+					&pbuf[bytes_written + (i * SLFS_DATABLK_PAYLOAD_SIZE)]))
 					return -IO_ERR;
 
 				if (bytes_write == 0)
 					break;
 
 				if (io_ops.read(datablk_addr + SLFS_DATABLK_TAIL_OFF_LOW,
-				                sizeof(uint32_t), (uint8_t *)&datablk_addr))
+						sizeof(uint32_t), (uint8_t *)&datablk_addr))
 					return -IO_ERR;
 
 				bytes_written += len;
@@ -1156,8 +1154,8 @@ int slfs_write(slfs_file_t *pf, const uint8_t *pbuf, uint32_t bytes_write)
 	 *    this is the record of CLOSE event of COW
 	 */
 	if (io_ops.write(SLFS_INODE_TAB_START + pf->inode_idx * SLFS_INODE_SIZE +
-	                     OFFSET_OF(slfs_inode_t, update_cnt),
-	                 sizeof(uint32_t), (uint8_t *)&(pf->update_cnt)))
+			     OFFSET_OF(slfs_inode_t, update_cnt),
+			 sizeof(uint32_t), (uint8_t *)&(pf->update_cnt)))
 		return -IO_ERR;
 
 	return NO_ERR;
@@ -1210,7 +1208,7 @@ int slfs_read(slfs_file_t *pf, uint8_t *pbuf, uint32_t bytes_read)
 	/* 3. read remaing data from next datablks */
 	while (bytes_read > 0) {
 		if (io_ops.read(datablk_addr + SLFS_DATABLK_TAIL_OFF_LOW, sizeof(uint32_t),
-		                (uint8_t *)&datablk_addr))
+				(uint8_t *)&datablk_addr))
 			return -IO_ERR;
 		len = bytes_read;
 		if (len >= SLFS_DATABLK_PAYLOAD_SIZE)
@@ -1232,7 +1230,7 @@ int slfs_delete(slfs_file_t *pf)
 
 	/* 1. load current inode_idx to inode */
 	if (io_ops.read(SLFS_INODE_TAB_START + (pf->inode_idx * SLFS_INODE_SIZE), SLFS_INODE_SIZE,
-	                (uint8_t *)&inode))
+			(uint8_t *)&inode))
 		return -IO_ERR;
 
 	/* 2. update pf with new inode from inode table */
@@ -1260,7 +1258,7 @@ int slfs_delete(slfs_file_t *pf)
 	inode.datablk_addr = 0;
 
 	if (io_ops.write(SLFS_INODE_TAB_START + pf->inode_idx * SLFS_INODE_SIZE, SLFS_INODE_SIZE,
-	                 (uint8_t *)&inode))
+			 (uint8_t *)&inode))
 		return -IO_ERR;
 
 	return NO_ERR;
@@ -1278,7 +1276,7 @@ int slfs_get_next_file(slfs_file_t *pf, uint32_t *pinode_loc)
 	/* 1. gather the deleted file's file_id */
 	for (i = 0, j = 0; i < SLFS_INODE_MAX_CNT; i++) {
 		if (io_ops.read(SLFS_INODE_TAB_START + (SLFS_INODE_SIZE * i), SLFS_INODE_SIZE,
-		                (uint8_t *)&inode))
+				(uint8_t *)&inode))
 			return -IO_ERR;
 		/* record the deleted file's file_id from inode */
 		if ((inode.file_size == 0) && (inode.datablk_addr == 0))
@@ -1291,14 +1289,13 @@ int slfs_get_next_file(slfs_file_t *pf, uint32_t *pinode_loc)
 	 */
 	for (i = *pinode_loc; i < SLFS_INODE_MAX_CNT; i++) {
 		if (io_ops.read(SLFS_INODE_TAB_START + (SLFS_INODE_SIZE * i), SLFS_INODE_SIZE,
-		                (uint8_t *)&inode))
+				(uint8_t *)&inode))
 			return -IO_ERR;
 
 		if ((inode.inode_idx != MINUS_ONE) && (inode.update_cnt != MINUS_ONE)) {
 			for (j = 0; j < SLFS_INODE_MAX_CNT; j++) {
 				file_id = del_file_desc[j];
-				/* found 's inode that isn't from deleted file
-				 */
+				/* found 's inode that isn't from deleted file */
 				if (file_id != inode.file_id) {
 					*pinode_loc = i;
 					bfound = true;

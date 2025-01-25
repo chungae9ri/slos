@@ -11,7 +11,7 @@ static struct lfs_config cfg;
 static lfs_t lfs;
 
 static int lfs_api_read(const struct lfs_config *c, lfs_block_t block, lfs_off_t off, void *buffer,
-                        lfs_size_t size)
+			lfs_size_t size)
 {
 	size_t offset = block * c->block_size + off;
 
@@ -19,7 +19,7 @@ static int lfs_api_read(const struct lfs_config *c, lfs_block_t block, lfs_off_t
 }
 
 static int lfs_api_prog(const struct lfs_config *c, lfs_block_t block, lfs_off_t off,
-                        const void *buffer, lfs_size_t size)
+			const void *buffer, lfs_size_t size)
 {
 	size_t offset = block * c->block_size + off;
 
