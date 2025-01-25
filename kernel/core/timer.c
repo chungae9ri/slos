@@ -17,8 +17,8 @@
 #include <percpu.h>
 #include <waitq.h>
 #include <runq.h>
+#include <ops.h>
 
-extern uint32_t smp_processor_id();
 static uint32_t ticks_per_sec;
 
 static void delay(uint32_t ticks)
@@ -39,10 +39,10 @@ static void delay(uint32_t ticks)
 	if (this_current->yield_task->state == TASK_WAITING)
 		this_current->yield_task = this_idle_task;
 
-	yield();
+	yieldyi();
 }
 
-void msleep(unsigned msecs)
+void mdelay(uint32_t msecs)
 {
 	uint64_t ticks;
 	/* divide by 1024 */
@@ -50,7 +50,7 @@ void msleep(unsigned msecs)
 	delay(ticks);
 }
 
-void usleep(unsigned usecs)
+void udelay(uint32_t usecs)
 {
 	uint64_t ticks;
 	/* divide by 1024 * 1024 */
@@ -58,7 +58,7 @@ void usleep(unsigned usecs)
 	delay(ticks);
 }
 
-inline uint32_t get_timer_freq()
+inline uint32_t get_timer_freq(void)
 {
 	return (XPAR_CPU_CORTEXA9_0_CPU_CLK_FREQ_HZ >> 1);
 }
@@ -83,15 +83,16 @@ void timer_enable(void)
 void timer_enable_secondary(void)
 {
 	uint32_t ctrl;
-	/* init timer */
-	*(volatile uint32_t *)(PRIV_TMR_LD) = 1000000;
+
+	/* Init timer */
+	*(uint32_t *)(PRIV_TMR_LD) = 1000000;
 	gic_enable_interrupt(PRIV_TMR_INT_VEC);
 
-	/* enable timer */
-	ctrl = *(volatile uint32_t *)(PRIV_TMR_CTRL);
+	/* Enable timer */
+	ctrl = *(uint32_t *)(PRIV_TMR_CTRL);
 	ctrl = ctrl | (PRIV_TMR_EN_MASK | PRIV_TMR_AUTO_RE_MASK | PRIV_TMR_IRQ_EN_MASK);
 
-	*(volatile uint32_t *)(PRIV_TMR_CTRL) = ctrl;
+	*(uint32_t *)(PRIV_TMR_CTRL) = ctrl;
 }
 
 void timer_disable(void)
@@ -104,7 +105,7 @@ void timer_disable(void)
 	write32(PRIV_TMR_CTRL, ctrl);
 }
 
-int timer_irq(void *arg)
+int32_t timer_irq(void *arg)
 {
 	uint32_t elapsed = 0;
 	uint32_t tc = 0;
@@ -112,6 +113,7 @@ int timer_irq(void *arg)
 	struct task_struct *this_current = NULL;
 	struct timer_struct *this_sched_timer = NULL;
 	struct timer_root *this_ptroot;
+
 #if _ENABLE_SMP_
 	this_current = (struct task_struct *)__get_cpu_var(current);
 	this_sched_timer = (struct timer_struct *)__get_cpu_var(sched_timer);
@@ -122,14 +124,14 @@ int timer_irq(void *arg)
 	this_ptroot = ptroot;
 #endif
 
-	// read banked PRIV_TMR_LD register.
+	/* Read banked PRIV_TMR_LD register. */
 	elapsed = (uint32_t)(read32(PRIV_TMR_LD));
 
 	pct = container_of(this_ptroot->rb_leftmost, struct timer_struct, run_node);
 	update_timer_tree(elapsed);
 	pnt = container_of(this_ptroot->rb_leftmost, struct timer_struct, run_node);
 	tc = pnt->tc;
-	/* reprogram next earliest deadline timer intr. */
+	/* Reprogram next earliest deadline timer intr. */
 	write32(PRIV_TMR_LD, tc);
 
 	update_current(elapsed);
@@ -138,7 +140,7 @@ int timer_irq(void *arg)
 	case SCHED_TIMER:
 		/* cfs task doesn't preempt rt task.
 		 * Let's wait until rt task complete its
-		 * task and yield().
+		 * task and yieldyi().
 		 */
 		if (this_current->type == RT_TASK)
 			break;
@@ -153,7 +155,7 @@ int timer_irq(void *arg)
 			if (this_current->type == RT_TASK)
 				this_current->preempted = 1;
 
-			/* oneshot, realtime timer task should
+			/* Oneshot, realtime timer task should
 			 * be switched everytime.
 			 */
 			switch_context(this_current, pct->pt);
@@ -169,13 +171,13 @@ int timer_irq(void *arg)
 			if (pct->pt->state == TASK_WAITING) {
 				enqueue_se_to_runq(&pct->pt->se);
 			}
-			/* remove oneshot timer from timer tree */
+			/* Remove oneshot timer from timer tree */
 			del_timer(this_ptroot, pct);
 		} else if (!this_current->done && !this_current->preempted)
-			/* missed the deadline
+			/* Missed the deadline
 			 * when another timer intr
 			 * fires before rt task done and next
-			 * periodic timer. missed its deadline.
+			 * periodic timer. Missed its deadline.
 			 */
 			this_current->missed_cnt++;
 
@@ -217,7 +219,7 @@ void init_timer(void)
 	tc = pct->tc;
 	write32(PRIV_TMR_LD, tc);
 
-	/* register timer isr for each corresponding cpu in
+	/* Register timer isr for each corresponding cpu in
 	 * the gic_register_int_handler()
 	 */
 	gic_register_int_handler(PRIV_TMR_INT_VEC, timer_irq, NULL);
@@ -232,7 +234,7 @@ void init_timer(void)
 #include <timer.h>
 #include <gic_v2.h>
 
-int timer_irq(void *arg)
+int32_t timer_irq(void *arg)
 {
 	return 0;
 }

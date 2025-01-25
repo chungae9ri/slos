@@ -17,3 +17,6 @@ genesis/genesis
 *code-workspace
 build/
 doc/out
+checkpatch.pl
+kernel/ramdisk
+kernel/.config

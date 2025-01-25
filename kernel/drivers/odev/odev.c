@@ -23,26 +23,26 @@
  * be the same. When modify this, it also should be changed
  * in the odev slave module's sig_seq_addr in multiple place.
  */
-#define O_STREAM_START    0x18000000
+#define O_STREAM_START	  0x18000000
 #define O_STREAM_BURST_SZ 0x00000040 /* 64B */
-#define O_STREAM_STEP     0x00000100 /* 256B */
-#define O_STREAM_WRAP     0x00001000 /* 4096 */
+#define O_STREAM_STEP	  0x00000100 /* 256B */
+#define O_STREAM_WRAP	  0x00001000 /* 4096 */
 
 /* register offset */
-#define REG_CTRL_OFFSET    0x0
+#define REG_CTRL_OFFSET	   0x0
 #define REG_STATUS_OFFSET  0x4
-#define REG_ADDR_OFFSET    0x8
-#define REG_LEN_OFFSET     0xc
+#define REG_ADDR_OFFSET	   0x8
+#define REG_LEN_OFFSET	   0xc
 #define REG_LATENCY_OFFSET 0x10
 /* bit masks */
-#define BM_GBL_START       (0x1)
-#define BM_INTR_DONE       (0x1 << 1)
-#define BM_IN_TRANS        (0x1 << 2)
+#define BM_GBL_START	   (0x1)
+#define BM_INTR_DONE	   (0x1 << 1)
+#define BM_IN_TRANS	   (0x1 << 2)
 #define BM_OSTREAM_START   (0x1 << 3)
 #define BM_CONSUMER_START  (0x1 << 4)
-#define BM_ITAB_UNDER      (0x1)
+#define BM_ITAB_UNDER	   (0x1)
 #define BM_DATA_BUFF_UNDER (0x1 << 1)
-#define BM_ITAB_FULL       (0x1 << 2)
+#define BM_ITAB_FULL	   (0x1 << 2)
 #define BM_TRANSFER_DONE   (0x1 << 3)
 
 #define O_STREAM_TASK_PRI 4
@@ -137,7 +137,7 @@ int32_t put_to_itab(uint32_t sAddr, uint32_t sLen)
 
 extern uint32_t smp_processor_id(void);
 
-int odev_irq(void *arg)
+int32_t odev_irq(void *arg)
 {
 	uint32_t cntl;
 
@@ -218,12 +218,12 @@ uint32_t run_odev_task(void)
 		ret = put_to_itab(O_STREAM_START + O_STREAM_STEP * i, O_STREAM_STEP);
 		if (!ret) {
 			printk("put_to_itab: %d\n", i);
-			msleep(10);
+			mdelay(10);
 			i++;
 
 			i = i % O_STREAM_WRAP;
 		} else if (ret == -ERR_ITAB_FULL) {
-			msleep(100);
+			mdelay(100);
 		} else {
 			printk("put_to_itab error ret=0x%x\n", ret);
 			break;
@@ -240,7 +240,9 @@ uint32_t run_odev_task(void)
 	return NO_ERR;
 }
 
-void create_odev_task(void *arg)
+int32_t create_odev_task(void *arg)
 {
 	create_cfs_task("odev_worker", run_odev_task, O_STREAM_TASK_PRI);
+
+	return 0;
 }

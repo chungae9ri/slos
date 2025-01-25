@@ -1,11 +1,13 @@
-// SPDX-License-Identifier: MIT OR Apache-2.0
-//
-// Copyright (c) 2024 kwangdo.yi<kwangdo.yi@gmail.com>
+/* SPDX-License-Identifier: MIT OR Apache-2.0
+ *
+ * Copyright (c) 2024 kwangdo.yi<kwangdo.yi@gmail.com>
+ */
 
 #ifndef _SCHED_H_
 #define _SCHED_H_
 
 #include <stdint.h>
+
 #include <mem_layout.h>
 #include <defs.h>
 #include <rbtree.h>
@@ -45,9 +47,9 @@ struct task_context_struct {
 	uint32_t lr;
 	uint32_t pc;
 	uint32_t reserved; /* needed to align 8bytes for d0-15 registers */
-	uint64_t d[16];    /* 16 double-precision registers (d0-d15) */
-	uint32_t fpscr;    /* Floating-Point Status and Control Register */
-	uint32_t fpexc;    /* Floating-Point Exception Register */
+	uint64_t d[16];	   /* 16 double-precision registers (d0-d15) */
+	uint32_t fpscr;	   /* Floating-Point Status and Control Register */
+	uint32_t fpexc;	   /* Floating-Point Exception Register */
 };
 
 typedef enum {
@@ -87,13 +89,11 @@ static inline struct task_struct *to_task_from_se(struct sched_entity *s)
 	return ((struct task_struct *)((uint32_t)s - offsetof(struct task_struct, se)));
 }
 
-extern void do_switch_context(struct task_struct *, struct task_struct *);
-extern void switch_context_yield(struct task_struct *, struct task_struct *);
 void init_cfs_scheduler(void);
 struct task_struct *forkyi(char *name, task_entry fn, TASKTYPE type, uint32_t pri);
 void switch_context(struct task_struct *prev, struct task_struct *next);
 void schedule(void);
-void yield(void);
+void yieldyi(void);
 void update_current(uint32_t elapsed);
-void print_task_stat(void *);
+int32_t print_task_stat(void *arg);
 #endif

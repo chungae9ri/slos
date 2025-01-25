@@ -19,6 +19,7 @@
 #include <mailbox.h>
 #include <slfs.h>
 #include <uart.h>
+#include <ops.h>
 #endif
 
 #include <timer.h>
@@ -27,25 +28,22 @@
 #include <uart.h>
 
 #if defined(ARCH_CORTEX_A9)
-extern uint32_t show_stat;
-extern void secondary_reset(void);
-extern void flush_ent_dcache(void);
-extern uint32_t read_scr(void);
 
-#define A9_CPU_RST_CTRL  (0xF8000244)
-#define A9_RST0_MASK     (0x1)
-#define A9_RST1_MASK     (0x2)
+#define A9_CPU_RST_CTRL	 (0xF8000244)
+#define A9_RST0_MASK	 (0x1)
+#define A9_RST1_MASK	 (0x2)
 #define A9_CLKSTOP0_MASK (0x10)
 #define A9_CLKSTOP1_MASK (0x20)
 
 static void cpuidle_secondary(void)
 {
 	uint32_t i = 0;
-	printk("### I am cpuidle_secondary.....\n");
+
+	printk("I am %s", __func__);
 
 	while (1) {
 		if (show_stat) {
-			printk("### cpuidle_secondary is running....\n");
+			printk("%s is running....\n", __func__);
 		}
 
 		/* cpuidle can't go to waitq.
@@ -54,6 +52,7 @@ static void cpuidle_secondary(void)
 		while (i <= 10000) {
 			i++;
 		}
+
 		i = 0;
 	}
 }
@@ -61,18 +60,21 @@ static void cpuidle_secondary(void)
 static void cpuidle(void)
 {
 	uint32_t i = 0;
-	printk("### I am cpuidle.....\n");
+
+	printk("I am %s\n", __func__);
 
 	while (1) {
 		if (show_stat) {
-			printk("### cpuidle is running....\n");
+			printk("%s is running....\n", __func__);
 		}
+
 		/* cpuidle can't go to waitq.
 		 * arch-dependent power saving routine here.
 		 */
 		while (i <= 10000) {
 			i++;
 		}
+
 		i = 0;
 	}
 }
@@ -82,29 +84,30 @@ static void start_cpu1(void)
 {
 	uint32_t i, A9_rst_ctrl;
 
-	A9_rst_ctrl = *(volatile uint32_t *)(A9_CPU_RST_CTRL);
+	A9_rst_ctrl = *(uint32_t *)(A9_CPU_RST_CTRL);
 	A9_rst_ctrl |= (A9_RST1_MASK | A9_CLKSTOP1_MASK); // set clock disable, reset bit for cpu1
-	*(volatile uint32_t *)(A9_CPU_RST_CTRL) = A9_rst_ctrl;
+	*(uint32_t *)(A9_CPU_RST_CTRL) = A9_rst_ctrl;
 
 	/*load [0x8] to r0*/
-	*(volatile uint32_t *)(0x0) = *(uint32_t *)(secondary_reset);
+	*(uint32_t *)(0x0) = *(uint32_t *)(secondary_reset);
 	/* bx to [r0] */
-	*(volatile uint32_t *)(0x4) = *(uint32_t *)(secondary_reset + 4);
-	*(volatile uint32_t *)(0x8) = KERNEL_CODE_BASE;
+	*(uint32_t *)(0x4) = *(uint32_t *)(secondary_reset + 4);
+	*(uint32_t *)(0x8) = KERNEL_CODE_BASE;
 
 	/* flush cache of cpu 0 */
 	flush_ent_dcache();
 
-	/* msleep isn't ready yet */
-	while (i < 1000)
+	/* mdelay isn't ready yet */
+	while (i < 1000) {
 		i++;
+	}
 
 	// release cpu1 reset
 	A9_rst_ctrl &= ~(A9_RST1_MASK);
-	*(volatile uint32_t *)(A9_CPU_RST_CTRL) = A9_rst_ctrl;
+	*(uint32_t *)(A9_CPU_RST_CTRL) = A9_rst_ctrl;
 	// release cpu1 clock
 	A9_rst_ctrl &= ~(A9_CLKSTOP1_MASK);
-	*(volatile uint32_t *)(A9_CPU_RST_CTRL) = A9_rst_ctrl;
+	*(uint32_t *)(A9_CPU_RST_CTRL) = A9_rst_ctrl;
 }
 
 /* Running from CPU 1 */
@@ -114,9 +117,9 @@ int secondary_start_kernel(void)
 	uint32_t scr = 0xFFFFFFFF;
 
 	cpuid = smp_processor_id();
-	printk("### I am cpu %d!\n", cpuid);
+	printk("I am cpu %d!\n", cpuid);
 	scr = read_scr();
-	printk("### cpu %d scr: 0x%x\n", cpuid, scr);
+	printk("cpu %d scr: 0x%x\n", cpuid, scr);
 
 	init_gic_secondary();
 	init_idletask();
@@ -153,10 +156,10 @@ int start_kernel(void)
 
 	cpuid = smp_processor_id();
 	scr = read_scr();
-	printk("### cpu %d scr: 0x%x\n", cpuid, scr);
+	printk("cpu %d scr: 0x%x\n", cpuid, scr);
 
 	init_kernmem(&framepool, &pgt, &kheap);
-	printk("### init_kernmem done.\n");
+	printk("init_kernmem done.\n");
 	init_gic();
 	init_idletask();
 
@@ -176,7 +179,7 @@ int start_kernel(void)
 	create_workq_worker();
 
 #if _ENABLE_SMP_
-	printk("### start secondary cpu.\n");
+	printk("start secondary cpu.\n");
 	start_cpu1();
 #endif
 	timer_enable();
@@ -189,6 +192,7 @@ int start_kernel(void)
 int main(void)
 {
 	uint32_t current_el = 0;
+
 	init_uart();
 	printk("stdio uart initialized");
 
@@ -199,8 +203,9 @@ int main(void)
 	init_gic();
 	init_timer();
 
-	while (1)
+	while (1) {
 		;
+	}
 
 	return 0;
 }

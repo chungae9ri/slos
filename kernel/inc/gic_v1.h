@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: MIT OR Apache-2.0
-//
-// Copyright (c) 2024 kwangdo.yi<kwangdo.yi@gmail.com>
+/* SPDX-License-Identifier: MIT OR Apache-2.0
+ *
+ * Copyright (c) 2024 kwangdo.yi<kwangdo.yi@gmail.com>
+ */
 
 #ifndef _GIC_V1_H_
 #define _GIC_V1_H_
@@ -28,13 +29,13 @@
 #define GIC_ICDICER1_OFFSET 0x1184
 #define GIC_ICDICER2_OFFSET 0x1188
 
-#define NUM_SGI  16
-#define NUM_PPI  16
+#define NUM_SGI	 16
+#define NUM_PPI	 16
 #define SPI_BASE (NUM_PPI + NUM_SGI)
-#define NUM_SPI  64
+#define NUM_SPI	 64
 #define NUM_IRQS (NUM_SGI + NUM_PPI + NUM_SPI)
 
-typedef int (*int_handler)(void *arg);
+typedef int32_t (*int_handler)(void *arg);
 struct ihandler {
 	int_handler func;
 	void *arg;

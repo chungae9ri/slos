@@ -8,6 +8,7 @@
 #include <runq.h>
 #include <printk.h>
 #include <percpu.h>
+#include <ops.h>
 
 extern uint32_t smp_processor_id(void);
 static void init_jiffies(void)
@@ -30,15 +31,16 @@ void init_cfs_scheduler(void)
 #endif
 	cpuid = smp_processor_id();
 
-	if (cpuid == 0)
+	if (cpuid == 0) {
 		set_ticks_per_sec(get_timer_freq());
+	}
 
 	create_sched_timer(this_current, 10, NULL);
 	init_jiffies();
 }
 
 #include <inttypes.h>
-void print_task_stat(void *arg)
+int32_t print_task_stat(void *arg)
 {
 	uint32_t cpuid;
 	struct task_struct *pcur = NULL;
@@ -54,10 +56,11 @@ void print_task_stat(void *arg)
 	printk("**** cpu: %d taskstat ****\n", cpuid);
 	next_lh = &this_first->task;
 	pcur = (struct task_struct *)to_task_from_listhead(next_lh);
-	/*for (i = 0; i < runq->cfs_task_num; i++) {*/
 	do {
-		if (!pcur)
+		if (!pcur) {
 			break;
+		}
+
 		if (pcur->type == CFS_TASK) {
 			printk("cfs task:%s\n", pcur->name);
 			printk("pid: %d\n", pcur->pid);
@@ -76,6 +79,8 @@ void print_task_stat(void *arg)
 		next_lh = next_lh->next;
 		pcur = (struct task_struct *)to_task_from_listhead(next_lh);
 	} while (pcur != this_first);
+
+	return 0;
 }
 
 void schedule(void)
@@ -95,19 +100,19 @@ void schedule(void)
 	se = rb_entry(this_runq->rb_leftmost, struct sched_entity, run_node);
 	next = (struct task_struct *)to_task_from_se(se);
 
-	/* you should not print message in interrupt context.
-	 * print message try to acquire spin lock but if it fails, it spins
+	/* You should not print message in interrupt context.
+	 * Print message try to acquire spin lock but if it fails, it spins
 	 * forever because interrupt is disabled.
 	 */
-	/*if (show_stat && next->pfwhoami) next->pfwhoami();*/
 
 #if _ENABLE_SMP_
 	this_current = __get_cpu_var(current);
 #else
 	this_current = current;
 #endif
-	if (this_current == next)
+	if (this_current == next) {
 		return;
+	}
 
 	switch_context(this_current, next);
 	/*next->yield_task = this_current;*/
@@ -137,14 +142,17 @@ struct task_struct *forkyi(char *name, task_entry fn, TASKTYPE type, uint32_t pr
 
 	/* CFS task priority should be one of 1 2 4 8 16 */
 	if (type == CFS_TASK) {
-		for (i = 0; i < CFS_PRI_NUM; i++)
-			if (pri == (0x1 << i))
+		for (i = 0; i < CFS_PRI_NUM; i++) {
+			if (pri == (0x1 << i)) {
 				break;
+			}
+		}
 
-		if (i == CFS_PRI_NUM)
+		if (i == CFS_PRI_NUM) {
 			return NULL;
-		else
-			pri_div_shift = i;
+		}
+
+		pri_div_shift = i;
 	}
 
 #if _ENABLE_SMP_
@@ -159,10 +167,11 @@ struct task_struct *forkyi(char *name, task_entry fn, TASKTYPE type, uint32_t pr
 	this_current = current;
 #endif
 
-	if (*pthis_task_created_num == MAX_TASK)
+	if (*pthis_task_created_num == MAX_TASK) {
 		return NULL;
+	}
 
-	pt = (struct task_struct *)kmalloc(sizeof(struct task_struct));
+	pt = kmalloc(sizeof(struct task_struct));
 
 	pt->pid = pid++;
 	pt->entry = fn;
@@ -179,7 +188,7 @@ struct task_struct *forkyi(char *name, task_entry fn, TASKTYPE type, uint32_t pr
 		pt->se.pri_div_shift = pri_div_shift;
 		pt->se.priority = pri;
 	}
-	/*pt->se.ticks_vruntime = 0LL;*/
+
 	pt->se.ticks_consumed = 0LL;
 	pt->se.jiffies_vruntime = 0L;
 	pt->se.jiffies_consumed = 0L;
@@ -188,18 +197,18 @@ struct task_struct *forkyi(char *name, task_entry fn, TASKTYPE type, uint32_t pr
 	pt->done = 1;
 	(*pthis_task_created_num)++;
 	cpuid = smp_processor_id();
-	if (cpuid == 0)
+	if (cpuid == 0) {
 		pt->ct.sp = (uint32_t)(SVC_STACK_BASE - TASK_STACK_GAP * (*pthis_task_created_num));
-	else
+	} else {
 		pt->ct.sp =
 		    (uint32_t)(SEC_SVC_STACK_BASE - TASK_STACK_GAP * (*pthis_task_created_num));
+	}
 
 	__asm __volatile("mov %[lr], r14" : [lr] "+r"(lr)::);
 	pt->ct.lr = (uint32_t)lr;
 	pt->ct.pc = (uint32_t)pt->entry;
 
-	/* get the last task from task list and add this task to the end of the
-	 * task list*/
+	/* Get the last task from task list and add this task to the end of the task list */
 	this_last->task.next = &(pt->task);
 	pt->task.prev = &(this_last->task);
 	pt->task.next = &(this_first->task);
@@ -214,11 +223,11 @@ struct task_struct *forkyi(char *name, task_entry fn, TASKTYPE type, uint32_t pr
 }
 
 extern void disable_interrupt(void);
-/* yield() isn't fully thread-safe. yield() is used
- * from RT task and msleep() and ramdomly crashed
+/* yieldyi() isn't fully thread-safe. yieldyi() is used
+ * from RT task and mdelay() and ramdomly crashed
  * when both tasks are running. Fix me
  */
-void yield(void)
+void yieldyi(void)
 {
 	struct task_struct *temp = NULL;
 	struct task_struct *this_current = NULL, *this_idle_task = NULL;
@@ -231,40 +240,38 @@ void yield(void)
 	this_idle_task = idle_task;
 #endif
 
-	/* only cpuidle task has NULL for yield_task.
+	/* Only cpuidle task has NULL for yield_task.
 	 * This is true because cpuidle doesn't yield, rather
 	 * it enters arch-dependent power collapse routines.
 	 */
-	if (!this_current->yield_task)
+	if (!this_current->yield_task) {
 		return;
+	}
 
 	disable_interrupt();
-	/* need to update ticks_consumed of RT task
+
+	/* Need to update ticks_consumed of RT task
 	 * but data abort exception happens. Fix me
 	 */
-#if 0
-	elapsed = get_elapsedtime();
-	update_timer_tree(elapsed);
-	current->se.ticks_consumed += elapsed;
-#endif
-
 	temp = this_current;
 
 #if _ENABLE_SMP_
-	if (this_current->yield_task->state == TASK_RUNNING)
+	if (this_current->yield_task->state == TASK_RUNNING) {
 		__get_cpu_var(current) = this_current->yield_task;
-	else
+	} else {
 		__get_cpu_var(current) = this_idle_task;
+	}
 
 	this_current = __get_cpu_var(current);
-	switch_context_yield(temp, this_current);
+	switch_context_yieldyi(temp, this_current);
 #else
-	if (this_current->yield_task->state == TASK_RUNNING)
+	if (this_current->yield_task->state == TASK_RUNNING) {
 		current = this_current->yield_task;
-	else
+	} else {
 		current = this_idle_task;
+	}
 
-	switch_context_yield(temp, current);
+	switch_context_yieldyi(temp, current);
 #endif
 }
 

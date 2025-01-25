@@ -1,4 +1,6 @@
 kernel/inc/mem_layout.h
+kernel/inc/rbtree.h
+kernel/inc/rbtree_augumented.h
 kernel/core/rbtree.c
 *.S
 genesis

@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: MIT OR Apache-2.0
-//
-// Copyright (c) 2024 kwangdo.yi<kwangdo.yi@gmail.com>
+/* SPDX-License-Identifier: MIT OR Apache-2.0
+ *
+ * Copyright (c) 2024 kwangdo.yi<kwangdo.yi@gmail.com>
+ */
 
 #ifndef _SGI_H_
 #define _SGI_H_
@@ -11,6 +12,6 @@ struct sgi_data {
 	uint32_t cpuid;
 };
 
-int sgi_irq(void *arg);
-void enable_sgi_irq(int vec, int (*)(void *arg));
+int32_t sgi_irq(void *arg);
+void enable_sgi_irq(int vec, int32_t (*)(void *arg));
 #endif

@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: MIT OR Apache-2.0
-//
-// Copyright (c) 2024 kwangdo.yi<kwangdo.yi@gmail.com>
+/* SPDX-License-Identifier: MIT OR Apache-2.0
+ *
+ * Copyright (c) 2024 kwangdo.yi<kwangdo.yi@gmail.com>
+ */
 
 #ifndef _ODEV_H_
 #define _ODEV_H_
@@ -55,7 +56,7 @@ int32_t put_to_itab(uint32_t sAddr, uint32_t sLen);
  * @param arg
  * @return int
  */
-int odev_irq(void *arg);
+int32_t odev_irq(void *arg);
 
 /**
  * @brief Set the consume latency object
@@ -90,5 +91,5 @@ uint32_t run_odev_task(void);
  * @brief Create a odev task object
  *
  */
-void create_odev_task(void *);
+int32_t create_odev_task(void *arg);
 #endif

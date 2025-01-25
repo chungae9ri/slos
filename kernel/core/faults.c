@@ -6,22 +6,22 @@
 #include <page_table.h>
 #include <printk.h>
 
-#define ALIGNMENT_FLT       0x1
+#define ALIGNMENT_FLT	    0x1
 #define BUS_ERR_TRN_LVL1    0xc
 #define BUS_ERR_TRN_LVL2    0xe
 #define TRANSLATION_FLT_SEC 0x5
 #define TRANSLATION_FLT_PG  0x7
-#define DOMAIN_FLT_SEC      0x9
-#define DOMAIN_FLT_PG       0xb
-#define PERM_FLT_SEC        0xd
-#define PERM_FLT_PG         0xf
-#define BUS_ERR_LF_SEC      0x4
-#define BUS_ERR_LF_PG       0x6
-#define BUS_ERR_OTH_SEC     0x8
-#define BUS_ERR_OTH_PG      0xa
+#define DOMAIN_FLT_SEC	    0x9
+#define DOMAIN_FLT_PG	    0xb
+#define PERM_FLT_SEC	    0xd
+#define PERM_FLT_PG	    0xf
+#define BUS_ERR_LF_SEC	    0x4
+#define BUS_ERR_LF_PG	    0x6
+#define BUS_ERR_OTH_SEC	    0x8
+#define BUS_ERR_OTH_PG	    0xa
 
 #define SYS_EXIT  0x0
-#define SYS_CMD   0x1
+#define SYS_CMD	  0x1
 #define SYS_WRITE 0x2
 #define SYS_READ  0x3
 #define SYS_SLEEP 0x4
@@ -29,8 +29,9 @@
 void platform_undefined_handler(void)
 {
 	printk("undefined cmd exception!!\n");
-	for (;;)
+	for (;;) {
 		;
+	}
 }
 
 int platform_syscall_handler(char *msg, int idx, int sys_num)
@@ -68,15 +69,17 @@ int platform_syscall_handler(char *msg, int idx, int sys_num)
 void platform_prefetch_abort_handler(void)
 {
 	printk("prefetch abort exception!!\n");
-	for (;;)
+	for (;;) {
 		;
+	}
 }
 
-void abort()
+void kernel_abort(void)
 {
 	printk("data abort exception!!\n");
-	for (;;)
+	for (;;) {
 		;
+	}
 }
 
 void platform_data_abort_handler(unsigned int dfsr)
@@ -92,6 +95,6 @@ void platform_data_abort_handler(unsigned int dfsr)
 	} else if ((dfsr & TRANSLATION_FLT_SEC) == TRANSLATION_FLT_SEC) {
 		handle_fault();
 	} else {
-		abort();
+		kernel_abort();
 	}
 }

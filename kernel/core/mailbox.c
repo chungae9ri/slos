@@ -4,12 +4,13 @@
 
 #include <stdint.h>
 #include <mailbox.h>
+#include <ops.h>
+#include <defs.h>
 
-__attribute__((__section__(".mailbox"))) struct mailbox_struct mailbox_0;
-__attribute__((__section__(".mailbox"))) struct mailbox_struct mailbox_1;
+__section(".mailbox") struct mailbox_struct mailbox_0;
+__section(".mailbox") struct mailbox_struct mailbox_1;
 
-volatile uint32_t mailbox_lock = 0;
-uint32_t smp_processor_id(void);
+uint32_t mailbox_lock;
 
 void init_mailbox(void)
 {
@@ -24,26 +25,25 @@ void push_mail(enum letter_type letter)
 	uint32_t cpuid;
 	struct mailbox_struct *pmailbox;
 
-	/* get current cpuid and
+	/* Get current cpuid and
 	 * set target cpuid
 	 */
 	cpuid = smp_processor_id();
 	spin_lock_acquire(&mailbox_lock);
+
 	if (cpuid == 0) {
 		pmailbox = &mailbox_1;
 	} else {
 		pmailbox = &mailbox_0;
 	}
 
-	// blocking until the letter is read
+	/* Blocking until the letter is read */
 	while (1) {
 		if (pmailbox->status == READ) {
 			pmailbox->letter = letter;
 			pmailbox->status = NOT_READ;
 			spin_lock_release(&mailbox_lock);
 			break;
-		} else {
-			spin_lock_release(&mailbox_lock);
 		}
 	}
 }
@@ -62,12 +62,13 @@ enum letter_type pull_mail(void)
 
 	spin_lock_acquire(&mailbox_lock);
 	if (pmailbox->status == READ) {
-		spin_lock_release(&mailbox_lock);
-		return EMPTY;
+		letter = EMPTY;
 	} else {
 		letter = pmailbox->letter;
 		pmailbox->status = READ;
-		spin_lock_release(&mailbox_lock);
-		return letter;
 	}
+
+	spin_lock_release(&mailbox_lock);
+
+	return letter;
 }

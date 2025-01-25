@@ -17,8 +17,8 @@ dsb:
 	mcr 	p15, 0, r0, c7, c10, 4
 	mov	pc, lr
 ;
-.global switch_context_yield
-switch_context_yield:
+.global switch_context_yieldyi
+switch_context_yieldyi:
 	mov	r12, r0
 	/* keep current frame ptr (r11).
 	 * r0-r3 will be auto-updated

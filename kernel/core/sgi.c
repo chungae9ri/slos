@@ -10,22 +10,17 @@
 #include <printk.h>
 #include <mailbox.h>
 
-void enable_sgi_irq(int vec, int(sgi_irq_handler)(void *arg))
+void enable_sgi_irq(int vec, int32_t(sgi_irq_handler)(void *arg))
 {
 	gic_register_int_handler(vec, sgi_irq_handler, NULL);
 }
 
-int sgi_irq(void *arg)
+int32_t sgi_irq(void *arg)
 {
-	/* don't enable this message */
-#if 0
-	struct sgi_data *pdat;
-
-	pdat = (struct sgi_data *)arg;
-	printk("sgi intr 0x%x from cpu: 0x%x\n", pdat->num, pdat->cpuid);
-#endif
-
 	enum letter_type letter = pull_mail();
+
+	/* Don't print debug message here */
+
 	switch (letter) {
 	case EMPTY:
 		break;

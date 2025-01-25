@@ -2,6 +2,8 @@
 //
 // Copyright (c) 2024 kwangdo.yi<kwangdo.yi@gmail.com>
 
+#include <stddef.h>
+
 #include <ktimer.h>
 #include <timer.h>
 #include <defs.h>
@@ -12,8 +14,8 @@
 #include <percpu.h>
 
 #define MAX_ONESHOT_TIMER_NUM 32
-#define MIN_TIME_INT          (get_ticks_per_sec() >> 10)
-#define MSEC_MARGIN           (get_ticks_per_sec() >> 10)
+#define MIN_TIME_INT	      (get_ticks_per_sec() >> 10)
+#define MSEC_MARGIN	      (get_ticks_per_sec() >> 10)
 
 static void cfs_scheduler(uint32_t elapsed)
 {
@@ -25,23 +27,27 @@ static void insert_timer(struct timer_root *ptr, struct timer_struct *pts)
 {
 	struct rb_node **link = &ptr->root.rb_node, *parent = NULL;
 	uint64_t value = pts->tc;
-	int leftmost = 1;
+	int32_t leftmost = 1;
+	struct timer_struct *entry;
 
 	/* Go to the bottom of the tree */
 	while (*link) {
 		parent = *link;
-		struct timer_struct *entry = rb_entry(parent, struct timer_struct, run_node);
-		if (entry->tc > value)
+		entry = rb_entry(parent, struct timer_struct, run_node);
+
+		if (entry->tc > value) {
 			link = &(*link)->rb_left;
-		else /* if (entry->tc<= value)*/ {
+		} else /* if (entry->tc<= value)*/ {
 			link = &(*link)->rb_right;
 			leftmost = 0;
 		}
 	}
 	/* Maintain a cache of leftmost tree entries */
 
-	if (leftmost)
+	if (leftmost) {
 		ptr->rb_leftmost = &pts->run_node;
+	}
+
 	/* put the new node there */
 	rb_link_node(&pts->run_node, parent, link);
 	rb_insert_color(&pts->run_node, &ptr->root);
@@ -50,21 +56,21 @@ static void insert_timer(struct timer_root *ptr, struct timer_struct *pts)
 void init_timertree(void)
 {
 	struct timer_root *this_ptroot;
+
 #if _ENABLE_SMP_
-	__get_cpu_var(csd) =
-	    (struct clock_source_device *)kmalloc(sizeof(struct clock_source_device));
-	__get_cpu_var(ptroot) = (struct timer_root *)kmalloc(sizeof(struct timer_root));
+	__get_cpu_var(csd) = kmalloc(sizeof(struct clock_source_device));
+	__get_cpu_var(ptroot) = kmalloc(sizeof(struct timer_root));
 	this_ptroot = (struct timer_root *)__get_cpu_var(ptroot);
 #else
-	csd = (struct clock_source_device *)kmalloc(sizeof(struct clock_source_device));
-	ptroot = (struct timer_root *)kmalloc(sizeof(struct timer_root));
+	csd = kmalloc(sizeof(struct clock_source_device));
+	ptroot = kmalloc(sizeof(struct timer_root));
 	this_ptroot = ptroot;
 #endif
 	this_ptroot->root = RB_ROOT;
 	this_ptroot->rb_leftmost = NULL;
 }
 
-/* need to use 64bit Global Timer */
+/* Need to use 64bit Global Timer */
 void update_csd(void)
 {
 	struct clock_source_device *pthis_csd;
@@ -105,24 +111,26 @@ void update_timer_tree(uint32_t elapsed)
 				 * its work in 1msec
 				 */
 				temp = (pct->tc - elapsed);
-				if (temp < MIN_TIME_INT)
+				if (temp < MIN_TIME_INT) {
 					pct->tc = MIN_TIME_INT;
-				else
+				} else {
 					pct->tc = temp;
+				}
 			}
 		} else {
 			temp = (pct->tc - elapsed);
-			if (temp < MIN_TIME_INT)
+			if (temp < MIN_TIME_INT) {
 				pct->tc = MIN_TIME_INT;
-			else
+			} else {
 				pct->tc = temp;
+			}
 		}
 		pcur = rb_next(pcur);
 	}
 
 	/* Update the location of the left-most node only.
-	   All other nodes are already sorted and
-	   updated only the tc value with elapsed time.
+	 * All other nodes are already sorted and
+	 * updated only the tc value with elapsed time.
 	 */
 	pcur = this_ptroot->rb_leftmost;
 	pct = container_of(pcur, struct timer_struct, run_node);
@@ -133,7 +141,7 @@ void update_timer_tree(uint32_t elapsed)
 void create_rt_timer(struct task_struct *rt_task, uint32_t msec, void *arg)
 {
 	struct timer_root *this_ptroot;
-	struct timer_struct *rt_timer = (struct timer_struct *)kmalloc(sizeof(struct timer_struct));
+	struct timer_struct *rt_timer = kmalloc(sizeof(struct timer_struct));
 
 	rt_timer->pt = rt_task;
 	rt_timer->handler = NULL;
@@ -156,8 +164,7 @@ void init_oneshot_timers(void)
 	uint32_t *pthis_oneshot_timer_idx;
 	struct timer_struct *this_oneshot_timer;
 
-	this_oneshot_timer =
-	    (struct timer_struct *)kmalloc(sizeof(struct timer_struct) * MAX_ONESHOT_TIMER_NUM);
+	this_oneshot_timer = kmalloc(sizeof(struct timer_struct) * MAX_ONESHOT_TIMER_NUM);
 #if _ENABLE_SMP_
 	__get_cpu_var(oneshot_timer) = this_oneshot_timer;
 	pthis_oneshot_timer_idx = (uint32_t *)__get_cpu_var_addr(oneshot_timer_idx);
@@ -206,8 +213,9 @@ void create_oneshot_timer(struct task_struct *oneshot_task, uint32_t tc, void *a
 	insert_timer(this_ptroot, &this_oneshot_timer[*pthis_oneshot_timer_idx]);
 
 	(*pthis_oneshot_timer_idx)++;
-	if (*pthis_oneshot_timer_idx == MAX_ONESHOT_TIMER_NUM)
+	if (*pthis_oneshot_timer_idx == MAX_ONESHOT_TIMER_NUM) {
 		*pthis_oneshot_timer_idx = 0;
+	}
 }
 
 void create_sched_timer(struct task_struct *cfs_sched_task, uint32_t msec, void *arg)
@@ -216,16 +224,17 @@ void create_sched_timer(struct task_struct *cfs_sched_task, uint32_t msec, void 
 	struct timer_root *this_ptroot = NULL;
 
 #if _ENABLE_SMP_
-	__get_cpu_var(sched_timer) = (struct timer_struct *)kmalloc(sizeof(struct timer_struct));
+	__get_cpu_var(sched_timer) = kmalloc(sizeof(struct timer_struct));
 	this_sched_timer = __get_cpu_var(sched_timer);
 	this_ptroot = __get_cpu_var(ptroot);
 #else
-	sched_timer = (struct timer_struct *)kmalloc(sizeof(struct timer_struct));
+	sched_timer = kmalloc(sizeof(struct timer_struct));
 	this_sched_timer = sched_timer;
 	this_ptroot = ptroot;
 #endif
-	if (this_ptroot->root.rb_node == (struct rb_node *)0xffffffff)
+	if (this_ptroot->root.rb_node == (struct rb_node *)0xffffffff) {
 		this_ptroot->root.rb_node = 0;
+	}
 
 	this_sched_timer->pt = cfs_sched_task;
 	this_sched_timer->handler = cfs_scheduler;
@@ -240,8 +249,8 @@ void create_sched_timer(struct task_struct *cfs_sched_task, uint32_t msec, void 
 
 void del_timer(struct timer_root *ptr, struct timer_struct *pts)
 {
-	/* oneshot timer doesn't need to be deleted.
-	 * update rb timer tree only.
+	/* Oneshot timer doesn't need to be deleted.
+	 * Update rb timer tree only.
 	 * Other timers' resource that was kmalloc-ed
 	 * isn't free-ed for now.
 	 */

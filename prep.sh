@@ -1,6 +1,11 @@
 #! /usr/bin/env bash
-change_files=$(git diff --cached --name-only | grep -E '\.(c|h|cpp|hpp)$')
-change_files="${change_files} $(git ls-files -mo --exclude-standard | grep -E '\.(c|h|cpp|hpp)$')"
+if [[ -z "$1" ]]
+then
+    change_files=$(git diff --cached --name-only | grep -E '\.(c|h|cpp|hpp)$')
+    change_files="${change_files} $(git ls-files -mo --exclude-standard | grep -E '\.(c|h|cpp|hpp)$')"
+else
+    change_files="$@"
+fi
 
 if [[ -z "${change_files}" || "${change_files}" =~ ^[[:space:]]*$ ]]
 then
@@ -17,7 +22,11 @@ else
         echo "### run dos2unix for ${f}"
         dos2unix ${f}
         echo "### run checkpatch for\n${f}"
-        ./checkpatch.pl --no-tree --file ${f}
+        ./checkpatch.pl --no-tree --ignore=PRINTK_WITHOUT_KERN_LEVEL \
+                                  --ignore=SPDX_COMMENT_STYLE \
+                                  --ignore=BRACES \
+                                  --ignore=NEW_TYPEDEFS \
+                                  --file ${f}
         echo "---------------------"
     done
 fi
