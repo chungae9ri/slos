@@ -5,8 +5,7 @@
 #include <runq.h>
 #include <percpu.h>
 #include <ops.h>
-
-extern void remove_from_wq(struct task_struct *p);
+#include <waitq.h>
 
 /* from lwn.net/Articles/184495 */
 static void enqueue_se(struct sched_entity *se)
@@ -28,26 +27,17 @@ static void enqueue_se(struct sched_entity *se)
 		parent = *link;
 		struct sched_entity *entry = rb_entry(parent, struct sched_entity, run_node);
 
-		if (entry->jiffies_vruntime >= value)
+		if (entry->jiffies_vruntime >= value) {
 			link = &(*link)->rb_left;
-		else if (entry->jiffies_vruntime < value) {
+		} else if (entry->jiffies_vruntime < value) {
 			link = &(*link)->rb_right;
 			leftmost = 0;
-		} /*else {
-		        if (entry->priority > se->priority)
-		                link = &(*link)->rb_left;
-		        else {
-		                link = &(*link)->rb_right;
-		                leftmost = 0;
-		        }
-		}*/
+		}
 	}
-	/*
-	 * Maintain a cache of leftmost tree entries (it is frequently
-	 * used):
-	 */
-	if (leftmost)
+	/* Maintain a cache of leftmost tree entries (it is frequently used): */
+	if (leftmost) {
 		this_runq->rb_leftmost = &se->run_node;
+	}
 
 	/* Put the new node there */
 	rb_link_node(&se->run_node, parent, link);
@@ -58,13 +48,14 @@ void init_rq(void)
 {
 	struct task_struct *this_idle_task = NULL;
 	struct cfs_rq *this_runq = NULL;
+
 #if _ENABLE_SMP_
 	this_idle_task = __get_cpu_var(idle_task);
-	__get_cpu_var(runq) = (struct cfs_rq *)kmalloc(sizeof(struct cfs_rq));
+	__get_cpu_var(runq) = kmalloc(sizeof(struct cfs_rq));
 	this_runq = __get_cpu_var(runq);
 #else
 	this_idle_task = idle_task;
-	runq = this_runq = (struct cfs_rq *)kmalloc(sizeof(struct cfs_rq));
+	runq = this_runq = kmalloc(sizeof(struct cfs_rq));
 #endif
 	this_runq->root = RB_ROOT;
 	this_runq->priority_sum = 0;
@@ -81,6 +72,7 @@ void init_rq(void)
 void dequeue_se(struct sched_entity *se)
 {
 	struct cfs_rq *this_runq = NULL;
+
 #if _ENABLE_SMP_
 	this_runq = __get_cpu_var(runq);
 #else
@@ -101,6 +93,7 @@ void update_vruntime_runq(struct sched_entity *se)
 	struct cfs_rq *this_runq = NULL;
 	struct sched_entity *cur_se, *se_leftmost;
 	struct rb_node *cur_rb_node;
+
 #if _ENABLE_SMP_
 	this_runq = __get_cpu_var(runq);
 #else
@@ -136,6 +129,7 @@ void enqueue_se_to_runq(struct sched_entity *se)
 	struct task_struct *tp = NULL;
 	struct cfs_rq *this_runq = NULL;
 	uint32_t *this_rqlock = NULL;
+
 #if _ENABLE_SMP_
 	this_runq = __get_cpu_var(runq);
 	this_rqlock = (uint32_t *)__get_cpu_var_addr(rqlock);
@@ -165,24 +159,7 @@ void update_se(uint32_t elapsed)
 	this_runq = runq;
 #endif
 
-/* updating vruntime of current is moved to timer_irq routine */
-#if 0
-	current->se.ticks_consumed += elapsed;
-	current->se.ticks_vruntime = (current->se.ticks_consumed) * (current->se.priority)/runq->priority_sum;
-
-	if (&current->se.run_node == runq->rb_leftmost) {
-		next_node = rb_next(&current->se.run_node);
-		/* if there is only one task in runq, next_node should be NULL */
-		if (!next_node) return;
-	} else {
-		next_node = runq->rb_leftmost;
-	}
-	se = rb_entry(next_node, struct sched_entity, run_node);
-	if (se->ticks_vruntime < current->se.ticks_vruntime) {
-		dequeue_se(&current->se);
-		enqueue_se(runq, &current->se);
-	}
-#else
+	/* Updating vruntime of current is moved to timer_irq routine */
 	cur_se = container_of(this_runq->rb_leftmost, struct sched_entity, run_node);
 	next_node = rb_next(this_runq->rb_leftmost);
 	next_se = container_of(next_node, struct sched_entity, run_node);
@@ -190,5 +167,4 @@ void update_se(uint32_t elapsed)
 		dequeue_se(cur_se);
 		enqueue_se(cur_se);
 	}
-#endif
 }

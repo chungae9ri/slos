@@ -18,7 +18,7 @@
 static struct pagetable *pcurrentpgt;
 
 void init_pageregion(struct pagetable *ppagetable, struct framepool *pframepool,
-                     const unsigned int _shared_size)
+		     const unsigned int _shared_size)
 {
 	ppagetable->paging_enabled = 0;
 	ppagetable->pframepool = pframepool;
@@ -34,14 +34,13 @@ void init_pagetable(struct pagetable *ppagetable, PG_TYPE pagetype)
 	if (pagetype == PG_TABLE_KERN && ppagetable->ppage_dir)
 		return;
 
-	/* page directory is located in process mem pool
+	/* Page directory is located in process mem pool
 	 * 16KB for 4096 entry(16KB = 4K * 4Byte) is needed
 	 */
 	if (pagetype == PG_TABLE_USER) {
-		/* do nothing for now */
+		/* Do nothing for now */
 	} else {
-		/*
-		 * assign prealloced 4 contiguous memory frames
+		/* Assign prealloced 4 contiguous memory frames
 		 * for page_directory : 4K entry
 		 */
 		ppagetable->ppage_dir = (unsigned int *)KERN_PGD_START_BASE;
@@ -53,7 +52,7 @@ void load_pagetable(struct pagetable *ppagetable)
 {
 	unsigned int r0 = 0;
 
-	/* invalidate tlb */
+	/* Invalidate tlb */
 	asm("mcr p15, 0, %0, c8, c7, 0" : : "r"(r0) :);
 	pcurrentpgt = ppagetable;
 }
@@ -65,50 +64,31 @@ void handle_fault(void)
 	unsigned int *pda;
 	unsigned int *pfa;
 	unsigned int *pde, *pte, *frame_addr;
-	/*unsigned int *page_table;*/
-	/*unsigned int *pcur;*/
 
-	/* read DFAR */
+	/* Read DFAR */
 	asm("mrc p15, 0, %0, c6, c0, 0" : "=r"(pfa)::);
-	/* read ttb0 */
+	/* Read ttb0 */
 	asm("mrc p15, 0, %0, c2, c0, 0" : "=r"(pda)::);
-#if 0
-	/* check fault address is in valid VM region */
-	for (i = 0; i < VMcnt; i++) {
-		if(pVMref[i]->is_legitimate((unsigned int)pfa)) break;
-	}
 
-	/* the fault address is not in valid VM region */
-	if(VMcnt != 0 && i == VMcnt) {
-		return;
-	}
-#endif
-	/* entry for 1st level descriptor */
+	/* Entry for 1st level descriptor */
 	pgdIdx = ((unsigned int)pfa & 0xFFF00000) >> 20;
 	pde = (unsigned int *)(((unsigned int)pda) + (pgdIdx << 2));
 
-	/* section fault */
+	/* Section fault */
 	if ((*pde & 0x00000003) == 0x0) {
 		*pde = (KERN_PGT_START_BASE + ((pgdIdx << 8) << 2)) | 0x1E1;
 	}
 
-	/* kernel heap fault only */
+	/* Kernel heap fault only */
 	frameno = get_frame(pcurrentpgt->pframepool);
 	frame_addr = (unsigned int *)FRAMETOPHYADDR(frameno);
 
-	/* entry for 2nd level descriptor */
+	/* Entry for 2nd level descriptor */
 	pgtIdx = ((unsigned int)pfa & 0x000FF000) >> 12;
 	pte = (unsigned int *)(KERN_PGT_START_BASE + ((pgdIdx << 8) << 2) + (pgtIdx << 2));
-	/* set the value of 2nd level descriptor */
+	/* Set the value of 2nd level descriptor */
 	*pte = ((unsigned int)frame_addr | 0x472);
 }
-
-#if 0
-void PageTable::register_vmpool(VMPool *_pool)
-{
-	pVMref[VMcnt++] = _pool;
-}
-#endif
 
 void free_page(unsigned int freedAddr)
 {
@@ -117,17 +97,17 @@ void free_page(unsigned int freedAddr)
 	unsigned int pda, *pte;
 	unsigned int *frame_addr;
 	unsigned int frame_num;
-	/* read ttb */
+	/* Read ttb */
 	asm("mrc p15, 0, %0, c2, c0, 0" : "=r"(pda)::);
-	/* entry for 1st level descriptor */
+	/* Entry for 1st level descriptor */
 	pgdIdx = ((unsigned int)freedAddr & 0xFFF00000) >> 20;
 	/*pde = (unsigned int *)(((unsigned int)pda) + (pgdIdx << 2));*/
 
-	/* entry for 2nd level descriptor */
+	/* Entry for 2nd level descriptor */
 	pgtIdx = ((unsigned int)freedAddr & 0x000FF000) >> 12;
 	pte = (unsigned int *)(KERN_PGT_START_BASE + ((pgdIdx << 8) << 2) + (pgtIdx << 2));
 
-	/* physical address of frame */
+	/* Physical address of frame */
 	frame_addr = (unsigned int *)(*pte);
 	frame_num = (unsigned int)(frame_addr) >> 12;
 
@@ -140,11 +120,8 @@ void free_page(unsigned int freedAddr)
 	}
 
 	*pte = 0x0;
-	/*
-	 * should not clean the 1st level entry
+	/* Should not clean the 1st level entry
+	 * Invalidate tlb
 	 */
-	/**pde = 0x0;*/
-
-	/* invalidate tlb */
 	asm("mcr p15, 0, %0, c8, c7, 0" : : "r"(r0) :);
 }

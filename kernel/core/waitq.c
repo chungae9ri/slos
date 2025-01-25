@@ -12,11 +12,12 @@
 void init_wq(void)
 {
 	struct wait_queue *this_wq;
+
 #if _ENABLE_SMP_
-	__get_cpu_var(wq) = (struct wait_queue *)kmalloc(sizeof(struct wait_queue));
+	__get_cpu_var(wq) = kmalloc(sizeof(struct wait_queue));
 	this_wq = __get_cpu_var(wq);
 #else
-	this_wq = wq = (struct wait_queue *)kmalloc(sizeof(struct wait_queue));
+	this_wq = wq = kmalloc(sizeof(struct wait_queue));
 #endif
 	this_wq->wqlock = 0;
 	this_wq->magic = 1;
@@ -29,13 +30,15 @@ void wake_all_wq(void)
 {
 	struct list_head *cur, *next;
 	struct wait_queue *this_wq;
+
 #if _ENABLE_SMP_
 	this_wq = __get_cpu_var(wq);
 #else
 	this_wq = wq;
 #endif
-	if (!this_wq)
+	if (!this_wq) {
 		return;
+	}
 
 	cur = this_wq->task_list.next;
 	while (cur) {
@@ -50,13 +53,15 @@ void wake_all_wq(void)
 void destroy_wq(void)
 {
 	struct wait_queue *this_wq;
+
 #if _ENABLE_SMP_
 	this_wq = __get_cpu_var(wq);
 #else
 	this_wq = wq;
 #endif
-	if (!this_wq)
+	if (!this_wq) {
 		return;
+	}
 
 	wake_all_wq();
 	this_wq->magic = 0;
@@ -73,8 +78,9 @@ void add_to_wq(struct task_struct *p)
 	this_wq = wq;
 #endif
 
-	if (!this_wq)
+	if (!this_wq) {
 		return;
+	}
 
 	temp_p = this_wq->task_list.next;
 
@@ -99,8 +105,9 @@ void remove_from_wq(struct task_struct *p)
 	this_wq = wq;
 #endif
 
-	if (!this_wq)
+	if (!this_wq) {
 		return;
+	}
 
 	spin_lock_acquire(&this_wq->wqlock);
 	cur_p = this_wq->task_list.next;
@@ -115,9 +122,9 @@ void remove_from_wq(struct task_struct *p)
 			pt->waitlist.next = NULL;
 			this_wq->count--;
 			break;
-		} else {
-			cur_p = cur_p->next;
 		}
+
+		cur_p = cur_p->next;
 	}
 	spin_lock_release(&this_wq->wqlock);
 }
@@ -150,8 +157,9 @@ void dequeue_se_to_wq(struct sched_entity *se)
 	this_runq = runq;
 	this_rqlock = &rqlock;
 #endif
-	if (!this_runq)
+	if (!this_runq) {
 		return;
+	}
 
 	tp = container_of(se, struct task_struct, se);
 	this_runq->priority_sum -= se->priority;
@@ -169,6 +177,7 @@ void dequeue_se_to_exit(struct sched_entity *se)
 	struct task_struct *tp;
 	struct cfs_rq *this_runq;
 	uint32_t *this_rqlock = NULL;
+
 #if _ENABLE_SMP_
 	this_runq = __get_cpu_var(runq);
 	this_rqlock = (uint32_t *)__get_cpu_var_addr(rqlock);
@@ -176,8 +185,9 @@ void dequeue_se_to_exit(struct sched_entity *se)
 	this_runq = runq;
 	this_rqlock = &rqlock;
 #endif
-	if (!this_runq)
+	if (!this_runq) {
 		return;
+	}
 
 	tp = container_of(se, struct task_struct, se);
 	if (tp->state == TASK_RUNNING || tp->state == TASK_STOP_RUNNING) {

@@ -23,23 +23,24 @@ DEFINE_PER_CPU(struct clock_source_device *, csd);
 DEFINE_PER_CPU(struct wait_queue *, wq);
 DEFINE_PER_CPU(struct worker *, qworker);
 DEFINE_PER_CPU(struct timer_struct *, oneshot_timer);
-DEFINE_PER_CPU(volatile uint32_t, rqlock);
+DEFINE_PER_CPU(uint32_t, rqlock);
 DEFINE_PER_CPU(uint32_t, oneshot_timer_idx);
 #else
 struct task_struct *idle_task;
-struct task_struct *current = NULL;
-struct task_struct *last = NULL;
-struct task_struct *first = NULL;
-uint32_t task_created_num = 1; /* cpuidle task is not created by forkyi. it is
-                                  already made from start */
-struct cfs_rq *runq = NULL;
+struct task_struct *current;
+struct task_struct *last;
+struct task_struct *first;
+/** cpuidle task is not created by forkyi. it is already made from start */
+uint32_t task_created_num = 1;
+struct cfs_rq *runq;
 uint32_t jiffies;
-struct timer_struct *sched_timer = NULL;
-struct timer_root *ptroot = NULL;
-struct clock_source_device *csd = NULL;
-struct wait_queue *wq = NULL;
-struct worker *qworker = NULL;
-struct timer_struct *oneshot_timer = NULL;
-volatile uint32_t rqlock = 0;
-uint32_t oneshot_timer_idx = 0;
+struct timer_struct *sched_timer;
+struct timer_root *ptroot;
+struct clock_source_device *csd;
+struct wait_queue *wq;
+struct worker *qworker;
+struct timer_struct *oneshot_timer;
+uint32_t rqlock;
+uint32_t oneshot_timer_idx;
+
 #endif
