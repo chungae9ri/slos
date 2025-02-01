@@ -1,0 +1,28 @@
+/**
+ * @defgroup kernel Kernel for SLOS
+ * @brief Kernel modlues
+ */
+
+ /**
+  * @defgroup kernel_arch Arch modules
+  * @ingroup kernel
+  * @brief Arch modules
+  */
+
+ /**
+  * @defgroup kernel_drivers Drivers modules
+  * @ingroup kernel
+  * @brief Drivers modules
+  */
+
+ /**
+  * @defgroup kernel_fs File system modules
+  * @ingroup kernel
+  * @brief File system modules
+  */
+
+ /**
+  * @defgroup kernel_libs Library modules
+  * @ingroup kernel
+  * @brief Library modules
+  */

@@ -3,12 +3,19 @@
 # General configuration
 PROJECT_NAME           = "SLOS (Simple and Light OS)"           # Name of your project
 PROJECT_NUMBER         = "0.9"                 # Version number
-#PROJECT_BRIEF          = "SLOS has basic OS features"
+# PROJECT_BRIEF          = "SLOS has basic OS features"
+#LAYOUT_FILE            = doc/doxy_layout.xml
+DISABLE_INDEX = YES
+GENERATE_TREEVIEW = YES
+#FULL_SIDEBAR = NO
+LAYOUT_FILE            = doc/slos_layout.xml
 OUTPUT_DIRECTORY       = doc/out                  # Directory where documentation is generated
-INPUT                  = README.md kernel/ apps/ libslos/ mkfs/ # Directories containing source files
-FILE_PATTERNS          = *.c *.cpp *.h *.hpp   # Files to parse
+INPUT                  = doc/mainpage.dox genesis/genesis.dox genesis_mp/genesis_mp.dox kernel/ apps/ libslos/ mkfs/ # Directories containing source files
+FILE_PATTERNS          = *.dox *.c *.cpp *.h *.hpp   # Files to parse
 RECURSIVE              = YES                   # Search subdirectories recursively
-EXCLUDE                = genesis genesis_mp kernel/inc/rbtree.h kernel/core/retree.c
+EXCLUDE                = kernel/inc/rbtree.h \
+                         kernel/core/retree.c \
+                         kernel/inc/elf*.h
 
 # Build configuration
 EXTRACT_ALL            = YES                   # Extract documentation even without comments
@@ -45,4 +52,8 @@ CALL_GRAPH             = YES                   # Generate call graphs
 CALLER_GRAPH           = YES                   # Generate caller graphs
 
 # Examples and documentation
-USE_MDFILE_AS_MAINPAGE = README.md             # Use README.md as the main page
+#USE_MDFILE_AS_MAINPAGE = README.md             # Use README.md as the main page
+EXTRACT_ALL              = YES
+#EXTRACT_GROUPS           = YES
+# MARKDOWN_SUPPORT = YES
+#EXAMPLE_PATH = .
