@@ -4,9 +4,45 @@
  */
 
  /**
-  * @defgroup kernel_arch Arch modules
+  * @defgroup kernel_arch Arch
   * @ingroup kernel
   * @brief Arch modules
+  */
+
+/**
+  * @defgroup kernel_arch_ca9 Cortex-A9
+  * @ingroup kernel_arch
+  * @brief Cortex-A9 architecture dependent implementations
+  */
+
+/**
+  * @defgroup kernel_arch_ca53 Cortex-A53
+  * @ingroup kernel_arch
+  * @brief Cortex-A53 architecture dependent implementations
+  */
+
+ /**
+  * @defgroup kernel_core Core
+  * @ingroup kernel
+  * @brief Core modules implementations
+  */
+
+ /**
+  * @defgroup kernel_core_proc Process management
+  * @ingroup kernel_core
+  * @brief Kernel process management
+  */
+
+ /**
+  * @defgroup kernel_core_mm Memory management
+  * @ingroup kernel_core
+  * @brief Kernel memory management
+  */
+
+/**
+  * @defgroup kernel_core_misc Miscellaneous
+  * @ingroup kernel_core
+  * @brief Miscellaneous
   */
 
  /**
@@ -16,9 +52,45 @@
   */
 
  /**
+  * @defgroup kernel_drivers_dma DMA modules
+  * @ingroup kernel_drivers
+  * @brief DMA driver implementations
+  */
+
+ /**
+  * @defgroup kernel_drivers_odev ODEV modules
+  * @ingroup kernel_drivers
+  * @brief Outstream driver implementations
+  */
+
+ /**
+  * @defgroup kernel_drivers_rd Ramdisk modules
+  * @ingroup kernel_drivers
+  * @brief Ramdisk driver implementations
+  */
+
+ /**
+  * @defgroup kernel_drivers_uart Uart modules
+  * @ingroup kernel_drivers
+  * @brief Uart driver implementations
+  */
+
+ /**
   * @defgroup kernel_fs File system modules
   * @ingroup kernel
   * @brief File system modules
+  */
+
+ /**
+  * @defgroup kernel_fs_littlefs Littlefs modules
+  * @ingroup kernel_fs
+  * @brief Littlefs file system modules
+  */
+
+ /**
+  * @defgroup kernel_fs_slfs SLFS file system modules
+  * @ingroup kernel_fs
+  * @brief SLFS file system modules
   */
 
  /**

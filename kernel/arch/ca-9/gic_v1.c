@@ -1,3 +1,15 @@
+/**
+ * @addtogroup kernel 
+ * @{
+ * @addtogroup kernel_arch Arch
+ * @{
+ * @addtogroup kernel_arch_a9 Cortex-A9 implementation
+ * @{
+ * 
+ * @brief abc
+ * 
+ */
+
 // SPDX-License-Identifier: MIT OR Apache-2.0
 //
 // Copyright (c) 2024 kwangdo.yi<kwangdo.yi@gmail.com>
@@ -238,3 +250,9 @@ void gic_register_int_handler(int vec, int_handler func, void *arg)
 	handler[cpuid][vec].func = func;
 	handler[cpuid][vec].arg = arg;
 }
+
+/**
+ * @}
+ * @}
+ * @}
+ */

@@ -4,7 +4,6 @@
 PROJECT_NAME           = "SLOS (Simple and Light OS)"           # Name of your project
 PROJECT_NUMBER         = "0.9"                 # Version number
 # PROJECT_BRIEF          = "SLOS has basic OS features"
-#LAYOUT_FILE            = doc/doxy_layout.xml
 DISABLE_INDEX = YES
 GENERATE_TREEVIEW = YES
 #FULL_SIDEBAR = NO
@@ -47,13 +46,17 @@ SKIP_FUNCTION_MACROS   = YES                   # Skip macros defined as function
 # Class hierarchy and diagrams
 HAVE_DOT               = YES                   # Enable diagrams using Graphviz
 DOT_PATH               = /usr/bin/dot          # Path to Graphviz's dot
-CLASS_DIAGRAMS         = YES                   # Generate class diagrams
 CALL_GRAPH             = YES                   # Generate call graphs
 CALLER_GRAPH           = YES                   # Generate caller graphs
 
 # Examples and documentation
 #USE_MDFILE_AS_MAINPAGE = README.md             # Use README.md as the main page
-EXTRACT_ALL              = YES
-#EXTRACT_GROUPS           = YES
 # MARKDOWN_SUPPORT = YES
 #EXAMPLE_PATH = .
+#DISTRIBUTED_GROUP_DOC   = NO
+GROUP_NESTED_COMPOUNDS  = YES
+SUBGROUPING             = YES
+#INLINE_GROUPED_CLASS    = NO
+SHOW_GROUPED_MEMB_INC   = NO
+EXTERNAL_GROUPS         = YES
+PREDEFINED              = ARCH_CORTEX_A9 LITTLEFS _ENABLE_SMP_

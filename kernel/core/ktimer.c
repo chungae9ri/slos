@@ -1,3 +1,17 @@
+/**
+ * @addtogroup kernel 
+ * @{
+ * @addtogroup kernel_core Core
+ * @{
+ * @addtogroup kernel_core_proc Process management
+ * @{
+ * 
+ * @file ktimer.c
+ * 
+ * @brief Kernel timer module
+ * 
+ */
+
 // SPDX-License-Identifier: MIT OR Apache-2.0
 //
 // Copyright (c) 2024 kwangdo.yi<kwangdo.yi@gmail.com>
@@ -263,3 +277,9 @@ void del_timer(struct timer_root *ptr, struct timer_struct *pts)
 
 	rb_erase(&pts->run_node, &ptr->root);
 }
+
+/**
+ * @}
+ * @}
+ * @}
+ */

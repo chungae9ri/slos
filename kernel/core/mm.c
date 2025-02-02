@@ -1,3 +1,17 @@
+/**
+ * @addtogroup kernel 
+ * @{
+ * @addtogroup kernel_core Core
+ * @{
+ * @addtogroup kernel_core_mm Memory management
+ * @{
+ * 
+ * @file mm.c
+ * 
+ * @brief Kernel memory management module
+ * 
+ */
+
 // SPDX-License-Identifier: MIT OR Apache-2.0
 //
 // Copyright (c) 2024 kwangdo.yi<kwangdo.yi@gmail.com>
@@ -12,6 +26,10 @@
 struct vmpool *pvm_kernel;
 struct vmpool *pvm_user;
 
+/**
+ * @brief Initialize page table
+ * 
+ */
 void init_pgt(void)
 {
 	unsigned int i, j;
@@ -227,3 +245,9 @@ void kfree(uint32_t addr)
 {
 	release(pvm_kernel, addr);
 }
+
+/**
+ * @}
+ * @}
+ * @}
+ */

@@ -1,3 +1,18 @@
+/**
+ * @addtogroup kernel 
+ * @{
+ * @addtogroup kernel_core Core
+ * @{
+ * @addtogroup kernel_core_misc Miscellaneous
+ * @{
+ *
+ * @file main.c
+ * 
+ * @brief Kernel start, initialization and secondary CPU
+ *        start are done 
+ * 
+ */
+
 // SPDX-License-Identifier: MIT OR Apache-2.0
 //
 // Copyright (c) 2024 kwangdo.yi<kwangdo.yi@gmail.com>
@@ -35,6 +50,10 @@
 #define A9_CLKSTOP0_MASK (0x10)
 #define A9_CLKSTOP1_MASK (0x20)
 
+/**
+ * @brief Secondary CPU idle
+ * 
+ */
 static void cpuidle_secondary(void)
 {
 	uint32_t i = 0;
@@ -57,6 +76,10 @@ static void cpuidle_secondary(void)
 	}
 }
 
+/**
+ * @brief Primary CPU idle
+ * 
+ */
 static void cpuidle(void)
 {
 	uint32_t i = 0;
@@ -79,7 +102,10 @@ static void cpuidle(void)
 	}
 }
 
-/* Running from CPU 0 */
+/**
+ * @brief Start CPU1 from CPU0
+ * 
+ */
 static void start_cpu1(void)
 {
 	uint32_t i, A9_rst_ctrl;
@@ -110,7 +136,11 @@ static void start_cpu1(void)
 	*(uint32_t *)(A9_CPU_RST_CTRL) = A9_rst_ctrl;
 }
 
-/* Running from CPU 1 */
+/**
+ * @brief Secondary CPU start kernel
+ * 
+ * @return int 0 for success
+ */
 int secondary_start_kernel(void)
 {
 	uint32_t cpuid;
@@ -143,6 +173,11 @@ int secondary_start_kernel(void)
 	return 0;
 }
 
+/**
+ * @brief CPU0 start kernel
+ * 
+ * @return int 0 for success
+ */
 int start_kernel(void)
 {
 	uint32_t scr = 0xFFFFFFFF;
@@ -210,3 +245,9 @@ int main(void)
 	return 0;
 }
 #endif
+/**
+ *@}
+ *@}
+ *@}
+ * 
+ */
