@@ -33,7 +33,7 @@ void init_vmpool(struct vmpool *pvmpool, struct pagetable *_pagetable, unsigned 
 
 	region_num_supported = (int)(PAGE_SIZE / sizeof(struct vmpool));
 
-	printk("### Total %d number of kmalloc calls(vm region desc) supported!\n",
+	printk("Total %d number of kmalloc calls(vm region desc) supported!\n",
 	       region_num_supported);
 }
 

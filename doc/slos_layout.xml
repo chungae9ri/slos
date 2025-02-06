@@ -3,6 +3,7 @@
   <!-- Navigation index tabs for HTML output -->
   <navindex>
     <tab type="mainpage" visible="yes" url="@ref mainpage" title="What is SLOS?"/>
+    <tab type="user" visible="yes" url="@ref getting_started" title="Getting Started"/>
     <tab type="usergroup" visible="yes" title="Modules">
       <tab type="user" url="@ref user_apps" visible="yes" title="User Applications" /> 
       <tab type="user" url="@ref genesis" visible="yes" title="Zynq7000 Genesis Bitstream" /> 

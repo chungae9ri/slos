@@ -279,7 +279,7 @@ static uint32_t workq_worker(void)
 		/* Woken up */
 		enq_idx = this_qworker->enq_idx;
 		deq_idx = this_qworker->deq_idx;
-		printk("### cpu %d qworker enq_idx: %d, deq_idx: %d\n", cpuid, enq_idx, deq_idx);
+		printk("cpu %d qworker enq_idx: %d, deq_idx: %d\n", cpuid, enq_idx, deq_idx);
 
 		/* enq_idx is wrapped around */
 		if (enq_idx < deq_idx) {

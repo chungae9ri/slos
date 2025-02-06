@@ -2,7 +2,7 @@
  * @mainpage What is SLOS?
  * SLOS represents Simple Light OS.
  *
- * It is tested in Cortex-A9 in Xilinx Zynq7000 chipset (currently tested in coraz7 board) but seems to be expanded to other products.
+ * It is tested in Cortex-A9 in Xilinx Zynq7000 chipset (currently tested in coraz7 board).
  * 
  * [SLOS GitHub Repository] (https://github.com/chungae9ri/slos)
  * 
