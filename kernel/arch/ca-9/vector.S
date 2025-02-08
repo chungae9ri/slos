@@ -1,3 +1,15 @@
+/**
+ * @addtogroup kernel 
+ * @{
+ * @addtogroup kernel_arch Arch
+ * @{
+ * @addtogroup kernel_arch_ca9 Cortex-A9
+ * @{
+ * 
+ * @file
+ * @brief Exception vector table for primary CPU 
+ */
+
 // SPDX-License-Identifier: MIT OR Apache-2.0
 //
 // Copyright (c) 2024 kwangdo.yi<kwangdo.yi@gmail.com>
@@ -152,3 +164,9 @@ fiq_handler:
 	b 	.
 ;
 .end
+
+/**
+ * @}
+ * @}
+ * @}
+ */

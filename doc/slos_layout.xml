@@ -9,8 +9,8 @@
       <tab type="user" url="@ref genesis" visible="yes" title="Zynq7000 Genesis Bitstream" /> 
       <tab type="usergroup" url="@ref kernel" visible="yes" title="Kernel"> 
         <tab type="usergroup" url="@ref kernel_arch" visible="yes" title="Arch">
-          <tab type="usergroup" url="@ref kernel_arch_ca9" visible="yes" title="CA-9" />
-          <tab type="usergroup" url="@ref kernel_arch_ca53" visible="yes" title="CA-53" />
+          <tab type="usergroup" url="@ref kernel_arch_ca9" visible="yes" title="Cortex-A9" />
+          <tab type="usergroup" url="@ref kernel_arch_ca53" visible="yes" title="Cortex-A53" />
         </tab>
         <tab type="usergroup" url="@ref kernel_core" visible="yes" title="Core">
           <tab type="user" url="@ref kernel_core_proc" visible="yes" title="Process Management" />

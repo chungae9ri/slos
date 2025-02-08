@@ -1,3 +1,15 @@
+/**
+ * @addtogroup kernel 
+ * @{
+ * @addtogroup kernel_arch Arch
+ * @{
+ * @addtogroup kernel_arch_ca9 Cortex-A9
+ * @{
+ * 
+ * @file
+ * @brief Start secondary CPU
+ */
+
 // SPDX-License-Identifier: MIT OR Apache-2.0
 //
 // Copyright (c) 2024 kwangdo.yi<kwangdo.yi@gmail.com>
@@ -15,3 +27,9 @@ secondary_reset_jump:
 .global secondary_reset_jump_end
 secondary_reset_jump_end:
 secondary_reset_end:
+
+/**
+ * @}
+ * @}
+ * @}
+ */

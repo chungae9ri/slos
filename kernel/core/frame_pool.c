@@ -2,6 +2,19 @@
 //
 // Copyright (c) 2024 kwangdo.yi<kwangdo.yi@gmail.com>
 
+/**
+ * @addtogroup kernel
+ * @{
+ * @addtogroup kernel_core Core
+ * @{
+ * @addtogroup kernel_core_mm Memory management
+ * @{
+ *
+ * @file
+ * @brief Memory frame pool management functions
+ *
+ */
+
 #include <stdint.h>
 #include <error.h>
 #include <frame_pool.h>
@@ -157,3 +170,10 @@ int32_t release_frame(struct framepool *pframe, unsigned long _frame_no)
 
 	return 0;
 }
+
+/**
+ * @}
+ * @}
+ * @}
+ *
+ */

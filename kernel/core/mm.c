@@ -1,20 +1,20 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
+//
+// Copyright (c) 2024 kwangdo.yi<kwangdo.yi@gmail.com>
+
 /**
- * @addtogroup kernel 
+ * @addtogroup kernel
  * @{
  * @addtogroup kernel_core Core
  * @{
  * @addtogroup kernel_core_mm Memory management
  * @{
- * 
+ *
  * @file mm.c
- * 
+ *
  * @brief Kernel memory management module
- * 
+ *
  */
-
-// SPDX-License-Identifier: MIT OR Apache-2.0
-//
-// Copyright (c) 2024 kwangdo.yi<kwangdo.yi@gmail.com>
 
 #include <stdint.h>
 
@@ -28,7 +28,7 @@ struct vmpool *pvm_user;
 
 /**
  * @brief Initialize page table
- * 
+ *
  */
 void init_pgt(void)
 {

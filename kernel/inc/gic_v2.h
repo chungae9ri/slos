@@ -3,6 +3,18 @@
  * Copyright (c) 2024 kwangdo.yi<kwangdo.yi@gmail.com>
  */
 
+/**
+ * @addtogroup kernel
+ * @{
+ * @addtogroup kernel_arch Arch
+ * @{
+ * @addtogroup kernel_arch_ca53 Cortex-A53
+ * @{
+ *
+ * @file
+ * @brief General Interrupt Controller (GIC) version 2 implementation
+ */
+
 #ifndef _GIC_V2_H_
 #define _GIC_V2_H_
 
@@ -40,10 +52,62 @@ struct ihandler {
 	void *arg;
 };
 
+/**
+ * @brief Initialize GIC disctributor
+ *
+ */
+void init_gic_dist(void);
+
+/**
+ * @brief Initialize GIC CPU interface
+ *
+ */
+void init_gic_cpu(void);
+
+/**
+ * @brief Initialize GIC
+ *
+ */
 void init_gic(void);
-void init_gic_secondary(void);
-uint32_t gic_enable_interrupt(int vec);
-uint32_t gic_disable_interrupt(int vec);
+
+/**
+ * @brief IRQ handler called from IRQ exception
+ *
+ * @return int32_t 0 for success
+ */
+int32_t gic_irq_handler(void);
+
+/**
+ * @brief Enable interrupt
+ *
+ * @param [in] vec Interrupt number
+ * @return int32_t 0 for success
+ */
+int32_t gic_enable_interrupt(int vec);
+
+/**
+ * @brief Disable interrupt
+ *
+ * @param [in] vec Interrupt number disabled
+ * @return int32_t 0 for success
+ */
+int32_t gic_disable_interrupt(int vec);
+
+/**
+ * @brief Register interrupt handler to interrupt vector table
+ *
+ * @param [in] vec Interrupt number
+ * @param [in] func Interrupt handler
+ * @param [in] arg Interrupt handler argument
+ */
 void gic_register_int_handler(int vec, int_handler func, void *arg);
 
 #endif
+
+/**
+ * @}
+ * @}
+ * @}
+ *
+ */
+

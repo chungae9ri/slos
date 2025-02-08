@@ -124,6 +124,12 @@
  * SLOS open a file and save the exeutable as a file (SLFS or littleFS). When executing, SLOS reads
  * the executable from file and part it with ELF loader. The user application prints message via system call
  * which is provided by libslos.a.
+ * ```
+ * shell > apprun                                                                                      
+ * shell > hello world!!                                                                               
+ * nice to meet you!!                                                                                  
+ * I am user_0 app!!  
+ * ```
  *
  * cfs task command
  *
@@ -156,6 +162,7 @@
  * device. Refer `A little book on the development of custom OS from scratch.pdf' for details.
  *
  * start cs command
+ *
  * This command start consumer hardware in the outstream datapath. If consumer device doesn't consume
  * data in the datapath, after all FIFOs are filled up, the outstream datapath is blocked to avoid overflow
  * in the FiFOs. Once this command runs, it starts the consumer device, flush the data in the FIFOs and

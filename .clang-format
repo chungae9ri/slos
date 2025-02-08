@@ -21,3 +21,4 @@ AllowShortEnumsOnASingleLine: false  # Force multiline formatting for enums
 AllowShortFunctionsOnASingleLine: InlineOnly # Only allows functions with no body to stay on one line (e.g., void funcA(void);)
 # Align consecutive macros
 AlignConsecutiveMacros: true
+KeepEmptyLinesAtEOF: true

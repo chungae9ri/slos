@@ -1,3 +1,15 @@
+/**
+ * @addtogroup kernel 
+ * @{
+ * @addtogroup kernel_arch Arch
+ * @{
+ * @addtogroup kernel_arch_ca9 Cortex-A9
+ * @{
+ * 
+ * @file
+ * @brief Basic Cortex-A9 operations
+ */
+
 // SPDX-License-Identifier: MIT OR Apache-2.0
 //
 // Copyright (c) 2024 kwangdo.yi<kwangdo.yi@gmail.com>
@@ -167,3 +179,9 @@ read_scr:
 #endif
 	mov	pc, lr
 .end
+
+/**
+ * @}
+ * @}
+ * @}
+ */

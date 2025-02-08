@@ -1,20 +1,20 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
+//
+// Copyright (c) 2024 kwangdo.yi<kwangdo.yi@gmail.com>
+
 /**
- * @addtogroup kernel 
+ * @addtogroup kernel
  * @{
  * @addtogroup kernel_core Core
  * @{
  * @addtogroup kernel_core_proc Process management
  * @{
- * 
+ *
  * @file ktimer.c
- * 
+ *
  * @brief Kernel timer module
- * 
+ *
  */
-
-// SPDX-License-Identifier: MIT OR Apache-2.0
-//
-// Copyright (c) 2024 kwangdo.yi<kwangdo.yi@gmail.com>
 
 #include <stddef.h>
 
@@ -27,16 +27,28 @@
 #include <runq.h>
 #include <percpu.h>
 
+/** Max preallocated oneshot timer number */
 #define MAX_ONESHOT_TIMER_NUM 32
-#define MIN_TIME_INT	      (get_ticks_per_sec() >> 10)
-#define MSEC_MARGIN	      (get_ticks_per_sec() >> 10)
+/** Minimum timer interrupt interval */
+#define MIN_TIME_INT (get_ticks_per_sec() >> 10)
 
+/**
+ * @brief CFS scheduler called from CFS timer interrupt
+ *
+ * @param [in] elapsed Elapsed timer
+ */
 static void cfs_scheduler(uint32_t elapsed)
 {
 	update_se(elapsed);
 	schedule();
 }
 
+/**
+ * @brief Insert timer to timer rbtree
+ *
+ * @param [in] ptr Pointer to timer rbtree root node
+ * @param [in] pts Timer to be inserted
+ */
 static void insert_timer(struct timer_root *ptr, struct timer_struct *pts)
 {
 	struct rb_node **link = &ptr->root.rb_node, *parent = NULL;
@@ -94,11 +106,6 @@ void update_csd(void)
 	pthis_csd = csd;
 #endif
 	pthis_csd->current_tick = timer_get_phy_tick_cnt();
-}
-
-uint32_t get_elapsedtime(void)
-{
-	return (uint32_t)(read32(PRIV_TMR_LD));
 }
 
 void update_timer_tree(uint32_t elapsed)

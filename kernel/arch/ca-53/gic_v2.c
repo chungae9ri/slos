@@ -2,6 +2,19 @@
 //
 // Copyright (c) 2024 kwangdo.yi<kwangdo.yi@gmail.com>
 
+/**
+ * @addtogroup kernel
+ * @{
+ * @addtogroup kernel_arch Arch
+ * @{
+ * @addtogroup kernel_arch_ca53 Cortex-A53
+ * @{
+ *
+ * @file
+ * @brief General Interrupt Controller (GIC) version 2 implementation
+ */
+
+/** Compatible string in devicetree for GIC 400 */
 #define DEVICE_DT_COMPAT ARM_GIC_400
 
 #include <regops.h>
@@ -11,8 +24,10 @@
 #include <generated_devicetree_defs.h>
 #include <device.h>
 
+/** Define GIC device from devicetree */
 DEVICE_DEFINE(gic_0, DT_GET_COMPAT(0), DT_GET_BASE_ADDR(0), 0);
 
+/** Interrupt handler vector table for CPU 0 */
 static struct ihandler handler[NUM_IRQS];
 
 void init_gic_dist(void)
@@ -71,7 +86,7 @@ void gic_fiq(void)
 { /* do nothing */
 }
 
-uint32_t gic_irq_handler(void)
+int32_t gic_irq_handler(void)
 {
 	uint32_t ret;
 	uint32_t num;
@@ -84,7 +99,7 @@ uint32_t gic_irq_handler(void)
 	num = val & 0x3FF;
 
 	if (num >= NUM_IRQS) {
-		return 1;
+		return -1;
 	}
 
 	ret = handler[num].func(&dat);
@@ -98,7 +113,7 @@ uint32_t gic_irq_handler(void)
 	return ret;
 }
 
-uint32_t gic_enable_interrupt(int vec)
+int32_t gic_enable_interrupt(int vec)
 {
 	uint32_t reg;
 	uint32_t bit;
@@ -116,7 +131,7 @@ uint32_t gic_enable_interrupt(int vec)
 	return 0;
 }
 
-uint32_t gic_disable_interrupt(int vec)
+int32_t gic_disable_interrupt(int vec)
 {
 	uint32_t reg;
 	uint32_t bit;
@@ -138,3 +153,9 @@ void gic_register_int_handler(int vec, int_handler func, void *arg)
 	handler[vec].func = func;
 	handler[vec].arg = arg;
 }
+
+/**
+ * @}
+ * @}
+ * @}
+ */

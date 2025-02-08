@@ -1,19 +1,20 @@
-/**
- * @addtogroup kernel 
- * @{
- * @addtogroup kernel_arch Arch
- * @{
- * @addtogroup kernel_arch_a9 Cortex-A9 implementation
- * @{
- * 
- * @brief abc
- * 
- */
-
 // SPDX-License-Identifier: MIT OR Apache-2.0
 //
 // Copyright (c) 2024 kwangdo.yi<kwangdo.yi@gmail.com>
 
+/**
+ * @addtogroup kernel
+ * @{
+ * @addtogroup kernel_arch Arch
+ * @{
+ * @addtogroup kernel_arch_ca9 Cortex-A9
+ * @{
+ *
+ * @file
+ * @brief General Interrupt Controller (GIC) version 1 implementation
+ */
+
+/** Devicetree compatible string */
 #define DEVICE_DT_COMPAT ARM_GIC_390
 
 #include <regops.h>
@@ -23,10 +24,12 @@
 #include <percpudef.h>
 #include <generated_devicetree_defs.h>
 #include <device.h>
+#include <ops.h>
 
+/** Define GIC device from devicetree */
 DEVICE_DEFINE(gic_0, DT_GET_COMPAT(0), DT_GET_BASE_ADDR(0), 0);
 
-uint32_t smp_processor_id();
+/** Interrupt handler vector table for CPU 0 and CPU 1 */
 static struct ihandler handler[NR_CPUS][NUM_IRQS];
 
 void init_gic_dist(void)

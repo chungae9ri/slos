@@ -1,5 +1,9 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
+//
+// Copyright (c) 2024 kwangdo.yi<kwangdo.yi@gmail.com>
+
 /**
- * @addtogroup kernel 
+ * @addtogroup kernel
  * @{
  * @addtogroup kernel_core Core
  * @{
@@ -7,15 +11,11 @@
  * @{
  *
  * @file main.c
- * 
+ *
  * @brief Kernel start, initialization and secondary CPU
- *        start are done 
- * 
+ *        start are done
+ *
  */
-
-// SPDX-License-Identifier: MIT OR Apache-2.0
-//
-// Copyright (c) 2024 kwangdo.yi<kwangdo.yi@gmail.com>
 
 #include <generated_kconfig_defs.h>
 
@@ -52,7 +52,7 @@
 
 /**
  * @brief Secondary CPU idle
- * 
+ *
  */
 static void cpuidle_secondary(void)
 {
@@ -78,7 +78,7 @@ static void cpuidle_secondary(void)
 
 /**
  * @brief Primary CPU idle
- * 
+ *
  */
 static void cpuidle(void)
 {
@@ -104,7 +104,7 @@ static void cpuidle(void)
 
 /**
  * @brief Start CPU1 from CPU0
- * 
+ *
  */
 static void start_cpu1(void)
 {
@@ -138,7 +138,7 @@ static void start_cpu1(void)
 
 /**
  * @brief Secondary CPU start kernel
- * 
+ *
  * @return int 0 for success
  */
 int secondary_start_kernel(void)
@@ -175,7 +175,7 @@ int secondary_start_kernel(void)
 
 /**
  * @brief CPU0 start kernel
- * 
+ *
  * @return int 0 for success
  */
 int start_kernel(void)
@@ -249,5 +249,5 @@ int main(void)
  *@}
  *@}
  *@}
- * 
+ *
  */

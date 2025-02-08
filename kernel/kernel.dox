@@ -12,13 +12,11 @@
 /**
   * @defgroup kernel_arch_ca9 Cortex-A9
   * @ingroup kernel_arch
-  * @brief Cortex-A9 architecture dependent implementations
   */
 
 /**
   * @defgroup kernel_arch_ca53 Cortex-A53
   * @ingroup kernel_arch
-  * @brief Cortex-A53 architecture dependent implementations
   */
 
  /**

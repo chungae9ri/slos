@@ -1,3 +1,15 @@
+/**
+ * @addtogroup kernel 
+ * @{
+ * @addtogroup kernel_arch Arch
+ * @{
+ * @addtogroup kernel_arch_ca9 Cortex-A9
+ * @{
+ * 
+ * @file
+ * @brief Intialize MMU
+ */
+
 // SPDX-License-Identifier: MIT OR Apache-2.0
 //
 // Copyright (c) 2024 kwangdo.yi<kwangdo.yi@gmail.com>
@@ -41,7 +53,7 @@ ssbl:
 	cmp	r0, #0x0
 	bleq	init_pgt			/* cpu0 sets up pgd, pgt */
 	
-	/* enable scu if current cpu is 1*/
+	/* enable scu if current cpu is 1 */
 	mrc 	p15, 0, r0, c0, c0, 5		/* read MPIDR */
 	bic 	r0, r0, #0xFFFFFFFC		/* load cpuid */
 	cmp	r0, #0x1
@@ -172,3 +184,9 @@ finished:
 
 	bx	lr
 .end
+
+/**
+ *@}
+ *@}
+ *@}
+ */

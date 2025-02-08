@@ -2,30 +2,42 @@
 //
 // Copyright (c) 2024 kwangdo.yi<kwangdo.yi@gmail.com>
 
+/**
+ * @addtogroup kernel
+ * @{
+ * @addtogroup kernel_core Core
+ * @{
+ * @addtogroup kernel_core_proc Process management
+ * @{
+ *
+ * @file
+ * @brief Fault handler functions
+ *
+ */
+
 #include <mem_layout.h>
 #include <page_table.h>
 #include <printk.h>
 
-#define ALIGNMENT_FLT	    0x1
-#define BUS_ERR_TRN_LVL1    0xc
-#define BUS_ERR_TRN_LVL2    0xe
+/** Translation fault in section */
 #define TRANSLATION_FLT_SEC 0x5
-#define TRANSLATION_FLT_PG  0x7
-#define DOMAIN_FLT_SEC	    0x9
-#define DOMAIN_FLT_PG	    0xb
-#define PERM_FLT_SEC	    0xd
-#define PERM_FLT_PG	    0xf
-#define BUS_ERR_LF_SEC	    0x4
-#define BUS_ERR_LF_PG	    0x6
-#define BUS_ERR_OTH_SEC	    0x8
-#define BUS_ERR_OTH_PG	    0xa
-
-#define SYS_EXIT  0x0
-#define SYS_CMD	  0x1
+/** Translation fault in page */
+#define TRANSLATION_FLT_PG 0x7
+/** System call number for exit */
+#define SYS_EXIT 0x0
+/** System call number for shell command */
+#define SYS_CMD 0x1
+/** System call number for write (stdout) */
 #define SYS_WRITE 0x2
-#define SYS_READ  0x3
+/** System call number for read (stdin) */
+#define SYS_READ 0x3
+/** System call number for process sleep */
 #define SYS_SLEEP 0x4
 
+/**
+ * @brief Exception handler for undefined exception
+ *
+ */
 void platform_undefined_handler(void)
 {
 	printk("undefined cmd exception!!\n");
@@ -34,38 +46,49 @@ void platform_undefined_handler(void)
 	}
 }
 
-int platform_syscall_handler(char *msg, int idx, int sys_num)
+/**
+ * @brief Syscall handler for SVC exception
+ *
+ * @param [in] msg String for stdout
+ * @param [in] idx User application ID
+ * @param [in] sys_num System call number
+ * @return int32_t 0 for success -1 for failure
+ */
+int32_t platform_syscall_handler(char *msg, int idx, int sys_num)
 {
-	int ret = 0;
-
 	switch (sys_num) {
 	/* syscall exit */
 	case SYS_EXIT:
 		break;
 
-	/* syscal shellcmd */
+	/* syscall shellcmd */
 	case SYS_CMD:
 		break;
 
-	/* syscal write */
+	/* syscall write */
 	case SYS_WRITE:
 		msg = msg + (USER_APP_BASE + USER_APP_GAP * idx);
 		printk(msg);
 		break;
-	/* syscal read */
+	/* syscall read */
 	case SYS_READ:
 		break;
 
-	/* syscal sleep*/
+	/* syscall sleep*/
 	case SYS_SLEEP:
 		break;
 
 	default:
-		break;
+		return -1;
 	}
-	return ret;
+
+	return 0;
 }
 
+/**
+ * @brief Prefetch abort handler for
+ *
+ */
 void platform_prefetch_abort_handler(void)
 {
 	printk("prefetch abort exception!!\n");
@@ -74,6 +97,10 @@ void platform_prefetch_abort_handler(void)
 	}
 }
 
+/**
+ * @brief Kernel data abort handler
+ *
+ */
 void kernel_abort(void)
 {
 	printk("data abort exception!!\n");
@@ -82,6 +109,11 @@ void kernel_abort(void)
 	}
 }
 
+/**
+ * @brief Data abort handler for data abort exception
+ *
+ * @param [in] dfsr Data abort status register value
+ */
 void platform_data_abort_handler(unsigned int dfsr)
 {
 	/* here is the routine to check the page fault */
@@ -98,3 +130,10 @@ void platform_data_abort_handler(unsigned int dfsr)
 		kernel_abort();
 	}
 }
+
+/**
+ * @}
+ * @}
+ * @}
+ *
+ */

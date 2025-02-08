@@ -3,6 +3,19 @@
  * Copyright (c) 2024 kwangdo.yi<kwangdo.yi@gmail.com>
  */
 
+/**
+ * @addtogroup kernel
+ * @{
+ * @addtogroup kernel_core Core
+ * @{
+ * @addtogroup kernel_core_mm Memory management
+ * @{
+ *
+ * @file
+ * @brief Memory frame pool management functions
+ *
+ */
+
 #ifndef _FRAME_POOL_H_
 #define _FRAME_POOL_H_
 
@@ -34,17 +47,20 @@ struct framepool {
 /**
  * @brief Initialize memory frame pool
  *
- * @param pframe Pointer to memory frame pool
- * @param _base_frame_no Base frame number which is kernel memory start frame number
- * @param _nframes  Frame number in the pool which is kernel memory frame number
- * @param _info_frame_no Info frame (bitmap frame) number
+ * One bitmap frame(4KB) can address 4K * 8 * 4KB = 128MB memory.
+ * One bitmap frame is enough for kernel.
+ *
+ * @param [in] pframe Pointer to memory frame pool
+ * @param [in] _base_frame_no Base frame number which is kernel memory start frame number
+ * @param [in] _nframes  Frame number in the pool which is kernel memory frame number
+ * @param [in] _info_frame_no Info frame (bitmap frame) number
  */
 void init_framepool(struct framepool *pframe, uint32_t _base_frame_no, uint32_t _nframes,
 		    uint32_t _info_frame_no);
 /**
  * @brief Allocates a frame from the frame pool.
  *
- * @param pframe Frame pool pointer
+ * @param [in] pframe Frame pool pointer
  * @return int32_t if successful, returns the frame number of the frame. If fails, returns -1.
  */
 int32_t get_frame(struct framepool *pframe);
@@ -52,18 +68,26 @@ int32_t get_frame(struct framepool *pframe);
 /**
  * @brief Mark allocated for the preallocated memory frames
  *
- * @param pframe Frame pool pointer
- * @param _base_frame_no Base frame number of the frame pool
- * @param _nframes Frame number of frame pool
+ * @param [in] pframe Frame pool pointer
+ * @param [in] _base_frame_no Base frame number of the frame pool
+ * @param [in] _nframes Frame number of frame pool
  */
 void mark_prealloc_frame(struct framepool *pframe, uint32_t _base_frame_no, uint32_t _nframes);
 
 /**
  * @brief Release frame from frame pool
  *
- * @param pframe Frame pool pointer
- * @param _frame_no Frame number of the frame pool
+ * @param [in] pframe Frame pool pointer
+ * @param [in] _frame_no Frame number of the frame pool
+ *
  * @return int32_t 0 for success, others for failure
  */
 int32_t release_frame(struct framepool *pframe, uint32_t _frame_no);
 #endif
+
+/**
+ * @}
+ * @}
+ * @}
+ *
+ */
