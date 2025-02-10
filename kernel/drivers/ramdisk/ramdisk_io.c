@@ -2,10 +2,22 @@
 //
 // Copyright (c) 2024 kwangdo.yi<kwangdo.yi@gmail.com>
 
-/* NOTE: ramdisk simulation for flash device.
- *       1page = 4KiB, erasable,
- *       datablk = 512B
- *	 ramdisk size = 4MiB
+/**
+ * @addtogroup kernel
+ * @{
+ * @addtogroup kernel_drivers Drivers
+ * @{
+ * @addtogroup kernel_drivers_rd Ramdisk driver
+ * @{
+ *
+ * @file
+ *
+ * @brief Ramdisk driver implemented
+ *
+ * ramdisk simulation for flash device.
+ * 1page = 4KiB, erasable,
+ * datablk = 512B
+ * ramdisk size = 4MiB
  */
 
 #include <error.h>
@@ -79,9 +91,16 @@ static int erase_ramdisk(uint32_t addr, uint32_t len)
 }
 
 struct ramdisk_io_ops io_ops = {
-    .erase_chip = erase_ramdisk_chip,
-    .erase_page = erase_ramdisk_page,
-    .erase_addr_len = erase_ramdisk,
-    .write = write_ramdisk,
-    .read = read_ramdisk,
+	.erase_chip = erase_ramdisk_chip,
+	.erase_page = erase_ramdisk_page,
+	.erase_addr_len = erase_ramdisk,
+	.write = write_ramdisk,
+	.read = read_ramdisk,
 };
+
+/**
+ * @}
+ * @}
+ * @}
+ *
+ */

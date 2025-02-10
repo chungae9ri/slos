@@ -2,6 +2,18 @@
 //
 // Copyright (c) 2024 kwangdo.yi<kwangdo.yi@gmail.com>
 
+/**
+ * @addtogroup kernel
+ * @{
+ * @addtogroup kernel_fs File system
+ * @{
+ *
+ * @file
+ *
+ * @brief File system interface
+ *
+ */
+
 #include <error.h>
 #include <fs.h>
 #include <mm.h>
@@ -218,3 +230,9 @@ int32_t create_ramdisk_fs(FILE_SYSTEM_TYPE fs_t)
 
 	return NO_ERR;
 }
+
+/**
+ * @}
+ * @}
+ *
+ */

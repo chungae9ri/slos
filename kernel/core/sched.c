@@ -2,6 +2,20 @@
 //
 // Copyright (c) 2024 kwangdo.yi<kwangdo.yi@gmail.com>
 
+/**
+ * @addtogroup kernel
+ * @{
+ * @addtogroup kernel_core Core
+ * @{
+ * @addtogroup kernel_core_proc Process management
+ * @{
+ *
+ * @file
+ *
+ * @brief Functions for kernel process schedule, context switch, yield, fork new task
+ *
+ */
+
 #include <sched.h>
 #include <timer.h>
 #include <ktimer.h>
@@ -303,3 +317,10 @@ void update_current(uint32_t elapsed)
 		this_current->se.ticks_consumed += (uint64_t)elapsed;
 	}
 }
+
+/**
+ * @}
+ * @}
+ * @}
+ *
+ */

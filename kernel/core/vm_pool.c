@@ -2,13 +2,30 @@
 //
 // Copyright (c) 2024 kwangdo.yi<kwangdo.yi@gmail.com>
 
+/**
+ * @addtogroup kernel
+ * @{
+ * @addtogroup kernel_core Core
+ * @{
+ * @addtogroup kernel_core_mm Memory management
+ * @{
+ *
+ * @file
+ *
+ * @brief Virtual memory pool management functions
+ *
+ */
+
 #include <vm_pool.h>
 #include <page_table.h>
 #include <printk.h>
 
-#define PAGE_SIZE	(4 * 1024)
+/** Page size 4KiB */
+#define PAGE_SIZE (4 * 1024)
+/** Bit shift amount for page size */
 #define PAGE_SIZE_SHIFT (12)
-#define PAGE_SIZE_MASK	(0x00000FFF)
+/** Page size mask */
+#define PAGE_SIZE_MASK (0x00000FFF)
 
 void init_vmpool(struct vmpool *pvmpool, struct pagetable *_pagetable, unsigned int _base_address,
 		 unsigned int _size)
@@ -123,3 +140,10 @@ int is_legitimate(struct vmpool *pvmpool, unsigned int _address)
 
 	return 0;
 }
+
+/**
+ * @}
+ * @}
+ * @}
+ *
+ */

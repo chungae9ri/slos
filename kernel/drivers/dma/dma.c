@@ -2,6 +2,21 @@
 //
 // Copyright (c) 2024 kwangdo.yi<kwangdo.yi@gmail.com>
 
+/**
+ * @addtogroup kernel
+ * @{
+ * @addtogroup kernel_drivers Drivers
+ * @{
+ * @addtogroup kernel_drivers_dma DMA driver
+ * @{
+ *
+ * @file
+ *
+ * @brief Driver for DMA peripheral implemented in FPGA
+ *
+ */
+
+/** Modecore DMA compatible string in devicetree */
 #define DEVICE_DT_COMPAT SLOS_MODCORE_DMA
 
 #include <stddef.h>
@@ -160,3 +175,10 @@ int32_t dma_irq(void *arg)
 
 	return 0;
 }
+
+/**
+ * @}
+ * @}
+ * @}
+ *
+ */

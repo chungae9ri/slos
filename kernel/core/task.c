@@ -2,6 +2,20 @@
 //
 // Copyright (c) 2024 kwangdo.yi<kwangdo.yi@gmail.com>
 
+/**
+ * @addtogroup kernel
+ * @{
+ * @addtogroup kernel_core Core
+ * @{
+ * @addtogroup kernel_core_proc Process management
+ * @{
+ *
+ * @file
+ *
+ * @brief Functions to create CFS tasks, Realtime tasks and shell task
+ *
+ */
+
 #include <stdint.h>
 
 #include <mem_layout.h>
@@ -667,3 +681,10 @@ void init_idletask(void)
 #endif
 	*pthis_task_created_num = 1;
 }
+
+/**
+ * @}
+ * @}
+ * @}
+ *
+ */

@@ -10,7 +10,7 @@
  * @addtogroup kernel_core_proc Process management
  * @{
  *
- * @file ktimer.c
+ * @file
  *
  * @brief Kernel timer module
  *
@@ -290,4 +290,3 @@ void del_timer(struct timer_root *ptr, struct timer_struct *pts)
  * @}
  * @}
  */
- 

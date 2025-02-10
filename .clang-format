@@ -22,3 +22,8 @@ AllowShortFunctionsOnASingleLine: InlineOnly # Only allows functions with no bod
 # Align consecutive macros
 AlignConsecutiveMacros: true
 KeepEmptyLinesAtEOF: true
+#AlignConsecutiveDeclarations: false
+#AlignTrailingComments: false
+#AlignAfterOpenBracket: DontAlign
+#AlignEscapedNewlines: DontAlign
+#ColumnLimit: 0  # Disable line wrapping to avoid alignment issues

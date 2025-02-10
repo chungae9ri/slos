@@ -2,14 +2,31 @@
 //
 // Copyright (c) 2024 kwangdo.yi<kwangdo.yi@gmail.com>
 
+/**
+ * @addtogroup kernel
+ * @{
+ * @addtogroup kernel_core Core
+ * @{
+ * @addtogroup kernel_core_misc Miscellaneous kernel modules
+ * @{
+ *
+ * @file
+ *
+ * @brief Mailbox used for coummunicating between CPU 0 and CPU 1
+ *
+ */
+
 #include <stdint.h>
 #include <mailbox.h>
 #include <ops.h>
 #include <defs.h>
 
+/** Mailbox for CPU 0 */
 __section(".mailbox") struct mailbox_struct mailbox_0;
+/** Mailbox for CPU 1 */
 __section(".mailbox") struct mailbox_struct mailbox_1;
 
+/** Spinlock synchronization */
 uint32_t mailbox_lock;
 
 void init_mailbox(void)
@@ -72,3 +89,10 @@ enum letter_type pull_mail(void)
 
 	return letter;
 }
+
+/**
+ * @}
+ * @}
+ * @}
+ *
+ */

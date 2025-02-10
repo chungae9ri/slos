@@ -2,6 +2,20 @@
 //
 // Copyright (c) 2024 kwangdo.yi<kwangdo.yi@gmail.com>
 
+/**
+ * @addtogroup kernel
+ * @{
+ * @addtogroup kernel_core Core
+ * @{
+ * @addtogroup kernel_core_proc Process management
+ * @{
+ *
+ * @file
+ *
+ * @brief Timer event device including delay functions, timer interrupt handler
+ *
+ */
+
 #include <generated_kconfig_defs.h>
 
 #if defined(ARCH_CORTEX_A9)
@@ -19,6 +33,7 @@
 #include <runq.h>
 #include <ops.h>
 
+/** Ticks per second */
 static uint32_t ticks_per_sec;
 
 static void delay(uint32_t ticks)
@@ -245,3 +260,10 @@ void init_timer(void)
 	gic_enable_interrupt(PRIV_TMR_INT_VEC);
 }
 #endif
+
+/**
+ * @}
+ * @}
+ * @}
+ *
+ */

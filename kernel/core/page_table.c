@@ -2,19 +2,25 @@
 //
 // Copyright (c) 2024 kwangdo.yi<kwangdo.yi@gmail.com>
 
+/**
+ * @addtogroup kernel
+ * @{
+ * @addtogroup kernel_core Core
+ * @{
+ * @addtogroup kernel_core_mm Memory management
+ * @{
+ *
+ * @file
+ *
+ * @brief Page table initialization, page fault handle and free pages
+ *
+ */
+
 #include <page_table.h>
 #include <frame_pool.h>
 #include <mem_layout.h>
 
-#define ENABLE_MMU    0x00000001
-#define ENABLE_DCACHE 0x00000004
-#define ENABLE_ICACHE 0x00001000
-#define MASK_MMU      0x00000001
-#define MASK_DCACHE   0x00000004
-#define MASK_ICACHE   0x00001000
-
-#define MMIO_START_ADDR 0xF8000000 /* size : 128MB */
-
+/** Pointer to current page table */
 static struct pagetable *pcurrentpgt;
 
 void init_pageregion(struct pagetable *ppagetable, struct framepool *pframepool,
@@ -125,3 +131,10 @@ void free_page(unsigned int freedAddr)
 	 */
 	asm("mcr p15, 0, %0, c8, c7, 0" : : "r"(r0) :);
 }
+
+/**
+ * @}
+ * @}
+ * @}
+ *
+ */

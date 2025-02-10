@@ -38,61 +38,61 @@
   */
 
 /**
-  * @defgroup kernel_core_misc Miscellaneous
+  * @defgroup kernel_core_misc Miscellaneous kernel modules
   * @ingroup kernel_core
-  * @brief Miscellaneous
+  * @brief Miscellaneous kernel modules
   */
 
  /**
-  * @defgroup kernel_drivers Drivers modules
+  * @defgroup kernel_drivers Drivers
   * @ingroup kernel
   * @brief Drivers modules
   */
 
  /**
-  * @defgroup kernel_drivers_dma DMA modules
+  * @defgroup kernel_drivers_dma DMA driver 
   * @ingroup kernel_drivers
   * @brief DMA driver implementations
   */
 
  /**
-  * @defgroup kernel_drivers_odev ODEV modules
+  * @defgroup kernel_drivers_odev Outstream device
   * @ingroup kernel_drivers
-  * @brief Outstream driver implementations
+  * @brief Outstream device driver implementations
   */
 
  /**
-  * @defgroup kernel_drivers_rd Ramdisk modules
+  * @defgroup kernel_drivers_rd Ramdisk driver 
   * @ingroup kernel_drivers
   * @brief Ramdisk driver implementations
   */
 
  /**
-  * @defgroup kernel_drivers_uart Uart modules
+  * @defgroup kernel_drivers_uart Uart driver
   * @ingroup kernel_drivers
   * @brief Uart driver implementations
   */
 
  /**
-  * @defgroup kernel_fs File system modules
+  * @defgroup kernel_fs File system
   * @ingroup kernel
   * @brief File system modules
   */
 
  /**
-  * @defgroup kernel_fs_littlefs Littlefs modules
+  * @defgroup kernel_fs_littlefs Littlefs file system
   * @ingroup kernel_fs
   * @brief Littlefs file system modules
   */
 
  /**
-  * @defgroup kernel_fs_slfs SLFS file system modules
+  * @defgroup kernel_fs_slfs SLFS file file system
   * @ingroup kernel_fs
   * @brief SLFS file system modules
   */
 
  /**
-  * @defgroup kernel_libs Library modules
+  * @defgroup kernel_libs Kernel library 
   * @ingroup kernel
-  * @brief Library modules
+  * @brief Kernel library modules
   */

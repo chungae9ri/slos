@@ -2,6 +2,20 @@
 //
 // Copyright (c) 2024 kwangdo.yi<kwangdo.yi@gmail.com>
 
+/**
+ * @addtogroup kernel
+ * @{
+ * @addtogroup kernel_core Core
+ * @{
+ * @addtogroup kernel_core_proc Process management
+ * @{
+ *
+ * @file
+ *
+ * @brief task waitq management functions, initialization, enqueue, dequeue
+ *
+ */
+
 #include <task.h>
 #include <waitq.h>
 #include <defs.h>
@@ -204,3 +218,10 @@ void dequeue_se_to_exit(struct sched_entity *se)
 		tp->state = TASK_STOP;
 	}
 }
+
+/**
+ * @}
+ * @}
+ * @}
+ *
+ */

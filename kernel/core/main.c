@@ -7,13 +7,12 @@
  * @{
  * @addtogroup kernel_core Core
  * @{
- * @addtogroup kernel_core_misc Miscellaneous
+ * @addtogroup kernel_core_misc Miscellaneous kernel modules
  * @{
  *
- * @file main.c
+ * @file
  *
- * @brief Kernel start, initialization and secondary CPU
- *        start are done
+ * @brief Kernel start, initialization for CPU0 and CPU1
  *
  */
 
@@ -251,4 +250,3 @@ int main(void)
  *@}
  *
  */
- 

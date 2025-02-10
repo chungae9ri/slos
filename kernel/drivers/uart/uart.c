@@ -2,6 +2,21 @@
 //
 // Copyright (c) 2024 kwangdo.yi<kwangdo.yi@gmail.com>
 
+/**
+ * @addtogroup kernel
+ * @{
+ * @addtogroup kernel_drivers Drivers
+ * @{
+ * @addtogroup kernel_drivers_uart Uart driver
+ * @{
+ *
+ * @file
+ *
+ * @brief Driver for Uart peripheral
+ *
+ */
+
+/** Uart compatible string in devicetree */
 #define DEVICE_DT_COMPAT PS_UART
 
 #include <stdint.h>
@@ -11,20 +26,20 @@
 #include <generated_devicetree_defs.h>
 #include <device.h>
 
-#define CR_OFFSET              0x0
-#define MR_OFFSET              0x4
-#define IER_OFFSET             0x8
-#define IDR_OFFSET             0xC
-#define IMR_OFFSET             0x10
-#define ISR_OFFSET             0x14
-#define BAUDGEN_OFFSET         0x18
-#define RXTOUT_OFFSET          0x1C
-#define RXWM_OFFSET            0x20
-#define MODEMCR_OFFSET         0x24
-#define MODEMSR_OFFSET         0x28
-#define SR_OFFSET              0x2C
-#define FIFO_OFFSET            0x30
-#define BAUD_DIV_OFFSET        0x34
+#define CR_OFFSET	       0x0
+#define MR_OFFSET	       0x4
+#define IER_OFFSET	       0x8
+#define IDR_OFFSET	       0xC
+#define IMR_OFFSET	       0x10
+#define ISR_OFFSET	       0x14
+#define BAUDGEN_OFFSET	       0x18
+#define RXTOUT_OFFSET	       0x1C
+#define RXWM_OFFSET	       0x20
+#define MODEMCR_OFFSET	       0x24
+#define MODEMSR_OFFSET	       0x28
+#define SR_OFFSET	       0x2C
+#define FIFO_OFFSET	       0x30
+#define BAUD_DIV_OFFSET	       0x34
 #define FLOW_DELAY_OFFSET      0x38
 #define TX_FIFO_TRIG_LV_OFFSET 0x44
 #define RX_FIFO_TRIG_LV_OFFSET 0x48
@@ -101,3 +116,10 @@ void init_uart(void)
 	write32(DEVICE_GET_BASE_ADDR(uart_0) + FLOW_DELAY_OFFSET, 0x00000000);
 	write32(DEVICE_GET_BASE_ADDR(uart_0) + TX_FIFO_TRIG_LV_OFFSET, 0x00000020);
 }
+
+/**
+ * @}
+ * @}
+ * @}
+ *
+ */

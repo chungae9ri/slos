@@ -10,7 +10,7 @@
  * @addtogroup kernel_core_mm Memory management
  * @{
  *
- * @file mm.c
+ * @file
  *
  * @brief Kernel memory management module
  *
@@ -23,7 +23,9 @@
 #include <mem_layout.h>
 #include <mm.h>
 
+/** Virtual memory pool for kernel */
 struct vmpool *pvm_kernel;
+/** Virtual memory pool for user */
 struct vmpool *pvm_user;
 
 /**
@@ -251,4 +253,3 @@ void kfree(uint32_t addr)
  * @}
  * @}
  */
-

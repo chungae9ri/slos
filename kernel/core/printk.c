@@ -2,6 +2,20 @@
 //
 // Copyright (c) 2024 kwangdo.yi<kwangdo.yi@gmail.com>
 
+/**
+ * @addtogroup kernel
+ * @{
+ * @addtogroup kernel_core Core
+ * @{
+ * @addtogroup kernel_core_misc Miscellaneous kernel modules
+ * @{
+ *
+ * @file
+ *
+ * @brief Print message through stdout
+ *
+ */
+
 #include <stdint.h>
 #include <stdarg.h>
 
@@ -123,3 +137,10 @@ void sprintk(uint8_t *buf, const char *fmt, ...)
 
 	va_end(argp);
 }
+
+/**
+ * @}
+ * @}
+ * @}
+ *
+ */

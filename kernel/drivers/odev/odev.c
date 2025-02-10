@@ -2,6 +2,21 @@
 //
 // Copyright (c) 2024 kwangdo.yi<kwangdo.yi@gmail.com>
 
+/**
+ * @addtogroup kernel
+ * @{
+ * @addtogroup kernel_drivers Drivers
+ * @{
+ * @addtogroup kernel_drivers_odev Outstream device
+ * @{
+ *
+ * @file
+ *
+ * @brief Outstream Device driver
+ *
+ */
+
+/** Outstream Device compatible string in devicetree */
 #define DEVICE_DT_COMPAT SLOS_ODEV
 
 #include <stdint.h>
@@ -246,3 +261,10 @@ int32_t create_odev_task(void *arg)
 
 	return 0;
 }
+
+/**
+ * @}
+ * @}
+ * @}
+ *
+ */

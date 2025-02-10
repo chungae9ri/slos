@@ -2,6 +2,20 @@
 //
 // Copyright (c) 2024 kwangdo.yi<kwangdo.yi@gmail.com>
 
+/**
+ * @addtogroup kernel
+ * @{
+ * @addtogroup kernel_core Core
+ * @{
+ * @addtogroup kernel_core_misc Miscellaneous kernel modules
+ * @{
+ *
+ * @file
+ *
+ * @brief ELF loader that launch and jump to the start of ELF
+ *
+ */
+
 #include <stdint.h>
 #include <string.h>
 
@@ -12,6 +26,7 @@
 #include <mem_layout.h>
 #include <error.h>
 
+/** User task pointer array */
 struct task_struct *upt[MAX_USR_TASK];
 
 void exit_elf(uint32_t idx)
@@ -178,3 +193,10 @@ int32_t load_ramdisk_app(FILE_SYSTEM_TYPE fs_t, uint32_t app_idx)
 
 	return -NO_ERR;
 }
+
+/**
+ * @}
+ * @}
+ * @}
+ *
+ */

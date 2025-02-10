@@ -2,6 +2,20 @@
 //
 // Copyright (c) 2024 kwangdo.yi<kwangdo.yi@gmail.com>
 
+/**
+ * @addtogroup kernel
+ * @{
+ * @addtogroup kernel_core Core
+ * @{
+ * @addtogroup kernel_core_proc Process management
+ * @{
+ *
+ * @file
+ *
+ * @brief SGI (Software Generate Interrupt) enable and interrupt handler functions
+ *
+ */
+
 #include <gic_v1.h>
 #include <sgi.h>
 #include <sched.h>
@@ -41,3 +55,10 @@ int32_t sgi_irq(void *arg)
 
 	return 0;
 }
+
+/**
+ * @}
+ * @}
+ * @}
+ *
+ */

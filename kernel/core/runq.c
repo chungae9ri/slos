@@ -2,6 +2,20 @@
 //
 // Copyright (c) 2024 kwangdo.yi<kwangdo.yi@gmail.com>
 
+/**
+ * @addtogroup kernel
+ * @{
+ * @addtogroup kernel_core Core
+ * @{
+ * @addtogroup kernel_core_proc Process management
+ * @{
+ *
+ * @file
+ *
+ * @brief Runq management apis such as enqueue, dequeue, update
+ *
+ */
+
 #include <runq.h>
 #include <percpu.h>
 #include <ops.h>
@@ -168,3 +182,10 @@ void update_se(uint32_t elapsed)
 		enqueue_se(cur_se);
 	}
 }
+
+/**
+ * @}
+ * @}
+ * @}
+ *
+ */
