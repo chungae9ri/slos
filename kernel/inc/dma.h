@@ -3,6 +3,20 @@
  * Copyright (c) 2024 kwangdo.yi<kwangdo.yi@gmail.com>
  */
 
+/**
+ * @addtogroup kernel
+ * @{
+ * @addtogroup kernel_drivers Drivers
+ * @{
+ * @addtogroup kernel_drivers_dma DMA driver
+ * @{
+ *
+ * @file
+ *
+ * @brief Driver for DMA peripheral implemented in FPGA
+ *
+ */
+
 #ifndef _DMA_H_
 #define _DMA_H_
 
@@ -42,3 +56,10 @@ int32_t start_dma(void *arg);
 int32_t dma_irq(void *arg);
 
 #endif
+
+/**
+ * @}
+ * @}
+ * @}
+ *
+ */

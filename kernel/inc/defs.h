@@ -2,6 +2,19 @@
  *
  * Copyright (c) 2024 kwangdo.yi<kwangdo.yi@gmail.com>
  */
+/**
+ * @addtogroup kernel
+ * @{
+ * @addtogroup kernel_core Core
+ * @{
+ * @addtogroup kernel_core_misc Miscellaneous kernel modules
+ * @{
+ *
+ * @file
+ *
+ * @brief Miscellaneous macro definitions
+ *
+ */
 
 #ifndef _DEFS_H_
 #define _DEFS_H_
@@ -13,3 +26,10 @@
 #define __section(x) __attribute__((__section__(x)))
 
 #endif
+
+/**
+ * @}
+ * @}
+ * @}
+ *
+ */

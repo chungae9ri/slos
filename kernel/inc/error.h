@@ -3,6 +3,20 @@
  * Copyright (c) 2024 kwangdo.yi<kwangdo.yi@gmail.com>
  */
 
+/**
+ * @addtogroup kernel
+ * @{
+ * @addtogroup kernel_core Core
+ * @{
+ * @addtogroup kernel_core_misc Miscellaneous kernel modules
+ * @{
+ *
+ * @file
+ *
+ * @brief Error codes
+ *
+ */
+
 #ifndef _ERROR_H_
 #define _ERROR_H_
 
@@ -36,3 +50,11 @@
 #define FRAMEPOOL_FREE_ERR 13
 
 #endif
+
+/**
+ * @}
+ * @}
+ * @}
+ *
+ */
+

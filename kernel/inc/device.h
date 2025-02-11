@@ -2,6 +2,19 @@
  *
  * Copyright (c) 2024 kwangdo.yi<kwangdo.yi@gmail.com>
  */
+/**
+ * @addtogroup kernel
+ * @{
+ * @addtogroup kernel_core Core
+ * @{
+ * @addtogroup kernel_core_misc Miscellaneous kernel modules
+ * @{
+ *
+ * @file
+ *
+ * @brief Macro definitions for devicetree operations
+ *
+ */
 
 #ifndef _DEVICE_H_
 #define _DEVICE_H_
@@ -41,3 +54,10 @@ struct device {
 #define DEVICE_GET_IRQ(DEV) dev_##DEV.irq
 
 #endif
+
+/**
+ * @}
+ * @}
+ * @}
+ *
+ */
