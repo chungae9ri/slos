@@ -11,8 +11,6 @@
  * @addtogroup kernel_drivers_dma DMA driver
  * @{
  *
- * @file
- *
  * @brief Driver for DMA peripheral implemented in FPGA
  *
  */

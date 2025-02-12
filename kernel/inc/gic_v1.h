@@ -11,7 +11,6 @@
  * @addtogroup kernel_arch_ca9 Cortex-A9
  * @{
  *
- * @file
  * @brief General Interrupt Controller (GIC) version 1 implementation
  */
 
@@ -127,4 +126,4 @@ uint32_t gic_irq_handler(void);
  * @}
  *
  */
- 
+

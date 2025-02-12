@@ -3,6 +3,18 @@
  * Copyright (c) 2024 kwangdo.yi<kwangdo.yi@gmail.com>
  */
 
+/**
+ * @addtogroup kernel
+ * @{
+ * @addtogroup kernel_core Core
+ * @{
+ * @addtogroup kernel_core_mm Memory management
+ * @{
+ *
+ * @brief Kernel memory layout map
+ *
+ */
+
 #ifndef _MEM_LAYOUT_H_
 #define _MEM_LAYOUT_H_
 
@@ -105,4 +117,11 @@
 #endif
 
 #endif
+
+/**
+ * @}
+ * @}
+ * @}
+ *
+ */
 

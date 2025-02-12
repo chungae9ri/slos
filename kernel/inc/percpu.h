@@ -3,6 +3,18 @@
  * Copyright (c) 2024 kwangdo.yi<kwangdo.yi@gmail.com>
  */
 
+/**
+ * @addtogroup kernel
+ * @{
+ * @addtogroup kernel_core Core
+ * @{
+ * @addtogroup kernel_core_proc Process management
+ * @{
+ *
+ * @brief Kernel per cpu data definition
+ *
+ */
+
 #ifndef _PER_CPU_H_
 #define _PER_CPU_H_
 
@@ -44,3 +56,10 @@ extern uint32_t rqlock;
 extern uint32_t oneshot_timer_idx;
 #endif /* ! _ENABLE_SMP_*/
 #endif
+
+/**
+ * @}
+ * @}
+ * @}
+ *
+ */

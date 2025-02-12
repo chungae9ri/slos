@@ -11,7 +11,6 @@
  * @addtogroup kernel_arch_ca53 Cortex-A53
  * @{
  *
- * @file
  * @brief General Interrupt Controller (GIC) version 2 implementation
  */
 

@@ -11,8 +11,6 @@
  * @addtogroup kernel_core_proc Process management
  * @{
  *
- * @file ktimer.c
- *
  * @brief Kernel timer module
  *
  */
@@ -131,4 +129,4 @@ void init_oneshot_timers(void);
  * @}
  *
  */
- 
+

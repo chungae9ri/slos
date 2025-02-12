@@ -90,6 +90,7 @@ static int erase_ramdisk(uint32_t addr, uint32_t len)
 	return NO_ERR;
 }
 
+/** Ramdisk IO operation interface definition */
 struct ramdisk_io_ops io_ops = {
 	.erase_chip = erase_ramdisk_chip,
 	.erase_page = erase_ramdisk_page,

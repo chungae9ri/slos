@@ -10,8 +10,6 @@
  * @addtogroup kernel_core_misc Miscellaneous kernel modules
  * @{
  *
- * @file
- *
  * @brief ELF loader functions
  *
  */

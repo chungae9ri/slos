@@ -9,8 +9,6 @@
  * @addtogroup kernel_fs File system
  * @{
  *
- * @file
- *
  * @brief File system interface
  *
  */

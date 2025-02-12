@@ -11,7 +11,6 @@
  * @addtogroup kernel_core_mm Memory management
  * @{
  *
- * @file
  * @brief Memory frame pool management functions
  *
  */
@@ -91,4 +90,4 @@ int32_t release_frame(struct framepool *pframe, uint32_t _frame_no);
  * @}
  *
  */
- 
+

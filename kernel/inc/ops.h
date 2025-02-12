@@ -3,6 +3,18 @@
  * Copyright (c) 2024 kwangdo.yi<kwangdo.yi@gmail.com>
  */
 
+/**
+ * @addtogroup kernel
+ * @{
+ * @addtogroup kernel_core Core
+ * @{
+ * @addtogroup kernel_core_misc Miscellaneous kernel modules
+ * @{
+ *
+ * @brief Low level helper operations
+ *
+ */
+
 #ifndef OPS_H
 #define OPS_H
 
@@ -74,3 +86,10 @@ void spin_lock_acquire(uint32_t *pl);
  */
 void spin_lock_release(uint32_t *pl);
 #endif
+
+/**
+ * @}
+ * @}
+ * @}
+ *
+ */

@@ -3,6 +3,18 @@
  * Copyright (c) 2024 kwangdo.yi<kwangdo.yi@gmail.com>
  */
 
+/**
+ * @addtogroup kernel
+ * @{
+ * @addtogroup kernel_drivers Drivers
+ * @{
+ * @addtogroup kernel_drivers_odev Outstream device
+ * @{
+ *
+ * @brief Outstream Device driver
+ *
+ */
+
 #ifndef _ODEV_H_
 #define _ODEV_H_
 
@@ -93,3 +105,10 @@ uint32_t run_odev_task(void);
  */
 int32_t create_odev_task(void *arg);
 #endif
+
+/**
+ * @}
+ * @}
+ * @}
+ *
+ */
