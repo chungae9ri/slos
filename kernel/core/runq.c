@@ -114,8 +114,9 @@ void update_vruntime_runq(struct sched_entity *se)
 	this_runq = runq;
 #endif
 	/* in very first time, the leftmost should be null */
-	if (!this_runq->rb_leftmost)
+	if (!this_runq->rb_leftmost) {
 		return;
+	}
 
 	cur_rb_node = this_runq->rb_leftmost;
 	se_leftmost = container_of(cur_rb_node, struct sched_entity, run_node);
@@ -130,10 +131,11 @@ void update_vruntime_runq(struct sched_entity *se)
 		cur_se->jiffies_vruntime = cur_se->jiffies_consumed * cur_se->priority;
 
 		cur_rb_node = rb_next(&cur_se->run_node);
-		if (cur_rb_node)
+		if (cur_rb_node) {
 			cur_se = container_of(cur_rb_node, struct sched_entity, run_node);
-		else
+		} else {
 			cur_se = NULL;
+		}
 	}
 }
 

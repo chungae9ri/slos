@@ -24,7 +24,11 @@
 #include <percpu.h>
 #include <ops.h>
 
-extern uint32_t smp_processor_id(void);
+/** CFS priority number */
+#define CFS_PRI_NUM (5u)
+/** Mas task number supported */
+#define MAX_TASK ((SVC_STACK_BASE - SYS_STACK_BASE) / (TASK_STACK_GAP))
+
 static void init_jiffies(void)
 {
 #if _ENABLE_SMP_
