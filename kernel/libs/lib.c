@@ -2,6 +2,18 @@
 //
 // Copyright (c) 2024 kwangdo.yi<kwangdo.yi@gmail.com>
 
+/**
+ * @addtogroup kernel
+ * @{
+ * @addtogroup kernel_core Core
+ * @{
+ * @addtogroup kernel_core_misc Miscellaneous kernel modules
+ * @{
+ *
+ * @brief Library function to be linked with littleFS
+ *
+ */
+
 #include <stdint.h>
 #include <stddef.h>
 #include <stdarg.h>
@@ -254,8 +266,8 @@ char *strchr(const char *s, int c_in)
 		      ^ ~longword)
 
 		     /* Look at only the hole bits.  If any of the hole bits
-		        are unchanged, most likely one of the bytes was a
-		        zero.  */
+			are unchanged, most likely one of the bytes was a
+			zero.  */
 		     & ~magic_bits) != 0 ||
 
 		    /* That caught zeroes.  Now test for C.  */
@@ -480,3 +492,10 @@ void __aeabi_uidivmod(uint32_t n, uint32_t d)
 {
 	__aeabi_uidiv(n, d);
 }
+
+/**
+ * @}
+ * @}
+ * @}
+ *
+ */

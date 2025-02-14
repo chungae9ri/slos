@@ -86,7 +86,7 @@
   */
 
  /**
-  * @defgroup kernel_fs_slfs SLFS file file system
+  * @defgroup kernel_fs_slfs SLFS file system
   * @ingroup kernel_fs
   * @brief SLFS file system modules
   */

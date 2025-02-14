@@ -13,8 +13,9 @@ INPUT                  = doc/mainpage.dox doc/getting_started.dox genesis/genesi
 FILE_PATTERNS          = *.dox *.c *.cpp *.h *.hpp   # Files to parse
 RECURSIVE              = YES                   # Search subdirectories recursively
 EXCLUDE                = kernel/inc/rbtree.h \
-                         kernel/core/retree.c \
-                         kernel/inc/elf*.h
+                         kernel/inc/retree_augmented.h \
+                         kernel/inc/elf*.h \
+                         kernel/core/retree.c
 
 # Build configuration
 EXTRACT_ALL            = YES                   # Extract documentation even without comments
