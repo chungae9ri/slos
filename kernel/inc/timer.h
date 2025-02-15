@@ -3,6 +3,18 @@
  * Copyright (c) 2024 kwangdo.yi<kwangdo.yi@gmail.com>
  */
 
+/**
+ * @addtogroup kernel
+ * @{
+ * @addtogroup kernel_core Core
+ * @{
+ * @addtogroup kernel_core_proc Process management
+ * @{
+ *
+ * @brief Kernel clock device
+ *
+ */
+
 #ifndef _TIMER_H_
 #define _TIMER_H_
 
@@ -31,15 +43,82 @@
 
 #define XPAR_CPU_CORTEXA9_0_CPU_CLK_FREQ_HZ 666666687
 
+/**
+ * @brief Nonblocking msec delay
+ *
+ * This suspend current task for input msec and yield cpu to next task
+ *
+ * @param [in] msecs msec duration
+ */
 void mdelay(uint32_t msecs);
-void udelay(uint32_t usecs);
-uint32_t get_ticks_per_sec(void);
-void set_ticks_per_sec(uint32_t tps);
-uint32_t get_timer_freq(void);
-int32_t timer_irq(void *arg);
-uint32_t timer_get_phy_tick_cnt(void);
-void init_timer(void);
-void timer_enable(void);
-void timer_enable_secondary(void);
 
+/**
+ * @brief Nonblocking usec delay
+ *
+ * This suspend current task for input usec and yield cpu to next task
+ *
+ * @param [in] usecs usec duration
+ */
+void udelay(uint32_t usecs);
+
+/**
+ * @brief Get the ticks per sec
+ *
+ * @return uint32_t Tick counter per sec
+ */
+uint32_t get_ticks_per_sec(void);
+
+/**
+ * @brief Set the ticks per sec
+ *
+ * @param [in] tps Ticks per sec value
+ */
+void set_ticks_per_sec(uint32_t tps);
+
+/**
+ * @brief Get the clock device freq
+ *
+ * @return uint32_t Clock freq
+ */
+uint32_t get_timer_freq(void);
+
+/**
+ * @brief Timer ISR
+ *
+ * @param [in] arg Argument
+ * @return int32_t 0 for success
+ */
+int32_t timer_irq(void *arg);
+
+/**
+ * @brief Get current clock device tick count
+ *
+ * @return uint32_t Current tick count
+ */
+uint32_t timer_get_phy_tick_cnt(void);
+
+/**
+ * @brief Initialize timer clock device
+ *
+ */
+void init_timer(void);
+
+/**
+ * @brief Enable timer clock device
+ *
+ */
+void timer_enable(void);
+
+/**
+ * @brief Enable secondary timer clock device
+ *
+ */
+void timer_enable_secondary(void);
 #endif
+
+/**
+ * @}
+ * @}
+ * @}
+ *
+ */

@@ -11,7 +11,7 @@
  * @addtogroup kernel_core_proc Process management
  * @{
  *
- * @brief Kernel timer module
+ * @brief Kernel timer framework
  *
  */
 

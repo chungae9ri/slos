@@ -3,35 +3,77 @@
  * Copyright (c) 2024 kwangdo.yi<kwangdo.yi@gmail.com>
  */
 
-#ifndef _VM_POOL_H_ // include file only once
+/**
+ * @addtogroup kernel
+ * @{
+ * @addtogroup kernel_core Core
+ * @{
+ * @addtogroup kernel_core_mm Memory management
+ * @{
+ *
+ * @brief Kernel virtual memory pool management
+ *
+ */
+
+#ifndef _VM_POOL_H_
 #define _VM_POOL_H_
 
 #include <frame_pool.h>
 #include <page_table.h>
 
-/* Region descriptor structure */
+/** Virtual memory region descriptor structure */
 struct region_desc {
-	unsigned int startAddr;
-	unsigned int size;
+	uint32_t startAddr;
+	uint32_t size;
 	struct region_desc *next;
 	struct region_desc *prev;
 };
 
-/* Virtual Memory Pool */
+/** Virtual memory pool */
 struct vmpool {
-	unsigned int base_address;
-	unsigned int size;
+	uint32_t base_address;
+	uint32_t size;
 	struct region_desc *plast_region;
-	unsigned int region_num;
-	unsigned int region_size_total;
+	uint32_t region_num;
+	uint32_t region_size_total;
 	struct pagetable *ppagetable;
 };
 
-void init_vmpool(struct vmpool *pvmpool, struct pagetable *_pagetable, unsigned int _base_address,
-		 unsigned int _size);
+/**
+ * @brief Initialize virtual memory pool
+ *
+ * @param [in] pvmpool Pointer to virtual memory pool
+ * @param [in] _pagetable Pointer to page table
+ * @param [in] _base_address Base address of virtual memory region
+ * @param [in] _size Virtual memory region size
+ */
+void init_vmpool(struct vmpool *pvmpool, struct pagetable *_pagetable, uint32_t _base_address,
+		 uint32_t _size);
 
-unsigned int allocate(struct vmpool *pvmpool, unsigned int _size);
-void release(struct vmpool *pvmpool, unsigned int _start_address);
-int is_legitimate(struct vmpool *pvmpool, unsigned int _address);
+/**
+ * @brief Allocate memory from virtual memory pool
+ *
+ * This is a lazy allocate that real allocation occurs when page fault happens
+ *
+ * @param [in] pvmpool Pointer to virtual memory pool
+ * @param [in] _size Size allocated
+ * @return uint32_t Address of allocated memory regioin
+ */
+uint32_t allocate(struct vmpool *pvmpool, uint32_t _size);
+
+/**
+ * @brief Free allocated memory
+ *
+ * @param [in] pvmpool Pointer to virtual memory pool
+ * @param [in] _start_address Start address of memory region to be freed
+ */
+void release(struct vmpool *pvmpool, uint32_t _start_address);
 
 #endif
+
+/**
+ * @}
+ * @}
+ * @}
+ *
+ */

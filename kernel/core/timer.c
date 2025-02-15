@@ -36,6 +36,13 @@
 /** Ticks per second */
 static uint32_t ticks_per_sec;
 
+/**
+ * @brief Nonblocking delay current task for ticks.
+ *
+ * This suspend current task and yield cpu to next task.
+ *
+ * @param [in] ticks Delay duration
+ */
 static void delay(uint32_t ticks)
 {
 	struct task_struct *this_current = NULL;

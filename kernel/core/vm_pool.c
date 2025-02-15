@@ -27,8 +27,8 @@
 /** Page size mask */
 #define PAGE_SIZE_MASK (0x00000FFF)
 
-void init_vmpool(struct vmpool *pvmpool, struct pagetable *_pagetable, unsigned int _base_address,
-		 unsigned int _size)
+void init_vmpool(struct vmpool *pvmpool, struct pagetable *_pagetable, uint32_t _base_address,
+		 uint32_t _size)
 {
 	int region_num_supported;
 
@@ -55,9 +55,9 @@ void init_vmpool(struct vmpool *pvmpool, struct pagetable *_pagetable, unsigned 
 }
 
 /* Lazy allocator */
-unsigned int allocate(struct vmpool *pvmpool, unsigned int _size)
+uint32_t allocate(struct vmpool *pvmpool, uint32_t _size)
 {
-	unsigned int pgnum;
+	uint32_t pgnum;
 
 	/* Allocate multiple of pages, internal fragmentation allowed */
 	pgnum = (int)(_size >> PAGE_SIZE_SHIFT) + ((_size & PAGE_SIZE_MASK) ? 1 : 0);
@@ -82,11 +82,11 @@ unsigned int allocate(struct vmpool *pvmpool, unsigned int _size)
 	return pvmpool->plast_region->startAddr;
 }
 
-void release(struct vmpool *pvmpool, unsigned int _start_address)
+void release(struct vmpool *pvmpool, uint32_t _start_address)
 {
 	int i;
-	unsigned int region_size;
-	unsigned int pgnum;
+	uint32_t region_size;
+	uint32_t pgnum;
 	struct region_desc *pcur = (struct region_desc *)(pvmpool->base_address);
 
 	while (pcur) {
@@ -100,7 +100,7 @@ void release(struct vmpool *pvmpool, unsigned int _start_address)
 			pgnum = (int)(region_size >> PAGE_SIZE_SHIFT) +
 				((region_size & PAGE_SIZE_MASK) ? 1 : 0);
 			for (i = 0; i < pgnum; i++) {
-				free_page((unsigned int)(_start_address + (PAGE_SIZE * i)));
+				free_page((uint32_t)(_start_address + (PAGE_SIZE * i)));
 			}
 
 			if (i == pgnum) {
@@ -119,26 +119,6 @@ void release(struct vmpool *pvmpool, unsigned int _start_address)
 			pvmpool->plast_region = pvmpool->plast_region->next;
 		}
 	}
-}
-
-int is_legitimate(struct vmpool *pvmpool, unsigned int _address)
-{
-	struct region_desc *pcur = (struct region_desc *)(pvmpool->base_address);
-
-	if (_address == pvmpool->base_address) {
-		return 1;
-	}
-
-	pcur = pcur->next;
-	while (pcur) {
-		if (_address >= pcur->startAddr && _address < pcur->startAddr + pcur->size) {
-			return -1;
-		}
-
-		pcur = pcur->next;
-	}
-
-	return 0;
 }
 
 /**
