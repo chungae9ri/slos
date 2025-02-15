@@ -13,4 +13,4 @@ add_executable(
   mkfs.cpp
 )
 
-target_compile_features(${TARGET_NAME} PRIVATE cxx_std_11)
+target_compile_features(${TARGET_NAME} PRIVATE cxx_std_17)

@@ -2,59 +2,72 @@
 //
 // Copyright (c) 2024 kwangdo.yi<kwangdo.yi@gmail.com>
 
+/**
+ * @addtogroup mkfs
+ * @{
+ *
+ * @file
+ *
+ * @brief Build ramdisk image with user applications.
+ * Format is user_app_number(4bytes) + user_app_0_size(4bytes) + user_app_0_bin + pad + ...
+ *
+ */
+
 #include <iostream>
-#include <stdio.h>
-#include <string.h>
+#include <fstream>
+#include <filesystem>
+
 using namespace std;
 
 int main(int argc, char **argv)
 {
 	int i;
-	FILE *outfp, *infp;
-	/* user app size should be less than 1MB */
+	/* User app size max size 1MB */
 	char buff[1024 * 1024];
-	unsigned int size, cnt = argc - 2, padding;
+	uint32_t app_cnt = argc - 2;
+	uint32_t padding;
 
 	if (argc < 3) {
 		cout << "usage : mkappfs out in1 in2...\n" << endl;
-		return 0;
+		return -1;
 	}
 
-	outfp = fopen(argv[1], "w");
-	if (!outfp)
-		return 0;
+	filesystem::path ramdisk_file_path = argv[1];
+	if (!filesystem::exists(ramdisk_file_path)) {
+		filesystem::remove(ramdisk_file_path);
+	}
 
-	/*sprintf(cnt, "%d", argc-2);*/
-	fwrite(&cnt, 1, sizeof(unsigned int), outfp);
+	ofstream ramdisk_file_os(ramdisk_file_path, ios::binary);
+	ramdisk_file_os.write(reinterpret_cast<const char*>(&app_cnt), sizeof(app_cnt));
 
 	for (i = 2; i < argc; i++) {
-		infp = fopen(argv[i], "r");
-		if (!infp)
-			return 0;
+		filesystem::path app_path = argv[i];
+		if (!filesystem::exists(app_path)) {
+			cout << app_path << " doesn't exists" << endl;
+			return -1;
+		}
 
-		fseek(infp, 0, SEEK_SET);
+		ifstream app_is(app_path, ios::binary);
+		app_is.read(reinterpret_cast<char *>(buff), 1024 * 1024);
+		uint32_t bytes_read = static_cast<uint32_t>(app_is.gcount());
+		cout << "bytes read: " << bytes_read << endl;
 
-		size = 0;
-		fseek(outfp, 0, SEEK_END);
-		memset(buff, 0x0, sizeof(buff));
-		size = fread(buff, sizeof(char), sizeof(buff), infp);
-		cout << "read : " << size << endl;
-		padding = size % 4;
-		if (padding != 0) {
+		padding = bytes_read % 4;
+		if (padding) {
 			padding = 4 - padding;
-			while (padding > 0) {
-				buff[size] = 0x00;
-				padding--;
-				size++;
+			while (padding-- > 0) {
+				buff[bytes_read++] = 0x00;
 			}
 		}
-		fwrite(&size, 1, sizeof(size), outfp);
-		fwrite(buff, size, 1, outfp);
-		cout << "write : " << size << endl;
 
-		fclose(infp);
+		ramdisk_file_os.write(reinterpret_cast<const char *>(&bytes_read), sizeof(bytes_read));
+		ramdisk_file_os.write(reinterpret_cast<const char *>(buff), bytes_read);
 	}
-	fclose(outfp);
 
 	return 0;
 }
+
+/**
+ * @}
+ *
+ */
