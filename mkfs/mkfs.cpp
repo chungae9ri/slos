@@ -33,12 +33,12 @@ int main(int argc, char **argv)
 	}
 
 	filesystem::path ramdisk_file_path = argv[1];
-	if (!filesystem::exists(ramdisk_file_path)) {
+	if (filesystem::exists(ramdisk_file_path)) {
 		filesystem::remove(ramdisk_file_path);
 	}
 
 	ofstream ramdisk_file_os(ramdisk_file_path, ios::binary);
-	ramdisk_file_os.write(reinterpret_cast<const char*>(&app_cnt), sizeof(app_cnt));
+	ramdisk_file_os.write(reinterpret_cast<const char *>(&app_cnt), sizeof(app_cnt));
 
 	for (i = 2; i < argc; i++) {
 		filesystem::path app_path = argv[i];
@@ -60,7 +60,8 @@ int main(int argc, char **argv)
 			}
 		}
 
-		ramdisk_file_os.write(reinterpret_cast<const char *>(&bytes_read), sizeof(bytes_read));
+		ramdisk_file_os.write(reinterpret_cast<const char *>(&bytes_read),
+				      sizeof(bytes_read));
 		ramdisk_file_os.write(reinterpret_cast<const char *>(buff), bytes_read);
 	}
 
