@@ -25,7 +25,13 @@ set current_vivado_version [version -short]
 
 if { [string first $scripts_vivado_version $current_vivado_version] == -1 } {
    puts ""
-   catch {common::send_gid_msg -ssname BD::TCL -id 2041 -severity "ERROR" "This script was generated using Vivado <$scripts_vivado_version> and is being run in <$current_vivado_version> of Vivado. Please run the script in Vivado <$scripts_vivado_version> then open the design in Vivado <$current_vivado_version>. Upgrade the design by running \"Tools => Report => Report IP Status...\", then run write_bd_tcl to create an updated script."}
+   if { [string compare $scripts_vivado_version $current_vivado_version] > 0 } {
+      catch {common::send_gid_msg -ssname BD::TCL -id 2042 -severity "ERROR" " This script was generated using Vivado <$scripts_vivado_version> and is being run in <$current_vivado_version> of Vivado. Sourcing the script failed since it was created with a future version of Vivado."}
+
+   } else {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2041 -severity "ERROR" "This script was generated using Vivado <$scripts_vivado_version> and is being run in <$current_vivado_version> of Vivado. Please run the script in Vivado <$scripts_vivado_version> then open the design in Vivado <$current_vivado_version>. Upgrade the design by running \"Tools => Report => Report IP Status...\", then run write_bd_tcl to create an updated script."}
+
+   }
 
    return 1
 }
@@ -244,17 +250,18 @@ proc create_root_design { parentCell } {
     CONFIG.PCW_EN_CLK1_PORT {1} \
     CONFIG.PCW_EN_EMIO_CD_SDIO0 {0} \
     CONFIG.PCW_EN_EMIO_I2C0 {0} \
-    CONFIG.PCW_EN_EMIO_I2C1 {1} \
+    CONFIG.PCW_EN_EMIO_I2C1 {0} \
     CONFIG.PCW_EN_EMIO_TTC0 {1} \
     CONFIG.PCW_EN_EMIO_UART0 {0} \
     CONFIG.PCW_EN_EMIO_WP_SDIO0 {0} \
     CONFIG.PCW_EN_GPIO {1} \
-    CONFIG.PCW_EN_I2C0 {1} \
-    CONFIG.PCW_EN_I2C1 {1} \
+    CONFIG.PCW_EN_I2C0 {0} \
+    CONFIG.PCW_EN_I2C1 {0} \
     CONFIG.PCW_EN_SDIO0 {1} \
     CONFIG.PCW_EN_TTC0 {1} \
     CONFIG.PCW_EN_UART0 {1} \
     CONFIG.PCW_EN_UART1 {0} \
+    CONFIG.PCW_EN_USB0 {1} \
     CONFIG.PCW_FCLK_CLK1_BUF {TRUE} \
     CONFIG.PCW_FPGA0_PERIPHERAL_FREQMHZ {100} \
     CONFIG.PCW_FPGA1_PERIPHERAL_FREQMHZ {200} \
@@ -262,15 +269,10 @@ proc create_root_design { parentCell } {
     CONFIG.PCW_FPGA_FCLK1_ENABLE {1} \
     CONFIG.PCW_GPIO_MIO_GPIO_ENABLE {1} \
     CONFIG.PCW_GPIO_MIO_GPIO_IO {MIO} \
-    CONFIG.PCW_I2C0_GRP_INT_ENABLE {0} \
-    CONFIG.PCW_I2C0_I2C0_IO {MIO 10 .. 11} \
-    CONFIG.PCW_I2C0_PERIPHERAL_ENABLE {1} \
-    CONFIG.PCW_I2C0_RESET_ENABLE {0} \
-    CONFIG.PCW_I2C1_I2C1_IO {EMIO} \
-    CONFIG.PCW_I2C1_PERIPHERAL_ENABLE {1} \
+    CONFIG.PCW_I2C0_PERIPHERAL_ENABLE {0} \
+    CONFIG.PCW_I2C1_PERIPHERAL_ENABLE {0} \
     CONFIG.PCW_I2C_PERIPHERAL_FREQMHZ {111.111115} \
-    CONFIG.PCW_I2C_RESET_ENABLE {1} \
-    CONFIG.PCW_I2C_RESET_SELECT {Share reset pin} \
+    CONFIG.PCW_I2C_RESET_ENABLE {0} \
     CONFIG.PCW_IRQ_F2P_INTR {1} \
     CONFIG.PCW_MIO_0_IOTYPE {LVCMOS 3.3V} \
     CONFIG.PCW_MIO_0_PULLUP {enabled} \
@@ -427,13 +429,13 @@ proc create_root_design { parentCell } {
     CONFIG.PCW_MIO_9_IOTYPE {LVCMOS 3.3V} \
     CONFIG.PCW_MIO_9_PULLUP {enabled} \
     CONFIG.PCW_MIO_9_SLEW {slow} \
-    CONFIG.PCW_MIO_TREE_PERIPHERALS {GPIO#GPIO#GPIO#GPIO#GPIO#GPIO#GPIO#GPIO#GPIO#GPIO#I2C 0#I2C 0#GPIO#GPIO#UART 0#UART 0#GPIO#GPIO#GPIO#GPIO#GPIO#GPIO#GPIO#GPIO#GPIO#GPIO#GPIO#GPIO#GPIO#GPIO#GPIO#GPIO#GPIO#GPIO#GPIO#GPIO#GPIO#GPIO#GPIO#GPIO#SD\
-0#SD 0#SD 0#SD 0#SD 0#SD 0#SD 0#GPIO#GPIO#GPIO#SD 0#GPIO#GPIO#GPIO} \
-    CONFIG.PCW_MIO_TREE_SIGNALS {gpio[0]#gpio[1]#gpio[2]#gpio[3]#gpio[4]#gpio[5]#gpio[6]#gpio[7]#gpio[8]#gpio[9]#scl#sda#gpio[12]#gpio[13]#rx#tx#gpio[16]#gpio[17]#gpio[18]#gpio[19]#gpio[20]#gpio[21]#gpio[22]#gpio[23]#gpio[24]#gpio[25]#gpio[26]#gpio[27]#gpio[28]#gpio[29]#gpio[30]#gpio[31]#gpio[32]#gpio[33]#gpio[34]#gpio[35]#gpio[36]#gpio[37]#gpio[38]#gpio[39]#clk#cmd#data[0]#data[1]#data[2]#data[3]#cd#gpio[47]#gpio[48]#gpio[49]#wp#gpio[51]#gpio[52]#gpio[53]}\
+    CONFIG.PCW_MIO_TREE_PERIPHERALS {GPIO#GPIO#GPIO#GPIO#GPIO#GPIO#GPIO#GPIO#GPIO#GPIO#GPIO#GPIO#GPIO#GPIO#UART 0#UART 0#GPIO#GPIO#GPIO#GPIO#GPIO#GPIO#GPIO#GPIO#GPIO#GPIO#GPIO#GPIO#USB 0#USB 0#USB 0#USB\
+0#USB 0#USB 0#USB 0#USB 0#USB 0#USB 0#USB 0#USB 0#SD 0#SD 0#SD 0#SD 0#SD 0#SD 0#USB Reset#SD 0#GPIO#GPIO#SD 0#GPIO#GPIO#GPIO} \
+    CONFIG.PCW_MIO_TREE_SIGNALS {gpio[0]#gpio[1]#gpio[2]#gpio[3]#gpio[4]#gpio[5]#gpio[6]#gpio[7]#gpio[8]#gpio[9]#gpio[10]#gpio[11]#gpio[12]#gpio[13]#rx#tx#gpio[16]#gpio[17]#gpio[18]#gpio[19]#gpio[20]#gpio[21]#gpio[22]#gpio[23]#gpio[24]#gpio[25]#gpio[26]#gpio[27]#data[4]#dir#stp#nxt#data[0]#data[1]#data[2]#data[3]#clk#data[5]#data[6]#data[7]#clk#cmd#data[0]#data[1]#data[2]#data[3]#reset#cd#gpio[48]#gpio[49]#wp#gpio[51]#gpio[52]#gpio[53]}\
 \
     CONFIG.PCW_PRESET_BANK1_VOLTAGE {LVCMOS 1.8V} \
     CONFIG.PCW_SD0_GRP_CD_ENABLE {1} \
-    CONFIG.PCW_SD0_GRP_CD_IO {MIO 46} \
+    CONFIG.PCW_SD0_GRP_CD_IO {MIO 47} \
     CONFIG.PCW_SD0_GRP_POW_ENABLE {0} \
     CONFIG.PCW_SD0_GRP_WP_ENABLE {1} \
     CONFIG.PCW_SD0_GRP_WP_IO {MIO 50} \
@@ -461,7 +463,12 @@ proc create_root_design { parentCell } {
     CONFIG.PCW_UIPARAM_DDR_DQS_TO_CLK_DELAY_3 {0.023} \
     CONFIG.PCW_UIPARAM_DDR_PARTNO {MT41K256M16 RE-125} \
     CONFIG.PCW_UIPARAM_DDR_USE_INTERNAL_VREF {1} \
+    CONFIG.PCW_USB0_PERIPHERAL_ENABLE {1} \
+    CONFIG.PCW_USB0_RESET_ENABLE {1} \
+    CONFIG.PCW_USB0_RESET_IO {MIO 46} \
+    CONFIG.PCW_USB0_USB0_IO {MIO 28 .. 39} \
     CONFIG.PCW_USB_RESET_ENABLE {1} \
+    CONFIG.PCW_USB_RESET_SELECT {Share reset pin} \
     CONFIG.PCW_USE_FABRIC_INTERRUPT {1} \
     CONFIG.PCW_USE_S_AXI_ACP {1} \
   ] $processing_system7_0
