@@ -119,7 +119,7 @@ sec_irq_handler:
 	stmia	r12!, {r0-r11} 
 	sub 	r0, lr, #4 /* return address */
 	msr		cpsr_c, #MODE_SVC | I_BIT | F_BIT  /* irq,fiq disabled */
-	ldr 	r12, =0x5030
+	ldr 	r12, =0x5030 /* start address to save sp, lr, pc */
 	stmia	r12!, {sp, lr}
 	/* r0 (return address) should be saved after storing sp, lr 
 	 * stmfa r12!, {sp, lr, r0} doesn't work.
@@ -133,7 +133,6 @@ sec_irq_handler:
 	str 	r0, [r12],#4		/* save FPSCR to memory */
 	mrc 	p10, 7, r0, c8, c0, 3	/* read FPEXC */
 	str 	r0, [r12]		/* save FPEXC to memory */
-	/**/
 	bl	gic_irq_handler
 	;
 	mrs	r0, CPSR
@@ -146,9 +145,7 @@ sec_irq_handler:
 	mcr 	p10, 7, r0, c1, c0, 2	/* write FPSCR */
 	ldr 	r0, [r12]		/* load FPEXC from memory */
 	mcr 	p10, 7, r0, c8, c0, 3	/* write FPEXC */	
-	/**/
 	ldr		r12, =SEC_CONTEXT_MEM
-	/*ldr		r12, =0x503C*/
 	ldmia	r12!, {r0-r11, sp, lr, pc}
 ;
 sec_fiq_handler:
