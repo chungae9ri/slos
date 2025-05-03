@@ -116,24 +116,40 @@ sec_reserved:
 ;
 sec_irq_handler:
 	ldr 	r12, =SEC_CONTEXT_MEM
-	sub	r12, #4
-	stmfa	r12!, {r0-r11}
-	sub 	r0, lr, #4
-	msr	cpsr_c, #MODE_SVC | I_BIT | F_BIT  /* irq,fiq disabled */
-	mov	r12, #SEC_CONTEXT_MEM_SP
-	stmfa	r12!, {sp, lr}
-	/* r0 should be saved after storing sp, lr 
+	stmia	r12!, {r0-r11} 
+	sub 	r0, lr, #4 /* return address */
+	msr		cpsr_c, #MODE_SVC | I_BIT | F_BIT  /* irq,fiq disabled */
+	ldr 	r12, =0x5030
+	stmia	r12!, {sp, lr}
+	/* r0 (return address) should be saved after storing sp, lr 
 	 * stmfa r12!, {sp, lr, r0} doesn't work.
 	 * Compiler changes the order.
 	 */
-	str	r0, [r12, #4]
+	str		r0, [r12],#4 /* save return address */
+	add		r12, r12,#4	 /* reserved */
+	/* save FPU context */
+	vstmia 	r12!, {s0-s31}		/* save all 32 single-precision registers */
+	mrc 	p10, 7, r0, c1, c0, 2	/* read FPSCR */
+	str 	r0, [r12],#4		/* save FPSCR to memory */
+	mrc 	p10, 7, r0, c8, c0, 3	/* read FPEXC */
+	str 	r0, [r12]		/* save FPEXC to memory */
+	/**/
 	bl	gic_irq_handler
 	;
 	mrs	r0, CPSR
-	bic	r1, r0, #I_BIT|F_BIT
+	bic	r1, r0, #I_BIT|F_BIT /* enable interrupt */
 	msr	cpsr_c, r1
-	ldr	r12, =SEC_CONTEXT_MEM_END
-	ldmfa	r12!, {r0-r11, sp, lr, pc}
+	/* restore FPU context */
+	mov 	r12, #0x5040 /* start of FPU context */
+	vldmia 	r12!, {s0-s31}		/* restore all 32 single-precision registers */
+	ldr 	r0, [r12],#4		/* load FPSCR from memory */
+	mcr 	p10, 7, r0, c1, c0, 2	/* write FPSCR */
+	ldr 	r0, [r12]		/* load FPEXC from memory */
+	mcr 	p10, 7, r0, c8, c0, 3	/* write FPEXC */	
+	/**/
+	ldr		r12, =SEC_CONTEXT_MEM
+	/*ldr		r12, =0x503C*/
+	ldmia	r12!, {r0-r11, sp, lr, pc}
 ;
 sec_fiq_handler:
 	b 	.

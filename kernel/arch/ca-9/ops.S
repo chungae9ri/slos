@@ -45,7 +45,7 @@ switch_context_yieldyi:
 	str	lr, [r12],#4
 	/* save current task's FPU context */
 	add 	r12, r12, #4			/* skip reserved */
-	vstmia 	r12!, {d0-d15}			/* save all 15 double-precision registers */
+	vstmia 	r12!, {s0-s31}			/* save all 32 single-precision registers */
 	mrc 	p10, 7, r0, c1, c0, 2  		/* read FPSCR */
 	str 	r0, [r12],#4			/* save FPSCR to memory */
 	mrc 	p10, 7, r0, c8, c0, 3  		/* read FPEXC */
@@ -53,7 +53,7 @@ switch_context_yieldyi:
 	/**/
 	/* restore FPU context from next task's FPU context */
 	add 	r12, r1,#CPU_CONTEXT_SZ		/* set r12 to the start of FPU context */
-	vldmia 	r12!, {d0-d15}			/* restore all 15 double-precision registers */
+	vldmia 	r12!, {s0-s31}			/* restore all 31 single-precision registers */
 	ldr 	r0, [r12],#4			/* load FPSCR from memory */
 	mcr 	p10, 7, r0, c1, c0, 2		/* write FPSCR */
 	ldr 	r0, [r12]			/* load FPEXC from memory */
@@ -99,28 +99,45 @@ savectxt:
 	bne	savectxt
 	/* save FPU context to current task's FPU context */
 	add 	r0, r0, #4		/* skip reserved */
-	vstmia 	r0!, {d0-d15}		/* save all 15 double-precision registers */
-	mrc 	p10, 7, r2, c1, c0, 2	/* read FPSCR */
-	str 	r2, [r0],#4		/* save FPSCR to memory */
-	mrc 	p10, 7, r2, c8, c0, 3	/* read FPEXC */
-	str 	r2, [r0]		/* save FPEXC to memory */
+	add 	r4, r4, #4		/* skip reserved */
+/* save all 32 single-precision registers from ctx mem */
+	mov 	r2, #32
+savefpuctxt: 
+	ldr 	r3, [r4], #4
+	str		r3, [r0], #4
+	subs 	r2, r2, #1
+	bne		savefpuctxt
+	/* save FPSCR from ctx mem */
+	ldr		r3, [r4], #4
+	str		r3, [r0], #4
+	/* save FPEXC to memory */
+	ldr		r3, [r4], #4
+	str 	r3, [r0], #4		
 	mov 	r2,#CONTEXT_MEM_LEN
-	mov	r4, r12
+	mov		r4, r12
 /* save next task's context ([r1]) to the CONTEXT_MEM.
  * restore next task's context when return from ISR 
  */
 restrctxt:
-	ldr	r3,[r1],#4
-	str	r3,[r4],#4
-	subs	r2,r2,#1
+	ldr		r3,[r1], #4
+	str		r3,[r4], #4
+	subs	r2,r2, #1
 	bne	restrctxt
-	/* restore FPU context from next task's FPU context */
 	add 	r4, r4, #4		/* skip reserved */
-	vldmia 	r4!, {d0-d15}		/* restore all 15 double-precision registers */
-	ldr 	r1, [r4],#4		/* load FPSCR from memory */
-	mcr 	p10, 7, r1, c1, c0, 2	/* write FPSCR */
-	ldr 	r1, [r4]		/* load FPEXC from memory */
-	mcr 	p10, 7, r1, c8, c0, 3	/* write FPEXC */
+	add 	r1, r1, #4		/* skip reserved */
+	mov 	r2, #32
+/* restore FPU context from next task's FPU context */
+restrfpuctxt:
+	ldr		r3, [r1], #4
+	str		r3, [r4], #4
+	subs	r2, r2, #1
+	bne restrfpuctxt
+	/* save FPSCR to ctx mem */
+	ldr 	r3, [r1], #4		
+	str		r3, [r4], #4
+	/* save FPEXC to ctx mem */
+	ldr 	r3, [r1], #4	
+	str		r3, [r4], #4
 	pop	{r0-r5, pc}
 
 .global enable_interrupt

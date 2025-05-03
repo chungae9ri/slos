@@ -58,11 +58,11 @@ struct task_context_struct {
 	uint32_t sp;	   /**< Stack pointer storage */
 	uint32_t lr;	   /**< LR register storage */
 	uint32_t pc;	   /**< PC storage */
-	uint32_t reserved; /**< needed to align 8bytes for d0-15 registers */
-	uint64_t d[16];	   /**< 16 double-precision registers (d0-d15) */
+	uint32_t reserved; /**< needed to align 8bytes for s0-31 registers */
+	uint32_t s[32];	   /**< 32 single-precision registers (s0-s31) */
 	uint32_t fpscr;	   /**< Floating-Point Status and Control Register */
 	uint32_t fpexc;	   /**< Floating-Point Exception Register */
-};
+} __attribute__((aligned(8)));
 
 /** Task type */
 typedef enum {

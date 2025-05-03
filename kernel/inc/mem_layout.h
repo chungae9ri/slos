@@ -22,10 +22,10 @@
 /* memory map */
 .set KERNEL_FRAME_BITMAP,			0xC000
 .set CONTEXT_MEM,				0x00004000 /* cpu0 secure mode context memory address */
-.set CONTEXT_MEM_SP,				0x402C
+.set CONTEXT_MEM_SP,				0x4030 // 0x402C
 .set CONTEXT_MEM_END,				0x00004038
 .set SEC_CONTEXT_MEM,				0x00005000 /* cpu1 secure mode context memory address */
-.set SEC_CONTEXT_MEM_SP,			0x502C
+.set SEC_CONTEXT_MEM_SP,			0x5030 // 0x502C
 .set SEC_CONTEXT_MEM_END,			0x00005038
 /* kernel*/
 .set KERNEL_CODE_BASE,				0x100000
@@ -70,10 +70,10 @@
 /* memory map */
 #define KERNEL_FRAME_BITMAP			0xC000
 #define CONTEXT_MEM				0x00004000 /* cpu0 secure mode context memory address */
-#define CONTEXT_MEM_SP				0x402C
+#define CONTEXT_MEM_SP				0x4030 // 0x402C
 #define CONTEXT_MEM_END				0x00004038
 #define SEC_CONTEXT_MEM				0x00005000 /* cpu1 secure mode context memory address */
-#define SEC_CONTEXT_MEM_SP			0x502C
+#define SEC_CONTEXT_MEM_SP			0x5030 // 0x502C
 #define SEC_CONTEXT_MEM_END			0x00005038
 /* kernel*/
 #define KERNEL_CODE_BASE			0x100000

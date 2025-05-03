@@ -57,7 +57,6 @@ void init_cfs_scheduler(void)
 	init_jiffies();
 }
 
-#include <inttypes.h>
 int32_t print_task_stat(void *arg)
 {
 	uint32_t cpuid;
@@ -225,6 +224,8 @@ struct task_struct *forkyi(char *name, task_entry fn, TASKTYPE type, uint32_t pr
 	__asm __volatile("mov %[lr], r14" : [lr] "+r"(lr)::);
 	pt->ct.lr = (uint32_t)lr;
 	pt->ct.pc = (uint32_t)pt->entry;
+	pt->ct.fpscr = 0x0;
+	pt->ct.fpexc = 0x40000000;
 
 	/* Get the last task from task list and add this task to the end of the task list */
 	this_last->task.next = &(pt->task);

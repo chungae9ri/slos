@@ -461,26 +461,16 @@ uint32_t __popcountsi2(uint32_t a)
 
 void __aeabi_uidiv(uint32_t n, uint32_t d)
 {
-	uint32_t i = 1, q = 0;
+	uint32_t i = 0;
 
-	if (d == 0) {
-		return;
-	}
+    if (d == 0) {
+        while (1);  // Trap or halt
+    }
 
-	while ((d >> 31) == 0) {
-		i = i << 1; /* count the max division steps */
-		d = d << 1; /* increase p until it has maximum size*/
-	}
-
-	while (i > 0) {
-		q = q << 1; /* write bit in q at index (size-1) */
-		if (n >= d) {
-			n -= d;
-			q++;
-		}
-		d = d >> 1; /* decrease p */
-		i = i >> 1; /* decrease remaining size in q */
-	}
+    while (n >= d) {
+        n -= d;
+        i++;
+    }
 
 	/* replace quotient in r0 */
 	__asm volatile("mov r0, %[i]" ::[i] "r"(i));
@@ -491,6 +481,9 @@ void __aeabi_uidiv(uint32_t n, uint32_t d)
 void __aeabi_uidivmod(uint32_t n, uint32_t d)
 {
 	__aeabi_uidiv(n, d);
+
+	/* replace r0 with r1 (remainder)*/
+	__asm volatile("mov r0, r1" ::);
 }
 
 /**
