@@ -1,3 +1,6 @@
 [submodule "kernel/fs/littlefs"]
 	path = kernel/fs/littlefs
 	url = https://github.com/littlefs-project/littlefs.git
+[submodule "kernel/drivers/usb"]
+	path = kernel/drivers/usb
+	url = https://github.com/hathach/tinyusb.git
