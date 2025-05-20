@@ -11,4 +11,6 @@ else ()
     ramdisk/ramdisk_io.c
     uart/uart.c
   )
+  add_subdirectory(tinyusb/src)
+  tinyusb_target_add(drivers_objs)
 endif ()
