@@ -20,25 +20,40 @@
 #ifndef _UART_H_
 #define _UART_H_
 
+#include <device.h>
+
+DEVICE_DECLARE_IDX(uart, 0);
 /**
  * @brief Initialize uart
  *
+ * @param dev Uart device instance
  */
-void init_uart(void);
+int32_t init_uart(struct device *dev);
+
+/**
+ * @brief Configure uart device
+ * 
+ * @param dev Uart device instance
+ * @retval 0 for success others for failure
+ */
+int32_t configure_uart(struct device *dev);
 
 /**
  * @brief Send 1 byte to uart output
  *
- * @param c
+ * @param dev Uart device instance
+ * @param c 1byte data to be sent
+ * @retval 0 for success others for failure
  */
-void poll_out(char c);
+int32_t poll_out(struct device *dev, char c);
 
 /**
  * @brief Receive 1 byte from uart input
  *
- * @return uint8_t
+ * @param dev Uart device instance
+ * @retval 0 for success others for failure
  */
-uint8_t poll_in(void);
+uint8_t poll_in(struct device *dev);
 #endif
 
 /**

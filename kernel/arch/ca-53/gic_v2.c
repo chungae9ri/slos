@@ -25,7 +25,9 @@
 #include <device.h>
 
 /** Define GIC device from devicetree */
-DEVICE_DEFINE(gic_0, DT_GET_COMPAT(0), DT_GET_BASE_ADDR(0), 0);
+DEVICE_DEFINE_IDX(gic, 0);
+
+static struct device *dev = DEVICE_GET_IDX(gic, 0);
 
 /** Interrupt handler vector table for CPU 0 */
 static struct ihandler handler[NUM_IRQS];
@@ -35,12 +37,12 @@ void init_gic_dist(void)
 	uint32_t ext_irq_num = 0;
 
 	/* Disabling GIC */
-	write32(DEVICE_GET_BASE_ADDR(gic_0) + GICD_CTLR_OFFSET, 0);
+	write32(dev->base_addr + GICD_CTLR_OFFSET, 0);
 
 	/* GICD_TYPER: interrupt controller type reg.
 	 * Find out how many interrupts are supported.
 	 */
-	ext_irq_num = read32(DEVICE_GET_BASE_ADDR(gic_0) + GICD_TYPER_OFFSET) & 0x1f;
+	ext_irq_num = read32(dev->base_addr + GICD_TYPER_OFFSET) & 0x1f;
 	ext_irq_num = (ext_irq_num + 1) * 32;
 
 	/* PPI interrupt sensitivity are fixed and doesn't need to be set.
@@ -53,10 +55,10 @@ void init_gic_dist(void)
 	 * writing 0 has no effect.
 	 * Enable all PPIs including secure private timer interrupt #29
 	 */
-	write32(DEVICE_GET_BASE_ADDR(gic_0) + GICD_ISE_BASE_OFFSET, 0xFFFF0000);
+	write32(dev->base_addr + GICD_ISE_BASE_OFFSET, 0xFFFF0000);
 
 	/* Enable GIC distributor */
-	write32(DEVICE_GET_BASE_ADDR(gic_0) + GICD_CTLR_OFFSET, 0x1);
+	write32(dev->base_addr + GICD_CTLR_OFFSET, 0x1);
 }
 
 void init_gic_cpu(void)
@@ -68,16 +70,18 @@ void init_gic_cpu(void)
 	 * which has max value of priority.
 	 * Pass all levels of interrupts.
 	 */
-	write32(DEVICE_GET_BASE_ADDR(gic_0) + GICC_PMR_OFFSET, 0xF8);
+	write32(dev->base_addr + GICC_PMR_OFFSET, 0xF8);
 
 	/* enable GIC cpu interface,
 	 * banked register
 	 */
-	write32(DEVICE_GET_BASE_ADDR(gic_0) + GICC_CTLR_OFFSET, 0x1);
+	write32(dev->base_addr + GICC_CTLR_OFFSET, 0x1);
 }
 
 void init_gic(void)
 {
+	dev->base_addr = DT_GET_BASE_ADDR(0);
+
 	init_gic_dist();
 	init_gic_cpu();
 }
@@ -94,7 +98,7 @@ int32_t gic_irq_handler(void)
 	struct sgi_data dat = {0, 0};
 
 	/* ack the interrupt */
-	val = read32(DEVICE_GET_BASE_ADDR(gic_0) + GICC_IAR_OFFSET);
+	val = read32(dev->base_addr + GICC_IAR_OFFSET);
 
 	num = val & 0x3FF;
 
@@ -108,7 +112,7 @@ int32_t gic_irq_handler(void)
 		write32(PRIV_TMR_INTSTAT, 1);
 	}
 
-	write32(DEVICE_GET_BASE_ADDR(gic_0) + GICC_EOIR_OFFSET, val);
+	write32(dev->base_addr + GICC_EOIR_OFFSET, val);
 
 	return ret;
 }
@@ -120,7 +124,7 @@ int32_t gic_enable_interrupt(int vec)
 	uint32_t val;
 
 	/* register set-enable ICDISER0~2, only GIC_ICDISER0 is banked */
-	reg = DEVICE_GET_BASE_ADDR(gic_0) + GICD_ISE_BASE_OFFSET + (uint32_t)(vec / 32) * 4;
+	reg = dev->base_addr + GICD_ISE_BASE_OFFSET + (uint32_t)(vec / 32) * 4;
 	bit = 1 << (vec & 0x1F);
 
 	/* writing 1 enables intr */
@@ -137,7 +141,7 @@ int32_t gic_disable_interrupt(int vec)
 	uint32_t bit;
 
 	/* banked register clear-enable ICDICER0 */
-	reg = DEVICE_GET_BASE_ADDR(gic_0) + GICD_ICE_BASE_OFFSET + (uint32_t)(vec / 32) * 4;
+	reg = dev->base_addr + GICD_ICE_BASE_OFFSET + (uint32_t)(vec / 32) * 4;
 	bit = 1 << (vec & 31);
 
 	/* writing 1 disables intr

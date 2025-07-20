@@ -45,6 +45,8 @@
 #define ICDSGIR		0xF8F01F00
 #define CMD_LEN		32
 
+static struct device *uart_dev = DEVICE_GET_IDX(uart, 0);
+
 uint32_t show_stat;
 
 static uint32_t oneshot_worker(void)
@@ -491,8 +493,8 @@ void shell(void)
 		printk("%s > ", __func__);
 
 		do {
-			byte = poll_in();
-			poll_out(byte);
+			byte = poll_in(uart_dev);
+			poll_out(uart_dev, byte);
 			cmdline[i++] = byte;
 
 		} while (byte != '\n' && byte != '\r' && i < CMD_LEN);
@@ -546,9 +548,9 @@ void shell(void)
 			create_oneshot_task("oneshot_task", oneshot_worker, 1000);
 		} else if (!strcmp(cmdline, "sleep")) {
 			printk("input task pid: ");
-			byte = poll_in();
-			poll_out(byte);
-			poll_out('\n');
+			byte = poll_in(uart_dev);
+			poll_out(uart_dev, byte);
+			poll_out(uart_dev, '\n');
 			pid = byte - '0';
 #if _ENABLE_SMP_
 			next_lh = &(((struct task_struct *)(__get_cpu_var(first)))->task);
@@ -569,9 +571,9 @@ void shell(void)
 
 		} else if (!strcmp(cmdline, "run")) {
 			printk("input task pid: ");
-			byte = poll_in();
-			poll_out(byte);
-			poll_out('\n');
+			byte = poll_in(uart_dev);
+			poll_out(uart_dev, byte);
+			poll_out(uart_dev, '\n');
 			pid = byte - '0';
 
 #if _ENABLE_SMP_

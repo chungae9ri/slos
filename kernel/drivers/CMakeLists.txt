@@ -1,9 +1,9 @@
-if (TARGET_ARCH STREQUAL "aarch64")
+if(TARGET_ARCH STREQUAL "aarch64")
   add_library(
     drivers_objs OBJECT
     uart/uart.c
   )
-else ()
+else()
   add_library(
     drivers_objs OBJECT
     dma/dma.c
@@ -14,8 +14,8 @@ else ()
 
 option(BUILD_TINYUSB "Build includes tinyusb" OFF)
 
-if (BUILD_TINYUSB)
+if(BUILD_TINYUSB)
   add_subdirectory(tinyusb/src)
   tinyusb_target_add(drivers_objs)
 endif()
-endif ()
+endif()

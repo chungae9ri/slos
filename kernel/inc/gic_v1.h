@@ -68,18 +68,6 @@ struct ihandler {
 void init_gic(void);
 
 /**
- * @brief Initialize GIC Distributor
- *
- */
-void init_gic_dist(void);
-
-/**
- * @brief Initialize GIC CPU Interface
- *
- */
-void init_gic_cpu(void);
-
-/**
  * @brief Initialize GIC for secondary CPU (CPU 1)
  */
 void init_gic_secondary(void);

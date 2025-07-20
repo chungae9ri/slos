@@ -24,5 +24,17 @@
 		reg = <0xE0000000 0x100>;
 		interrupts = <59 4>;
 	};
+
+	usb0:usb@E0002000 {
+		compatible = "ps,usb";
+		reg = <0xE0002000 0x1000>;
+		interrupts = <53 4>;
+	};
+
+	usb1:usb@E0003000 {
+		compatible = "ps,usb";
+		reg = <0xE0003000 0x1000>;
+		interrupts = <76 4>;
+	};
 };
 

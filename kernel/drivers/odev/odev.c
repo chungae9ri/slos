@@ -20,6 +20,7 @@
 #define DEVICE_DT_COMPAT SLOS_ODEV
 
 #include <stdint.h>
+
 #include <error.h>
 #include <odev.h>
 #include <regops.h>
@@ -62,92 +63,98 @@
 
 #define O_STREAM_TASK_PRI 4
 
-DEVICE_DEFINE(odev_0, DT_GET_COMPAT(0), DT_GET_BASE_ADDR(0), DT_GET_IRQ(0));
+DEVICE_DEFINE_IDX(odev, 0);
+
+static struct device *dev = DEVICE_GET_IDX(odev, 0);
 
 int32_t init_odev(void)
 {
-	gic_register_int_handler(DEVICE_GET_IRQ(odev_0), odev_irq, NULL);
+	dev->name = DT_GET_COMPAT(0);
+	dev->base_addr = DT_GET_BASE_ADDR(0);
+	dev->irq = DT_GET_IRQ(0);
+
+	gic_register_int_handler(dev->irq, odev_irq, dev);
 	/* This also reprogram the distributor
 	 * forwarding target cpu in the ICDIPTR register.
 	 */
-	gic_enable_interrupt(DEVICE_GET_IRQ(odev_0));
+	gic_enable_interrupt(dev->irq);
 
-	return NO_ERR;
+	return 0;
 }
 
 int32_t start_odev(void)
 {
 	uint32_t ctrl;
 
-	ctrl = read32(DEVICE_GET_BASE_ADDR(odev_0) + REG_CTRL_OFFSET);
+	ctrl = read32(dev->base_addr + REG_CTRL_OFFSET);
 	ctrl |= BM_GBL_START;
-	write32(DEVICE_GET_BASE_ADDR(odev_0) + REG_CTRL_OFFSET, ctrl);
+	write32(dev->base_addr + REG_CTRL_OFFSET, ctrl);
 
-	return NO_ERR;
+	return 0;
 }
 
 int32_t start_odev_stream(void)
 {
 	uint32_t ctrl;
 
-	ctrl = read32(DEVICE_GET_BASE_ADDR(odev_0) + REG_CTRL_OFFSET);
+	ctrl = read32(dev->base_addr + REG_CTRL_OFFSET);
 	ctrl |= BM_OSTREAM_START;
-	write32(DEVICE_GET_BASE_ADDR(odev_0) + REG_CTRL_OFFSET, ctrl);
+	write32(dev->base_addr + REG_CTRL_OFFSET, ctrl);
 
-	return NO_ERR;
+	return 0;
 }
 
 int32_t stop_odev(void)
 {
 	uint32_t ctrl;
 
-	ctrl = read32(DEVICE_GET_BASE_ADDR(odev_0) + REG_CTRL_OFFSET);
+	ctrl = read32(dev->base_addr + REG_CTRL_OFFSET);
 	ctrl &= ~BM_GBL_START;
-	write32(DEVICE_GET_BASE_ADDR(odev_0) + REG_CTRL_OFFSET, ctrl);
-	return NO_ERR;
+	write32(dev->base_addr + REG_CTRL_OFFSET, ctrl);
+	
+	return 0;
 }
 
 int32_t stop_odev_stream(void)
 {
 	uint32_t ctrl;
 
-	ctrl = read32(DEVICE_GET_BASE_ADDR(odev_0) + REG_CTRL_OFFSET);
+	ctrl = read32(dev->base_addr + REG_CTRL_OFFSET);
 	ctrl &= ~BM_OSTREAM_START;
-	write32(DEVICE_GET_BASE_ADDR(odev_0) + REG_CTRL_OFFSET, ctrl);
+	write32(dev->base_addr + REG_CTRL_OFFSET, ctrl);
 
-	return NO_ERR;
+	return 0;
 }
 
 int32_t put_to_itab(uint32_t sAddr, uint32_t sLen)
 {
 	uint32_t ctrl, status;
 
-	status = read32(DEVICE_GET_BASE_ADDR(odev_0) + REG_STATUS_OFFSET);
+	status = read32(dev->base_addr + REG_STATUS_OFFSET);
 	/* ITAB is full, return error */
 	if (status & BM_ITAB_FULL)
-		return -ERR_ITAB_FULL;
+		return -EINVAL;
 
-	write32(DEVICE_GET_BASE_ADDR(odev_0) + REG_ADDR_OFFSET, sAddr);
-	write32(DEVICE_GET_BASE_ADDR(odev_0) + REG_LEN_OFFSET, sLen);
+	write32(dev->base_addr + REG_ADDR_OFFSET, sAddr);
+	write32(dev->base_addr + REG_LEN_OFFSET, sLen);
 
-	ctrl = read32(DEVICE_GET_BASE_ADDR(odev_0) + REG_CTRL_OFFSET);
+	ctrl = read32(dev->base_addr + REG_CTRL_OFFSET);
 	ctrl |= BM_IN_TRANS;
-	write32(DEVICE_GET_BASE_ADDR(odev_0) + REG_CTRL_OFFSET, ctrl);
+	write32(dev->base_addr + REG_CTRL_OFFSET, ctrl);
 
-	while (!(read32(DEVICE_GET_BASE_ADDR(odev_0) + REG_STATUS_OFFSET) & BM_TRANSFER_DONE)) {
-		ctrl = read32(DEVICE_GET_BASE_ADDR(odev_0) + REG_CTRL_OFFSET);
+	while (!(read32(dev->base_addr + REG_STATUS_OFFSET) & BM_TRANSFER_DONE)) {
+		ctrl = read32(dev->base_addr + REG_CTRL_OFFSET);
 		/* if stop ODEV, then exit */
 		if (!(ctrl & BM_GBL_START))
-			return NO_ERR;
+			return 0;
 	}
 
 	/* clear the CTRL_IN_TRANS_MASK bit */
-	ctrl = read32(DEVICE_GET_BASE_ADDR(odev_0) + REG_CTRL_OFFSET);
+	ctrl = read32(dev->base_addr + REG_CTRL_OFFSET);
 	ctrl &= ~BM_IN_TRANS;
-	write32(DEVICE_GET_BASE_ADDR(odev_0) + REG_CTRL_OFFSET, ctrl);
-	/*printk("ctrl after: 0x%x\n", ctrl);*/
+	write32(dev->base_addr + REG_CTRL_OFFSET, ctrl);
 
-	return NO_ERR;
+	return 0;
 }
 
 extern uint32_t smp_processor_id(void);
@@ -161,19 +168,12 @@ int32_t odev_irq(void *arg)
 
 	uint32_t cpuid = smp_processor_id();
 
-	cntl = read32(DEVICE_GET_BASE_ADDR(odev_0) + REG_CTRL_OFFSET);
+	cntl = read32(dev->base_addr + REG_CTRL_OFFSET);
 	cntl |= BM_INTR_DONE;
-	write32(DEVICE_GET_BASE_ADDR(odev_0) + REG_CTRL_OFFSET, cntl);
+	write32(dev->base_addr + REG_CTRL_OFFSET, cntl);
 	printk("odev irq done from cpu: %d!\n", cpuid);
 
-	return NO_ERR;
-}
-
-int32_t set_consume_latency(uint32_t lat)
-{
-	write32(DEVICE_GET_BASE_ADDR(odev_0) + REG_LATENCY_OFFSET, lat);
-
-	return NO_ERR;
+	return 0;
 }
 
 int32_t start_consumer(void)
@@ -181,26 +181,26 @@ int32_t start_consumer(void)
 	uint32_t cntl;
 
 	printk("odev consumer starts!\n");
-	cntl = read32(DEVICE_GET_BASE_ADDR(odev_0) + REG_CTRL_OFFSET);
+	cntl = read32(dev->base_addr + REG_CTRL_OFFSET);
 	cntl |= BM_CONSUMER_START;
-	write32(DEVICE_GET_BASE_ADDR(odev_0) + REG_CTRL_OFFSET, cntl);
+	write32(dev->base_addr + REG_CTRL_OFFSET, cntl);
 
-	return NO_ERR;
+	return 0;
 }
 
 int32_t stop_consumer(void)
 {
 	uint32_t cntl, status;
 
-	status = read32(DEVICE_GET_BASE_ADDR(odev_0) + REG_STATUS_OFFSET);
+	status = read32(dev->base_addr + REG_STATUS_OFFSET);
 	printk("odev status: 0x%x!\n", status);
 
-	cntl = read32(DEVICE_GET_BASE_ADDR(odev_0) + REG_CTRL_OFFSET);
+	cntl = read32(dev->base_addr + REG_CTRL_OFFSET);
 	cntl &= ~BM_CONSUMER_START;
-	write32(DEVICE_GET_BASE_ADDR(odev_0) + REG_CTRL_OFFSET, cntl);
+	write32(dev->base_addr + REG_CTRL_OFFSET, cntl);
 	printk("odev consumer stops!\n");
 
-	return NO_ERR;
+	return 0;
 }
 
 /* This task is run in the cpu1 triggered
@@ -223,7 +223,7 @@ uint32_t run_odev_task(void)
 		((uint32_t *)((uint32_t)psrc + O_STREAM_BURST_SZ * i))[0] = i + 1;
 	}
 
-	set_consume_latency(10000);
+	write32(dev->base_addr + REG_LATENCY_OFFSET, 10000);
 	start_odev_stream();
 
 	i = 0;
@@ -237,12 +237,9 @@ uint32_t run_odev_task(void)
 			i++;
 
 			i = i % O_STREAM_WRAP;
-		} else if (ret == -ERR_ITAB_FULL) {
-			mdelay(100);
 		} else {
-			printk("put_to_itab error ret=0x%x\n", ret);
-			break;
-		}
+			mdelay(100);
+		} 
 	}
 
 	stop_consumer();
@@ -252,11 +249,14 @@ uint32_t run_odev_task(void)
 	/* spin forever */
 	while (1)
 		;
-	return NO_ERR;
+
+	return 0;
 }
 
 int32_t create_odev_task(void *arg)
 {
+	(void)arg;
+
 	create_cfs_task("odev_worker", run_odev_task, O_STREAM_TASK_PRI);
 
 	return 0;

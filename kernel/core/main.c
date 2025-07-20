@@ -34,12 +34,15 @@
 #include <slfs.h>
 #include <uart.h>
 #include <ops.h>
+#include <device.h>
 #endif
 
 #include <timer.h>
 #include <gic_v1.h>
 #include <printk.h>
 #include <uart.h>
+
+static struct device *uart_dev = DEVICE_GET_IDX(uart, 0);
 
 #if defined(ARCH_CORTEX_A9)
 
@@ -185,7 +188,8 @@ int start_kernel(void)
 	struct pagetable pgt;
 	struct vmpool kheap;
 
-	init_uart();
+	init_uart(uart_dev);
+	configure_uart(uart_dev);
 	printk("stdio uart initialized");
 
 	cpuid = smp_processor_id();
@@ -227,8 +231,9 @@ int main(void)
 {
 	uint32_t current_el = 0;
 
-	init_uart();
-	printk("stdio uart initialized");
+	init_uart(uart_dev);
+	configure_uart(uart_dev);
+	printk("stdio uart initialized\n");
 
 	/* read currentEL*/
 	asm volatile("mrs %[cel], CurrentEL" : [cel] "=r"(current_el)::);
@@ -236,6 +241,8 @@ int main(void)
 
 	init_gic();
 	init_timer();
+
+	timer_enable();
 
 	while (1) {
 		;

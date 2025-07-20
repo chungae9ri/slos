@@ -21,6 +21,8 @@
 #include <mm.h>
 #include <uart.h>
 
+static struct device *uart_dev = DEVICE_GET_IDX(uart, 0);
+
 int printf(const char *fmt, ...)
 {
 	uint8_t *pch, *pstr;
@@ -33,7 +35,7 @@ int printf(const char *fmt, ...)
 
 	for (pch = (uint8_t *)fmt; *pch != '\0'; pch++) {
 		if (*pch != '%') {
-			poll_out(*pch);
+			poll_out(uart_dev, *pch);
 			continue;
 		}
 		switch (*++pch) {
@@ -53,7 +55,7 @@ int printf(const char *fmt, ...)
 			str_len = i;
 			num_str[i] = '\0';
 			for (i = 0; i < str_len; i++) {
-				poll_out(num_str[str_len - 1 - i]);
+				poll_out(uart_dev, num_str[str_len - 1 - i]);
 			}
 			break;
 
@@ -69,14 +71,14 @@ int printf(const char *fmt, ...)
 			str_len = i;
 			num_str[i] = '\0';
 			for (i = 0; i < str_len; i++) {
-				poll_out(num_str[str_len - 1 - i]);
+				poll_out(uart_dev, num_str[str_len - 1 - i]);
 			}
 			break;
 
 		case 's':
 			pstr = va_arg(argp, uint8_t *);
 			while (*pstr != '\0') {
-				poll_out(*pstr++);
+				poll_out(uart_dev, *pstr++);
 			}
 			break;
 		default:
