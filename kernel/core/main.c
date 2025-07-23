@@ -246,8 +246,6 @@ int main(void)
 	init_gic();
 	init_timer();
 
-	timer_enable();
-
 	while (1) {
 		;
 	}
