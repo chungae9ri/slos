@@ -46,6 +46,7 @@
 #define CMD_LEN		32
 
 static struct device *uart_dev = DEVICE_GET_IDX(uart, 0);
+static struct device *dma_dev = DEVICE_GET_IDX(dma, 0);
 
 uint32_t show_stat;
 
@@ -611,7 +612,7 @@ void shell(void)
 			}
 
 			set_dma_work(COPROC_SRC_ADDR, COPROC_DST_ADDR, COPROC_DAT_LEN);
-			start_dma(NULL);
+			start_dma(dma_dev);
 		}
 #if _ENABLE_SMP_
 		else if (!strcmp(cmdline, "sgi")) {

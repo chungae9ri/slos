@@ -166,23 +166,20 @@ uint32_t gic_irq_handler(void)
 	uint32_t num;
 	uint32_t val;
 	uint32_t cpuid;
-	struct sgi_data dat = {0, 0};
 
 	/* ack the interrupt */
 	val = read32(dev->base_addr + GIC_ICCIAR_OFFSET);
 
-	num = val & 0x3FF;
-
-	if (num >= NUM_IRQS) {
-		return 1;
-	} else if (num < NUM_SGI) {
-		dat.cpuid = val & 0x1C00;
-		dat.num = num;
-	}
-
 	/* get current cpuid */
 	cpuid = smp_processor_id();
-	ret = handler[cpuid][num].func(&dat);
+
+	num = val & 0x3FF;
+	if (num >= NUM_IRQS) {
+		return 1;
+	}
+
+	ret = handler[cpuid][num].func(handler[cpuid][num].arg);
+
 	/* clear timer int(29U) status bit */
 	if (num == PRIV_TMR_INT_VEC) {
 		write32(PRIV_TMR_INTSTAT, 1);
@@ -263,4 +260,4 @@ void gic_register_int_handler(int vec, int_handler func, void *arg)
  * @}
  * @}
  */
- 
+

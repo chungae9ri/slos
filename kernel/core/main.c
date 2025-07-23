@@ -45,6 +45,10 @@
 static struct device *uart_dev = DEVICE_GET_IDX(uart, 0);
 
 #if defined(ARCH_CORTEX_A9)
+static struct device *dma_dev = DEVICE_GET_IDX(dma, 0);
+#endif
+
+#if defined(ARCH_CORTEX_A9)
 
 #define A9_CPU_RST_CTRL	 (0xF8000244)
 #define A9_RST0_MASK	 (0x1)
@@ -212,7 +216,7 @@ int start_kernel(void)
 	update_csd();
 
 	/* dma task is running in cpu0 */
-	init_dma();
+	init_dma(dma_dev);
 
 	create_workq_worker();
 
