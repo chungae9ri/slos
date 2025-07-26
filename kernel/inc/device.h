@@ -31,13 +31,14 @@
 /** Device structure */
 struct device {
 	uint32_t idx;
-	const char *name;	/**< Device name */
+	const char *name;   /**< Device name */
 	uint32_t base_addr; /**< Device base address */
 	uint32_t irq;	    /**< Device irq number */
+	void *data;	    /**< Device data */
 };
 
 /** Device declaration */
-#define DEVICE_DECLARE(DEV)  extern struct device dev_##DEV
+#define DEVICE_DECLARE(DEV) extern struct device dev_##DEV
 /** Device definition */
 #define DEVICE_DEFINE(DEV) struct device dev_##DEV
 /** Device declaration with index */

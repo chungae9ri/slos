@@ -20,6 +20,7 @@
 #define DEVICE_DT_COMPAT SLOS_MODCORE_DMA
 
 #include <stddef.h>
+#include <stdbool.h>
 
 #include <error.h>
 #include <dma.h>
@@ -54,10 +55,8 @@ struct dma_work_order {
 	uint32_t dst;
 	uint32_t len;
 	struct dma_work_order *next;
+	bool is_first;
 };
-
-static struct dma_work_order *p_dma_work_order;
-int bFirst;
 
 int32_t init_dma(struct device *dev)
 {
@@ -70,10 +69,10 @@ int32_t init_dma(struct device *dev)
 	dev->name = DT_GET_COMPAT(0);
 	dev->base_addr = DT_GET_BASE_ADDR(0);
 	dev->irq = DT_GET_IRQ(0);
+	dev->data = NULL;
 
 	gic_register_int_handler(dev->irq, dma_irq, dev);
 	gic_enable_interrupt(dev->irq);
-	p_dma_work_order = NULL;
 	/* reset mdcore hw */
 	cntl = BM_MODCORE_DMA_RESET;
 	write32(dev->base_addr + MODCORE_DMA_CNTL_OFFSET, cntl);
@@ -81,12 +80,12 @@ int32_t init_dma(struct device *dev)
 	return 0;
 }
 
-int32_t set_dma_work(uint32_t src, uint32_t dst, uint32_t len)
+int32_t set_dma_work(struct device *dev, uint32_t src, uint32_t dst, uint32_t len)
 {
 	int i, q, r;
 	struct dma_work_order *pcur, *ptemp;
 
-	bFirst = 1;
+	((struct dma_work_order *)dev)->is_first = true;
 
 	if (len > MODCORE_DMA_BURST_LEN) {
 		q = (int)(len / MODCORE_DMA_BURST_LEN);
@@ -101,7 +100,7 @@ int32_t set_dma_work(uint32_t src, uint32_t dst, uint32_t len)
 			ptemp->next = NULL;
 
 			if (i == 0) {
-				p_dma_work_order = pcur = ptemp;
+				dev->data = pcur = ptemp;
 			} else {
 				pcur->next = ptemp;
 				pcur = pcur->next;
@@ -128,7 +127,7 @@ int32_t set_dma_work(uint32_t src, uint32_t dst, uint32_t len)
 		ptemp->len = len;
 		ptemp->next = NULL;
 
-		p_dma_work_order = ptemp;
+		dev->data = ptemp;
 	}
 
 	return 0;
@@ -143,22 +142,22 @@ int32_t start_dma(struct device *dev)
 		return -EINVAL;
 	}
 
-	if (bFirst) {
+	if (((struct dma_work_order *)(dev->data))->is_first) {
 		flush_ent_dcache();
-		bFirst = 0;
+		((struct dma_work_order *)(dev->data))->is_first = false;
 	}
 
-	src = p_dma_work_order->src;
-	dst = p_dma_work_order->dst;
-	len = p_dma_work_order->len;
+	src = ((struct dma_work_order *)(dev->data))->src;
+	dst = ((struct dma_work_order *)(dev->data))->dst;
+	len = ((struct dma_work_order *)(dev->data))->len;
 	printk("dma start, src: 0x%x, dst: 0x%x, 0x%xbytes\n", src, dst, len);
 
 	write32(dev->base_addr + MODCORE_DMA_SRC_ADDR_OFFSET, src);
 	write32(dev->base_addr + MODCORE_DMA_DST_ADDR_OFFSET, dst);
 	write32(dev->base_addr + MODCORE_DMA_LEN_OFFSET, len);
 
-	ptemp = p_dma_work_order;
-	p_dma_work_order = p_dma_work_order->next;
+	ptemp = (struct dma_work_order *)(dev->data);
+	dev->data = ((struct dma_work_order *)(dev->data))->next;
 	kfree((uint32_t)ptemp);
 
 	cntl = read32(dev->base_addr + MODCORE_DMA_CNTL_OFFSET);
@@ -177,7 +176,7 @@ int32_t dma_irq(void *arg)
 		return -EINVAL;
 	}
 
-	if (p_dma_work_order) {
+	if (dev->data != NULL) {
 		printk("enqueue next dma work\n");
 		enqueue_workq((int32_t (*)(void *))(start_dma), (void *)dev);
 	} else {

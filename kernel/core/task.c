@@ -615,7 +615,7 @@ void shell(void)
 				psrc[j] = (uint8_t)(j % 256);
 			}
 
-			set_dma_work(COPROC_SRC_ADDR, COPROC_DST_ADDR, COPROC_DAT_LEN);
+			set_dma_work(dma_dev, COPROC_SRC_ADDR, COPROC_DST_ADDR, COPROC_DAT_LEN);
 			start_dma(dma_dev);
 		}
 #if _ENABLE_SMP_

@@ -33,13 +33,14 @@ int32_t init_dma(struct device *dev);
 /**
  * @brief Set the DMA work
  *
+ * @param dev DMA device controller instance
  * @param src Source address of memory for DMA
  * @param dst Destination address of memory for DMA
  * @param len Byte length of DMA transfer
  *
  * @return 0 for success, others for failure
  */
-int32_t set_dma_work(uint32_t src, uint32_t dst, uint32_t len);
+int32_t set_dma_work(struct device *dev, uint32_t src, uint32_t dst, uint32_t len);
 
 /**
  * @brief Start DMA transfer
