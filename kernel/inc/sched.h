@@ -86,7 +86,7 @@ struct task_struct {
 	uint32_t missed_cnt;		/**< RT task deadline missed count */
 	enum task_state state;		/**< Task state */
 	uint32_t timeinterval;		/**< Realtime task time interval */
-	struct mm_struct mm;		/**< Memory management for this task */
+	struct mm_struct mm;		/**< Memory map for this task */
 	uint32_t done;			/**<  */
 	uint32_t preempted;		/**< */
 };

@@ -18,49 +18,18 @@
 #ifndef _ODEV_H_
 #define _ODEV_H_
 
-/**
- * @brief
- *
- * @return int32_t
- */
-int32_t init_odev(void);
+#include <device.h>
+
+DEVICE_DECLARE_IDX(odev, 0);
 
 /**
  * @brief
  *
- * @return int32_t
- */
-int32_t start_odev(void);
-
-/**
- * @brief
+ * @param dev Outstream device instance
  *
  * @return int32_t
  */
-int32_t stop_odev(void);
-
-/**
- * @brief
- *
- * @return int32_t
- */
-int32_t start_odev_stream(void);
-
-/**
- * @brief
- *
- * @return int32_t
- */
-int32_t stop_odev_stream(void);
-
-/**
- * @brief
- *
- * @param sAddr
- * @param sLen
- * @return int32_t
- */
-int32_t put_to_itab(uint32_t sAddr, uint32_t sLen);
+int32_t init_odev(struct device *dev);
 
 /**
  * @brief
@@ -81,16 +50,18 @@ int32_t set_consume_latency(uint32_t lat);
 /**
  * @brief
  *
+ * @param dev Outstream device instance
  * @return int32_t
  */
-int32_t start_consumer(void);
+int32_t start_consumer(struct device *dev);
 
 /**
  * @brief
  *
+ * @param dev Outstream device instance
  * @return int32_t
  */
-int32_t stop_consumer(void);
+int32_t stop_consumer(struct device *dev);
 
 /**
  * @brief

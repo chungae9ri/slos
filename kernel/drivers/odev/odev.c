@@ -29,8 +29,8 @@
 #include <printk.h>
 #include <task.h>
 #include <timer.h>
+#include <percpu.h>
 #include <generated_devicetree_defs.h>
-#include <device.h>
 
 /* CAUTION!
  * O_STREAM_START address is used as the start address of
@@ -65,24 +65,7 @@
 
 DEVICE_DEFINE_IDX(odev, 0);
 
-static struct device *dev = DEVICE_GET_IDX(odev, 0);
-
-int32_t init_odev(void)
-{
-	dev->name = DT_GET_COMPAT(0);
-	dev->base_addr = DT_GET_BASE_ADDR(0);
-	dev->irq = DT_GET_IRQ(0);
-
-	gic_register_int_handler(dev->irq, odev_irq, dev);
-	/* This also reprogram the distributor
-	 * forwarding target cpu in the ICDIPTR register.
-	 */
-	gic_enable_interrupt(dev->irq);
-
-	return 0;
-}
-
-int32_t start_odev(void)
+static int32_t start_odev(struct device *dev)
 {
 	uint32_t ctrl;
 
@@ -93,7 +76,7 @@ int32_t start_odev(void)
 	return 0;
 }
 
-int32_t start_odev_stream(void)
+static int32_t start_odev_stream(struct device *dev)
 {
 	uint32_t ctrl;
 
@@ -104,18 +87,18 @@ int32_t start_odev_stream(void)
 	return 0;
 }
 
-int32_t stop_odev(void)
+static int32_t stop_odev(struct device *dev)
 {
 	uint32_t ctrl;
 
 	ctrl = read32(dev->base_addr + REG_CTRL_OFFSET);
 	ctrl &= ~BM_GBL_START;
 	write32(dev->base_addr + REG_CTRL_OFFSET, ctrl);
-	
+
 	return 0;
 }
 
-int32_t stop_odev_stream(void)
+static int32_t stop_odev_stream(struct device *dev)
 {
 	uint32_t ctrl;
 
@@ -126,7 +109,7 @@ int32_t stop_odev_stream(void)
 	return 0;
 }
 
-int32_t put_to_itab(uint32_t sAddr, uint32_t sLen)
+static int32_t put_to_itab(struct device *dev, uint32_t sAddr, uint32_t sLen)
 {
 	uint32_t ctrl, status;
 
@@ -157,14 +140,28 @@ int32_t put_to_itab(uint32_t sAddr, uint32_t sLen)
 	return 0;
 }
 
-extern uint32_t smp_processor_id(void);
+int32_t init_odev(struct device *dev)
+{
+	dev->name = DT_GET_COMPAT(0);
+	dev->base_addr = DT_GET_BASE_ADDR(0);
+	dev->irq = DT_GET_IRQ(0);
+
+	gic_register_int_handler(dev->irq, odev_irq, dev);
+	/* This also reprogram the distributor
+	 * forwarding target cpu in the ICDIPTR register.
+	 */
+	gic_enable_interrupt(dev->irq);
+
+	return 0;
+}
 
 int32_t odev_irq(void *arg)
 {
 	uint32_t cntl;
+	struct device *dev = (struct device *)arg;
 
 	/* stop consumer hw first */
-	stop_consumer();
+	stop_consumer(dev);
 
 	uint32_t cpuid = smp_processor_id();
 
@@ -176,7 +173,7 @@ int32_t odev_irq(void *arg)
 	return 0;
 }
 
-int32_t start_consumer(void)
+int32_t start_consumer(struct device *dev)
 {
 	uint32_t cntl;
 
@@ -188,7 +185,7 @@ int32_t start_consumer(void)
 	return 0;
 }
 
-int32_t stop_consumer(void)
+int32_t stop_consumer(struct device *dev)
 {
 	uint32_t cntl, status;
 
@@ -213,24 +210,33 @@ uint32_t run_odev_task(void)
 	uint8_t *psrc;
 	uint32_t i;
 	int32_t ret;
+	struct device *dev;
+	struct task_struct *this_current = NULL;
 
+#if _ENABLE_SMP_
+	this_current = __get_cpu_var(current);
+#else
+	this_current = current;
+#endif
+
+	dev = (struct device *)(this_current->arg);
 	psrc = (uint8_t *)O_STREAM_START;
 
 	// To avoid underflow, prepare initial data first
-	start_odev();
+	start_odev(dev);
 	for (i = 0; i < O_STREAM_WRAP * 4; i++) {
 		/* seq number starting from 1*/
 		((uint32_t *)((uint32_t)psrc + O_STREAM_BURST_SZ * i))[0] = i + 1;
 	}
 
 	write32(dev->base_addr + REG_LATENCY_OFFSET, 10000);
-	start_odev_stream();
+	start_odev_stream(dev);
 
 	i = 0;
 
 	/* out stream forever */
 	for (;;) {
-		ret = put_to_itab(O_STREAM_START + O_STREAM_STEP * i, O_STREAM_STEP);
+		ret = put_to_itab(dev, O_STREAM_START + O_STREAM_STEP * i, O_STREAM_STEP);
 		if (!ret) {
 			printk("put_to_itab: %d\n", i);
 			mdelay(10);
@@ -239,12 +245,12 @@ uint32_t run_odev_task(void)
 			i = i % O_STREAM_WRAP;
 		} else {
 			mdelay(100);
-		} 
+		}
 	}
 
-	stop_consumer();
-	stop_odev_stream();
-	stop_odev();
+	stop_consumer(dev);
+	stop_odev_stream(dev);
+	stop_odev(dev);
 
 	/* spin forever */
 	while (1)
@@ -257,7 +263,7 @@ int32_t create_odev_task(void *arg)
 {
 	(void)arg;
 
-	create_cfs_task("odev_worker", run_odev_task, O_STREAM_TASK_PRI);
+	create_cfs_task("odev_worker", run_odev_task, O_STREAM_TASK_PRI, arg);
 
 	return 0;
 }

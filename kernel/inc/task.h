@@ -74,9 +74,10 @@ struct task_struct *create_usr_cfs_task(char *name, task_entry cfs_task, uint32_
  * @param [in] name CFS task name
  * @param [in] cfs_task Task entry
  * @param [in] pri Task priority
+ * @param [in] arg Task argument
  * @return struct task_struct* CFS task object
  */
-struct task_struct *create_cfs_task(char *name, task_entry cfs_task, uint32_t pri);
+struct task_struct *create_cfs_task(char *name, task_entry cfs_task, uint32_t pri, void *arg);
 
 /**
  * @brief Create a rt task object

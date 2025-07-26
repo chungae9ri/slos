@@ -24,9 +24,9 @@
 #include <printk.h>
 #include <mailbox.h>
 
-void enable_sgi_irq(int vec, int32_t(sgi_irq_handler)(void *arg))
+void enable_sgi_irq(int vec, int32_t(sgi_irq_handler)(void *arg), void *arg)
 {
-	gic_register_int_handler(vec, sgi_irq_handler, NULL);
+	gic_register_int_handler(vec, sgi_irq_handler, arg);
 }
 
 int32_t sgi_irq(void *arg)
@@ -45,7 +45,7 @@ int32_t sgi_irq(void *arg)
 		break;
 
 	case TASK_ODEV:
-		enqueue_workq(create_odev_task, NULL);
+		enqueue_workq(create_odev_task, arg);
 		wakeup_workq_worker();
 		break;
 

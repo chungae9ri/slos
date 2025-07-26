@@ -47,6 +47,7 @@
 
 static struct device *uart_dev = DEVICE_GET_IDX(uart, 0);
 static struct device *dma_dev = DEVICE_GET_IDX(dma, 0);
+static struct device *odev_dev = DEVICE_GET_IDX(odev, 0);
 
 uint32_t show_stat;
 
@@ -327,11 +328,11 @@ static void create_cfs_workers(void)
 	static int cfs_worker_num;
 
 	if (cfs_worker_num == 0) {
-		create_cfs_task("cfs_worker1", cfs_dummy1, 8);
+		create_cfs_task("cfs_worker1", cfs_dummy1, 8, NULL);
 	} else if (cfs_worker_num == 1) {
-		create_cfs_task("cfs_worker2", cfs_dummy2, 4);
+		create_cfs_task("cfs_worker2", cfs_dummy2, 4, NULL);
 	} else if (cfs_worker_num == 2) {
-		create_cfs_task("cfs_worker3", cfs_dummy3, 4);
+		create_cfs_task("cfs_worker3", cfs_dummy3, 4, NULL);
 	} else {
 		printk("cfs worker number limit\n");
 	}
@@ -378,7 +379,7 @@ struct task_struct *create_usr_cfs_task(char *name, task_entry cfs_task, uint32_
 	return upt[app_idx];
 }
 
-struct task_struct *create_cfs_task(char *name, task_entry cfs_task, uint32_t pri)
+struct task_struct *create_cfs_task(char *name, task_entry cfs_task, uint32_t pri, void *arg)
 {
 	struct task_struct *task = NULL;
 	struct cfs_rq *this_runq = NULL;
@@ -390,6 +391,7 @@ struct task_struct *create_cfs_task(char *name, task_entry cfs_task, uint32_t pr
 #endif
 
 	task = forkyi(name, (task_entry)cfs_task, CFS_TASK, pri);
+	task->arg = arg;
 	rb_init_node(&task->se.run_node);
 	enqueue_se_to_runq(&task->se);
 	this_runq->cfs_task_num++;
@@ -416,6 +418,7 @@ void wakeup_workq_worker(void)
 {
 	struct worker *this_qworker;
 	struct task_struct *this_task;
+
 #if _ENABLE_SMP_
 	this_qworker = __get_cpu_var(qworker);
 	this_task = this_qworker->task;
@@ -452,6 +455,7 @@ void create_workq_worker(void)
 	char worker_name[16];
 	uint32_t cpuid;
 	struct worker *this_qworker;
+
 #if _ENABLE_SMP_
 	__get_cpu_var(qworker) = kmalloc(sizeof(struct worker));
 	this_qworker = __get_cpu_var(qworker);
@@ -464,7 +468,7 @@ void create_workq_worker(void)
 
 	cpuid = smp_processor_id();
 	sprintk(worker_name, "workq_worker:%x", (int)cpuid);
-	this_qworker->task = create_cfs_task(worker_name, workq_worker, 4);
+	this_qworker->task = create_cfs_task(worker_name, workq_worker, 4, NULL);
 }
 
 void shell(void)
@@ -602,9 +606,9 @@ void shell(void)
 			load_ramdisk_app(LITTLEFS_FILE_SYSTEM, 0);
 #endif
 		} else if (!strcmp(cmdline, "start cs")) {
-			start_consumer();
+			start_consumer(odev_dev);
 		} else if (!strcmp(cmdline, "stop cs")) {
-			stop_consumer();
+			stop_consumer(odev_dev);
 		} else if (!strcmp(cmdline, "start dma")) {
 			psrc = (uint8_t *)COPROC_SRC_ADDR;
 			for (j = 0; j < COPROC_DAT_LEN; j++) {
@@ -624,7 +628,7 @@ void shell(void)
 		}
 #endif
 		else if (!strcmp(cmdline, "test mem")) {
-			create_cfs_task("test_mem", test_mem, 4);
+			create_cfs_task("test_mem", test_mem, 4, NULL);
 		} else {
 			printk("I don't know.... ^^;\n");
 		}

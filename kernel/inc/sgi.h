@@ -39,7 +39,7 @@ int32_t sgi_irq(void *arg);
  *
  * @param [in] vec SGI number
  */
-void enable_sgi_irq(int vec, int32_t (*)(void *arg));
+void enable_sgi_irq(int vec, int32_t (*)(void *arg), void *arg);
 #endif
 
 /**

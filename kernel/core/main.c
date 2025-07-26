@@ -46,6 +46,7 @@ static struct device *uart_dev = DEVICE_GET_IDX(uart, 0);
 
 #if defined(ARCH_CORTEX_A9)
 static struct device *dma_dev = DEVICE_GET_IDX(dma, 0);
+static struct device *odev = DEVICE_GET_IDX(odev, 0);
 #endif
 
 #if defined(ARCH_CORTEX_A9)
@@ -169,10 +170,10 @@ int secondary_start_kernel(void)
 	update_csd();
 	timer_enable_secondary();
 	/* enable sgi 15 for starting odev task */
-	enable_sgi_irq(0xF, sgi_irq);
+	enable_sgi_irq(0xF, sgi_irq, odev);
 
 	/* odev device driver is running in the cpu1 */
-	init_odev();
+	init_odev(odev);
 	create_workq_worker();
 	cpuidle_secondary();
 
