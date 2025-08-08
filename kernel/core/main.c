@@ -45,8 +45,10 @@
 static struct device *uart_dev = DEVICE_GET_IDX(uart, 0);
 
 #if defined(ARCH_CORTEX_A9)
+static struct device *timer_dev = DEVICE_GET_IDX(timer, 0);
 static struct device *dma_dev = DEVICE_GET_IDX(dma, 0);
 static struct device *odev = DEVICE_GET_IDX(odev, 0);
+static struct device *gic_dev = DEVICE_GET_IDX(gic, 0);
 #endif
 
 #if defined(ARCH_CORTEX_A9)
@@ -56,6 +58,31 @@ static struct device *odev = DEVICE_GET_IDX(odev, 0);
 #define A9_RST1_MASK	 (0x2)
 #define A9_CLKSTOP0_MASK (0x10)
 #define A9_CLKSTOP1_MASK (0x20)
+
+static void register_timer_irq(void)
+{
+	/* Register timer isr for each corresponding cpu called
+	 * from gic_register_int_handler()
+	 */
+	gic_register_int_handler(timer_dev->irq, timer_irq, timer_dev);
+	gic_enable_interrupt(gic_dev, timer_dev->irq);
+}
+
+static void register_dma_irq(void)
+{
+	/* Register dma isr called from gic_register_int_handler() */
+	gic_register_int_handler(dma_dev->irq, dma_irq, dma_dev);
+	gic_enable_interrupt(gic_dev, dma_dev->irq);
+}
+
+static void register_odev_irq(void)
+{
+	gic_register_int_handler(odev->irq, odev_irq, odev);
+	/* This also reprogram the distributor
+	 * forwarding target cpu in the ICDIPTR register.
+	 */
+	gic_enable_interrupt(gic_dev, odev->irq);
+}
 
 /**
  * @brief Secondary CPU idle
@@ -158,22 +185,25 @@ int secondary_start_kernel(void)
 	scr = read_scr();
 	printk("cpu %d scr: 0x%x\n", cpuid, scr);
 
-	init_gic_secondary();
+	init_gic_secondary(gic_dev);
 	init_idletask();
 	init_wq();
 	init_rq();
 
-	init_timertree();
+	init_timertree(timer_dev);
 	init_oneshot_timers();
 	init_cfs_scheduler();
-	init_timer();
+	init_timer(timer_dev);
+	/* Register timer irq for cpu 1 */
+	register_timer_irq();
 	update_csd();
-	timer_enable_secondary();
+	timer_enable_secondary(timer_dev);
 	/* enable sgi 15 for starting odev task */
 	enable_sgi_irq(0xF, sgi_irq, odev);
 
 	/* odev device driver is running in the cpu1 */
 	init_odev(odev);
+	register_odev_irq();
 	create_workq_worker();
 	cpuidle_secondary();
 
@@ -203,21 +233,23 @@ int start_kernel(void)
 
 	init_kernmem(&framepool, &pgt, &kheap);
 	printk("init_kernmem done.\n");
-	init_gic();
+	init_gic(gic_dev);
 	init_idletask();
 
 	init_wq();
 	init_rq();
 	init_shell();
-	init_timertree();
+	init_timertree(timer_dev);
 	init_oneshot_timers();
 	init_cfs_scheduler();
-	init_timer();
+	init_timer(timer_dev);
+	/* Register timer irq for cpu 0 */
+	register_timer_irq();
 	init_mailbox();
 	update_csd();
-
 	/* dma task is running in cpu0 */
 	init_dma(dma_dev);
+	register_dma_irq();
 
 	create_workq_worker();
 
@@ -225,7 +257,7 @@ int start_kernel(void)
 	printk("start secondary cpu.\n");
 	start_cpu1();
 #endif
-	timer_enable();
+	timer_enable(timer_dev);
 	cpuidle();
 
 	return 0;

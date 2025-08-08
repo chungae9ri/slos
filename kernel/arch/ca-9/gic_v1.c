@@ -17,6 +17,7 @@
 /** Devicetree compatible string */
 #define DEVICE_DT_COMPAT ARM_GIC_390
 
+#include <errno.h>
 #include <regops.h>
 #include <gic_v1.h>
 #include <timer.h>
@@ -26,20 +27,64 @@
 #include <device.h>
 #include <ops.h>
 
+/** GIC CPU interface reigsers */
+#define GIC_ICCICR_OFFSET  0x100
+#define GIC_ICCPMR_OFFSET  0x104
+#define GIC_ICCIAR_OFFSET  0x10C
+#define GIC_ICCEOIR_OFFSET 0x110
+/** GIC Distributor registers */
+#define GIC_ICDDCR_OFFSET   0x1000
+#define GIC_ICDICTR_OFFSET  0x1004
+#define GIC_ICDICFR0_OFFSET 0x1C00
+#define GIC_ICDICFR1_OFFSET 0x1C04
+#define GIC_ICDICFR2_OFFSET 0x1C08
+#define GIC_ICDICFR3_OFFSET 0x1C0C
+#define GIC_ICDICFR4_OFFSET 0x1C10
+#define GIC_ICDICFR5_OFFSET 0x1C14
+#define GIC_ICDIPTR0_OFFSET 0x1800
+#define GIC_ICDIPTR8_OFFSET 0x1820
+#define GIC_ICDISER0_OFFSET 0x1100
+#define GIC_ICDISER1_OFFSET 0x1104
+#define GIC_ICDISER2_OFFSET 0x1108
+#define GIC_ICDICER0_OFFSET 0x1180
+#define GIC_ICDICER1_OFFSET 0x1184
+#define GIC_ICDICER2_OFFSET 0x1188
+
+/** Software Generated Interrupt (SGI) number */
+#define NUM_SGI 16
+/** Private Peripheral Interrupt (PPI) number */
+#define NUM_PPI 16
+/** Shared Peripheral Interrupt (SPI) start number */
+#define SPI_BASE (NUM_PPI + NUM_SGI)
+/** Shared Peripheral Interrupt (SPI) number */
+#define NUM_SPI 64
+/** Total IRQ number */
+#define NUM_IRQS (NUM_SGI + NUM_PPI + NUM_SPI)
+
 /** Define GIC device from devicetree */
 DEVICE_DEFINE_IDX(gic, 0);
 
-static struct device *dev = DEVICE_GET_IDX(gic, 0);
+/** GIC instance */
+static struct device *gic_dev = DEVICE_GET_IDX(gic, 0);
 
 /** Interrupt handler vector table for CPU 0 and CPU 1 */
 static struct ihandler handler[NR_CPUS][NUM_IRQS];
 
-void init_gic_dist(void)
+/**
+ * @brief Initialize GIC distributor
+ *
+ * @param dev GIC device controller instance
+ */
+static int32_t init_gic_dist(struct device *dev)
 {
 	uint32_t i;
 	uint32_t ext_irq_num = 0;
 	/* 0x01010101 : CPU0 targeted */
 	uint32_t cpumask = 0x01010101;
+
+	if (dev == NULL) {
+		return -EINVAL;
+	}
 
 	/* Disabling GIC */
 	write32(dev->base_addr + GIC_ICDDCR_OFFSET, 0);
@@ -94,10 +139,16 @@ void init_gic_dist(void)
 	 * in both secure, non-secure interrupt singal occurrance
 	 */
 	write32(dev->base_addr + GIC_ICDDCR_OFFSET, 0x3);
+
+	return 0;
 }
 
-void init_gic_cpu(void)
+static int32_t init_gic_cpu(struct device *dev)
 {
+	if (dev == NULL) {
+		return -EINVAL;
+	}
+
 	/* 32 priority level (ICCPMR[2:0] = 2b000)
 	 * supported. ICDIPR0 ~ 23 is used to set
 	 * interrupt priority. Reset value 0.
@@ -110,18 +161,30 @@ void init_gic_cpu(void)
 	 * banked register
 	 */
 	write32(dev->base_addr + GIC_ICCICR_OFFSET, 0x07);
+
+	return 0;
 }
 
-void init_gic(void)
+int32_t init_gic(struct device *dev)
 {
+	if (dev == NULL) {
+		return -EINVAL;
+	}
+
 	dev->base_addr = DT_GET_BASE_ADDR(0);
 
-	init_gic_dist();
-	init_gic_cpu();
+	init_gic_dist(dev);
+	init_gic_cpu(dev);
+
+	return 0;
 }
 
-void init_gic_secondary(void)
+int32_t init_gic_secondary(struct device *dev)
 {
+	if (dev == NULL) {
+		return -EINVAL;
+	}
+
 	/* Disabling interrupt forwarding is already done
 	 * in init_gic_dist(), which should be done before
 	 * gic_enable_interrupt()
@@ -154,21 +217,23 @@ void init_gic_secondary(void)
 	 */
 	write32(dev->base_addr + GIC_ICDISER0_OFFSET, 0xFFFF8000);
 	/*write32(GIC_ICDISER0, 0xFFFFFFFF);*/
+
+	return 0;
 }
 
 void gic_fiq(void)
 { /* do nothing */
 }
 
-uint32_t gic_irq_handler(void)
+int32_t gic_irq_handler(void)
 {
-	uint32_t ret;
+	int32_t ret;
 	uint32_t num;
 	uint32_t val;
 	uint32_t cpuid;
 
 	/* ack the interrupt */
-	val = read32(dev->base_addr + GIC_ICCIAR_OFFSET);
+	val = read32(gic_dev->base_addr + GIC_ICCIAR_OFFSET);
 
 	/* get current cpuid */
 	cpuid = smp_processor_id();
@@ -178,25 +243,26 @@ uint32_t gic_irq_handler(void)
 		return 1;
 	}
 
+	/* run ISR */
 	ret = handler[cpuid][num].func(handler[cpuid][num].arg);
 
-	/* clear timer int(29U) status bit */
-	if (num == PRIV_TMR_INT_VEC) {
-		write32(PRIV_TMR_INTSTAT, 1);
-	}
-
-	write32(dev->base_addr + GIC_ICCEOIR_OFFSET, val);
+	/* end of interrupt */
+	write32(gic_dev->base_addr + GIC_ICCEOIR_OFFSET, val);
 
 	return ret;
 }
 
-uint32_t gic_enable_interrupt(int vec)
+int32_t gic_enable_interrupt(const struct device *dev, int vec)
 {
 	uint32_t reg;
 	uint32_t bit;
 	uint32_t val;
 	uint32_t byte;
 	uint32_t cpuid;
+
+	if (dev == NULL || vec < 0 || vec >= NUM_IRQS) {
+		return -EINVAL;
+	}
 
 	/* only SPI can be set with the target CPU */
 	if (vec >= SPI_BASE) {
@@ -225,10 +291,14 @@ uint32_t gic_enable_interrupt(int vec)
 	return 0;
 }
 
-uint32_t gic_disable_interrupt(int vec)
+int32_t gic_disable_interrupt(const struct device *dev, int vec)
 {
 	uint32_t reg;
 	uint32_t bit;
+
+	if (dev == NULL || vec < 0 || vec >= NUM_IRQS) {
+		return -EINVAL;
+	}
 
 	/* banked register clear-enable ICDICER0 */
 	reg = dev->base_addr + GIC_ICDICER0_OFFSET + (uint32_t)(vec / 32) * 4;

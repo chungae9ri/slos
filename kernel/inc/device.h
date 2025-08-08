@@ -27,6 +27,8 @@
 #define DT_GET_IRQ(IDX) CONCAT(DEVICE_DT_COMPAT, _##IDX##_P_INTR)
 /** Get compatible string of IDX from devicetree */
 #define DT_GET_COMPAT(IDX) CONCAT(DEVICE_DT_COMPAT, _##IDX##_P_COMPAT)
+/** Get clock frequency of IDX from devicetree */
+#define DT_GET_CLKFREQ(IDX) CONCAT(DEVICE_DT_COMPAT, _##IDX##_P_CLKFREQ)
 
 /** Device structure */
 struct device {
@@ -62,6 +64,8 @@ struct device {
 #define DEVICE_GET_IRQ(DEV) dev_##DEV.irq
 /** Get device irq from device intance with index */
 #define DEVICE_GET_IRQ_IDX(DEV, IDX) dev_##DEV##_##IDX.irq
+/** Get device clkfreq from device intance with index */
+#define DEVICE_GET_CLKFREQ_IDX(DEV, IDX) dev_##DEV##_##IDX.clkfreq
 
 #endif
 

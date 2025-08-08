@@ -11,17 +11,50 @@ import argparse
 compat_dict = {}
 
 class node:
-    def __init__(self, parent, name, idx, compat, base_addr, intr):
+    def __init__(self, parent=None, name=None, idx=None, compat=None, base_addr=None, intr=None, clkfreq=None):
         self.name = name
         self.idx = idx
         self.compat = compat
         self.base_addr = base_addr
         self.intr = intr
+        self.clkfreq = None
         self.parent = parent
         self.leaves = []
 
     def add_leaf(self, leaf):
         self.leaves.append(leaf)
+
+def handle_compat(line, current):
+    line = line.replace(';', '').replace('\"', '')
+    line_split = line.split('=')
+    compat_str = line_split[-1].strip()
+    compat_str = compat_str.replace('.', '_').replace(' ', '_').replace('-', '_').replace(',', '_')
+    current.compat = compat_str
+    if compat_str in compat_dict:
+        compat_dict[compat_str] = compat_dict[compat_str] + 1
+    else:
+        compat_dict[compat_str] = 0
+
+    current.idx = compat_dict[compat_str]
+
+
+def handle_reg(line, current):
+    left = line.find('<')
+    right = line.find('>')
+    regs = line[left + 1:right].split(' ')
+    current.base_addr = regs[0].strip()
+
+def handle_intr(line, current):
+    left = line.find('<')
+    right = line.find('>')
+    intr = line[left + 1:right].split(' ')
+    current.intr = intr[0].strip()
+
+def handle_clkfreq(line, current):
+    left = line.find('<')
+    right = line.find('>')
+    clkfreq = line[left + 1:right].split(' ')
+    current.clkfreq = clkfreq[0].strip()
 
 def dfs(node, path):
     for leaf in node.leaves:
@@ -34,10 +67,18 @@ def dfs(node, path):
             print(f"#define {compat}_{leaf.idx}_P_BASE_ADDR {leaf.base_addr}")
         if leaf.intr is not None:
             print(f"#define {compat}_{leaf.idx}_P_INTR {leaf.intr}")
+        if leaf.clkfreq is not None:
+            print(f"#define {compat}_{leaf.idx}_P_CLKFREQ {leaf.clkfreq}")
 
         dfs(leaf, devtree_macro)
 
 def build_tree(dts_file, root):
+    handlers = {'compatible': handle_compat, 
+                'reg': handle_reg,
+                 'interrupts': handle_intr,
+                 'clkfreq': handle_clkfreq
+                }
+
     with open(dts_file, 'r') as file:
         in_devicetree = False
         current = root
@@ -68,32 +109,11 @@ def build_tree(dts_file, root):
                     current = None
                 else:
                     current = current.parent
-
-            elif in_devicetree and 'compatible' in line and ';' in line:
-                line = line.replace(';', '').replace('\"', '')
-                line_split = line.split('=')
-                compat_str = line_split[-1].strip()
-                compat_str = compat_str.replace('.', '_').replace(' ', '_').replace('-', '_').replace(',', '_')
-                current.compat = compat_str
-                if compat_str in compat_dict:
-                    compat_dict[compat_str] = compat_dict[compat_str] + 1
-                else:
-                    compat_dict[compat_str] = 0
-
-                current.idx = compat_dict[compat_str]
-
-            elif in_devicetree and 'reg' in line:
-                left = line.find('<')
-                right = line.find('>')
-                regs = line[left + 1:right].split(' ')
-                current.base_addr = regs[0].strip()
-
-            elif in_devicetree and 'interrupts' in line:
-                left = line.find('<')
-                right = line.find('>')
-                intr = line[left + 1:right].split(' ')
-                current.intr = intr[0].strip()
-
+            else:
+                for key, handler in handlers.items():
+                    if key in line:
+                        handler(line, current)
+                        break
 
 def main():
     parser = argparse.ArgumentParser()

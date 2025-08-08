@@ -40,18 +40,13 @@ static void init_jiffies(void)
 
 void init_cfs_scheduler(void)
 {
-	uint32_t cpuid = 0;
 	struct task_struct *this_current = NULL;
+
 #if _ENABLE_SMP_
 	this_current = __get_cpu_var(current);
 #else
 	this_current = current;
 #endif
-	cpuid = smp_processor_id();
-
-	if (cpuid == 0) {
-		set_ticks_per_sec(get_timer_freq());
-	}
 
 	create_sched_timer(this_current, 10, NULL);
 	init_jiffies();

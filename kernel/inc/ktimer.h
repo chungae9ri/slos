@@ -29,6 +29,7 @@ typedef void (*timer_handler)(uint32_t el);
 struct clock_source_device {
 	uint32_t current_tick; /**< Current timer tick count - not used */
 	uint32_t current_time; /**< Current time - not used  */
+	struct device *dev;    /**< Timer device */
 };
 
 /** Timer rbtree root */
@@ -85,8 +86,10 @@ void create_oneshot_timer(struct task_struct *oneshot_task, uint32_t msec, void 
 /**
  * @brief Initialize timer rbtree
  *
+ * @param [in] timer_dev Timer device controller instance
+ * @return int32_t 0 for success, others for failure
  */
-void init_timertree(void);
+int32_t init_timertree(const struct device *timer_dev);
 
 /**
  * @brief Update current timer tick count

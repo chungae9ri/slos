@@ -20,11 +20,12 @@
 
 #if defined(ARCH_CORTEX_A9)
 
+#define DEVICE_DT_COMPAT ARM_PRIVATE_TIMER
+
 #include <stdint.h>
 
 #include <timer.h>
 #include <gic_v1.h>
-#include <regops.h>
 #include <rbtree.h>
 #include <ktimer.h>
 #include <defs.h>
@@ -32,6 +33,10 @@
 #include <waitq.h>
 #include <runq.h>
 #include <ops.h>
+#include <generated_devicetree_defs.h>
+
+/** Define GIC device from devicetree */
+DEVICE_DEFINE_IDX(timer, 0);
 
 /** Ticks per second */
 static uint32_t ticks_per_sec;
@@ -72,59 +77,51 @@ void mdelay(uint32_t msecs)
 	delay(ticks);
 }
 
-void udelay(uint32_t usecs)
-{
-	uint64_t ticks;
-	/* divide by 1024 * 1024 */
-	ticks = ((uint64_t)usecs * ticks_per_sec) >> 20;
-	delay(ticks);
-}
-
-inline uint32_t get_timer_freq(void)
-{
-	return (XPAR_CPU_CORTEXA9_0_CPU_CLK_FREQ_HZ >> 1);
-}
-
-inline uint32_t timer_get_phy_tick_cnt(void)
-{
-	return (uint32_t)read32(PRIV_TMR_CNTR);
-}
-
-/* banked cpu private timer: cpu0 */
-void timer_enable(void)
+int32_t timer_enable(const struct device *dev)
 {
 	int ctrl;
 
-	ctrl = read32(PRIV_TMR_CTRL);
+	if (dev == NULL) {
+		return -EINVAL;
+	}
+
+	ctrl = read32(dev->base_addr + PRIV_TMR_CTRL_OFFSET);
 	ctrl = ctrl | (PRIV_TMR_EN_MASK | PRIV_TMR_AUTO_RE_MASK | PRIV_TMR_IRQ_EN_MASK);
 
-	write32(PRIV_TMR_CTRL, ctrl);
+	write32(dev->base_addr + PRIV_TMR_CTRL_OFFSET, ctrl);
+
+	return 0;
 }
 
 /* banked cpu private timer: cpu1 */
-void timer_enable_secondary(void)
+void timer_enable_secondary(const struct device *dev)
 {
 	uint32_t ctrl;
 
 	/* Init timer */
-	*(uint32_t *)(PRIV_TMR_LD) = 1000000;
-	gic_enable_interrupt(PRIV_TMR_INT_VEC);
+	*(uint32_t *)(dev->base_addr + PRIV_TMR_LD_OFFSET) = 1000000;
 
 	/* Enable timer */
-	ctrl = *(uint32_t *)(PRIV_TMR_CTRL);
+	ctrl = read32(dev->base_addr + PRIV_TMR_CTRL_OFFSET);
 	ctrl = ctrl | (PRIV_TMR_EN_MASK | PRIV_TMR_AUTO_RE_MASK | PRIV_TMR_IRQ_EN_MASK);
 
-	*(uint32_t *)(PRIV_TMR_CTRL) = ctrl;
+	write32(dev->base_addr + PRIV_TMR_CTRL_OFFSET, ctrl);
 }
 
-void timer_disable(void)
+int32_t timer_disable(const struct device *dev)
 {
 	int ctrl;
 
-	ctrl = read32(PRIV_TMR_CTRL);
+	if (dev == NULL) {
+		return -EINVAL;
+	}
+
+	ctrl = read32(dev->base_addr + PRIV_TMR_CTRL_OFFSET);
 	ctrl = ctrl & ~PRIV_TMR_EN_MASK;
 
-	write32(PRIV_TMR_CTRL, ctrl);
+	write32(dev->base_addr + PRIV_TMR_CTRL_OFFSET, ctrl);
+
+	return 0;
 }
 
 int32_t timer_irq(void *arg)
@@ -135,6 +132,11 @@ int32_t timer_irq(void *arg)
 	struct task_struct *this_current = NULL;
 	struct timer_struct *this_sched_timer = NULL;
 	struct timer_root *this_ptroot;
+	struct device *dev = (struct device *)arg;
+
+	if (dev == NULL) {
+		return -EINVAL;
+	}
 
 #if _ENABLE_SMP_
 	this_current = (struct task_struct *)__get_cpu_var(current);
@@ -147,14 +149,14 @@ int32_t timer_irq(void *arg)
 #endif
 
 	/* Read banked PRIV_TMR_LD register. */
-	elapsed = (uint32_t)(read32(PRIV_TMR_LD));
+	elapsed = (uint32_t)(read32(dev->base_addr + PRIV_TMR_LD_OFFSET));
 
 	pct = container_of(this_ptroot->rb_leftmost, struct timer_struct, run_node);
 	update_timer_tree(elapsed);
 	pnt = container_of(this_ptroot->rb_leftmost, struct timer_struct, run_node);
 	tc = pnt->tc;
 	/* Reprogram next earliest deadline timer intr. */
-	write32(PRIV_TMR_LD, tc);
+	write32(dev->base_addr + PRIV_TMR_LD_OFFSET, tc);
 
 	update_current(elapsed);
 
@@ -209,25 +211,38 @@ int32_t timer_irq(void *arg)
 		break;
 	}
 
+	/* Clear timer interrupt status */
+	write32(dev->base_addr + PRIV_TMR_INTSTAT_OFFSET, 1);
+
 	return 0;
 }
 
 uint32_t get_ticks_per_sec(void)
 {
+	if (ticks_per_sec == 0) {
+		/* If ticks_per_sec is not set, read from device tree*/
+		ticks_per_sec = DT_GET_CLKFREQ(0);
+	}
+
 	return ticks_per_sec;
 }
 
-void set_ticks_per_sec(uint32_t tps)
-{
-	ticks_per_sec = tps;
-}
-
-void init_timer(void)
+int32_t init_timer(struct device *dev)
 {
 	uint32_t tc = 0;
 	struct timer_struct *pct = NULL;
 	struct task_struct *this_current = NULL;
 	struct timer_root *this_ptroot = NULL;
+
+	if (dev == NULL) {
+		return -EINVAL;
+	}
+
+	dev->name = DT_GET_COMPAT(0);
+	dev->base_addr = DT_GET_BASE_ADDR(0);
+	dev->irq = DT_GET_IRQ(0);
+	dev->data = NULL;
+	ticks_per_sec = DT_GET_CLKFREQ(0);
 
 #if _ENABLE_SMP_
 	this_current = __get_cpu_var(current);
@@ -239,13 +254,9 @@ void init_timer(void)
 	pct = container_of(this_ptroot->rb_leftmost, struct timer_struct, run_node);
 	pct->pt = this_current;
 	tc = pct->tc;
-	write32(PRIV_TMR_LD, tc);
+	write32(dev->base_addr + PRIV_TMR_LD_OFFSET, tc);
 
-	/* Register timer isr for each corresponding cpu in
-	 * the gic_register_int_handler()
-	 */
-	gic_register_int_handler(PRIV_TMR_INT_VEC, timer_irq, NULL);
-	gic_enable_interrupt(PRIV_TMR_INT_VEC);
+	return 0;
 }
 
 #else

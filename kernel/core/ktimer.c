@@ -79,33 +79,46 @@ static void insert_timer(struct timer_root *ptr, struct timer_struct *pts)
 	rb_insert_color(&pts->run_node, &ptr->root);
 }
 
-void init_timertree(void)
+int32_t init_timertree(const struct device *timer_dev)
 {
 	struct timer_root *this_ptroot;
+	struct clock_source_device *this_csd;
+
+	if (timer_dev == NULL) {
+		return -EINVAL;
+	}
 
 #if _ENABLE_SMP_
-	__get_cpu_var(csd) = kmalloc(sizeof(struct clock_source_device));
 	__get_cpu_var(ptroot) = kmalloc(sizeof(struct timer_root));
 	this_ptroot = (struct timer_root *)__get_cpu_var(ptroot);
+
+	__get_cpu_var(csd) = kmalloc(sizeof(struct clock_source_device));
+	this_csd = (struct clock_source_device *)__get_cpu_var(csd);
+	this_csd->dev = (struct device *)timer_dev;
 #else
-	csd = kmalloc(sizeof(struct clock_source_device));
+	/* FIXME: memory leak */
 	ptroot = kmalloc(sizeof(struct timer_root));
 	this_ptroot = ptroot;
+
+	this_csd = kmalloc(sizeof(struct clock_source_device));
+	this_csd->dev = (struct device *)timer_dev;
 #endif
 	this_ptroot->root = RB_ROOT;
 	this_ptroot->rb_leftmost = NULL;
+
+	return 0;
 }
 
 /* Need to use 64bit Global Timer */
 void update_csd(void)
 {
-	struct clock_source_device *pthis_csd;
+	struct clock_source_device *this_csd;
 #if _ENABLE_SMP_
-	pthis_csd = __get_cpu_var(csd);
+	this_csd = __get_cpu_var(csd);
 #else
-	pthis_csd = csd;
+	this_csd = csd;
 #endif
-	pthis_csd->current_tick = timer_get_phy_tick_cnt();
+	this_csd->current_tick = timer_get_phy_tick_cnt(this_csd->dev);
 }
 
 void update_timer_tree(uint32_t elapsed)
@@ -253,6 +266,7 @@ void create_sched_timer(struct task_struct *cfs_sched_task, uint32_t msec, void 
 	this_sched_timer = sched_timer;
 	this_ptroot = ptroot;
 #endif
+
 	if (this_ptroot->root.rb_node == (struct rb_node *)0xffffffff) {
 		this_ptroot->root.rb_node = 0;
 	}

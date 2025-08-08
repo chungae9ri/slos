@@ -19,12 +19,14 @@
 			compatible = "arm,cortex-a9";
 			device_type = "cpu";
 			reg = <0>;
+			clkfreq = <666666687>;
 		};
 
 		cpu1: cpu@1 {
 			compatible = "arm,cortex-a9";
 			device_type = "cpu";
 			reg = <1>;
+			clkfreq = <666666687>;
 		};
 	};
 
@@ -32,6 +34,13 @@
 		gic: gic@f8f00000 {
 			compatible = "arm,gic-390";
 			reg = <0xf8f00000 0x100>;
+		};
+
+		timer@F8F00600 {
+			compatible = "arm,private-timer";
+			reg = <0xF8F00600 0x100>;
+			interrupts = <29 4>;
+			clkfreq = <333333343>;
 		};
 	};
 };

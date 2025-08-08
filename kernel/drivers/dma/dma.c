@@ -71,8 +71,6 @@ int32_t init_dma(struct device *dev)
 	dev->irq = DT_GET_IRQ(0);
 	dev->data = NULL;
 
-	gic_register_int_handler(dev->irq, dma_irq, dev);
-	gic_enable_interrupt(dev->irq);
 	/* reset mdcore hw */
 	cntl = BM_MODCORE_DMA_RESET;
 	write32(dev->base_addr + MODCORE_DMA_CNTL_OFFSET, cntl);
@@ -84,6 +82,10 @@ int32_t set_dma_work(struct device *dev, uint32_t src, uint32_t dst, uint32_t le
 {
 	int i, q, r;
 	struct dma_work_order *pcur, *ptemp;
+
+	if (dev == NULL) {
+		return -EINVAL;
+	}
 
 	((struct dma_work_order *)dev)->is_first = true;
 

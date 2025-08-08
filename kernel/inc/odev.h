@@ -23,7 +23,7 @@
 DEVICE_DECLARE_IDX(odev, 0);
 
 /**
- * @brief
+ * @brief Initialize the Outstream device
  *
  * @param dev Outstream device instance
  *
@@ -32,9 +32,9 @@ DEVICE_DECLARE_IDX(odev, 0);
 int32_t init_odev(struct device *dev);
 
 /**
- * @brief
+ * @brief odev irq handler
  *
- * @param arg
+ * @param arg Outstream device instance
  * @return int
  */
 int32_t odev_irq(void *arg);
@@ -48,7 +48,10 @@ int32_t odev_irq(void *arg);
 int32_t set_consume_latency(uint32_t lat);
 
 /**
- * @brief
+ * @brief Start the consumer device in Outstream datapath
+ *
+ * This function start the consumer device which drains data from
+ * the FIFOs in the outstream datapath.
  *
  * @param dev Outstream device instance
  * @return int32_t
@@ -56,7 +59,11 @@ int32_t set_consume_latency(uint32_t lat);
 int32_t start_consumer(struct device *dev);
 
 /**
- * @brief
+ * @brief Stop the consumer device in Outstream datapath
+ *
+ * This function stops the consumer device which fills data into
+ * the FIFOs in the outstream datapath. When data reaches the FIFO
+ * threshold, data isn't copied to the FIFO to prevent overflow.
  *
  * @param dev Outstream device instance
  * @return int32_t
@@ -64,7 +71,7 @@ int32_t start_consumer(struct device *dev);
 int32_t stop_consumer(struct device *dev);
 
 /**
- * @brief
+ * @brief Run Outstream device driver task
  *
  * @return uint32_t
  */
@@ -73,8 +80,10 @@ uint32_t run_odev_task(void);
 /**
  * @brief Create a odev task object
  *
+ * @return uint32_t
  */
 int32_t create_odev_task(void *arg);
+
 #endif
 
 /**

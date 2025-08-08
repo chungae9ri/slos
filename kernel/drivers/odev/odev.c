@@ -146,12 +146,6 @@ int32_t init_odev(struct device *dev)
 	dev->base_addr = DT_GET_BASE_ADDR(0);
 	dev->irq = DT_GET_IRQ(0);
 
-	gic_register_int_handler(dev->irq, odev_irq, dev);
-	/* This also reprogram the distributor
-	 * forwarding target cpu in the ICDIPTR register.
-	 */
-	gic_enable_interrupt(dev->irq);
-
 	return 0;
 }
 
