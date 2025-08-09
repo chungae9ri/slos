@@ -22,17 +22,16 @@
 #include <timer.h>
 #include <sgi.h>
 #include <generated_devicetree_defs.h>
-#include <device.h>
 
 /** Define GIC device from devicetree */
 DEVICE_DEFINE_IDX(gic, 0);
 
-static struct device *dev = DEVICE_GET_IDX(gic, 0);
-
+/** GIC instance */
+static struct device *gic_dev = DEVICE_GET_IDX(gic, 0);
 /** Interrupt handler vector table for CPU 0 */
 static struct ihandler handler[NUM_IRQS];
 
-void init_gic_dist(void)
+int32_t init_gic_dist(const struct device *dev)
 {
 	uint32_t ext_irq_num = 0;
 
@@ -59,10 +58,16 @@ void init_gic_dist(void)
 
 	/* Enable GIC distributor */
 	write32(dev->base_addr + GICD_CTLR_OFFSET, 0x1);
+
+	return 0;
 }
 
-void init_gic_cpu(void)
+int32_t init_gic_cpu(struct device *dev)
 {
+	if (dev == NULL) {
+		return -EINVAL;
+	}
+
 	/* 32 priority level (ICCPMR[2:0] = 2b000)
 	 * supported. ICDIPR0 ~ 23 is used to set
 	 * interrupt priority. Reset value 0.
@@ -76,14 +81,22 @@ void init_gic_cpu(void)
 	 * banked register
 	 */
 	write32(dev->base_addr + GICC_CTLR_OFFSET, 0x1);
+
+	return 0;
 }
 
-void init_gic(void)
+int32_t init_gic(struct device *dev)
 {
+	if (dev == NULL) {
+		return -EINVAL;
+	}
+
 	dev->base_addr = DT_GET_BASE_ADDR(0);
 
-	init_gic_dist();
-	init_gic_cpu();
+	init_gic_dist(dev);
+	init_gic_cpu(dev);
+
+	return 0;
 }
 
 void gic_fiq(void)
@@ -95,10 +108,9 @@ int32_t gic_irq_handler(void)
 	uint32_t ret;
 	uint32_t num;
 	uint32_t val;
-	struct sgi_data dat = {0, 0};
 
 	/* ack the interrupt */
-	val = read32(dev->base_addr + GICC_IAR_OFFSET);
+	val = read32(gic_dev->base_addr + GICC_IAR_OFFSET);
 
 	num = val & 0x3FF;
 
@@ -106,18 +118,14 @@ int32_t gic_irq_handler(void)
 		return -1;
 	}
 
-	ret = handler[num].func(&dat);
-	/* clear timer int(29U) status bit */
-	if (num == PRIV_TMR_INT_VEC) {
-		write32(PRIV_TMR_INTSTAT, 1);
-	}
+	ret = handler[num].func(handler[num].arg);
 
-	write32(dev->base_addr + GICC_EOIR_OFFSET, val);
+	write32(gic_dev->base_addr + GICC_EOIR_OFFSET, val);
 
 	return ret;
 }
 
-int32_t gic_enable_interrupt(int vec)
+int32_t gic_enable_interrupt(const struct device *dev, int vec)
 {
 	uint32_t reg;
 	uint32_t bit;
@@ -135,7 +143,7 @@ int32_t gic_enable_interrupt(int vec)
 	return 0;
 }
 
-int32_t gic_disable_interrupt(int vec)
+int32_t gic_disable_interrupt(const struct device *dev, int vec)
 {
 	uint32_t reg;
 	uint32_t bit;
@@ -163,4 +171,3 @@ void gic_register_int_handler(int vec, int_handler func, void *arg)
  * @}
  * @}
  */
- 

@@ -19,6 +19,10 @@
 
 #include <stdint.h>
 
+#include <device.h>
+
+DEVICE_DECLARE_IDX(gic, 0);
+
 /* GIC Distributor register offset */
 #define GICD_CTLR_OFFSET       (0x00010000U)
 #define GICD_TYPER_OFFSET      (0x00010004U)
@@ -54,20 +58,26 @@ struct ihandler {
 /**
  * @brief Initialize GIC disctributor
  *
+ * @param dev GIC device controller instance
+ * @return int32_t 0 for success, negative error code for failure
  */
-void init_gic_dist(void);
+int32_t init_gic_dist(const struct device *dev);
 
 /**
  * @brief Initialize GIC CPU interface
  *
+ * @param dev GIC device controller instance
+ * @return int32_t 0 for success, negative error code for failure
  */
-void init_gic_cpu(void);
+int32_t init_gic_cpu(struct device *dev);
 
 /**
  * @brief Initialize GIC
  *
+ * @param dev GIC device controller instance
+ * @return int32_t 0 for success, negative error code for failure
  */
-void init_gic(void);
+int32_t init_gic(struct device *dev);
 
 /**
  * @brief IRQ handler called from IRQ exception
@@ -79,18 +89,20 @@ int32_t gic_irq_handler(void);
 /**
  * @brief Enable interrupt
  *
+ * @param [in] dev GIC device controller instance
  * @param [in] vec Interrupt number
  * @return int32_t 0 for success
  */
-int32_t gic_enable_interrupt(int vec);
+int32_t gic_enable_interrupt(const struct device *dev, int vec);
 
 /**
  * @brief Disable interrupt
  *
+ * @param [in] dev GIC device controller instance
  * @param [in] vec Interrupt number disabled
  * @return int32_t 0 for success
  */
-int32_t gic_disable_interrupt(int vec);
+int32_t gic_disable_interrupt(const struct device *dev, int vec);
 
 /**
  * @brief Register interrupt handler to interrupt vector table

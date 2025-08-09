@@ -71,7 +71,7 @@ int32_t init_timer(struct device *dev);
 /**
  * @brief Enable timer clock device
  *
- * This enables timer clock for each CPU0 and CPU1.
+ * This enables timer clock for each CPU0 and CPU1
  * Private timer is banked per CPU.
  *
  * @param dev Timer device controller instance

@@ -45,5 +45,11 @@
 			compatible = "arm,gic-400";
 			reg = <0xf9000000 0x100000>;
 		};
+		timer@F8F00600 {
+			compatible = "arm,private-timer";
+			reg = <0xF8F00600 0x100>;
+			interrupts = <29 4>;
+			clkfreq = <333333343>;
+		};
 	};
 };

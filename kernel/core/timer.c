@@ -18,9 +18,9 @@
 
 #include <generated_kconfig_defs.h>
 
-#if defined(ARCH_CORTEX_A9)
-
 #define DEVICE_DT_COMPAT ARM_PRIVATE_TIMER
+
+#if defined(ARCH_CORTEX_A9)
 
 #include <stdint.h>
 
@@ -266,16 +266,32 @@ int32_t init_timer(struct device *dev)
 
 #include <timer.h>
 #include <gic_v2.h>
+#include <generated_devicetree_defs.h>
+
+/** Define GIC device from devicetree */
+DEVICE_DEFINE_IDX(timer, 0);
+
+/** Ticks per second */
+static uint32_t ticks_per_sec;
 
 int32_t timer_irq(void *arg)
 {
 	return 0;
 }
 
-void init_timer(void)
+int32_t init_timer(struct device *dev)
 {
-	gic_register_int_handler(PRIV_TMR_INT_VEC, timer_irq, NULL);
-	gic_enable_interrupt(PRIV_TMR_INT_VEC);
+	if (dev == NULL) {
+		return -EINVAL;
+	}
+
+	dev->name = DT_GET_COMPAT(0);
+	dev->base_addr = DT_GET_BASE_ADDR(0);
+	dev->irq = DT_GET_IRQ(0);
+	dev->data = NULL;
+	ticks_per_sec = DT_GET_CLKFREQ(0);
+
+	return 0;
 }
 #endif
 

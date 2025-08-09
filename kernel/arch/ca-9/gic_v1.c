@@ -75,7 +75,7 @@ static struct ihandler handler[NR_CPUS][NUM_IRQS];
  *
  * @param dev GIC device controller instance
  */
-static int32_t init_gic_dist(struct device *dev)
+static int32_t init_gic_dist(const struct device *dev)
 {
 	uint32_t i;
 	uint32_t ext_irq_num = 0;
@@ -143,7 +143,7 @@ static int32_t init_gic_dist(struct device *dev)
 	return 0;
 }
 
-static int32_t init_gic_cpu(struct device *dev)
+static int32_t init_gic_cpu(const struct device *dev)
 {
 	if (dev == NULL) {
 		return -EINVAL;
@@ -179,7 +179,7 @@ int32_t init_gic(struct device *dev)
 	return 0;
 }
 
-int32_t init_gic_secondary(struct device *dev)
+int32_t init_gic_secondary(const struct device *dev)
 {
 	if (dev == NULL) {
 		return -EINVAL;

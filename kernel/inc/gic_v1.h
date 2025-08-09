@@ -44,7 +44,7 @@ int32_t init_gic(struct device *dev);
  *
  * @param dev GIC device controller instance
  */
-int32_t init_gic_secondary(struct device *dev);
+int32_t init_gic_secondary(const struct device *dev);
 
 /**
  * @brief Enable a specific interrupt

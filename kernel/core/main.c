@@ -43,15 +43,12 @@
 #include <uart.h>
 
 static struct device *uart_dev = DEVICE_GET_IDX(uart, 0);
+static struct device *gic_dev = DEVICE_GET_IDX(gic, 0);
+static struct device *timer_dev = DEVICE_GET_IDX(timer, 0);
 
 #if defined(ARCH_CORTEX_A9)
-static struct device *timer_dev = DEVICE_GET_IDX(timer, 0);
 static struct device *dma_dev = DEVICE_GET_IDX(dma, 0);
 static struct device *odev = DEVICE_GET_IDX(odev, 0);
-static struct device *gic_dev = DEVICE_GET_IDX(gic, 0);
-#endif
-
-#if defined(ARCH_CORTEX_A9)
 
 #define A9_CPU_RST_CTRL	 (0xF8000244)
 #define A9_RST0_MASK	 (0x1)
@@ -83,7 +80,18 @@ static void register_odev_irq(void)
 	 */
 	gic_enable_interrupt(gic_dev, odev->irq);
 }
+#else
+static void register_timer_irq(void)
+{
+	/* Register timer isr for each corresponding cpu called
+	 * from gic_register_int_handler()
+	 */
+	gic_register_int_handler(timer_dev->irq, timer_irq, timer_dev);
+	gic_enable_interrupt(gic_dev, timer_dev->irq);
+}
+#endif
 
+#if defined(ARCH_CORTEX_A9)
 /**
  * @brief Secondary CPU idle
  *
@@ -276,8 +284,9 @@ int main(void)
 	asm volatile("mrs %[cel], CurrentEL" : [cel] "=r"(current_el)::);
 	printk("currentEL: 0x%x\n", current_el >> 2);
 
-	init_gic();
-	init_timer();
+	init_gic(gic_dev);
+	init_timer(timer_dev);
+	register_timer_irq();
 
 	while (1) {
 		;
