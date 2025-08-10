@@ -70,8 +70,9 @@ int32_t gic_disable_interrupt(const struct device *dev, int vec);
  * @param [in] vec Interrupt number
  * @param [in] func Interrupt handler function
  * @param [in] arg Interrupt handler argument
+ * @return int32_t 0 for success
  */
-void gic_register_int_handler(int vec, int_handler func, void *arg);
+int32_t gic_register_int_handler(int vec, int_handler func, void *arg);
 
 /**
  * @brief GIC IRQ handler
@@ -81,6 +82,15 @@ void gic_register_int_handler(int vec, int_handler func, void *arg);
  * @return uint32_t  Return IRQ handler return value
  */
 int32_t gic_irq_handler(void);
+
+/**
+ * @brief Register IRQ handler and enable IRQ
+ *
+ * @param dev GIC device controller instance
+ * @param irq_handler IRQ handler function
+ * @return int32_t 0 for success
+ */
+int register_irq(const struct device *dev, int32_t (*irq_handler)(void *));
 
 #endif
 

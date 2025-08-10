@@ -312,7 +312,7 @@ int32_t gic_disable_interrupt(const struct device *dev, int vec)
 	return 0;
 }
 
-void gic_register_int_handler(int vec, int_handler func, void *arg)
+int32_t gic_register_int_handler(int vec, int_handler func, void *arg)
 {
 	uint32_t cpuid;
 
@@ -323,6 +323,15 @@ void gic_register_int_handler(int vec, int_handler func, void *arg)
 
 	handler[cpuid][vec].func = func;
 	handler[cpuid][vec].arg = arg;
+
+	return 0;
+}
+
+int register_irq(const struct device *dev, int32_t (*irq_handler)(void *))
+{
+	(void)gic_register_int_handler(dev->irq, irq_handler, (void *)dev);
+
+	return gic_enable_interrupt(gic_dev, dev->irq);
 }
 
 /**

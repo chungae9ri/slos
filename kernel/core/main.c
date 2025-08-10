@@ -56,42 +56,6 @@ static struct device *odev = DEVICE_GET_IDX(odev, 0);
 #define A9_CLKSTOP0_MASK (0x10)
 #define A9_CLKSTOP1_MASK (0x20)
 
-static void register_timer_irq(void)
-{
-	/* Register timer isr for each corresponding cpu called
-	 * from gic_register_int_handler()
-	 */
-	gic_register_int_handler(timer_dev->irq, timer_irq, timer_dev);
-	gic_enable_interrupt(gic_dev, timer_dev->irq);
-}
-
-static void register_dma_irq(void)
-{
-	/* Register dma isr called from gic_register_int_handler() */
-	gic_register_int_handler(dma_dev->irq, dma_irq, dma_dev);
-	gic_enable_interrupt(gic_dev, dma_dev->irq);
-}
-
-static void register_odev_irq(void)
-{
-	gic_register_int_handler(odev->irq, odev_irq, odev);
-	/* This also reprogram the distributor
-	 * forwarding target cpu in the ICDIPTR register.
-	 */
-	gic_enable_interrupt(gic_dev, odev->irq);
-}
-#else
-static void register_timer_irq(void)
-{
-	/* Register timer isr for each corresponding cpu called
-	 * from gic_register_int_handler()
-	 */
-	gic_register_int_handler(timer_dev->irq, timer_irq, timer_dev);
-	gic_enable_interrupt(gic_dev, timer_dev->irq);
-}
-#endif
-
-#if defined(ARCH_CORTEX_A9)
 /**
  * @brief Secondary CPU idle
  *
@@ -203,7 +167,7 @@ int secondary_start_kernel(void)
 	init_cfs_scheduler();
 	init_timer(timer_dev);
 	/* Register timer irq for cpu 1 */
-	register_timer_irq();
+	register_irq(timer_dev, timer_irq);
 	update_csd();
 	timer_enable_secondary(timer_dev);
 	/* enable sgi 15 for starting odev task */
@@ -211,7 +175,7 @@ int secondary_start_kernel(void)
 
 	/* odev device driver is running in the cpu1 */
 	init_odev(odev);
-	register_odev_irq();
+	register_irq(odev, odev_irq);
 	create_workq_worker();
 	cpuidle_secondary();
 
@@ -252,12 +216,12 @@ int start_kernel(void)
 	init_cfs_scheduler();
 	init_timer(timer_dev);
 	/* Register timer irq for cpu 0 */
-	register_timer_irq();
+	register_irq(timer_dev, timer_irq);
 	init_mailbox();
 	update_csd();
 	/* dma task is running in cpu0 */
 	init_dma(dma_dev);
-	register_dma_irq();
+	register_irq(dma_dev, dma_irq);
 
 	create_workq_worker();
 
@@ -286,7 +250,7 @@ int main(void)
 
 	init_gic(gic_dev);
 	init_timer(timer_dev);
-	register_timer_irq();
+	register_irq(timer_dev, timer_irq);
 
 	while (1) {
 		;
